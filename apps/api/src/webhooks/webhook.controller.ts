@@ -1,6 +1,7 @@
 import {
   Controller,
   Headers,
+  HttpCode,
   Param,
   Post,
   Req,
@@ -30,6 +31,7 @@ export class WebhookController {
   ) {}
 
   @Post(':event')
+  @HttpCode(204)
   @Throttle({ default: { limit: 60, ttl: 60_000 } })
   @ApiOperation({ summary: 'Receive Evolution API webhook events' })
   @ApiResponse({ status: 204, description: 'Event accepted' })
