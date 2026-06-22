@@ -10,13 +10,16 @@ import {
   HttpStatus,
   ForbiddenException,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { Public } from '../auth/public.decorator.js';
 import { Roles } from '../auth/roles.decorator.js';
 import { Role } from '../auth/role.enum.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { ReturnsService } from './returns.service.js';
 import { StoreCreditService } from './store-credit.service.js';
 import { CreateReturnDto } from './dto/create-return.dto.js';
+import { CreateGuestReturnRequestDto } from './dto/create-guest-return-request.dto.js';
 import { UpdateReturnStatusDto } from './dto/update-return-status.dto.js';
 import { ResolveReturnDto } from './dto/resolve-return.dto.js';
 import { ReturnStatus } from '@prisma/client';
@@ -57,6 +60,19 @@ export class ReturnsController {
     private readonly returnsService: ReturnsService,
     private readonly storeCreditService: StoreCreditService,
   ) {}
+
+  @Post('guest/request')
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 3600_000 } })
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a return request as a guest using order id + email' })
+  @ApiResponse({ status: 201, description: 'Return request created' })
+  @ApiResponse({ status: 400, description: 'Invalid input or order not returnable' })
+  @ApiResponse({ status: 403, description: 'Email does not match order' })
+  @ApiResponse({ status: 404, description: 'Order not found' })
+  createGuestReturn(@Body() dto: CreateGuestReturnRequestDto) {
+    return this.returnsService.createGuestReturn(dto);
+  }
 
   @Get()
   @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE, Role.SUPPORT)

@@ -16,7 +16,7 @@ interface OrderDetailPageProps {
 
 function isReturnable(order: Order): boolean {
   if (order.status !== 'DELIVERED') return false;
-  const deliveredAt = new Date(order.updatedAt);
+  const deliveredAt = new Date(order.createdAt);
   const windowDays = 30;
   return deliveredAt.getTime() + windowDays * 24 * 60 * 60 * 1000 >= Date.now();
 }

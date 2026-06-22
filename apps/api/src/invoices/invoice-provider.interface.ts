@@ -40,6 +40,7 @@ export interface CreditNoteItem extends InvoiceItem {
 export interface CreditNoteInput {
   returnRequestId: string;
   invoiceAccessKey: string;
+  parentInvoiceAccessKey?: string;
   authorizationNumber?: string;
   codDocModificado: string;
   numDocModificado: string;

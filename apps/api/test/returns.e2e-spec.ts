@@ -185,6 +185,7 @@ describe('Returns (e2e)', () => {
       discountAmount: 0,
       total: 100,
       channel: 'WEB',
+      createdAt: new Date(),
       updatedAt: new Date(),
       items: [
         { id: 'oi1', productId: 'p1', variantId: null, name: 'Product', sku: 'SKU-1', price: 100, quantity: 1 },
@@ -201,6 +202,53 @@ describe('Returns (e2e)', () => {
       invoice: overrides.invoice !== undefined ? overrides.invoice : { accessKey: '1'.repeat(49), authorizationNumber: '1234567890', createdAt: new Date() },
     };
   }
+
+  it('POST /v1/returns/guest/request creates a return request with email verification', async () => {
+    prismaMock.order.findUnique.mockResolvedValue({
+      ...buildOrder(),
+      userId: null,
+      user: null,
+    });
+    prismaMock.returnRequest.create.mockResolvedValue({
+      id: 'rr_guest',
+      orderId: 'o1',
+      userId: null,
+      status: ReturnStatus.REQUESTED,
+      reason: 'Damaged',
+      items: [{ id: 'ri1', productId: 'p1', quantity: 1 }],
+    });
+
+    const res = await request(app.getHttpServer())
+      .post('/v1/returns/guest/request')
+      .send({
+        orderId: 'o1',
+        email: 'customer@example.com',
+        items: [{ productId: 'p1', quantity: 1 }],
+        reason: 'Damaged',
+      })
+      .expect(201);
+
+    expect(res.body.status).toBe(ReturnStatus.REQUESTED);
+    expect(prismaMock.returnRequest.create).toHaveBeenCalled();
+  });
+
+  it('POST /v1/returns/guest/request returns 403 when email does not match', async () => {
+    prismaMock.order.findUnique.mockResolvedValue({
+      ...buildOrder(),
+      userId: null,
+      user: null,
+    });
+
+    await request(app.getHttpServer())
+      .post('/v1/returns/guest/request')
+      .send({
+        orderId: 'o1',
+        email: 'wrong@example.com',
+        items: [{ productId: 'p1', quantity: 1 }],
+        reason: 'Damaged',
+      })
+      .expect(403);
+  });
 
   it('POST /v1/orders/:id/returns creates a return request (customer)', async () => {
     prismaMock.order.findUnique.mockResolvedValue(buildOrder());

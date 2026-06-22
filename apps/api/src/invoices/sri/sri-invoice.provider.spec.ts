@@ -53,6 +53,7 @@ describe('DirectSriInvoiceProvider', () => {
   const creditNoteInput: CreditNoteInput = {
     returnRequestId: 'return_1',
     invoiceAccessKey: '1'.repeat(49),
+    parentInvoiceAccessKey: '1'.repeat(49),
     authorizationNumber: '1234567890',
     codDocModificado: '01',
     numDocModificado: '1'.repeat(49),
@@ -227,7 +228,13 @@ describe('DirectSriInvoiceProvider', () => {
       '001',
       '001',
     );
-    expect(prismaService.creditNote.create).toHaveBeenCalled();
+    expect(prismaService.creditNote.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          parentInvoiceAccessKey: '1'.repeat(49),
+        }),
+      }),
+    );
   });
 
   it('returns REJECTED credit note when reception fails', async () => {
@@ -239,7 +246,13 @@ describe('DirectSriInvoiceProvider', () => {
     const result = await provider.issueCreditNote(creditNoteInput);
 
     expect(result.status).toBe(InvoiceStatus.REJECTED);
-    expect(prismaService.creditNote.create).toHaveBeenCalled();
+    expect(prismaService.creditNote.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          parentInvoiceAccessKey: '1'.repeat(49),
+        }),
+      }),
+    );
   });
 
   it('returns SUBMITTED credit note when authorization is still pending', async () => {
@@ -251,6 +264,12 @@ describe('DirectSriInvoiceProvider', () => {
     const result = await provider.issueCreditNote(creditNoteInput);
 
     expect(result.status).toBe(InvoiceStatus.SUBMITTED);
-    expect(prismaService.creditNote.create).toHaveBeenCalled();
+    expect(prismaService.creditNote.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          parentInvoiceAccessKey: '1'.repeat(49),
+        }),
+      }),
+    );
   });
 });

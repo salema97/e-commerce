@@ -164,9 +164,7 @@ describe('Refunds (e2e)', () => {
     expect(res.body.type).toBe('full');
     expect(res.body.status).toBe(RefundStatus.COMPLETED);
     expect(stripeRefundMock).toHaveBeenCalledWith('pi_e2e', 100);
-    expect(creditNoteMock).toHaveBeenCalledWith(
-      expect.objectContaining({ invoiceAccessKey: '1'.repeat(49), total: 100 }),
-    );
+    expect(creditNoteMock).not.toHaveBeenCalled();
     expect(prismaMock.auditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({

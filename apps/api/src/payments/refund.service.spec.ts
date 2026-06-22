@@ -86,7 +86,7 @@ describe('RefundService', () => {
         data: expect.objectContaining({ status: OrderStatus.REFUNDED }),
       }));
       expect(prisma.payment.update).toHaveBeenCalled();
-      expect(invoiceProvider.issueCreditNote).toHaveBeenCalled();
+      expect(invoiceProvider.issueCreditNote).not.toHaveBeenCalled();
       expect(auditLog.log).toHaveBeenCalled();
       expect(result.type).toBe('full');
       expect(result.status).toBe(RefundStatus.COMPLETED);
@@ -123,6 +123,34 @@ describe('RefundService', () => {
 
       await service.createRefund({ orderId: 'o1', amount: 100, type: 'full' });
       expect(invoiceProvider.issueCreditNote).not.toHaveBeenCalled();
+    });
+
+    it('issues credit note when parentInvoiceAccessKey is provided', async () => {
+      prisma.order.findUnique.mockResolvedValue(buildOrder());
+      provider.refund.mockResolvedValue({ providerRefundId: 're_4', status: RefundStatus.COMPLETED });
+      prisma.refund.create.mockResolvedValue({
+        id: 'r4', orderId: 'o1', paymentId: 'pay1', providerRefundId: 're_4',
+        amount: new Prisma.Decimal(100), reason: 'full refund', status: RefundStatus.COMPLETED,
+        requestedById: 'admin1', approvedById: null,
+        providerMetadata: { type: 'full' }, createdAt: new Date(), updatedAt: new Date(),
+      });
+
+      await service.createRefund({
+        orderId: 'o1',
+        amount: 100,
+        type: 'full',
+        requestedById: 'admin1',
+        returnRequestId: 'rr1',
+        parentInvoiceAccessKey: 'accesskey'.padEnd(49, '0'),
+      });
+
+      expect(invoiceProvider.issueCreditNote).toHaveBeenCalledWith(
+        expect.objectContaining({
+          returnRequestId: 'rr1',
+          invoiceAccessKey: 'accesskey'.padEnd(49, '0'),
+          parentInvoiceAccessKey: 'accesskey'.padEnd(49, '0'),
+        }),
+      );
     });
 
     it('throws NotFound for unknown order', async () => {

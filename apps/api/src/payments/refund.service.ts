@@ -20,6 +20,7 @@ export interface CreateRefundInput {
   requestedById?: string;
   reason?: string;
   returnRequestId?: string;
+  parentInvoiceAccessKey?: string;
 }
 
 export interface RefundRecord {
@@ -131,14 +132,18 @@ export class RefundService {
       });
     }
 
-    if (order.invoice && !input.returnRequestId) {
-      await this.issueCreditNoteForRefund(order.invoice.accessKey, refund.id, input);
+    if (input.parentInvoiceAccessKey) {
+      await this.issueCreditNoteForRefund(
+        input.parentInvoiceAccessKey,
+        refund.id,
+        input,
+      );
     } else {
       this.logger.log(
         { orderId: order.id, returnRequestId: input.returnRequestId ?? null },
         input.returnRequestId
-          ? 'Return-request refund: skipping standalone credit note; ReturnsService will issue it'
-          : 'No invoice on file; skipping SRI credit note',
+          ? 'Return-request refund without invoice access key: skipping SRI credit note'
+          : 'Standalone refund: skipping SRI credit note',
       );
     }
 
@@ -228,6 +233,7 @@ export class RefundService {
     await provider.issueCreditNote({
       returnRequestId: input.returnRequestId ?? '',
       invoiceAccessKey,
+      parentInvoiceAccessKey: invoiceAccessKey,
       authorizationNumber: undefined,
       codDocModificado: '01',
       numDocModificado: invoiceAccessKey,

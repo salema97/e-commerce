@@ -14,6 +14,10 @@ export default function ReturnRequestForm({ order }: { order: Order }) {
   const [selected, setSelected] = React.useState<Record<string, { qty: number; reason: string }>>({});
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
+  const windowDays = 30;
+  const isWithinWindow =
+    new Date(order.createdAt).getTime() + windowDays * 24 * 60 * 60 * 1000 >= Date.now();
+
   function toggleItem(itemId: string, maxQty: number) {
     setSelected((prev) => {
       if (prev[itemId]) {
@@ -123,10 +127,16 @@ export default function ReturnRequestForm({ order }: { order: Order }) {
 
         <Button
           type="submit"
-          disabled={isSubmitting || Object.keys(selected).length === 0}
+          disabled={isSubmitting || Object.keys(selected).length === 0 || !isWithinWindow}
         >
           {isSubmitting ? 'Submitting...' : 'Submit return request'}
         </Button>
+
+        {!isWithinWindow ? (
+          <p className="text-sm text-destructive">
+            The return window for this order has closed.
+          </p>
+        ) : null}
       </form>
     </div>
   );

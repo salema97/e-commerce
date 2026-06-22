@@ -49,6 +49,14 @@ export interface CreateReturnRequestDto {
   refundMethod?: RefundMethod;
 }
 
+export interface CreateGuestReturnRequestDto {
+  orderId: string;
+  email: string;
+  items: CreateReturnRequestItemDto[];
+  reason: string;
+  refundMethod?: RefundMethod;
+}
+
 export interface UpdateReturnStatusDto {
   status: ReturnStatus;
   refundMethod?: RefundMethod;
@@ -65,6 +73,7 @@ export interface ResolveReturnDto {
 export interface CreditNoteResponse {
   id: string;
   accessKey: string;
+  parentInvoiceAccessKey?: string | null;
   authorizationNumber?: string | null;
   status: CreditNoteStatus;
   xmlContent?: string | null;

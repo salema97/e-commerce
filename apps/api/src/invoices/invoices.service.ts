@@ -243,6 +243,7 @@ export class InvoicesService {
     return {
       returnRequestId: returnRequest.id,
       invoiceAccessKey: originalInvoice.accessKey,
+      parentInvoiceAccessKey: originalInvoice.accessKey,
       authorizationNumber: originalInvoice.authorizationNumber ?? undefined,
       codDocModificado: '01',
       numDocModificado: originalInvoice.accessKey,
@@ -263,6 +264,7 @@ export class InvoicesService {
   private mapCreditNoteToResponse(creditNote: {
     id: string;
     accessKey: string;
+    parentInvoiceAccessKey: string | null;
     authorizationNumber: string | null;
     status: CreditNoteStatus;
     xmlContent: string | null;
@@ -273,6 +275,7 @@ export class InvoicesService {
     return {
       id: creditNote.id,
       accessKey: creditNote.accessKey,
+      parentInvoiceAccessKey: creditNote.parentInvoiceAccessKey,
       authorizationNumber: creditNote.authorizationNumber,
       status: creditNote.status,
       xmlContent: creditNote.xmlContent,

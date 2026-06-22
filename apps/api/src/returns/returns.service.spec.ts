@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma, OrderStatus, ReturnStatus, RefundMethod } from '@prisma/client';
+import { Prisma, OrderStatus, ReturnStatus, RefundMethod, PaymentStatus } from '@prisma/client';
 import { ReturnsService } from './returns.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditLogService } from '../audit/audit-log.service.js';
@@ -76,14 +76,22 @@ describe('ReturnsService', () => {
     id: string;
     userId: string | null;
     status: OrderStatus;
+    createdAt: Date;
     updatedAt: Date;
+    customerEmail: string;
+    user: { email: string } | null;
+    payments: Array<{ status: PaymentStatus; amount: Prisma.Decimal }>;
     items: Array<{ id: string; productId: string; variantId: string | null; quantity: number; price?: Prisma.Decimal }>;
   }> = {}) {
     return {
       id: 'o1',
       userId: 'u1',
       status: OrderStatus.DELIVERED,
+      createdAt: new Date(),
       updatedAt: new Date(),
+      customerEmail: 'customer@example.com',
+      user: { email: 'customer@example.com' },
+      payments: [{ status: PaymentStatus.COMPLETED, amount: new Prisma.Decimal(100) }],
       items: [{ id: 'oi1', productId: 'p1', variantId: null, quantity: 2, price: new Prisma.Decimal(50) }],
       ...overrides,
     };
@@ -130,9 +138,73 @@ describe('ReturnsService', () => {
     it('throws BadRequest when return window has elapsed', async () => {
       const oldDate = new Date();
       oldDate.setDate(oldDate.getDate() - 60);
-      prisma.order.findUnique.mockResolvedValue(buildDeliveredOrder({ updatedAt: oldDate }));
+      prisma.order.findUnique.mockResolvedValue(buildDeliveredOrder({ createdAt: oldDate }));
       await expect(service.createReturnRequest({
         orderId: 'o1', userId: 'u1', reason: 'x', items: [{ productId: 'p1', quantity: 1 }],
+      })).rejects.toBeInstanceOf(BadRequestException);
+    });
+  });
+
+  describe('createGuestReturn', () => {
+    it('creates a return request when email matches order.customerEmail', async () => {
+      prisma.order.findUnique.mockResolvedValue(buildDeliveredOrder({ userId: null }));
+      prisma.returnRequest.create.mockResolvedValue({
+        id: 'rr_guest', orderId: 'o1', userId: null, status: ReturnStatus.REQUESTED,
+        items: [{ id: 'ri1', productId: 'p1', quantity: 1 }],
+      });
+
+      const result = await service.createGuestReturn({
+        orderId: 'o1',
+        email: 'customer@example.com',
+        reason: 'damaged on arrival',
+        items: [{ productId: 'p1', quantity: 1 }],
+      });
+
+      expect(result.id).toBe('rr_guest');
+      expect(auditLog.log).toHaveBeenCalled();
+      expect(notificationService.onReturnRequested).toHaveBeenCalled();
+    });
+
+    it('falls back to user email when order.customerEmail is missing', async () => {
+      prisma.order.findUnique.mockResolvedValue(buildDeliveredOrder({
+        userId: 'u1',
+        customerEmail: '',
+      }));
+      prisma.returnRequest.create.mockResolvedValue({
+        id: 'rr_guest', orderId: 'o1', userId: 'u1', status: ReturnStatus.REQUESTED,
+        items: [{ id: 'ri1', productId: 'p1', quantity: 1 }],
+      });
+
+      const result = await service.createGuestReturn({
+        orderId: 'o1',
+        email: 'customer@example.com',
+        reason: 'damaged on arrival',
+        items: [{ productId: 'p1', quantity: 1 }],
+      });
+
+      expect(result.id).toBe('rr_guest');
+    });
+
+    it('throws Forbidden when email does not match', async () => {
+      prisma.order.findUnique.mockResolvedValue(buildDeliveredOrder({ userId: null }));
+      await expect(service.createGuestReturn({
+        orderId: 'o1',
+        email: 'wrong@example.com',
+        reason: 'x',
+        items: [{ productId: 'p1', quantity: 1 }],
+      })).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('throws BadRequest when order has no completed payment', async () => {
+      prisma.order.findUnique.mockResolvedValue(buildDeliveredOrder({
+        userId: null,
+        payments: [{ status: PaymentStatus.PENDING, amount: new Prisma.Decimal(100) }],
+      }));
+      await expect(service.createGuestReturn({
+        orderId: 'o1',
+        email: 'customer@example.com',
+        reason: 'x',
+        items: [{ productId: 'p1', quantity: 1 }],
       })).rejects.toBeInstanceOf(BadRequestException);
     });
   });
@@ -181,22 +253,21 @@ describe('ReturnsService', () => {
       };
     }
 
-    it('refunds original payment, restocks, and issues credit note', async () => {
+    it('refunds original payment, restocks, and issues credit note via RefundService', async () => {
       prisma.returnRequest.findUnique.mockResolvedValue(buildReturnForResolve());
       prisma.returnRequest.update.mockResolvedValue({ id: 'rr1', status: ReturnStatus.RESOLVED, refundMethod: RefundMethod.ORIGINAL_PAYMENT, items: [] });
       prisma.__txClient.inventory.findFirst.mockResolvedValue({ id: 'inv1', productId: 'p1', variantId: null, quantity: 10, reservedQuantity: 0 });
-      prisma.creditNote.findFirst.mockResolvedValue(null);
 
       const result = await service.resolveReturn('rr1', { refundMethod: RefundMethod.ORIGINAL_PAYMENT }, 'admin1');
 
       expect(result.status).toBe(ReturnStatus.RESOLVED);
-      expect(refundService.createRefund).toHaveBeenCalledWith(expect.objectContaining({ returnRequestId: 'rr1', amount: 50 }));
+      expect(refundService.createRefund).toHaveBeenCalledWith(expect.objectContaining({
+        returnRequestId: 'rr1',
+        amount: 50,
+        parentInvoiceAccessKey: '1'.repeat(49),
+      }));
       expect(prisma.__txClient.inventory.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ quantity: { increment: 1 } }) }));
-      expect(invoicesService.issueCreditNote).toHaveBeenCalledWith(
-        expect.objectContaining({ returnRequestId: 'rr1', total: expect.any(String) }),
-        'admin1',
-        true,
-      );
+      expect(invoicesService.issueCreditNote).not.toHaveBeenCalled();
     });
 
     it('issues store credit when method is STORE_CREDIT', async () => {
@@ -211,17 +282,18 @@ describe('ReturnsService', () => {
       expect(refundService.createRefund).not.toHaveBeenCalled();
     });
 
-    it('enters compensating state when credit note fails', async () => {
+    it('enters compensating state when credit note fails for store credit', async () => {
       prisma.returnRequest.findUnique.mockResolvedValue(buildReturnForResolve());
       prisma.returnRequest.update
-        .mockResolvedValueOnce({ id: 'rr1', status: ReturnStatus.RESOLVED, refundMethod: RefundMethod.ORIGINAL_PAYMENT, items: [] })
+        .mockResolvedValueOnce({ id: 'rr1', status: ReturnStatus.RESOLVED, refundMethod: RefundMethod.STORE_CREDIT, items: [] })
         .mockResolvedValueOnce({ id: 'rr1', status: ReturnStatus.RESOLUTION_PENDING_CREDIT_NOTE, items: [] });
       prisma.__txClient.inventory.findFirst.mockResolvedValue({ id: 'inv1', productId: 'p1', variantId: null, quantity: 10, reservedQuantity: 0 });
       invoicesService.issueCreditNote.mockRejectedValue(new Error('SRI down'));
 
-      const result = await service.resolveReturn('rr1', { refundMethod: RefundMethod.ORIGINAL_PAYMENT }, 'admin1');
+      const result = await service.resolveReturn('rr1', { refundMethod: RefundMethod.STORE_CREDIT }, 'admin1');
 
       expect(result.status).toBe(ReturnStatus.RESOLUTION_PENDING_CREDIT_NOTE);
+      expect(invoicesService.issueCreditNote).toHaveBeenCalled();
     });
 
     it('throws when resolving from a non-inspecting status', async () => {

@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma, ReturnStatus, RefundMethod, OrderStatus, OrderChannel } from '@prisma/client';
+import { Prisma, ReturnStatus, RefundMethod, OrderStatus, OrderChannel, PaymentStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditLogService } from '../audit/audit-log.service.js';
 import { RefundService } from '../payments/refund.service.js';
@@ -14,6 +14,7 @@ import { StoreCreditService } from './store-credit.service.js';
 import { InvoicesService } from '../invoices/invoices.service.js';
 import { ReturnNotificationService } from './notifications/return-notification.service.js';
 import { CreateReturnDto } from './dto/create-return.dto.js';
+import { CreateGuestReturnRequestDto } from './dto/create-guest-return-request.dto.js';
 import { UpdateReturnStatusDto } from './dto/update-return-status.dto.js';
 import { ResolveReturnDto } from './dto/resolve-return.dto.js';
 
@@ -35,6 +36,8 @@ export interface CreateReturnInput extends CreateReturnDto {
   orderId: string;
   userId?: string;
 }
+
+export interface CreateGuestReturnInput extends CreateGuestReturnRequestDto {}
 
 export interface ListReturnsFilter {
   status?: ReturnStatus;
@@ -88,7 +91,7 @@ export class ReturnsService {
       );
     }
 
-    this.assertWithinReturnWindow(order.updatedAt);
+    this.assertWithinReturnWindow(order.createdAt);
 
     if (!input.items?.length) {
       throw new BadRequestException('Return request must include at least one item');
@@ -123,6 +126,85 @@ export class ReturnsService {
       actorClerkUserId: input.userId ?? 'guest',
       resource: 'ReturnRequest',
       action: 'CREATE',
+      resourceId: created.id,
+      after: { orderId: order.id, status: created.status, itemCount: created.items.length },
+    });
+
+    await this.notificationService.onReturnRequested(created as never);
+
+    return created;
+  }
+
+  /**
+   * Create a return request for a guest using order id + email verification.
+   * Validates that the supplied email matches the order, that the order was
+   * paid and delivered, and that the return window has not elapsed.
+   */
+  async createGuestReturn(input: CreateGuestReturnInput) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: input.orderId },
+      include: { items: true, payments: true, user: { select: { email: true } } },
+    });
+
+    if (!order) {
+      throw new NotFoundException(`Order ${input.orderId} not found`);
+    }
+
+    const expectedEmail = order.customerEmail || order.user?.email;
+    if (!expectedEmail || expectedEmail.toLowerCase() !== input.email.toLowerCase()) {
+      throw new ForbiddenException('Email does not match order records');
+    }
+
+    if (order.status !== OrderStatus.DELIVERED) {
+      throw new BadRequestException(
+        `Order ${input.orderId} cannot be returned from status ${order.status}`,
+      );
+    }
+
+    const hasCompletedPayment = order.payments.some(
+      (payment) => payment.status === PaymentStatus.COMPLETED,
+    );
+    if (!hasCompletedPayment) {
+      throw new BadRequestException(
+        `Order ${input.orderId} has no completed payment and cannot be returned`,
+      );
+    }
+
+    this.assertWithinReturnWindow(order.createdAt);
+
+    if (!input.items?.length) {
+      throw new BadRequestException('Return request must include at least one item');
+    }
+
+    this.validateReturnItemsAgainstOrder(input.items, order.items);
+
+    const created = await this.prisma.returnRequest.create({
+      data: {
+        orderId: order.id,
+        userId: order.userId ?? null,
+        reason: input.reason,
+        refundMethod: input.refundMethod ?? null,
+        returnWindowDays: this.defaultReturnWindowDays,
+        status: ReturnStatus.REQUESTED,
+        items: {
+          create: input.items.map((item) => ({
+            productId: item.productId,
+            productVariantId: item.productVariantId ?? null,
+            quantity: item.quantity,
+            condition: item.condition ?? null,
+            refundValue: item.refundValue !== undefined
+              ? new Prisma.Decimal(item.refundValue)
+              : null,
+          })),
+        },
+      },
+      include: { items: true },
+    });
+
+    await this.auditLog.log({
+      actorClerkUserId: 'guest',
+      resource: 'ReturnRequest',
+      action: 'CREATE_GUEST',
       resourceId: created.id,
       after: { orderId: order.id, status: created.status, itemCount: created.items.length },
     });
@@ -274,6 +356,7 @@ export class ReturnsService {
         reason: current.reason,
         returnRequestId: current.id,
         requestedById: actorClerkUserId,
+        parentInvoiceAccessKey: current.order.invoice?.accessKey,
       });
     } else if (dto.refundMethod === RefundMethod.STORE_CREDIT) {
       if (!current.userId) {
@@ -285,7 +368,7 @@ export class ReturnsService {
       });
     } else if (dto.refundMethod === RefundMethod.EXCHANGE) {
       const exchangeOrder = await this.createExchangeOrder(current, dto.exchangeProductIds);
-      basePatch.exchangeOrderId = exchangeOrder.id;
+      basePatch.exchangeOrder = { connect: { id: exchangeOrder.id } };
     }
 
     await this.restockItems(current.items);
@@ -296,7 +379,13 @@ export class ReturnsService {
       include: { items: true },
     });
 
-    if (current.order.invoice) {
+    // Credit notes for original-payment refunds are issued by RefundService.
+    // Store-credit and exchange resolutions still need a credit note when the
+    // original order was invoiced.
+    if (
+      dto.refundMethod !== RefundMethod.ORIGINAL_PAYMENT &&
+      current.order.invoice
+    ) {
       try {
         await this.invoicesService.issueCreditNote(
           { returnRequestId: current.id, total: String(totalAmount) },

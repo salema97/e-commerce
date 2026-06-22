@@ -32,6 +32,7 @@ import type {
   PaginatedResponse,
   ReturnRequest,
   CreateReturnRequestDto,
+  CreateGuestReturnRequestDto,
   UpdateReturnStatusDto,
   ResolveReturnDto,
   StoreCreditBalance,
@@ -193,6 +194,8 @@ export function createApiClient(options: ApiClientOptions) {
       findOne: (id: string) => request<ReturnRequest>('GET', `/returns/${id}`),
       createForOrder: (orderId: string, data: CreateReturnRequestDto) =>
         request<ReturnRequest>('POST', `/orders/${orderId}/returns`, data),
+      createGuest: (data: CreateGuestReturnRequestDto) =>
+        request<ReturnRequest>('POST', '/returns/guest/request', data),
       updateStatus: (id: string, data: UpdateReturnStatusDto) =>
         request<ReturnRequest>('PATCH', `/returns/${id}/status`, data),
       resolve: (id: string, data: ResolveReturnDto) =>

@@ -201,6 +201,7 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
       const creditNote = await this.persistCreditNote({
         accessKey,
         returnRequestId: returnRequest.returnRequestId,
+        parentInvoiceAccessKey: returnRequest.parentInvoiceAccessKey,
         total: returnRequest.total,
         signedXml,
         status: InvoiceStatus.REJECTED,
@@ -222,6 +223,7 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
       await this.persistCreditNote({
         accessKey,
         returnRequestId: returnRequest.returnRequestId,
+        parentInvoiceAccessKey: returnRequest.parentInvoiceAccessKey,
         total: returnRequest.total,
         signedXml,
         status: InvoiceStatus.AUTHORIZED,
@@ -242,6 +244,7 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
       await this.persistCreditNote({
         accessKey,
         returnRequestId: returnRequest.returnRequestId,
+        parentInvoiceAccessKey: returnRequest.parentInvoiceAccessKey,
         total: returnRequest.total,
         signedXml,
         status: InvoiceStatus.REJECTED,
@@ -259,6 +262,7 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
     await this.persistCreditNote({
       accessKey,
       returnRequestId: returnRequest.returnRequestId,
+      parentInvoiceAccessKey: returnRequest.parentInvoiceAccessKey,
       total: returnRequest.total,
       signedXml,
       status: InvoiceStatus.SUBMITTED,
@@ -276,6 +280,7 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
   private async persistCreditNote(input: {
     accessKey: string;
     returnRequestId: string;
+    parentInvoiceAccessKey?: string;
     total: number;
     signedXml: string;
     status: InvoiceStatus;
@@ -287,6 +292,7 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
     const creditNote = await this.prisma.creditNote.create({
       data: {
         accessKey: input.accessKey,
+        parentInvoiceAccessKey: input.parentInvoiceAccessKey ?? null,
         status: creditNoteStatus,
         xmlContent: input.signedXml,
         signedXml: input.signedXml,

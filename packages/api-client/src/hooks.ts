@@ -36,6 +36,7 @@ import type {
   PaginatedResponse,
   ReturnRequest,
   CreateReturnRequestDto,
+  CreateGuestReturnRequestDto,
   UpdateReturnStatusDto,
   ResolveReturnDto,
   StoreCreditBalance,
@@ -429,6 +430,19 @@ export function createQueryHooks(client: ApiClient) {
       const queryClient = useQueryClient();
       return useMutation({
         mutationFn: ({ orderId, data }) => client.returns.createForOrder(orderId, data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.orders() });
+        },
+        ...options,
+      });
+    },
+
+    useCreateGuestReturnRequest: (
+      options?: UseMutationOptions<ReturnRequest, Error, CreateGuestReturnRequestDto>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.returns.createGuest(data),
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: queryKeys.orders() });
         },
