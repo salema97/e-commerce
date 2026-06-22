@@ -15,12 +15,19 @@ import { Roles } from '../auth/roles.decorator.js';
 import { Role } from '../auth/role.enum.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { OrdersService } from './orders.service.js';
+import { RefundService } from '../payments/refund.service.js';
+import { ReceiptService } from '../receipts/receipt.service.js';
 import { CreateOrderDto, UpdateOrderStatusDto } from './dto/create-order.dto.js';
+import { CreateRefundDto } from '../payments/dto/create-refund.dto.js';
 
 @ApiTags('Orders')
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(
+    private readonly ordersService: OrdersService,
+    private readonly refundService: RefundService,
+    private readonly receiptService: ReceiptService,
+  ) {}
 
   @Post()
   @Public()
@@ -68,5 +75,57 @@ export class OrdersController {
     @CurrentUser('userId') userId?: string,
   ) {
     return this.ordersService.cancelOrder(id, userId);
+  }
+
+  @Post(':id/refunds')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a refund for an order (admin/finance)' })
+  @ApiResponse({ status: 201, description: 'Refund created' })
+  @ApiResponse({ status: 400, description: 'Refund cannot be processed' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @HttpCode(HttpStatus.CREATED)
+  createRefund(
+    @Param('id') id: string,
+    @Body() dto: CreateRefundDto,
+    @CurrentUser('userId') userId?: string,
+  ) {
+    return this.refundService.createRefund({
+      orderId: id,
+      amount: dto.amount,
+      type: dto.type,
+      reason: dto.reason,
+      requestedById: userId,
+    });
+  }
+
+  @Get(':id/refunds')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE, Role.SUPPORT)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List refunds for an order' })
+  @ApiResponse({ status: 200, description: 'Refunds list' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  listRefunds(@Param('id') id: string) {
+    return this.refundService.listRefunds(id);
+  }
+
+  @Post(':id/receipt')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Generate a receipt for an order (admin)' })
+  @ApiResponse({ status: 201, description: 'Receipt generated' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @HttpCode(HttpStatus.CREATED)
+  generateReceipt(@Param('id') id: string) {
+    return this.receiptService.generateReceipt(id);
+  }
+
+  @Get(':id/receipt')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE, Role.SUPPORT)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get a receipt for an order' })
+  @ApiResponse({ status: 200, description: 'Receipt found' })
+  getReceipt(@Param('id') id: string) {
+    return this.receiptService.getReceipt(id);
   }
 }

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PaymentsService } from './payments.service.js';
+import { RefundService } from './refund.service.js';
 import { PaymentProviderFactory } from './payment-provider.factory.js';
 import { PaymentWebhookService } from './payment-webhook.service.js';
 import { PaymentWebhookController } from './webhook.controller.js';
@@ -20,6 +21,7 @@ import { AuditModule } from '../audit/audit.module.js';
   controllers: [StripeWebhookController, PaymentWebhookController],
   providers: [
     PaymentsService,
+    RefundService,
     PaymentProviderFactory,
     PaymentWebhookService,
     StripeProvider,
@@ -30,6 +32,12 @@ import { AuditModule } from '../audit/audit.module.js';
     MercadoPagoProvider,
     PlaceToPayProvider,
   ],
-  exports: [PaymentsService, PaymentProviderFactory, StripeCustomerService, PaymentWebhookService],
+  exports: [
+    PaymentsService,
+    RefundService,
+    PaymentProviderFactory,
+    StripeCustomerService,
+    PaymentWebhookService,
+  ],
 })
 export class PaymentsModule {}

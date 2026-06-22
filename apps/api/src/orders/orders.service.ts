@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException 
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { InventoryReservationService } from '../inventory/inventory-reservation.service.js';
+import { PromotionService } from '../promotions/promotion.service.js';
 import { CreateOrderDto, CreateOrderItemDto } from './dto/create-order.dto.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
 
@@ -25,6 +26,7 @@ export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly reservationService: InventoryReservationService,
+    private readonly promotionService: PromotionService,
   ) {}
 
   async createOrder(userId: string | undefined, dto: CreateOrderDto): Promise<CreatedOrderResult> {
@@ -33,15 +35,26 @@ export class OrdersService {
     if (!customerEmail) throw new BadRequestException('customerEmail required for guest orders');
     if (!dto.items?.length) throw new BadRequestException('Order must contain at least one item');
 
+    // Validate coupon BEFORE reserving inventory so an invalid code fails fast without
+    // holding stock. Final totals are computed via PromotionService (tax + discount).
+    if (dto.couponCode) {
+      await this.promotionService.validateCoupon(dto.couponCode, dto.items);
+    }
+
     const reservationItems = await this.validateItems(dto.items);
     await this.reservationService.reserveItems(reservationItems);
 
     const orderItems = await this.buildOrderItems(dto.items);
-    const subtotal = orderItems.reduce((sum, i) => sum.plus(i.price.times(i.quantity)), new Prisma.Decimal(0));
-    const taxAmount = new Prisma.Decimal(0);
-    const shippingAmount = new Prisma.Decimal(0);
-    const discountAmount = new Prisma.Decimal(0);
-    const total = subtotal;
+    const totals = await this.promotionService.calculateOrderTotals(
+      orderItems.map((i) => ({ productId: i.productId, variantId: i.variantId ?? undefined, price: Number(i.price), quantity: i.quantity })),
+      dto.couponCode,
+    );
+
+    const subtotal = new Prisma.Decimal(totals.subtotal);
+    const taxAmount = new Prisma.Decimal(totals.taxAmount);
+    const shippingAmount = new Prisma.Decimal(totals.shipping);
+    const discountAmount = new Prisma.Decimal(totals.discount);
+    const total = new Prisma.Decimal(totals.total);
     const orderNumber = this.generateOrderNumber();
     const reservationExpiresAt = this.reservationService.reservationExpiry();
 
@@ -58,6 +71,10 @@ export class OrdersService {
       },
       include: { items: true },
     });
+
+    if (dto.couponCode) {
+      await this.promotionService.incrementCouponUsage(dto.couponCode);
+    }
 
     return {
       id: order.id, orderNumber: order.orderNumber, status: order.status, channel: order.channel,

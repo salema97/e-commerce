@@ -5,12 +5,18 @@ import { Prisma } from '@prisma/client';
 import { OrdersService } from './orders.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { InventoryReservationService } from '../inventory/inventory-reservation.service.js';
+import { PromotionService } from '../promotions/promotion.service.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
 
 describe('OrdersService', () => {
   let service: OrdersService;
   let prisma: ReturnType<typeof mockPrisma>;
   let reservation: { reserveItems: ReturnType<typeof vi.fn>; release: ReturnType<typeof vi.fn>; reservationExpiry: ReturnType<typeof vi.fn> };
+  let promotion: {
+    validateCoupon: ReturnType<typeof vi.fn>;
+    calculateOrderTotals: ReturnType<typeof vi.fn>;
+    incrementCouponUsage: ReturnType<typeof vi.fn>;
+  };
 
   function mockPrisma() {
     return {
@@ -23,25 +29,56 @@ describe('OrdersService', () => {
   beforeEach(async () => {
     prisma = mockPrisma();
     reservation = { reserveItems: vi.fn(), release: vi.fn(), reservationExpiry: vi.fn(() => new Date('2026-06-22T01:00:00Z')) };
+    promotion = {
+      validateCoupon: vi.fn(),
+      calculateOrderTotals: vi.fn(),
+      incrementCouponUsage: vi.fn(),
+    };
     const module = await Test.createTestingModule({
-      providers: [OrdersService, { provide: PrismaService, useValue: prisma }, { provide: InventoryReservationService, useValue: reservation }],
+      providers: [
+        OrdersService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: InventoryReservationService, useValue: reservation },
+        { provide: PromotionService, useValue: promotion },
+      ],
     }).compile();
     service = module.get(OrdersService);
   });
 
   const mockCreatedOrder = (items = [{ productId: 'p1', variantId: null, name: 'Product', sku: 'SKU', price: new Prisma.Decimal(19.99), quantity: 2 }]) => ({
     id: 'o1', orderNumber: 'ORD-1', status: OrderStatus.PAYMENT_PENDING, channel: OrderChannel.WEB,
-    subtotal: new Prisma.Decimal(39.98), taxAmount: new Prisma.Decimal(0), shippingAmount: new Prisma.Decimal(0),
-    discountAmount: new Prisma.Decimal(0), total: new Prisma.Decimal(39.98), couponCode: null,
+    subtotal: new Prisma.Decimal(39.98), taxAmount: new Prisma.Decimal(6), shippingAmount: new Prisma.Decimal(0),
+    discountAmount: new Prisma.Decimal(0), total: new Prisma.Decimal(45.98), couponCode: null,
     reservationExpiresAt: new Date('2026-06-22T01:00:00Z'), items,
   });
 
   it('creates an order and reserves inventory', async () => {
+    promotion.calculateOrderTotals.mockResolvedValue({ subtotal: 39.98, discount: 0, taxAmount: 6, shipping: 0, total: 45.98 });
     prisma.order.create.mockResolvedValue(mockCreatedOrder());
     const result = await service.createOrder('u1', { items: [{ productId: 'p1', quantity: 2, price: 19.99 }] });
     expect(reservation.reserveItems).toHaveBeenCalledWith([{ productId: 'p1', variantId: undefined, quantity: 2 }]);
+    expect(promotion.calculateOrderTotals).toHaveBeenCalled();
     expect(result.status).toBe(OrderStatus.PAYMENT_PENDING);
-    expect(result.total).toBe(39.98);
+    expect(result.total).toBe(45.98);
+  });
+
+  it('validates coupon before reserving inventory', async () => {
+    promotion.validateCoupon.mockResolvedValue({ coupon: { code: 'SAVE10' }, subtotal: 100 });
+    promotion.calculateOrderTotals.mockResolvedValue({ subtotal: 100, discount: 10, taxAmount: 13.5, shipping: 0, total: 103.5 });
+    prisma.order.create.mockResolvedValue(mockCreatedOrder());
+
+    await service.createOrder('u1', { items: [{ productId: 'p1', quantity: 2, price: 50 }], couponCode: 'SAVE10' });
+
+    expect(promotion.validateCoupon).toHaveBeenCalledBefore(reservation.reserveItems);
+    expect(promotion.incrementCouponUsage).toHaveBeenCalledWith('SAVE10');
+  });
+
+  it('does not validate coupon when none provided', async () => {
+    promotion.calculateOrderTotals.mockResolvedValue({ subtotal: 39.98, discount: 0, taxAmount: 6, shipping: 0, total: 45.98 });
+    prisma.order.create.mockResolvedValue(mockCreatedOrder());
+    await service.createOrder('u1', { items: [{ productId: 'p1', quantity: 2, price: 19.99 }] });
+    expect(promotion.validateCoupon).not.toHaveBeenCalled();
+    expect(promotion.incrementCouponUsage).not.toHaveBeenCalled();
   });
 
   it('requires email for guest orders', async () => {
