@@ -14,6 +14,7 @@ import type {
   UpdateProductDto,
   Order,
   CreateOrderDto,
+  CreatedOrderResult,
   UpdateOrderStatusDto,
   CreatePaymentIntentDto,
   PaymentIntentResult,
@@ -31,6 +32,7 @@ import type {
   InvoiceResponseDto,
   CreateRefundDto,
   Refund,
+  ReceiptResponse,
   PaginatedResponse,
 } from '@repo/shared-types';
 import type { ApiClient } from './client.js';
@@ -184,7 +186,7 @@ export function createQueryHooks(client: ApiClient) {
       }),
 
     useCreateOrder: (
-      options?: UseMutationOptions<Order, Error, CreateOrderDto>,
+      options?: UseMutationOptions<CreatedOrderResult, Error, CreateOrderDto>,
     ) => {
       const queryClient = useQueryClient();
       return useMutation({
@@ -343,20 +345,54 @@ export function createQueryHooks(client: ApiClient) {
     },
 
     useCreateRefund: (
-      options?: UseMutationOptions<Refund, Error, CreateRefundDto>,
+      options?: UseMutationOptions<Refund, Error, { orderId: string; data: CreateRefundDto }>,
     ) => {
       const queryClient = useQueryClient();
       return useMutation({
-        mutationFn: (data) => client.refunds.create(data),
-        onSuccess: (_, data) => {
+        mutationFn: ({ orderId, data }) => client.orders.createRefund(orderId, data),
+        onSuccess: (_, { orderId }) => {
           queryClient.invalidateQueries({ queryKey: queryKeys.orders() });
-          if (data.orderId) {
-            queryClient.invalidateQueries({ queryKey: queryKeys.order(data.orderId) });
-          }
+          queryClient.invalidateQueries({ queryKey: queryKeys.order(orderId) });
+          queryClient.invalidateQueries({ queryKey: ['orders', orderId, 'refunds'] });
         },
         ...options,
       });
     },
+
+    useListRefunds: (
+      orderId: string,
+      options?: Omit<UseQueryOptions<Refund[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: ['orders', orderId, 'refunds'],
+        queryFn: () => client.orders.listRefunds(orderId),
+        enabled: Boolean(orderId),
+        ...options,
+      }),
+
+    useGenerateReceipt: (
+      options?: UseMutationOptions<ReceiptResponse, Error, string>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (orderId) => client.orders.generateReceipt(orderId),
+        onSuccess: (_, orderId) => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.order(orderId) });
+        },
+        ...options,
+      });
+    },
+
+    useGetReceipt: (
+      orderId: string,
+      options?: Omit<UseQueryOptions<ReceiptResponse, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: ['orders', orderId, 'receipt'],
+        queryFn: () => client.orders.getReceipt(orderId),
+        enabled: Boolean(orderId),
+        ...options,
+      }),
   };
 }
 

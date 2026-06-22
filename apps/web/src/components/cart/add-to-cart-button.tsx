@@ -19,6 +19,9 @@ export function AddToCartButton({ product }: { product: Product }) {
     addItem({
       productId: product.id,
       variantId: variantId || undefined,
+      name: product.name,
+      price: Number(product.price),
+      imageUrl: product.images?.[0]?.url,
       quantity,
     });
     router.push('/cart');

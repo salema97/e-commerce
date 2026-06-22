@@ -4,6 +4,7 @@ import { RefundService } from './refund.service.js';
 import { PaymentProviderFactory } from './payment-provider.factory.js';
 import { PaymentWebhookService } from './payment-webhook.service.js';
 import { PaymentWebhookController } from './webhook.controller.js';
+import { PaymentsController } from './payments.controller.js';
 import { StripeProvider } from './stripe/stripe.provider.js';
 import { StripeWebhookController } from './stripe/stripe-webhook.controller.js';
 import { StripeWebhookService } from './stripe/stripe-webhook.service.js';
@@ -18,7 +19,7 @@ import { AuditModule } from '../audit/audit.module.js';
 
 @Module({
   imports: [InvoicesModule, InventoryModule, AuditModule],
-  controllers: [StripeWebhookController, PaymentWebhookController],
+  controllers: [StripeWebhookController, PaymentWebhookController, PaymentsController],
   providers: [
     PaymentsService,
     RefundService,

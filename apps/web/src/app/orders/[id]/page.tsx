@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { formatPrice, orderStatusLabel } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
+import { PaymentStatus } from './payment-status';
 
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;
@@ -89,6 +90,12 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
                 <span>Subtotal</span>
                 <span>{formatPrice(order.subtotal)}</span>
               </div>
+              {Number(order.discountAmount) > 0 ? (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Discount{order.couponCode ? ` (${order.couponCode})` : null}</span>
+                  <span>-{formatPrice(order.discountAmount)}</span>
+                </div>
+              ) : null}
               <div className="flex justify-between text-sm">
                 <span>Tax</span>
                 <span>{formatPrice(order.taxAmount)}</span>
@@ -102,6 +109,8 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
                 <span>Total</span>
                 <span>{formatPrice(order.total)}</span>
               </div>
+              <Separator />
+              <PaymentStatus orderId={order.id} payments={order.payments} />
             </CardContent>
           </Card>
 

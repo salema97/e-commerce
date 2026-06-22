@@ -1,5 +1,7 @@
-import type { OrderStatus } from './enums.js';
+import type { OrderStatus, PaymentChannel } from './enums.js';
 import type { OrderAddress } from './address.js';
+import type { Payment } from './payment.js';
+import type { Refund } from './refund.js';
 
 export interface OrderItem {
   id: string;
@@ -30,11 +32,14 @@ export interface Order {
   customerEmail: string;
   customerPhone?: string | null;
   status: OrderStatus;
+  channel?: PaymentChannel | null;
+  couponCode?: string | null;
   subtotal: number;
   taxAmount: number;
   shippingAmount: number;
   discountAmount: number;
   total: number;
+  reservationExpiresAt?: string | null;
   shippingAddress?: OrderAddress | null;
   billingAddress?: OrderAddress | null;
   notes?: string | null;
@@ -43,18 +48,51 @@ export interface Order {
   user?: unknown;
   items: OrderItem[];
   statusHistory?: OrderStatusHistory[];
-  payments?: unknown[];
-  refunds?: unknown[];
+  payments?: Payment[];
+  refunds?: Refund[];
   invoice?: unknown;
+  receipt?: unknown;
+}
+
+export interface CreateOrderItemDto {
+  productId: string;
+  variantId?: string;
+  quantity: number;
+  price: number;
 }
 
 export interface CreateOrderDto {
-  customerEmail: string;
+  items: CreateOrderItemDto[];
+  channel?: PaymentChannel;
+  couponCode?: string;
+  customerEmail?: string;
   customerPhone?: string;
   shippingAddress?: OrderAddress;
   billingAddress?: OrderAddress;
   notes?: string;
   cartId?: string;
+}
+
+export interface CreatedOrderResult {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  channel: PaymentChannel;
+  subtotal: number;
+  taxAmount: number;
+  shippingAmount: number;
+  discountAmount: number;
+  total: number;
+  couponCode?: string;
+  reservationExpiresAt: string;
+  items: Array<{
+    productId: string;
+    variantId?: string;
+    name: string;
+    sku: string;
+    price: number;
+    quantity: number;
+  }>;
 }
 
 export interface UpdateOrderStatusDto {

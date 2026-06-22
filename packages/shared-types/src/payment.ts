@@ -1,10 +1,11 @@
-import type { PaymentStatus, PaymentProvider } from './enums.js';
+import type { PaymentStatus, PaymentProvider, PaymentChannel } from './enums.js';
 
 export interface Payment {
   id: string;
   orderId: string;
   provider: PaymentProvider;
   providerTransactionId?: string | null;
+  checkoutSessionId?: string | null;
   idempotencyKey?: string | null;
   amount: number;
   currency: string;
@@ -24,13 +25,17 @@ export interface CreatePaymentIntentDto {
   provider: PaymentProvider;
   idempotencyKey?: string;
   customerEmail?: string;
+  customerId?: string;
+  channel?: PaymentChannel;
   metadata?: Record<string, string>;
 }
 
 export interface PaymentIntentResult {
+  paymentId?: string;
+  providerTransactionId?: string;
   clientSecret?: string;
-  paymentIntentId?: string;
-  publicKey?: string;
+  status?: PaymentStatus;
+  idempotencyKey?: string;
   provider: PaymentProvider;
   amount: number;
   currency: string;
