@@ -1,0 +1,2 @@
+-- RenameIndex
+ALTER INDEX "InvoiceSequence_documentType_establishmentCode_emissionPointCod" RENAME TO "InvoiceSequence_documentType_establishmentCode_emissionPoin_key";
