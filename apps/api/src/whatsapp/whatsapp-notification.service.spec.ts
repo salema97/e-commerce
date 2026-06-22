@@ -189,6 +189,54 @@ describe('WhatsAppNotificationService', () => {
     );
   });
 
+  it('sends an ORDER_DELIVERED notification and persists the message', async () => {
+    prisma.order.findUnique.mockResolvedValue(mockOrder());
+    provider.sendText.mockResolvedValue({ providerMessageId: 'ext4', status: 'SENT' });
+    conversationService.findByRemoteJid.mockResolvedValue({ id: 'c1' });
+
+    await service.notify('o1', 'ORDER_DELIVERED', '+593991234567', {
+      customerName: 'Cliente',
+      orderNumber: 'ORD-1',
+    });
+
+    expect(provider.sendText).toHaveBeenCalledWith(
+      '+593991234567',
+      expect.stringContaining('entregado'),
+    );
+    expect(messageService.persistOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: 'c1',
+        status: 'SENT',
+        externalMessageId: 'ext4',
+      }),
+    );
+  });
+
+  it('sends a REFUND_CONFIRMED notification and persists the message', async () => {
+    prisma.order.findUnique.mockResolvedValue(mockOrder());
+    provider.sendText.mockResolvedValue({ providerMessageId: 'ext5', status: 'SENT' });
+    conversationService.findByRemoteJid.mockResolvedValue({ id: 'c1' });
+
+    await service.notify('o1', 'REFUND_CONFIRMED', '+593991234567', {
+      customerName: 'Cliente',
+      orderNumber: 'ORD-1',
+      amount: 'USD 45.98',
+      refundMethod: 'Tarjeta de crédito',
+    });
+
+    expect(provider.sendText).toHaveBeenCalledWith(
+      '+593991234567',
+      expect.stringContaining('reembolso'),
+    );
+    expect(messageService.persistOutbound).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: 'c1',
+        status: 'SENT',
+        externalMessageId: 'ext5',
+      }),
+    );
+  });
+
   it('does not throw when persistence fails', async () => {
     prisma.order.findUnique.mockResolvedValue(mockOrder());
     provider.sendText.mockResolvedValue({ providerMessageId: 'ext3', status: 'SENT' });
