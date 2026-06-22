@@ -113,6 +113,33 @@ describe('MessageService', () => {
     await expect(service.createOutbound('missing', { content: 'x' })).rejects.toBeInstanceOf(NotFoundException);
   });
 
+  it('persists a pre-sent outbound message without calling the provider', async () => {
+    prisma.message.create.mockResolvedValue({ id: 'm4' });
+    conversationService.touch.mockResolvedValue({ id: 'c1' });
+
+    const result = await service.persistOutbound({
+      conversationId: 'c1',
+      remoteJid: '593991234567',
+      content: 'Notification',
+      status: 'DELIVERED',
+      externalMessageId: 'ext4',
+    });
+
+    expect(provider.sendText).not.toHaveBeenCalled();
+    expect(prisma.message.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          direction: 'OUTBOUND',
+          content: 'Notification',
+          status: 'DELIVERED',
+          externalMessageId: 'ext4',
+        }),
+      }),
+    );
+    expect(conversationService.touch).toHaveBeenCalledWith('c1', 'OUTBOUND');
+    expect(result.id).toBe('m4');
+  });
+
   it('lists messages by conversation ordered by createdAt asc', async () => {
     prisma.message.findMany.mockResolvedValue([]);
     prisma.message.count.mockResolvedValue(0);
