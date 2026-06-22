@@ -80,9 +80,31 @@ enum PromotionType {
 
 enum ConversationStatus {
   OPEN
-  IN_PROGRESS
+  PENDING
   RESOLVED
   CLOSED
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum MessageContentType {
+  TEXT
+  IMAGE
+  AUDIO
+  VIDEO
+  DOCUMENT
+  LOCATION
+  UNKNOWN
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+  FAILED
 }
 
 enum IncomeSource {
@@ -597,37 +619,46 @@ model Address {
 model Conversation {
   id              String             @id @default(uuid())
   userId          String?
-  customerPhone   String
-  customerName    String?
+  remoteJid       String
+  instance        String             @default("ecommerce")
+  contactName     String?
   status          ConversationStatus @default(OPEN)
   assignedAgentId String?
-  source          String             @default("whatsapp")
+  lastMessageAt   DateTime?
+  unreadCount     Int                @default(0)
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 
   user     User?     @relation(fields: [userId], references: [id])
   messages Message[]
 
-  @@index([userId])
-  @@index([customerPhone])
+  @@index([remoteJid])
   @@index([status])
   @@index([createdAt])
 }
 
 model Message {
-  id             String   @id @default(uuid())
-  conversationId String
-  direction      String
-  content        String
-  mediaUrl       String?
-  status         String?
-  senderType     String?
-  createdAt      DateTime @default(now())
+  id                String            @id @default(uuid())
+  conversationId    String
+  remoteJid         String
+  instance          String            @default("ecommerce")
+  direction         MessageDirection
+  contentType       MessageContentType @default(TEXT)
+  content           String            @db.Text
+  mediaUrl          String?
+  status            MessageStatus     @default(SENT)
+  externalMessageId String?           @unique
+  externalStatus    String?
+  errorMessage      String?
+  sentAt            DateTime?
+  deliveredAt       DateTime?
+  readAt            DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-  @@index([conversationId])
-  @@index([createdAt])
+  @@index([conversationId, createdAt])
 }
 
 model Supplier {
