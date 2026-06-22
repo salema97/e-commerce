@@ -1,0 +1,52 @@
+import { APIRequestContext } from '@playwright/test';
+import { createHmac } from 'crypto';
+
+const WEBHOOK_SECRET = process.env.EVOLUTION_WEBHOOK_SECRET ?? 'whsec_xxx';
+
+export interface CreateConversationResult {
+  remoteJid: string;
+  externalMessageId: string;
+}
+
+export async function createConversationViaWebhook(
+  request: APIRequestContext,
+  overrides: {
+    remoteJid?: string;
+    externalMessageId?: string;
+    content?: string;
+    contactName?: string;
+  } = {},
+): Promise<CreateConversationResult> {
+  const remoteJid = overrides.remoteJid ?? '+593991234567@s.whatsapp.net';
+  const externalMessageId = overrides.externalMessageId ?? `msg-${Date.now()}`;
+  const content = overrides.content ?? 'Hola, necesito ayuda';
+  const contactName = overrides.contactName ?? 'Test Customer';
+
+  const payload = {
+    event: 'messages.upsert',
+    instance: 'ecommerce',
+    data: {
+      key: { remoteJid, id: externalMessageId, fromMe: false },
+      pushName: contactName,
+      message: { conversation: content },
+      messageTimestamp: Math.floor(Date.now() / 1000),
+    },
+  };
+
+  const body = JSON.stringify(payload);
+  const signature = createHmac('sha256', WEBHOOK_SECRET).update(body).digest('hex');
+
+  const response = await request.post('http://localhost:3001/v1/webhooks/evolution/messages.upsert', {
+    data: body,
+    headers: {
+      'Content-Type': 'application/json',
+      'x-evolution-api-signature': signature,
+    },
+  });
+
+  if (!response.ok()) {
+    throw new Error(`Failed to create conversation via webhook: ${await response.text()}`);
+  }
+
+  return { remoteJid, externalMessageId };
+}
