@@ -7,16 +7,17 @@ import {
   type TextInputProps,
   type ViewStyle,
   type TextStyle,
+  type StyleProp,
 } from 'react-native';
 
 export interface InputProps extends Omit<TextInputProps, 'style'> {
   label?: string;
   error?: string;
   helper?: string;
-  containerStyle?: ViewStyle;
-  inputStyle?: TextStyle;
-  labelStyle?: TextStyle;
-  errorStyle?: TextStyle;
+  containerStyle?: StyleProp<ViewStyle>;
+  inputStyle?: StyleProp<TextStyle>;
+  labelStyle?: StyleProp<TextStyle>;
+  errorStyle?: StyleProp<TextStyle>;
 }
 
 export const Input = React.forwardRef<TextInput, InputProps>(

@@ -1,4 +1,5 @@
-// Expo Router entry point placeholder.
-export default function Index(): null {
-  return null;
+import { Redirect } from 'expo-router';
+
+export default function Index(): React.ReactElement {
+  return <Redirect href="/(tabs)" />;
 }
