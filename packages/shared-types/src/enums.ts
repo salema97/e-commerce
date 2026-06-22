@@ -43,12 +43,21 @@ export type InvoiceStatus = 'DRAFT' | 'SUBMITTED' | 'AUTHORIZED' | 'REJECTED' | 
 
 export type PromotionType = 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIPPING' | 'BUNDLE' | 'TIERED';
 
-export type ConversationStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+export type ConversationStatus = 'OPEN' | 'PENDING' | 'RESOLVED' | 'CLOSED';
 
 export type IncomeSource = 'ORDER' | 'INVESTMENT' | 'OTHER';
 
 export type ExpenseStatus = 'PENDING' | 'PAID' | 'CANCELLED';
 
 export type MessageDirection = 'INBOUND' | 'OUTBOUND';
+
+export type MessageContentType =
+  | 'TEXT'
+  | 'IMAGE'
+  | 'AUDIO'
+  | 'VIDEO'
+  | 'DOCUMENT'
+  | 'LOCATION'
+  | 'UNKNOWN';
 
 export type MessageStatus = 'SENT' | 'DELIVERED' | 'READ' | 'FAILED';
