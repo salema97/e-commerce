@@ -1,0 +1,187 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { MessageStatus, Prisma } from '@prisma/client';
+import { ConversationService } from '../conversations/conversation.service.js';
+import { MessageService } from '../messages/message.service.js';
+
+export interface EvolutionWebhookPayload {
+  event?: string;
+  instance?: string;
+  data?: unknown;
+}
+
+interface EvolutionMessageKey {
+  remoteJid?: string;
+  id?: string;
+  fromMe?: boolean;
+}
+
+interface EvolutionMessage {
+  key?: EvolutionMessageKey;
+  pushName?: string;
+  message?: Record<string, unknown>;
+  messageTimestamp?: number;
+}
+
+interface EvolutionStatusUpdate {
+  key?: EvolutionMessageKey;
+  status?: string;
+}
+
+@Injectable()
+export class WebhookService {
+  private readonly logger = new Logger(WebhookService.name);
+
+  constructor(
+    private readonly conversationService: ConversationService,
+    private readonly messageService: MessageService,
+  ) {}
+
+  async handleEvent(event: string, payload: EvolutionWebhookPayload): Promise<void> {
+    switch (event) {
+      case 'messages.upsert':
+        await this.handleInboundMessage(payload);
+        break;
+      case 'messages.update':
+        await this.handleStatusUpdate(payload);
+        break;
+      case 'connection.update':
+        this.handleConnectionUpdate(payload);
+        break;
+      default:
+        this.logger.debug({ event }, 'Unhandled Evolution webhook event');
+    }
+  }
+
+  private async handleInboundMessage(payload: EvolutionWebhookPayload) {
+    const data = (payload.data ?? {}) as EvolutionMessage;
+    const remoteJid = data.key?.remoteJid;
+    const externalMessageId = data.key?.id;
+
+    if (!remoteJid || !externalMessageId) {
+      this.logger.warn(
+        { payload },
+        'Inbound message webhook missing remoteJid or message id',
+      );
+      return;
+    }
+
+    const instance = payload.instance ?? 'ecommerce';
+    const phone = normalizeRemoteJid(remoteJid);
+    const { content, contentType } = extractContent(data.message);
+
+    const conversation = await this.findOrCreateConversation(phone, instance, data.pushName);
+
+    await this.messageService.createInbound({
+      conversationId: conversation.id,
+      remoteJid: phone,
+      instance,
+      content,
+      contentType,
+      externalMessageId,
+      sentAt: data.messageTimestamp ? new Date(data.messageTimestamp * 1000) : new Date(),
+    });
+  }
+
+  private async handleStatusUpdate(payload: EvolutionWebhookPayload) {
+    const data = (payload.data ?? {}) as EvolutionStatusUpdate;
+    const externalMessageId = data.key?.id;
+
+    if (!externalMessageId) {
+      this.logger.warn(
+        { payload },
+        'Status update webhook missing message id',
+      );
+      return;
+    }
+
+    const status = mapStatus(data.status);
+    if (!status) {
+      this.logger.debug(
+        { status: data.status, externalMessageId },
+        'Ignoring non-terminal status update',
+      );
+      return;
+    }
+
+    await this.messageService.updateStatusByExternalId(
+      externalMessageId,
+      status,
+      data.status,
+    );
+  }
+
+  private handleConnectionUpdate(payload: EvolutionWebhookPayload) {
+    this.logger.debug(
+      { state: (payload.data as Record<string, unknown>)?.state },
+      'Evolution connection status update',
+    );
+  }
+
+  private async findOrCreateConversation(
+    remoteJid: string,
+    instance: string,
+    contactName?: string,
+  ) {
+    const existing = await this.conversationService.findByRemoteJid(remoteJid, instance);
+
+    if (existing) {
+      if (contactName && !existing.contactName) {
+        return this.conversationService.update(existing.id, { contactName });
+      }
+      return existing;
+    }
+
+    return this.conversationService.create({
+      remoteJid,
+      instance,
+      contactName,
+      status: 'OPEN',
+    });
+  }
+}
+
+function normalizeRemoteJid(remoteJid: string): string {
+  return remoteJid.split('@')[0]?.replace(/\D/g, '') ?? remoteJid;
+}
+
+function extractContent(
+  message?: Record<string, unknown>,
+): { content: string; contentType: Prisma.MessageCreateInput['contentType'] } {
+  if (!message) {
+    return { content: '', contentType: 'UNKNOWN' };
+  }
+
+  if (typeof message.conversation === 'string') {
+    return { content: message.conversation, contentType: 'TEXT' };
+  }
+
+  if (typeof message.extendedTextMessage === 'object' && message.extendedTextMessage !== null) {
+    const text = (message.extendedTextMessage as Record<string, unknown>).text;
+    if (typeof text === 'string') {
+      return { content: text, contentType: 'TEXT' };
+    }
+  }
+
+  if (message.imageMessage) return { content: '[image]', contentType: 'IMAGE' };
+  if (message.videoMessage) return { content: '[video]', contentType: 'VIDEO' };
+  if (message.audioMessage) return { content: '[audio]', contentType: 'AUDIO' };
+  if (message.documentMessage) return { content: '[document]', contentType: 'DOCUMENT' };
+  if (message.locationMessage) return { content: '[location]', contentType: 'LOCATION' };
+
+  return { content: '[unknown]', contentType: 'UNKNOWN' };
+}
+
+function mapStatus(status?: string): MessageStatus | null {
+  switch (status?.toUpperCase()) {
+    case 'READ':
+    case 'PLAYED':
+      return 'READ';
+    case 'DELIVERED':
+    case 'DELIVERY_ACK':
+      return 'DELIVERED';
+    case 'FAILED':
+      return 'FAILED';
+    default:
+      return null;
+  }
+}
