@@ -79,6 +79,7 @@ export class OrdersController {
 
   @Post(':id/refunds')
   @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE)
+  @Throttle({ default: { limit: 20, ttl: 3600_000 } })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a refund for an order (admin/finance)' })
   @ApiResponse({ status: 201, description: 'Refund created' })

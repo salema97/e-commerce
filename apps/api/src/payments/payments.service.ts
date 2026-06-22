@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { PaymentProviderFactory } from './payment-provider.factory.js';
@@ -30,7 +30,12 @@ export class PaymentsService {
 
   async createPaymentIntent(
     dto: CreatePaymentIntentDto,
+    actorUserId?: string,
   ): Promise<CreatePaymentIntentResult> {
+    if (actorUserId) {
+      await this.ensureOrderOwnership(dto.orderId, actorUserId);
+    }
+
     const provider = this.providerFactory.getProvider(dto.provider);
     const idempotencyKey = dto.idempotencyKey ?? randomUUID();
 
@@ -164,5 +169,20 @@ export class PaymentsService {
       return this.stripeCustomerService.findOrCreateEphemeralCustomer(dto.customerEmail);
     }
     return dto.customerId;
+  }
+
+  private async ensureOrderOwnership(orderId: string, actorUserId: string): Promise<void> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: { id: true, userId: true },
+    });
+    if (!order) {
+      throw new NotFoundException(`Order ${orderId} not found`);
+    }
+    if (!order.userId || order.userId !== actorUserId) {
+      throw new ForbiddenException(
+        `Order ${orderId} does not belong to the authenticated user`,
+      );
+    }
   }
 }

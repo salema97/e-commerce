@@ -71,6 +71,7 @@ describe('Refunds (e2e)', () => {
       coupon: { findUnique: vi.fn(), update: vi.fn() },
       user: { findUnique: vi.fn() },
       product: { findUnique: vi.fn() },
+      auditLog: { create: vi.fn().mockResolvedValue({ id: 'log_1' }) },
     };
   }
 
@@ -165,6 +166,16 @@ describe('Refunds (e2e)', () => {
     expect(stripeRefundMock).toHaveBeenCalledWith('pi_e2e', 100);
     expect(creditNoteMock).toHaveBeenCalledWith(
       expect.objectContaining({ invoiceAccessKey: '1'.repeat(49), total: 100 }),
+    );
+    expect(prismaMock.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          actorClerkUserId: 'user_admin',
+          resource: 'Refund',
+          action: 'CREATE',
+          resourceId: 'r1',
+        }),
+      }),
     );
   });
 
