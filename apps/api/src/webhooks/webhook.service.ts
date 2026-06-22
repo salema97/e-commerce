@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MessageStatus, Prisma } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service.js';
 import { ConversationService } from '../conversations/conversation.service.js';
 import { MessageService } from '../messages/message.service.js';
 
@@ -34,6 +35,7 @@ export class WebhookService {
   constructor(
     private readonly conversationService: ConversationService,
     private readonly messageService: MessageService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async handleEvent(event: string, payload: EvolutionWebhookPayload): Promise<void> {
@@ -80,6 +82,8 @@ export class WebhookService {
       externalMessageId,
       sentAt: data.messageTimestamp ? new Date(data.messageTimestamp * 1000) : new Date(),
     });
+
+    await this.handleOptOut(phone, content);
   }
 
   private async handleStatusUpdate(payload: EvolutionWebhookPayload) {
@@ -117,6 +121,40 @@ export class WebhookService {
     );
   }
 
+  private async handleOptOut(phoneDigits: string, content: string): Promise<void> {
+    const optOutKeywords = ['baja', 'stop', 'no mas'];
+    const normalized = content.trim().toLowerCase().replace(/\s+/g, ' ');
+
+    if (!optOutKeywords.includes(normalized)) {
+      return;
+    }
+
+    try {
+      const { count } = await this.prisma.user.updateMany({
+        where: {
+          phone: {
+            contains: phoneDigits,
+          },
+        },
+        data: {
+          whatsappOptOut: true,
+        },
+      });
+
+      if (count > 0) {
+        this.logger.log(
+          { phone: maskPhone(phoneDigits), count },
+          'Customer opted out of WhatsApp notifications',
+        );
+      }
+    } catch (error) {
+      this.logger.error(
+        { error, phone: maskPhone(phoneDigits) },
+        'Failed to update WhatsApp opt-out flag',
+      );
+    }
+  }
+
   private async findOrCreateConversation(
     remoteJid: string,
     instance: string,
@@ -138,6 +176,10 @@ export class WebhookService {
       status: 'OPEN',
     });
   }
+}
+
+function maskPhone(digits: string): string {
+  return `***${digits.slice(-4)}`;
 }
 
 function normalizeRemoteJid(remoteJid: string): string {

@@ -10,6 +10,7 @@ import { RefundService } from '../payments/refund.service.js';
 import { StoreCreditService } from './store-credit.service.js';
 import { InvoicesService } from '../invoices/invoices.service.js';
 import { ReturnNotificationService } from './notifications/return-notification.service.js';
+import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
 
 function buildTxClient() {
   return {
@@ -44,6 +45,7 @@ describe('ReturnsService', () => {
     onReturnRequested: ReturnType<typeof vi.fn>;
     onReturnStatusChanged: ReturnType<typeof vi.fn>;
   };
+  let whatsappNotificationService: { notify: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     prisma = buildPrismaMock();
@@ -56,6 +58,7 @@ describe('ReturnsService', () => {
       onReturnRequested: vi.fn().mockResolvedValue(undefined),
       onReturnStatusChanged: vi.fn().mockResolvedValue(undefined),
     };
+    whatsappNotificationService = { notify: vi.fn().mockResolvedValue(undefined) };
 
     const module = await Test.createTestingModule({
       providers: [
@@ -66,6 +69,7 @@ describe('ReturnsService', () => {
         { provide: StoreCreditService, useValue: storeCreditService },
         { provide: InvoicesService, useValue: invoicesService },
         { provide: ReturnNotificationService, useValue: notificationService },
+        { provide: WhatsAppNotificationService, useValue: whatsappNotificationService },
         { provide: ConfigService, useValue: configService },
       ],
     }).compile();
@@ -254,7 +258,7 @@ describe('ReturnsService', () => {
     }
 
     it('refunds original payment, restocks, and issues credit note via RefundService', async () => {
-      prisma.returnRequest.findUnique.mockResolvedValue(buildReturnForResolve());
+      prisma.returnRequest.findUnique.mockResolvedValue(buildReturnForResolve(ReturnStatus.INSPECTION, { order: { ...buildReturnForResolve().order, customerPhone: '+593991234567' } }));
       prisma.returnRequest.update.mockResolvedValue({ id: 'rr1', status: ReturnStatus.RESOLVED, refundMethod: RefundMethod.ORIGINAL_PAYMENT, items: [] });
       prisma.__txClient.inventory.findFirst.mockResolvedValue({ id: 'inv1', productId: 'p1', variantId: null, quantity: 10, reservedQuantity: 0 });
 
@@ -268,6 +272,12 @@ describe('ReturnsService', () => {
       }));
       expect(prisma.__txClient.inventory.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ quantity: { increment: 1 } }) }));
       expect(invoicesService.issueCreditNote).not.toHaveBeenCalled();
+      expect(whatsappNotificationService.notify).toHaveBeenCalledWith(
+        'o1',
+        'REFUND_CONFIRMED',
+        '+593991234567',
+        expect.objectContaining({ orderNumber: 'ORD-1', amount: 'USD 50.00' }),
+      );
     });
 
     it('issues store credit when method is STORE_CREDIT', async () => {
