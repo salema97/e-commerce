@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { WhatsAppProvider } from './whatsapp-provider.interface.js';
 import { EvolutionApiProvider } from './providers/evolution-api.provider.js';
+import { WhatsAppController } from './whatsapp.controller.js';
 
 /**
  * WhatsApp feature module.
@@ -12,6 +13,7 @@ import { EvolutionApiProvider } from './providers/evolution-api.provider.js';
  */
 @Module({
   imports: [ConfigModule],
+  controllers: [WhatsAppController],
   providers: [
     {
       provide: WhatsAppProvider,

@@ -1,9 +1,18 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { MessageService } from './message.service.js';
 import { ListMessagesQueryDto } from './dto/list-messages.query.dto.js';
+import { CreateMessageDto } from './dto/create-message.dto.js';
 import { Roles } from '../auth/roles.decorator.js';
 import { Role } from '../auth/role.enum.js';
+import { Audit } from '../audit/audit.decorator.js';
 
 @ApiTags('Messages')
 @Controller('conversations/:conversationId/messages')
@@ -19,5 +28,17 @@ export class MessageController {
     @Query() query: ListMessagesQueryDto,
   ) {
     return this.messageService.findAllByConversation(conversationId, query);
+  }
+
+  @Post()
+  @Audit({ resource: 'message', action: 'create' })
+  @ApiOperation({ summary: 'Send an outbound message in a conversation' })
+  @ApiResponse({ status: 201, description: 'Message sent and persisted' })
+  @ApiResponse({ status: 404, description: 'Conversation not found' })
+  create(
+    @Param('conversationId') conversationId: string,
+    @Body() createMessageDto: CreateMessageDto,
+  ) {
+    return this.messageService.createOutbound(conversationId, createMessageDto);
   }
 }

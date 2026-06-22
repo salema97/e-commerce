@@ -9,6 +9,7 @@ describe('MessageController', () => {
   function mockService() {
     return {
       findAllByConversation: vi.fn(),
+      createOutbound: vi.fn(),
     };
   }
 
@@ -24,5 +25,14 @@ describe('MessageController', () => {
 
     expect(service.findAllByConversation).toHaveBeenCalledWith('c1', { page: 1, limit: 20 });
     expect(result.data).toEqual([]);
+  });
+
+  it('creates an outbound message', async () => {
+    service.createOutbound.mockResolvedValue({ id: 'm1', content: 'Hello' });
+
+    const result = await controller.create('c1', { content: 'Hello' });
+
+    expect(service.createOutbound).toHaveBeenCalledWith('c1', { content: 'Hello' });
+    expect(result.id).toBe('m1');
   });
 });

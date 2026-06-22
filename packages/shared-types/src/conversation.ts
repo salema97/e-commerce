@@ -61,3 +61,29 @@ export interface ConversationTemplate {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface QuickReply {
+  id: string;
+  label: string;
+  text: string;
+}
+
+export interface PaginatedConversations {
+  data: Conversation[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface PaginatedMessages {
+  data: Message[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
