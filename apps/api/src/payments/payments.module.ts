@@ -17,10 +17,11 @@ import { PlaceToPayProvider } from './placetopay/placetopay.provider.js';
 import { InvoicesModule } from '../invoices/invoices.module.js';
 import { InventoryModule } from '../inventory/inventory.module.js';
 import { AuditModule } from '../audit/audit.module.js';
+import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
 import { isTestAuthEnabled } from '../auth/test-auth.js';
 
 @Module({
-  imports: [InvoicesModule, InventoryModule, AuditModule],
+  imports: [InvoicesModule, InventoryModule, AuditModule, WhatsAppNotificationModule],
   controllers: [
     StripeWebhookController,
     PaymentWebhookController,

@@ -6,6 +6,7 @@ import { PaymentProvider, PaymentStatus, OrderStatus } from '@prisma/client';
 import { PaymentWebhookService } from './payment-webhook.service.js';
 import { PaymentProviderFactory } from './payment-provider.factory.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
 
 describe('PaymentWebhookService', () => {
   let service: PaymentWebhookService;
@@ -18,9 +19,10 @@ describe('PaymentWebhookService', () => {
   };
   let prisma: {
     payment: { findFirst: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
-    order: { update: ReturnType<typeof vi.fn> };
+    order: { update: ReturnType<typeof vi.fn>; findUnique: ReturnType<typeof vi.fn> };
     orderStatusHistory: { create: ReturnType<typeof vi.fn> };
   };
+  let notificationService: { notify: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     provider = {
@@ -30,9 +32,10 @@ describe('PaymentWebhookService', () => {
     factory = { getProvider: vi.fn(() => provider) };
     prisma = {
       payment: { findFirst: vi.fn(), update: vi.fn() },
-      order: { update: vi.fn() },
+      order: { update: vi.fn(), findUnique: vi.fn() },
       orderStatusHistory: { create: vi.fn() },
     };
+    notificationService = { notify: vi.fn().mockResolvedValue(undefined) };
 
     const module = await Test.createTestingModule({
       providers: [
@@ -51,6 +54,7 @@ describe('PaymentWebhookService', () => {
         },
         { provide: PaymentProviderFactory, useValue: factory },
         { provide: PrismaService, useValue: prisma },
+        { provide: WhatsAppNotificationService, useValue: notificationService },
       ],
     }).compile();
 
@@ -116,6 +120,13 @@ describe('PaymentWebhookService', () => {
       orderId: 'order_2',
       status: PaymentStatus.PENDING,
     });
+    prisma.order.findUnique.mockResolvedValueOnce({
+      id: 'order_2',
+      customerPhone: '+593991234567',
+      orderNumber: 'ORD-002',
+      total: 99.99,
+      user: { whatsappOptOut: false },
+    });
 
     const result = await service.handle(
       'payphone',
@@ -128,6 +139,12 @@ describe('PaymentWebhookService', () => {
       expect.objectContaining({
         data: { status: OrderStatus.PAYMENT_FAILED },
       }),
+    );
+    expect(notificationService.notify).toHaveBeenCalledWith(
+      'order_2',
+      'PAYMENT_FAILED',
+      '+593991234567',
+      expect.objectContaining({ orderNumber: 'ORD-002' }),
     );
   });
 
