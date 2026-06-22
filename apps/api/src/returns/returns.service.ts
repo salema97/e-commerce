@@ -367,7 +367,7 @@ export class ReturnsService {
         amount: totalAmount,
       });
     } else if (dto.refundMethod === RefundMethod.EXCHANGE) {
-      const exchangeOrder = await this.createExchangeOrder(current, dto.exchangeProductIds);
+      const exchangeOrder = await this.createExchangeOrder(current, dto.exchangeProductId, dto.exchangeVariantId);
       basePatch.exchangeOrder = { connect: { id: exchangeOrder.id } };
     }
 
@@ -476,37 +476,45 @@ export class ReturnsService {
       order: { customerEmail: string; customerPhone: string | null };
       items: Array<{ productId: string; productVariantId: string | null; quantity: number }>;
     },
-    exchangeProductIds?: string[],
+    exchangeProductId?: string,
+    exchangeVariantId?: string,
   ) {
-    const fallbackItems: Array<{ productId: string; variantId?: string; quantity: number }> = returnRequest.items.map((item) => ({
-      productId: item.productId,
-      variantId: item.productVariantId ?? undefined,
-      quantity: item.quantity,
-    }));
+    const totalReturnedQuantity = returnRequest.items.reduce((sum, item) => sum + item.quantity, 0);
 
-    const replacementItems: Array<{ productId: string; variantId?: string; quantity: number }> = exchangeProductIds?.length
-      ? exchangeProductIds.map((id) => ({ productId: id, quantity: 1 }))
-      : fallbackItems;
+    let replacementProductId = exchangeProductId;
+    let replacementVariantId = exchangeVariantId;
 
-    const orderItems = await Promise.all(
-      replacementItems.map(async (item) => {
-        const product = await this.prisma.product.findUnique({
-          where: { id: item.productId },
-          include: { variants: true },
-        });
-        const variant = item.variantId
-          ? product?.variants.find((v) => v.id === item.variantId)
-          : product?.variants[0];
-        return {
-          productId: item.productId,
-          variantId: variant?.id ?? null,
-          name: product?.name ?? 'Exchange item',
-          sku: variant?.sku ?? product?.sku ?? `EXC-${item.productId}`,
-          price: Number(variant?.price ?? product?.price ?? 0),
-          quantity: item.quantity,
-        };
-      }),
-    );
+    if (!replacementProductId && returnRequest.items.length === 1) {
+      replacementProductId = returnRequest.items[0].productId;
+      replacementVariantId = returnRequest.items[0].productVariantId ?? undefined;
+    }
+
+    if (!replacementProductId) {
+      throw new BadRequestException('Exchange resolution requires a replacement product');
+    }
+
+    const product = await this.prisma.product.findUnique({
+      where: { id: replacementProductId },
+      include: { variants: true },
+    });
+    if (!product) {
+      throw new BadRequestException(`Exchange product ${replacementProductId} not found`);
+    }
+
+    const variant = replacementVariantId
+      ? product.variants.find((v) => v.id === replacementVariantId)
+      : product.variants[0];
+
+    const orderItems = [
+      {
+        productId: product.id,
+        variantId: variant?.id ?? null,
+        name: product.name,
+        sku: variant?.sku ?? product.sku ?? `EXC-${product.id}`,
+        price: Number(variant?.price ?? product.price ?? 0),
+        quantity: totalReturnedQuantity,
+      },
+    ];
 
     const total = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 

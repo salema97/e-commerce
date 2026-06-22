@@ -67,7 +67,8 @@ export interface UpdateReturnStatusDto {
 export interface ResolveReturnDto {
   refundMethod: RefundMethod;
   notes?: string;
-  exchangeProductIds?: string[];
+  exchangeProductId?: string;
+  exchangeVariantId?: string;
 }
 
 export interface CreditNoteResponse {

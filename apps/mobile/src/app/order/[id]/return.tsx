@@ -7,6 +7,19 @@ import { api } from '../../../lib/api.js';
 import { formatPrice } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
 
+const RETURN_WINDOW_DAYS = 30;
+
+function computeReturnEligibility(order: Order) {
+  const isDelivered = order.status === 'DELIVERED';
+  const createdAt = new Date(order.createdAt);
+  const cutoff = new Date(createdAt.getTime() + RETURN_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+  const now = new Date();
+  const isWithinWindow = cutoff >= now;
+  const remainingMs = Math.max(0, cutoff.getTime() - now.getTime());
+  const remainingDays = Math.ceil(remainingMs / (24 * 60 * 60 * 1000));
+  return { isDelivered, isWithinWindow, remainingDays };
+}
+
 export default function ReturnRequestScreen(): React.ReactElement {
   const router = useRouter();
   const params = useLocalSearchParams<{ id: string }>();
@@ -34,8 +47,11 @@ export default function ReturnRequestScreen(): React.ReactElement {
   }
 
   const currentOrder = order;
+  const { isDelivered, isWithinWindow, remainingDays } = computeReturnEligibility(currentOrder);
+  const canRequestReturn = isDelivered && isWithinWindow;
 
   function toggleItem(itemId: string, maxQty: number) {
+    if (!canRequestReturn) return;
     setSelected((prev) => {
       if (prev[itemId]) {
         const { [itemId]: _, ...rest } = prev;
@@ -46,6 +62,7 @@ export default function ReturnRequestScreen(): React.ReactElement {
   }
 
   async function handleSubmit() {
+    if (!canRequestReturn) return;
     const items = Object.entries(selected).map(([itemId, value]) => {
       const orderItem = currentOrder.items.find((i) => i.id === itemId)!;
       return {
@@ -72,6 +89,30 @@ export default function ReturnRequestScreen(): React.ReactElement {
         <Text style={styles.title}>Request return</Text>
         <Text style={styles.subtitle}>Order #{currentOrder.orderNumber}</Text>
 
+        {!isDelivered ? (
+          <Card style={styles.banner}>
+            <Text style={styles.bannerTitle}>Order not delivered</Text>
+            <Text style={styles.bannerText}>
+              You can request a return after the order has been delivered.
+            </Text>
+          </Card>
+        ) : null}
+
+        {isDelivered && !isWithinWindow ? (
+          <Card style={styles.banner}>
+            <Text style={styles.bannerTitle}>Return window closed</Text>
+            <Text style={styles.bannerText}>
+              The return window for this order has expired.
+            </Text>
+          </Card>
+        ) : null}
+
+        {isDelivered && isWithinWindow ? (
+          <Text style={styles.windowText}>
+            Return window: {remainingDays} day{remainingDays === 1 ? '' : 's'} remaining
+          </Text>
+        ) : null}
+
         {currentOrder.items.map((item) => (
           <Card key={item.id} style={styles.itemCard}>
             <View style={styles.row}>
@@ -80,6 +121,7 @@ export default function ReturnRequestScreen(): React.ReactElement {
                 variant={selected[item.id] ? 'primary' : 'outline'}
                 size="sm"
                 onPress={() => toggleItem(item.id, item.quantity)}
+                disabled={!canRequestReturn}
               >
                 {selected[item.id] ? 'Selected' : 'Select'}
               </Button>
@@ -92,7 +134,7 @@ export default function ReturnRequestScreen(): React.ReactElement {
               <View style={styles.inputs}>
                 <Text style={styles.label}>Quantity (max {item.quantity})</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, !canRequestReturn && styles.inputDisabled]}
                   keyboardType="numeric"
                   value={String(selected[item.id].qty)}
                   onChangeText={(text) =>
@@ -107,10 +149,11 @@ export default function ReturnRequestScreen(): React.ReactElement {
                       },
                     }))
                   }
+                  editable={canRequestReturn}
                 />
                 <Text style={styles.label}>Reason</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, !canRequestReturn && styles.inputDisabled]}
                   value={selected[item.id].reason}
                   onChangeText={(text) =>
                     setSelected((prev) => ({
@@ -119,6 +162,7 @@ export default function ReturnRequestScreen(): React.ReactElement {
                     }))
                   }
                   placeholder="Reason for returning this item"
+                  editable={canRequestReturn}
                 />
               </View>
             ) : null}
@@ -127,7 +171,7 @@ export default function ReturnRequestScreen(): React.ReactElement {
 
         <Button
           onPress={handleSubmit}
-          disabled={createReturn.isPending || Object.keys(selected).length === 0}
+          disabled={createReturn.isPending || Object.keys(selected).length === 0 || !canRequestReturn}
           size="lg"
         >
           {createReturn.isPending ? 'Submitting...' : 'Submit return request'}
@@ -161,6 +205,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#737373',
     marginBottom: 20,
+  },
+  windowText: {
+    fontSize: 14,
+    color: '#15803d',
+    marginBottom: 16,
+  },
+  banner: {
+    marginBottom: 16,
+    padding: 16,
+    backgroundColor: '#fef2f2',
+    borderColor: '#fecaca',
+  },
+  bannerTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#991b1b',
+    marginBottom: 4,
+  },
+  bannerText: {
+    fontSize: 13,
+    color: '#b91c1c',
   },
   itemCard: {
     marginBottom: 12,
@@ -199,6 +264,10 @@ const styles = StyleSheet.create({
     padding: 10,
     fontSize: 14,
     color: '#171717',
+  },
+  inputDisabled: {
+    backgroundColor: '#f5f5f5',
+    color: '#a3a3a3',
   },
   muted: {
     color: '#737373',

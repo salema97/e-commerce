@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@clerk/nextjs/server';
 import { getServerApiClient } from '@/lib/api';
+import { getTestAuthSession } from '@/lib/test-auth';
 import ReturnRequestForm from './return-request-form';
 
 interface ReturnRequestPageProps {
@@ -9,9 +10,8 @@ interface ReturnRequestPageProps {
 
 export default async function ReturnRequestPage({ params }: ReturnRequestPageProps) {
   const { userId } = await auth();
-  if (!userId) {
-    redirect('/sign-in?redirect_url=/orders');
-  }
+  const testSession = await getTestAuthSession();
+  const isAuthenticated = Boolean(userId || testSession);
 
   const { id } = await params;
   const api = getServerApiClient();
@@ -23,15 +23,14 @@ export default async function ReturnRequestPage({ params }: ReturnRequestPagePro
     notFound();
   }
 
-  if (order.status !== 'DELIVERED') {
-    redirect(`/orders/${id}`);
-  }
-
-  const deliveredAt = new Date(order.createdAt);
+  const isDelivered = order.status === 'DELIVERED';
+  const createdAt = new Date(order.createdAt);
   const windowDays = 30;
-  if (deliveredAt.getTime() + windowDays * 24 * 60 * 60 * 1000 < Date.now()) {
+  const isWithinWindow = createdAt.getTime() + windowDays * 24 * 60 * 60 * 1000 >= Date.now();
+
+  if (!isDelivered || !isWithinWindow) {
     redirect(`/orders/${id}`);
   }
 
-  return <ReturnRequestForm order={order} />;
+  return <ReturnRequestForm order={order} isGuest={!isAuthenticated} />;
 }

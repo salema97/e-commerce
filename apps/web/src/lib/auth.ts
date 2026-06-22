@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import type { Role } from '@repo/shared-types';
+import { getTestAuthSession } from './test-auth';
 
 export async function getCurrentRole(): Promise<Role | null> {
   const session = await auth();
@@ -7,6 +8,24 @@ export async function getCurrentRole(): Promise<Role | null> {
     | { role?: Role }
     | undefined;
   return metadata?.role ?? null;
+}
+
+export async function getCurrentUser(): Promise<{ userId: string; role: Role } | null> {
+  const session = await auth();
+  const metadata = session.sessionClaims?.public_metadata as
+    | { role?: Role }
+    | undefined;
+  const role = metadata?.role;
+  if (session.userId && role) {
+    return { userId: session.userId, role };
+  }
+
+  const testSession = await getTestAuthSession();
+  if (testSession) {
+    return testSession;
+  }
+
+  return null;
 }
 
 export function hasRole(role: Role | null, allowed: Role[]): boolean {

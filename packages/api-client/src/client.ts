@@ -42,6 +42,7 @@ export interface ApiClientOptions {
   baseURL: string;
   getToken?: () => string | null | Promise<string | null>;
   onError?: (error: ApiClientError) => void;
+  getHeaders?: () => Record<string, string> | Promise<Record<string, string>>;
 }
 
 export class ApiClientError extends Error {
@@ -80,7 +81,7 @@ function buildURL(baseURL: string, path: string, query?: Record<string, string |
 }
 
 export function createApiClient(options: ApiClientOptions) {
-  const { baseURL, getToken, onError } = options;
+  const { baseURL, getToken, onError, getHeaders } = options;
 
   async function request<T>(
     method: string,
@@ -89,8 +90,10 @@ export function createApiClient(options: ApiClientOptions) {
     query?: Record<string, string | number | boolean | undefined>,
   ): Promise<T> {
     const token = getToken ? await getToken() : null;
+    const extraHeaders = getHeaders ? await getHeaders() : {};
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      ...extraHeaders,
     };
 
     if (token) {

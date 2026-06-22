@@ -10,6 +10,16 @@ function getBaseURL(): string {
   );
 }
 
+function getTestAuthHeader(): Record<string, string> {
+  if (typeof document === 'undefined') return {};
+  if (process.env.NEXT_PUBLIC_ENABLE_TEST_AUTH !== 'true') return {};
+
+  const match = document.cookie.match(/(?:^|; )__test_auth=([^;]*)/);
+  if (!match) return {};
+
+  return { 'X-Test-Auth': decodeURIComponent(match[1]) };
+}
+
 export function useApiClient() {
   const { getToken } = useAuth();
 
@@ -18,6 +28,11 @@ export function useApiClient() {
       createApiClient({
         baseURL: getBaseURL(),
         getToken,
+        onError: (error) => {
+          // eslint-disable-next-line no-console
+          console.error('API error:', error.message);
+        },
+        getHeaders: () => getTestAuthHeader(),
       }),
     [getToken],
   );

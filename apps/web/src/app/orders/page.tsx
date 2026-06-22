@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@clerk/nextjs/server';
 import { getServerApiClient } from '@/lib/api';
+import { getTestAuthSession } from '@/lib/test-auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +11,8 @@ import type { Order } from '@repo/shared-types';
 
 export default async function OrdersPage() {
   const { userId } = await auth();
-  if (!userId) {
+  const testSession = await getTestAuthSession();
+  if (!userId && !testSession) {
     redirect('/sign-in?redirect_url=/orders');
   }
 

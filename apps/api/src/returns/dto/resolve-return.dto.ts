@@ -10,8 +10,13 @@ export class ResolveReturnDto {
   @ApiPropertyOptional({ description: 'Internal notes about the resolution' })
   @IsOptional() @IsString() notes?: string;
 
-  @ApiPropertyOptional({ description: 'Replacement product ids for EXCHANGE' })
+  @ApiPropertyOptional({ description: 'Replacement product id for EXCHANGE' })
   @IsOptional()
-  @IsUUID('4', { each: true })
-  exchangeProductIds?: string[];
+  @IsUUID('4')
+  exchangeProductId?: string;
+
+  @ApiPropertyOptional({ description: 'Replacement product variant id for EXCHANGE' })
+  @IsOptional()
+  @IsUUID('4')
+  exchangeVariantId?: string;
 }

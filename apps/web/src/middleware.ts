@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+import { getTestAuthSession, isTestAuthEnabled } from './lib/test-auth';
 
 const isAdminRoute = createRouteMatcher(['/admin(.*)']);
 
@@ -11,7 +12,16 @@ export default clerkMiddleware(async (auth, req) => {
     const metadata = sessionClaims?.public_metadata as { role?: string } | undefined;
     const role = metadata?.role;
 
-    if (!userId || typeof role !== 'string' || !ADMIN_ROLES.has(role)) {
+    let isAuthenticatedAdmin = Boolean(userId && typeof role === 'string' && ADMIN_ROLES.has(role));
+
+    if (!isAuthenticatedAdmin && isTestAuthEnabled()) {
+      const testSession = await getTestAuthSession();
+      if (testSession && ADMIN_ROLES.has(testSession.role)) {
+        isAuthenticatedAdmin = true;
+      }
+    }
+
+    if (!isAuthenticatedAdmin) {
       const signInUrl = new URL('/sign-in', req.url);
       signInUrl.searchParams.set('redirect_url', req.url);
       return NextResponse.redirect(signInUrl);

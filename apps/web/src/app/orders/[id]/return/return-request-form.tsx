@@ -8,11 +8,18 @@ import { useApiClient } from '@/lib/client-api';
 import { formatPrice } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
 
-export default function ReturnRequestForm({ order }: { order: Order }) {
+interface ReturnRequestFormProps {
+  order: Order;
+  isGuest?: boolean;
+}
+
+export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequestFormProps) {
   const router = useRouter();
   const api = useApiClient();
   const [selected, setSelected] = React.useState<Record<string, { qty: number; reason: string }>>({});
+  const [email, setEmail] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [error, setError] = React.useState('');
 
   const windowDays = 30;
   const isWithinWindow =
@@ -31,6 +38,7 @@ export default function ReturnRequestForm({ order }: { order: Order }) {
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setIsSubmitting(true);
+    setError('');
     const items = Object.entries(selected).map(([itemId, value]) => {
       const orderItem = order.items.find((i) => i.id === itemId)!;
       return {
@@ -42,12 +50,23 @@ export default function ReturnRequestForm({ order }: { order: Order }) {
     });
 
     try {
-      await api.returns.createForOrder(order.id, {
-        items,
-        reason: items.map((i) => i.reason).join('; ') || 'Customer return',
-      });
+      if (isGuest) {
+        await api.returns.createGuest({
+          orderId: order.id,
+          email,
+          items,
+          reason: items.map((i) => i.reason).join('; ') || 'Customer return',
+        });
+      } else {
+        await api.returns.createForOrder(order.id, {
+          items,
+          reason: items.map((i) => i.reason).join('; ') || 'Customer return',
+        });
+      }
       router.push(`/orders/${order.id}`);
       router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to submit return request');
     } finally {
       setIsSubmitting(false);
     }
@@ -58,6 +77,26 @@ export default function ReturnRequestForm({ order }: { order: Order }) {
       <h1 className="mb-6 text-2xl font-bold">Request return for order {order.orderNumber}</h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        {isGuest ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Order email</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              <label htmlFor="email" className="text-sm font-medium">Email address associated with this order</label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="rounded-md border px-3 py-2 text-sm"
+                placeholder="customer@example.com"
+              />
+            </CardContent>
+          </Card>
+        ) : null}
+
         <Card>
           <CardHeader>
             <CardTitle>Select items</CardTitle>
@@ -125,9 +164,13 @@ export default function ReturnRequestForm({ order }: { order: Order }) {
           </CardContent>
         </Card>
 
+        {error ? (
+          <p className="text-sm text-destructive">{error}</p>
+        ) : null}
+
         <Button
           type="submit"
-          disabled={isSubmitting || Object.keys(selected).length === 0 || !isWithinWindow}
+          disabled={isSubmitting || Object.keys(selected).length === 0 || !isWithinWindow || (isGuest && !email)}
         >
           {isSubmitting ? 'Submitting...' : 'Submit return request'}
         </Button>

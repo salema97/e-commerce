@@ -11,7 +11,7 @@ import {
   returnStatusLabel,
   refundMethodLabel,
 } from '@repo/shared-utils';
-import type { ReturnRequest, RefundMethod } from '@repo/shared-types';
+import type { ReturnRequest, RefundMethod, Product, ProductVariant } from '@repo/shared-types';
 
 const METHODS: RefundMethod[] = ['ORIGINAL_PAYMENT', 'STORE_CREDIT', 'EXCHANGE'];
 
@@ -21,17 +21,62 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
   const [method, setMethod] = React.useState<RefundMethod>('ORIGINAL_PAYMENT');
   const [notes, setNotes] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [exchangeProductId, setExchangeProductId] = React.useState('');
+  const [exchangeVariantId, setExchangeVariantId] = React.useState('');
+  const [products, setProducts] = React.useState<Product[]>([]);
+
+  React.useEffect(() => {
+    api.products.findAll().then((data) => setProducts(data)).catch(() => setProducts([]));
+  }, [api]);
+
+  const selectedProduct = products.find((p) => p.id === exchangeProductId);
 
   const total = returnRequest.items.reduce(
     (sum, item) => sum + (item.refundValue ?? 0) * item.quantity,
     0,
   );
 
+  function handleProductChange(productId: string) {
+    setExchangeProductId(productId);
+    setExchangeVariantId('');
+  }
+
+  function handleVariantChange(variantId: string) {
+    setExchangeVariantId(variantId);
+  }
+
+  function getSelectedVariant(): ProductVariant | undefined {
+    if (!selectedProduct?.variants) return undefined;
+    if (exchangeVariantId) {
+      return selectedProduct.variants.find((v) => v.id === exchangeVariantId);
+    }
+    return selectedProduct.variants[0];
+  }
+
+  function getExchangeSummary(): string | null {
+    if (method !== 'EXCHANGE' || !selectedProduct) return null;
+    const variant = getSelectedVariant();
+    const totalQuantity = returnRequest.items.reduce((sum, item) => sum + item.quantity, 0);
+    const label = variant ? `${selectedProduct.name} — ${variant.name}` : selectedProduct.name;
+    return `${label} (Qty: ${totalQuantity})`;
+  }
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setIsSubmitting(true);
     try {
-      await api.returns.resolve(returnRequest.id, { refundMethod: method, notes });
+      const payload: { refundMethod: RefundMethod; notes?: string; exchangeProductId?: string; exchangeVariantId?: string } = {
+        refundMethod: method,
+        notes,
+      };
+      if (method === 'EXCHANGE') {
+        if (!exchangeProductId) {
+          throw new Error('Select a replacement product for exchange');
+        }
+        payload.exchangeProductId = exchangeProductId;
+        if (exchangeVariantId) payload.exchangeVariantId = exchangeVariantId;
+      }
+      await api.returns.resolve(returnRequest.id, payload);
       router.push(`/admin/returns/${returnRequest.id}`);
       router.refresh();
     } finally {
@@ -94,6 +139,51 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
                 ))}
               </div>
 
+              {method === 'EXCHANGE' ? (
+                <div className="grid gap-3">
+                  <div className="grid gap-2">
+                    <label htmlFor="exchangeProduct" className="text-sm font-medium">Replacement product</label>
+                    <select
+                      id="exchangeProduct"
+                      value={exchangeProductId}
+                      onChange={(e) => handleProductChange(e.target.value)}
+                      className="rounded-md border px-3 py-2 text-sm"
+                      required
+                    >
+                      <option value="" disabled>Select a product</option>
+                      {products?.map((product: Product) => (
+                        <option key={product.id} value={product.id}>
+                          {product.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {selectedProduct && selectedProduct.variants && selectedProduct.variants.length > 0 ? (
+                    <div className="grid gap-2">
+                      <label htmlFor="exchangeVariant" className="text-sm font-medium">Variant</label>
+                      <select
+                        id="exchangeVariant"
+                        value={exchangeVariantId}
+                        onChange={(e) => handleVariantChange(e.target.value)}
+                        className="rounded-md border px-3 py-2 text-sm"
+                      >
+                        <option value="">Default variant</option>
+                        {selectedProduct.variants.map((variant: ProductVariant) => (
+                          <option key={variant.id} value={variant.id}>
+                            {variant.name} ({variant.sku})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : null}
+
+                  {getExchangeSummary() ? (
+                    <p className="text-sm text-muted-foreground">{getExchangeSummary()}</p>
+                  ) : null}
+                </div>
+              ) : null}
+
               <div className="grid gap-2">
                 <label htmlFor="notes" className="text-sm font-medium">Notes</label>
                 <textarea
@@ -105,7 +195,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
                 />
               </div>
 
-              <Button type="submit" disabled={isSubmitting || returnRequest.status !== 'INSPECTION'}>
+              <Button type="submit" disabled={isSubmitting || returnRequest.status !== 'INSPECTION' || (method === 'EXCHANGE' && !exchangeProductId)}>
                 {isSubmitting ? 'Resolving...' : 'Confirm resolution'}
               </Button>
             </form>

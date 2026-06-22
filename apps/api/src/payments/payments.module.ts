@@ -5,6 +5,7 @@ import { PaymentProviderFactory } from './payment-provider.factory.js';
 import { PaymentWebhookService } from './payment-webhook.service.js';
 import { PaymentWebhookController } from './webhook.controller.js';
 import { PaymentsController } from './payments.controller.js';
+import { TestPaymentsController } from './test-payments.controller.js';
 import { StripeProvider } from './stripe/stripe.provider.js';
 import { StripeWebhookController } from './stripe/stripe-webhook.controller.js';
 import { StripeWebhookService } from './stripe/stripe-webhook.service.js';
@@ -16,10 +17,16 @@ import { PlaceToPayProvider } from './placetopay/placetopay.provider.js';
 import { InvoicesModule } from '../invoices/invoices.module.js';
 import { InventoryModule } from '../inventory/inventory.module.js';
 import { AuditModule } from '../audit/audit.module.js';
+import { isTestAuthEnabled } from '../auth/test-auth.js';
 
 @Module({
   imports: [InvoicesModule, InventoryModule, AuditModule],
-  controllers: [StripeWebhookController, PaymentWebhookController, PaymentsController],
+  controllers: [
+    StripeWebhookController,
+    PaymentWebhookController,
+    PaymentsController,
+    ...(isTestAuthEnabled() ? [TestPaymentsController] : []),
+  ],
   providers: [
     PaymentsService,
     RefundService,

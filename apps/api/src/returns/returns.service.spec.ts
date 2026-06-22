@@ -296,6 +296,42 @@ describe('ReturnsService', () => {
       expect(invoicesService.issueCreditNote).toHaveBeenCalled();
     });
 
+    it('creates an exchange order when method is EXCHANGE with a selected replacement product', async () => {
+      prisma.returnRequest.findUnique.mockResolvedValue(buildReturnForResolve());
+      prisma.returnRequest.update.mockResolvedValue({ id: 'rr1', status: ReturnStatus.RESOLVED, refundMethod: RefundMethod.EXCHANGE, items: [] });
+      prisma.order.create.mockResolvedValue({ id: 'exc1' });
+      prisma.product.findUnique.mockResolvedValue({
+        id: 'p2',
+        name: 'Replacement Product',
+        sku: 'REPL-001',
+        price: new Prisma.Decimal(50),
+        variants: [{ id: 'v2', productId: 'p2', sku: 'REPL-001-BLK', name: 'Black', price: new Prisma.Decimal(50) }],
+      });
+      prisma.__txClient.inventory.findFirst.mockResolvedValue({ id: 'inv1', productId: 'p1', variantId: null, quantity: 10, reservedQuantity: 0 });
+
+      const result = await service.resolveReturn('rr1', {
+        refundMethod: RefundMethod.EXCHANGE,
+        exchangeProductId: 'p2',
+        exchangeVariantId: 'v2',
+      }, 'admin1');
+
+      expect(result.status).toBe(ReturnStatus.RESOLVED);
+      expect(prisma.order.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          orderNumber: 'EXC-rr1',
+          items: { create: [expect.objectContaining({ productId: 'p2', variantId: 'v2', quantity: 1 })] },
+        }),
+      }));
+      expect(refundService.createRefund).not.toHaveBeenCalled();
+      expect(storeCreditService.issue).not.toHaveBeenCalled();
+    });
+
+    it('throws when exchange resolution lacks a replacement product', async () => {
+      prisma.returnRequest.findUnique.mockResolvedValue(buildReturnForResolve());
+
+      await expect(service.resolveReturn('rr1', { refundMethod: RefundMethod.EXCHANGE }, 'admin1')).rejects.toBeInstanceOf(BadRequestException);
+    });
+
     it('throws when resolving from a non-inspecting status', async () => {
       prisma.returnRequest.findUnique.mockResolvedValue(buildReturnForResolve(ReturnStatus.REQUESTED));
       await expect(service.resolveReturn('rr1', { refundMethod: RefundMethod.ORIGINAL_PAYMENT }, 'admin1')).rejects.toBeInstanceOf(BadRequestException);

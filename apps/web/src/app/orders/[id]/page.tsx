@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation';
 import { auth } from '@clerk/nextjs/server';
 import Link from 'next/link';
 import { getServerApiClient } from '@/lib/api';
+import { getTestAuthSession } from '@/lib/test-auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -23,7 +24,8 @@ function isReturnable(order: Order): boolean {
 
 export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
   const { userId } = await auth();
-  if (!userId) {
+  const testSession = await getTestAuthSession();
+  if (!userId && !testSession) {
     redirect('/sign-in?redirect_url=/orders');
   }
 

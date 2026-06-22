@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@clerk/nextjs/server';
 import { AdminSidebar } from '@/components/layout/admin-sidebar';
 import { adminRoles, getCurrentRole } from '@/lib/auth';
+import { getTestAuthSession } from '@/lib/test-auth';
 
 export default async function AdminLayout({
   children,
@@ -10,8 +11,11 @@ export default async function AdminLayout({
 }>) {
   const { userId } = await auth();
   const role = await getCurrentRole();
+  const testSession = await getTestAuthSession();
+  const effectiveRole = role ?? testSession?.role;
+  const effectiveUserId = userId ?? testSession?.userId;
 
-  if (!userId || !role || !adminRoles.includes(role)) {
+  if (!effectiveUserId || !effectiveRole || !adminRoles.includes(effectiveRole)) {
     redirect('/sign-in?redirect_url=/admin/dashboard');
   }
 
