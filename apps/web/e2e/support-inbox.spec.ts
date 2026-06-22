@@ -43,6 +43,24 @@ test.describe('admin support inbox e2e', () => {
     await expect(page.locator('body')).toContainText('Asignado');
   });
 
+  test('support agent marks a conversation as resolved', async ({ page, request }) => {
+    await createConversationViaWebhook(request, {
+      content: 'Mi duda fue resuelta, gracias',
+      contactName: 'Cliente Resuelto',
+    });
+
+    await authenticatePage(page, TEST_SUPPORT);
+    await page.goto('/admin/support');
+
+    await page.getByText('Cliente Resuelto').click();
+
+    await page.locator('select[aria-label="Estado de la conversación"]').selectOption('RESOLVED');
+    await expect(page.locator('body')).toContainText('Resuelto');
+
+    await page.goto('/admin/support');
+    await expect(page.locator('body')).toContainText('Cliente Resuelto');
+  });
+
   test('non-support admin role cannot access support inbox', async ({ page }) => {
     // Finance role has no support access.
     await authenticatePage(page, { userId: 'test_finance_user', role: 'FINANCE' });
