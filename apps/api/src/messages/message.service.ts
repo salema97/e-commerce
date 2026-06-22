@@ -86,6 +86,34 @@ export class MessageService {
     return message;
   }
 
+  async persistOutbound(data: {
+    conversationId: string;
+    remoteJid: string;
+    instance?: string;
+    content: string;
+    status?: MessageStatus;
+    externalMessageId?: string | null;
+    errorMessage?: string | null;
+  }) {
+    const message = await this.prisma.message.create({
+      data: {
+        conversationId: data.conversationId,
+        remoteJid: data.remoteJid,
+        instance: data.instance ?? 'ecommerce',
+        direction: 'OUTBOUND',
+        contentType: 'TEXT',
+        content: data.content,
+        status: data.status ?? 'SENT',
+        externalMessageId: data.externalMessageId,
+        errorMessage: data.errorMessage,
+      },
+    });
+
+    await this.conversationService.touch(data.conversationId, 'OUTBOUND');
+
+    return message;
+  }
+
   async findAllByConversation(conversationId: string, query: ListMessagesQueryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
