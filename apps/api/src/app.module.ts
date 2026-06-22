@@ -18,6 +18,7 @@ import { ClerkModule } from './clerk/clerk.module.js';
 import { AuditModule } from './audit/audit.module.js';
 import { PaymentsModule } from './payments/payments.module.js';
 import { InvoicesModule } from './invoices/invoices.module.js';
+import { ReturnsModule } from './returns/returns.module.js';
 import { ClerkJwtGuard } from './auth/clerk-jwt.guard.js';
 import { RolesGuard } from './auth/roles.guard.js';
 import { AuditInterceptor } from './audit/audit.interceptor.js';
@@ -58,6 +59,7 @@ import { AuditInterceptor } from './audit/audit.interceptor.js';
     OrdersModule,
     PaymentsModule,
     InvoicesModule,
+    ReturnsModule,
   ],
   providers: [
     {

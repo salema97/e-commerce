@@ -97,6 +97,35 @@ enum ExpenseStatus {
   CANCELLED
 }
 
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  INSPECTION
+  RESOLVED
+  CLOSED
+}
+
+enum ReturnItemCondition {
+  NEW
+  USED
+  DAMAGED
+}
+
+enum RefundMethod {
+  ORIGINAL_PAYMENT
+  STORE_CREDIT
+  EXCHANGE
+}
+
+enum CreditNoteStatus {
+  DRAFT
+  SUBMITTED
+  AUTHORIZED
+  REJECTED
+  FAILED
+}
+
 model User {
   id               String    @id @default(uuid())
   clerkUserId      String    @unique
@@ -113,6 +142,8 @@ model User {
   addresses     Address[]
   conversations Conversation[]
   auditLogs     AuditLog[]
+  returns       ReturnRequest[]
+  storeCredits  StoreCredit[]
 
   @@index([clerkUserId])
   @@index([role])
@@ -167,6 +198,7 @@ model Product {
   cartItems         CartItem[]
   wishlists         Wishlist[]
   backInStockAlerts BackInStockAlert[]
+  returnItems       ReturnItem[]
 
   @@index([slug])
   @@index([categoryId])
@@ -188,6 +220,7 @@ model ProductVariant {
   inventory  Inventory[]
   orderItems OrderItem[]
   cartItems  CartItem[]
+  returnItems ReturnItem[]
 
   @@index([productId])
   @@index([sku])
@@ -296,6 +329,7 @@ model Order {
   refunds        Refund[]
   invoice        Invoice?
   receipt        Receipt?
+  returns        ReturnRequest[]
 
   @@index([userId])
   @@index([status])
@@ -659,4 +693,84 @@ model ExpenseCategory {
   expenses Expense[]
 
   @@index([name])
+}
+
+model ReturnRequest {
+  id               String        @id @default(uuid())
+  orderId          String
+  userId           String?
+  status           ReturnStatus  @default(REQUESTED)
+  reason           String
+  refundMethod     RefundMethod?
+  returnWindowDays Int           @default(30)
+  inspectedAt      DateTime?
+  resolvedAt       DateTime?
+  closedAt         DateTime?
+  approvedById     String?
+  rejectedById     String?
+  creditNoteId     String?       @unique
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  order       Order       @relation(fields: [orderId], references: [id])
+  user        User?       @relation(fields: [userId], references: [id])
+  items       ReturnItem[]
+  creditNote  CreditNote? @relation(fields: [creditNoteId], references: [id])
+
+  @@index([orderId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ReturnItem {
+  id               String              @id @default(uuid())
+  returnRequestId  String
+  productId        String
+  productVariantId String?
+  quantity         Int
+  condition        ReturnItemCondition?
+  refundValue      Decimal?            @db.Decimal(12, 2)
+  createdAt        DateTime            @default(now())
+
+  returnRequest ReturnRequest     @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+  product       Product           @relation(fields: [productId], references: [id])
+  variant       ProductVariant?   @relation(fields: [productVariantId], references: [id])
+
+  @@index([returnRequestId])
+  @@index([productId])
+  @@index([productVariantId])
+}
+
+model CreditNote {
+  id                 String          @id @default(uuid())
+  accessKey          String          @unique
+  authorizationNumber String?
+  status             CreditNoteStatus @default(DRAFT)
+  xmlContent         String?         @db.Text
+  signedXml          String?         @db.Text
+  totalAmount        Decimal         @db.Decimal(12, 2)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  returnRequest ReturnRequest?
+
+  @@index([accessKey])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model StoreCredit {
+  id        String    @id @default(uuid())
+  userId    String
+  balance   Decimal   @db.Decimal(12, 2) @default(0)
+  currency  String    @default("USD")
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
