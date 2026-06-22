@@ -1,9 +1,21 @@
-import { Controller, Get, Post, Patch, Param, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  Body,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Public } from '../auth/public.decorator.js';
+import { Roles } from '../auth/roles.decorator.js';
+import { Role } from '../auth/role.enum.js';
+import { CurrentUser } from '../auth/current-user.decorator.js';
 import { OrdersService } from './orders.service.js';
-import { CreatePaymentIntentDto } from '../payments/dto/create-payment-intent.dto.js';
+import { CreateOrderDto, UpdateOrderStatusDto } from './dto/create-order.dto.js';
 
 @ApiTags('Orders')
 @Controller('orders')
@@ -13,42 +25,48 @@ export class OrdersController {
   @Post()
   @Public()
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
-  @ApiOperation({ summary: 'Create an order (placeholder)' })
-  @ApiResponse({ status: 201, description: 'Order placeholder' })
-  create() {
-    return this.ordersService.create();
-  }
-
-  @Get()
-  @ApiOperation({ summary: 'List orders (placeholder)' })
-  @ApiResponse({ status: 200, description: 'Order list placeholder' })
-  findAll() {
-    return this.ordersService.findAll();
+  @ApiOperation({ summary: 'Create a new order' })
+  @ApiResponse({ status: 201, description: 'Order created' })
+  @ApiResponse({ status: 400, description: 'Invalid input or insufficient stock' })
+  create(
+    @Body() dto: CreateOrderDto,
+    @CurrentUser('userId') userId?: string,
+  ) {
+    return this.ordersService.createOrder(userId, dto);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get an order (placeholder)' })
-  @ApiResponse({ status: 200, description: 'Order placeholder' })
-  findOne(@Param('id') id: string) {
-    return this.ordersService.findOne(id);
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get an order by id' })
+  @ApiResponse({ status: 200, description: 'Order found' })
+  @ApiResponse({ status: 404, description: 'Order not found' })
+  getOrderById(@Param('id') id: string) {
+    return this.ordersService.getOrderById(id);
   }
 
   @Patch(':id/status')
-  @ApiOperation({ summary: 'Update order status (placeholder)' })
-  @ApiResponse({ status: 200, description: 'Order status update placeholder' })
-  updateStatus(@Param('id') id: string) {
-    return this.ordersService.updateStatus(id);
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.INVENTORY)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update order status (admin)' })
+  @ApiResponse({ status: 200, description: 'Order status updated' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  updateOrderStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateOrderStatusDto,
+  ) {
+    return this.ordersService.updateOrderStatus(id, dto.status);
   }
 
-  @Post(':id/payment-intent')
+  @Post(':id/cancel')
   @Public()
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
-  @ApiOperation({ summary: 'Create a payment intent for an order' })
-  @ApiResponse({ status: 201, description: 'Payment intent created' })
-  createPaymentIntent(
-    @Param('id') orderId: string,
-    @Body() dto: CreatePaymentIntentDto,
+  @ApiOperation({ summary: 'Cancel an order' })
+  @ApiResponse({ status: 200, description: 'Order cancelled' })
+  @HttpCode(HttpStatus.OK)
+  cancelOrder(
+    @Param('id') id: string,
+    @CurrentUser('userId') userId?: string,
   ) {
-    return this.ordersService.createPaymentIntent(orderId, dto);
+    return this.ordersService.cancelOrder(id, userId);
   }
 }
