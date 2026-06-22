@@ -35,6 +35,12 @@ export interface RefundResult {
   status: RefundStatus;
 }
 
+export interface ProviderPaymentResult {
+  status: PaymentStatus;
+  providerTransactionId: string;
+  metadata?: Record<string, unknown>;
+}
+
 export interface ProviderSelectionContext {
   country?: string;
   currency?: string;
@@ -61,4 +67,6 @@ export abstract class PaymentProvider {
     signature: string,
     secret: string,
   ): boolean;
+
+  abstract parseWebhookPayload(payload: unknown): Promise<ProviderPaymentResult>;
 }

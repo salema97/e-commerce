@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Test } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { PaymentProviderFactory } from './payment-provider.factory.js';
 import { StripeProvider } from './stripe/stripe.provider.js';
 import { KushkiProvider } from './kushki/kushki.provider.js';
@@ -7,6 +8,10 @@ import { PayPhoneProvider } from './payphone/payphone.provider.js';
 import { MercadoPagoProvider } from './mercadopago/mercadopago.provider.js';
 import { PlaceToPayProvider } from './placetopay/placetopay.provider.js';
 import { PaymentProvider as PaymentProviderEnum } from './payment-provider.enum.js';
+
+const TEST_CONFIG = {
+  DEFAULT_LOCAL_PAYMENT_PROVIDER: 'PLACETOPAY',
+};
 
 describe('PaymentProviderFactory', () => {
   let factory: PaymentProviderFactory;
@@ -20,6 +25,7 @@ describe('PaymentProviderFactory', () => {
     const module = await Test.createTestingModule({
       providers: [
         PaymentProviderFactory,
+        { provide: ConfigService, useValue: new ConfigService(TEST_CONFIG) },
         { provide: StripeProvider, useValue: { name: 'StripeProvider' } as unknown as StripeProvider },
         { provide: KushkiProvider, useValue: { name: 'KushkiProvider' } as unknown as KushkiProvider },
         { provide: PayPhoneProvider, useValue: { name: 'PayPhoneProvider' } as unknown as PayPhoneProvider },

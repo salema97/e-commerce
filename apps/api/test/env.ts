@@ -1,2 +1,11 @@
 process.env.STRIPE_SUCCESS_URL = process.env.STRIPE_SUCCESS_URL ?? 'https://example.com/success';
 process.env.STRIPE_CANCEL_URL = process.env.STRIPE_CANCEL_URL ?? 'https://example.com/cancel';
+process.env.KUSHKI_PRIVATE_KEY = process.env.KUSHKI_PRIVATE_KEY ?? 'kushki_private_test';
+process.env.KUSHKI_WEBHOOK_SECRET = process.env.KUSHKI_WEBHOOK_SECRET ?? 'kushki_webhook_secret';
+process.env.PAYPHONE_TOKEN = process.env.PAYPHONE_TOKEN ?? 'payphone_token_test';
+process.env.PAYPHONE_STORE_ID = process.env.PAYPHONE_STORE_ID ?? 'payphone_store_test';
+process.env.MERCADOPAGO_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN ?? 'mp_token_test';
+process.env.MERCADOPAGO_WEBHOOK_SECRET = process.env.MERCADOPAGO_WEBHOOK_SECRET ?? 'mp_webhook_secret';
+process.env.PLACETOPAY_LOGIN = process.env.PLACETOPAY_LOGIN ?? 'ptp_login_test';
+process.env.PLACETOPAY_SECRET_KEY = process.env.PLACETOPAY_SECRET_KEY ?? 'ptp_secret_test';
+process.env.PLACETOPAY_BASE_URL = process.env.PLACETOPAY_BASE_URL ?? 'https://ptp.test';

@@ -7,6 +7,11 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { StripeProvider } from '../src/payments/stripe/stripe.provider.js';
+import { KushkiProvider } from '../src/payments/kushki/kushki.provider.js';
+import { PayPhoneProvider } from '../src/payments/payphone/payphone.provider.js';
+import { MercadoPagoProvider } from '../src/payments/mercadopago/mercadopago.provider.js';
+import { PlaceToPayProvider } from '../src/payments/placetopay/placetopay.provider.js';
+import { PaymentProviderFactory } from '../src/payments/payment-provider.factory.js';
 import { OrderStatus, PaymentProvider, PaymentStatus } from '@prisma/client';
 
 vi.mock('@clerk/backend', async () => ({
@@ -19,6 +24,10 @@ const TEST_CONFIG = {
   CLERK_SECRET_KEY: 'sk_test_xxx', CLERK_WEBHOOK_SECRET: 'whsec_xxx',
   STRIPE_SECRET_KEY: 'sk_test_xxx', STRIPE_WEBHOOK_SECRET: 'whsec_xxx',
   STRIPE_SUCCESS_URL: 'https://example.com/success', STRIPE_CANCEL_URL: 'https://example.com/cancel',
+  KUSHKI_PRIVATE_KEY: 'kushki_private_test', KUSHKI_WEBHOOK_SECRET: 'kushki_webhook_secret',
+  PAYPHONE_TOKEN: 'payphone_token_test', PAYPHONE_STORE_ID: 'payphone_store_test',
+  MERCADOPAGO_ACCESS_TOKEN: 'mp_token_test', MERCADOPAGO_WEBHOOK_SECRET: 'mp_webhook_secret',
+  PLACETOPAY_LOGIN: 'ptp_login_test', PLACETOPAY_SECRET_KEY: 'ptp_secret_test', PLACETOPAY_BASE_URL: 'https://ptp.test',
   SRI_MODE: 'direct', SRI_RUC: '1792146739001', SRI_SOL_KEY: 'test', SRI_DIGITAL_CERTIFICATE_PATH: 'data:test',
   SRI_DIGITAL_CERTIFICATE_PASSWORD: 'test', SRI_ESTABLISHMENT_CODE: '001', SRI_EMISSION_POINT_CODE: '001', SRI_TEST_ENVIRONMENT: 'true',
 };
@@ -70,10 +79,27 @@ describe('Payments (e2e)', () => {
     const stripeProviderMock = {
       validateWebhookSignature: vi.fn(() => true),
     };
+    const localProviderMock = {
+      validateWebhookSignature: vi.fn((payload: Buffer, signature: string) =>
+        signature === 'valid-signature',
+      ),
+      parseWebhookPayload: vi.fn(async (payload: unknown) => {
+        const dto = payload as { transactionReference?: string; id?: string; status?: string };
+        return {
+          providerTransactionId: dto.transactionReference ?? dto.id ?? 'local_txn',
+          status: PaymentStatus.COMPLETED,
+          metadata: payload as Record<string, unknown>,
+        };
+      }),
+    };
     const module = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(ConfigService).useValue(new ConfigService(TEST_CONFIG))
       .overrideProvider(PrismaService).useValue(prismaMock as never)
       .overrideProvider(StripeProvider).useValue(stripeProviderMock)
+      .overrideProvider(KushkiProvider).useValue(localProviderMock)
+      .overrideProvider(PayPhoneProvider).useValue(localProviderMock)
+      .overrideProvider(MercadoPagoProvider).useValue(localProviderMock)
+      .overrideProvider(PlaceToPayProvider).useValue(localProviderMock)
       .compile();
     app = module.createNestApplication();
     app.setGlobalPrefix('v1');
@@ -137,5 +163,55 @@ describe('Payments (e2e)', () => {
 
     expect(prismaMock.payment.findFirst).not.toHaveBeenCalled();
     expect(prismaMock.payment.update).not.toHaveBeenCalled();
+  });
+
+  it('POST /v1/webhooks/payments/:provider routes to the correct adapter and confirms payment', async () => {
+    prismaMock.payment.findFirst.mockResolvedValueOnce({
+      id: 'pay_kushki',
+      orderId: 'o1',
+      provider: PaymentProvider.KUSHKI,
+      status: PaymentStatus.PENDING,
+    });
+
+    const res = await request(app.getHttpServer())
+      .post('/v1/webhooks/payments/kushki')
+      .set('x-provider-signature', 'valid-signature')
+      .send({ transactionReference: 'kushki_txn_1', status: 'approved' })
+      .expect(200);
+
+    expect(res.body).toEqual({
+      received: true,
+      providerTransactionId: 'kushki_txn_1',
+      status: PaymentStatus.COMPLETED,
+    });
+    expect(prismaMock.payment.update).toHaveBeenCalled();
+    expect(prismaMock.order.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { status: OrderStatus.PROCESSING } }),
+    );
+  });
+
+  it('rejects local provider webhook with invalid signature', async () => {
+    await request(app.getHttpServer())
+      .post('/v1/webhooks/payments/payphone')
+      .set('x-provider-signature', 'invalid-signature')
+      .send({ id: 'pp_txn_1', transactionStatus: 1 })
+      .expect(401);
+  });
+
+  it('returns 400 for unknown provider name', async () => {
+    await request(app.getHttpServer())
+      .post('/v1/webhooks/payments/unknown')
+      .set('x-provider-signature', 'valid-signature')
+      .send({})
+      .expect(400);
+  });
+
+  it('factory resolves the configured local provider for Ecuador orders', async () => {
+    const factory = app.get(PaymentProviderFactory);
+    const resolved = factory.resolveProvider({
+      country: 'Ecuador',
+      method: 'mercadopago',
+    });
+    expect(resolved).toBe(app.get(MercadoPagoProvider));
   });
 });

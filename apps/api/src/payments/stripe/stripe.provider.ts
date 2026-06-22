@@ -6,6 +6,7 @@ import {
   PaymentIntentResult,
   PaymentProvider,
   PaymentResult,
+  ProviderPaymentResult,
   RefundResult,
   PaymentOrder,
   CheckoutSessionResult,
@@ -129,6 +130,26 @@ export class StripeProvider extends PaymentProvider {
     } catch {
       return false;
     }
+  }
+
+  async parseWebhookPayload(payload: unknown): Promise<ProviderPaymentResult> {
+    const event = payload as {
+      type?: string;
+      data?: { object?: { id?: string; status?: string } };
+    };
+
+    let status: PaymentStatus = PaymentStatus.PENDING;
+    if (event.type === 'payment_intent.succeeded' || event.type === 'checkout.session.completed') {
+      status = PaymentStatus.COMPLETED;
+    } else if (event.type === 'payment_intent.payment_failed') {
+      status = PaymentStatus.FAILED;
+    }
+
+    return {
+      providerTransactionId: event.data?.object?.id ?? '',
+      status,
+      metadata: event as Record<string, unknown>,
+    };
   }
 
   private mapPaymentIntentStatus(status: Stripe.PaymentIntent.Status): PaymentStatus {

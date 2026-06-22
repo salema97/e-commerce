@@ -14,6 +14,15 @@ const TEST_CONFIG = {
   STRIPE_WEBHOOK_SECRET: 'whsec_xxx',
   STRIPE_SUCCESS_URL: 'https://example.com/success',
   STRIPE_CANCEL_URL: 'https://example.com/cancel',
+  KUSHKI_PRIVATE_KEY: 'kushki_private_test',
+  KUSHKI_WEBHOOK_SECRET: 'kushki_webhook_secret',
+  PAYPHONE_TOKEN: 'payphone_token_test',
+  PAYPHONE_STORE_ID: 'payphone_store_test',
+  MERCADOPAGO_ACCESS_TOKEN: 'mp_token_test',
+  MERCADOPAGO_WEBHOOK_SECRET: 'mp_webhook_secret',
+  PLACETOPAY_LOGIN: 'ptp_login_test',
+  PLACETOPAY_SECRET_KEY: 'ptp_secret_test',
+  PLACETOPAY_BASE_URL: 'https://ptp.test',
   SRI_MODE: 'direct',
   SRI_RUC: '1792146739001',
   SRI_SOL_KEY: 'test',
@@ -31,6 +40,15 @@ describe('AppModule', () => {
   beforeEach(async () => {
     vi.stubEnv('STRIPE_SUCCESS_URL', TEST_CONFIG.STRIPE_SUCCESS_URL);
     vi.stubEnv('STRIPE_CANCEL_URL', TEST_CONFIG.STRIPE_CANCEL_URL);
+    vi.stubEnv('KUSHKI_PRIVATE_KEY', TEST_CONFIG.KUSHKI_PRIVATE_KEY);
+    vi.stubEnv('KUSHKI_WEBHOOK_SECRET', TEST_CONFIG.KUSHKI_WEBHOOK_SECRET);
+    vi.stubEnv('PAYPHONE_TOKEN', TEST_CONFIG.PAYPHONE_TOKEN);
+    vi.stubEnv('PAYPHONE_STORE_ID', TEST_CONFIG.PAYPHONE_STORE_ID);
+    vi.stubEnv('MERCADOPAGO_ACCESS_TOKEN', TEST_CONFIG.MERCADOPAGO_ACCESS_TOKEN);
+    vi.stubEnv('MERCADOPAGO_WEBHOOK_SECRET', TEST_CONFIG.MERCADOPAGO_WEBHOOK_SECRET);
+    vi.stubEnv('PLACETOPAY_LOGIN', TEST_CONFIG.PLACETOPAY_LOGIN);
+    vi.stubEnv('PLACETOPAY_SECRET_KEY', TEST_CONFIG.PLACETOPAY_SECRET_KEY);
+    vi.stubEnv('PLACETOPAY_BASE_URL', TEST_CONFIG.PLACETOPAY_BASE_URL);
 
     const imported = await import('./app.module.js');
     AppModule = imported.AppModule;

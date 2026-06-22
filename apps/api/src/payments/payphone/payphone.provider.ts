@@ -1,5 +1,117 @@
 import { Injectable } from '@nestjs/common';
-import { NotImplementedPaymentProvider } from '../not-implemented.provider.js';
+import { ConfigService } from '@nestjs/config';
+import { timingSafeEqual } from 'crypto';
+import {
+  CreatePaymentIntentOptions,
+  PaymentIntentResult,
+  PaymentOrder,
+  PaymentProvider,
+  PaymentResult,
+  ProviderPaymentResult,
+  RefundResult,
+  CheckoutSessionResult,
+} from '../payment-provider.interface.js';
+import { PaymentStatus } from '../entities/payment-status.enum.js';
+import { PayPhoneWebhookDto } from '../dto/provider-webhook.dto.js';
 
 @Injectable()
-export class PayPhoneProvider extends NotImplementedPaymentProvider {}
+export class PayPhoneProvider extends PaymentProvider {
+  private readonly baseUrl = 'https://payphone.app';
+
+  constructor(private readonly configService: ConfigService) {
+    super();
+  }
+
+  private get token(): string {
+    return this.configService.getOrThrow<string>('PAYPHONE_TOKEN');
+  }
+
+  private get storeId(): string {
+    return this.configService.getOrThrow<string>('PAYPHONE_STORE_ID');
+  }
+
+  async createPaymentIntent(order: CreatePaymentIntentOptions): Promise<PaymentIntentResult> {
+    const response = await fetch(`${this.baseUrl}/api/transaction/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.token}`,
+      },
+      body: JSON.stringify({
+        amount: order.amount,
+        reference: order.orderNumber,
+        storeId: this.storeId,
+        metadata: {
+          orderId: order.orderId,
+          ...order.metadata,
+        },
+      }),
+    });
+
+    const data = (await response.json()) as { transactionId?: string; message?: string };
+    if (!response.ok) {
+      throw new Error(`PayPhone transaction failed: ${data.message ?? response.statusText}`);
+    }
+
+    return {
+      providerTransactionId: data.transactionId ?? `payphone_${order.orderId}`,
+      clientSecret: '',
+      status: PaymentStatus.PENDING,
+    };
+  }
+
+  async createCheckoutSession(order: PaymentOrder): Promise<CheckoutSessionResult> {
+    const result = await this.createPaymentIntent({ ...order, idempotencyKey: '' });
+    return {
+      sessionId: result.providerTransactionId,
+      url: `${this.baseUrl}/pay/${result.providerTransactionId}`,
+    };
+  }
+
+  async capturePayment(): Promise<void> {
+    throw new Error('PayPhone capturePayment is not implemented');
+  }
+
+  async confirmPayment(externalId: string): Promise<PaymentResult> {
+    return {
+      providerTransactionId: externalId,
+      status: PaymentStatus.PENDING,
+    };
+  }
+
+  async refund(): Promise<RefundResult> {
+    throw new Error('PayPhone refund is not implemented');
+  }
+
+  validateWebhookSignature(_payload: Buffer, signature: string, secret: string): boolean {
+    return constantTimeCompare(signature, secret);
+  }
+
+  async parseWebhookPayload(payload: unknown): Promise<ProviderPaymentResult> {
+    const dto = payload as PayPhoneWebhookDto;
+    const rawStatus = dto.transactionStatus as number | string | undefined;
+    const status =
+      rawStatus === 1 || rawStatus === '1'
+        ? PaymentStatus.COMPLETED
+        : rawStatus === -1 || rawStatus === '-1'
+          ? PaymentStatus.FAILED
+          : PaymentStatus.PENDING;
+
+    return {
+      providerTransactionId: String(dto.id ?? dto.reference ?? ''),
+      status,
+      metadata: dto as Record<string, unknown>,
+    };
+  }
+}
+
+function constantTimeCompare(a: string, b: string): boolean {
+  try {
+    const bufA = Buffer.from(a);
+    const bufB = Buffer.from(b);
+    if (bufA.length !== bufB.length) return false;
+    return timingSafeEqual(bufA, bufB);
+  } catch {
+    return false;
+  }
+}

@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { PaymentsService } from './payments.service.js';
 import { PaymentProviderFactory } from './payment-provider.factory.js';
+import { PaymentWebhookService } from './payment-webhook.service.js';
+import { PaymentWebhookController } from './webhook.controller.js';
 import { StripeProvider } from './stripe/stripe.provider.js';
 import { StripeWebhookController } from './stripe/stripe-webhook.controller.js';
 import { StripeWebhookService } from './stripe/stripe-webhook.service.js';
@@ -15,10 +17,11 @@ import { AuditModule } from '../audit/audit.module.js';
 
 @Module({
   imports: [InvoicesModule, InventoryModule, AuditModule],
-  controllers: [StripeWebhookController],
+  controllers: [StripeWebhookController, PaymentWebhookController],
   providers: [
     PaymentsService,
     PaymentProviderFactory,
+    PaymentWebhookService,
     StripeProvider,
     StripeWebhookService,
     StripeCustomerService,
@@ -27,6 +30,6 @@ import { AuditModule } from '../audit/audit.module.js';
     MercadoPagoProvider,
     PlaceToPayProvider,
   ],
-  exports: [PaymentsService, PaymentProviderFactory, StripeCustomerService],
+  exports: [PaymentsService, PaymentProviderFactory, StripeCustomerService, PaymentWebhookService],
 })
 export class PaymentsModule {}
