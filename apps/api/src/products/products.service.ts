@@ -1,0 +1,75 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { CreateProductDto } from './dto/create-product.dto.js';
+import { UpdateProductDto } from './dto/update-product.dto.js';
+
+const productInclude = {
+  category: true,
+  supplier: true,
+  variants: true,
+  attributes: true,
+  images: { orderBy: { sortOrder: 'asc' as const } },
+  inventory: true,
+};
+
+@Injectable()
+export class ProductsService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  create(data: CreateProductDto) {
+    const { variants, attributes, images, ...rest } = data;
+
+    return this.prisma.product.create({
+      data: {
+        ...rest,
+        status: rest.status ?? 'DRAFT',
+        variants: variants ? { createMany: { data: variants } } : undefined,
+        attributes: attributes ? { createMany: { data: attributes } } : undefined,
+        images: images ? { createMany: { data: images } } : undefined,
+      },
+      include: productInclude,
+    });
+  }
+
+  findAll() {
+    return this.prisma.product.findMany({
+      include: productInclude,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async findOne(id: string) {
+    const product = await this.prisma.product.findUnique({
+      where: { id },
+      include: productInclude,
+    });
+    if (!product) {
+      throw new NotFoundException(`Product with id ${id} not found`);
+    }
+    return product;
+  }
+
+  async update(id: string, data: UpdateProductDto) {
+    await this.findOne(id);
+    const { variants, attributes, images, ...rest } = data;
+
+    return this.prisma.product.update({
+      where: { id },
+      data: {
+        ...rest,
+        variants: variants ? { createMany: { data: variants } } : undefined,
+        attributes: attributes ? { createMany: { data: attributes } } : undefined,
+        images: images ? { createMany: { data: images } } : undefined,
+      },
+      include: productInclude,
+    });
+  }
+
+  async remove(id: string) {
+    await this.findOne(id);
+    return this.prisma.product.delete({
+      where: { id },
+      include: productInclude,
+    });
+  }
+}
