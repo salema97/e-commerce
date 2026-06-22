@@ -40,6 +40,12 @@ describe('InvoiceSequenceService', () => {
     expect(counter).toBe(1);
   });
 
+  it('allocates a zero-padded 9-digit sequence number for credit notes', async () => {
+    const number = await service.allocateNext('04', '001', '001');
+
+    expect(number).toBe('000000001');
+  });
+
   it('returns unique sequential numbers under concurrent allocation', async () => {
     const allocations = await Promise.all(
       Array.from({ length: 20 }, () => service.allocateNext('01', '001', '001')),

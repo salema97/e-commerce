@@ -103,6 +103,7 @@ enum ReturnStatus {
   REJECTED
   INSPECTION
   RESOLVED
+  RESOLUTION_PENDING_CREDIT_NOTE
   CLOSED
 }
 
@@ -330,6 +331,7 @@ model Order {
   invoice        Invoice?
   receipt        Receipt?
   returns        ReturnRequest[]
+  exchangeFor    ReturnRequest?       @relation("ExchangeOrder")
 
   @@index([userId])
   @@index([status])
@@ -402,6 +404,7 @@ model Refund {
   id              String        @id @default(uuid())
   orderId         String
   paymentId       String?
+  returnRequestId String?
   providerRefundId String?
   amount          Decimal       @db.Decimal(12, 2)
   reason          String
@@ -412,11 +415,13 @@ model Refund {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  payment Payment? @relation(fields: [paymentId], references: [id])
+  order         Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  payment       Payment?       @relation(fields: [paymentId], references: [id])
+  returnRequest ReturnRequest? @relation(fields: [returnRequestId], references: [id])
 
   @@index([orderId])
   @@index([paymentId])
+  @@index([returnRequestId])
   @@index([providerRefundId])
   @@index([status])
   @@index([requestedById])
@@ -709,18 +714,22 @@ model ReturnRequest {
   approvedById     String?
   rejectedById     String?
   creditNoteId     String?       @unique
+  exchangeOrderId  String?
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
-  order       Order       @relation(fields: [orderId], references: [id])
-  user        User?       @relation(fields: [userId], references: [id])
-  items       ReturnItem[]
-  creditNote  CreditNote? @relation(fields: [creditNoteId], references: [id])
+  order         Order        @relation(fields: [orderId], references: [id])
+  user          User?        @relation(fields: [userId], references: [id])
+  items         ReturnItem[]
+  creditNote    CreditNote?  @relation(fields: [creditNoteId], references: [id])
+  refunds       Refund[]
+  exchangeOrder Order?       @relation("ExchangeOrder", fields: [exchangeOrderId], references: [id])
 
   @@index([orderId])
   @@index([userId])
   @@index([status])
   @@index([createdAt])
+  @@index([exchangeOrderId])
 }
 
 model ReturnItem {
@@ -743,15 +752,16 @@ model ReturnItem {
 }
 
 model CreditNote {
-  id                 String          @id @default(uuid())
-  accessKey          String          @unique
+  id                  String           @id @default(uuid())
+  accessKey           String           @unique
   authorizationNumber String?
-  status             CreditNoteStatus @default(DRAFT)
-  xmlContent         String?         @db.Text
-  signedXml          String?         @db.Text
-  totalAmount        Decimal         @db.Decimal(12, 2)
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
+  status              CreditNoteStatus @default(DRAFT)
+  xmlContent          String?          @db.Text
+  signedXml           String?          @db.Text
+  sriResponse         Json?
+  totalAmount         Decimal          @db.Decimal(12, 2)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
   returnRequest ReturnRequest?
 

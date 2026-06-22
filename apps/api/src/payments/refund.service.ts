@@ -19,6 +19,7 @@ export interface CreateRefundInput {
   type: RefundType;
   requestedById?: string;
   reason?: string;
+  returnRequestId?: string;
 }
 
 export interface RefundRecord {
@@ -98,6 +99,7 @@ export class RefundService {
       data: {
         orderId: order.id,
         paymentId: payment.id,
+        returnRequestId: input.returnRequestId ?? null,
         providerRefundId: providerResult.providerRefundId,
         amount: new Prisma.Decimal(input.amount),
         reason: input.reason ?? `${input.type} refund`,
@@ -129,12 +131,14 @@ export class RefundService {
       });
     }
 
-    if (order.invoice) {
+    if (order.invoice && !input.returnRequestId) {
       await this.issueCreditNoteForRefund(order.invoice.accessKey, refund.id, input);
     } else {
       this.logger.log(
-        { orderId: order.id },
-        'No invoice on file; skipping SRI credit note',
+        { orderId: order.id, returnRequestId: input.returnRequestId ?? null },
+        input.returnRequestId
+          ? 'Return-request refund: skipping standalone credit note; ReturnsService will issue it'
+          : 'No invoice on file; skipping SRI credit note',
       );
     }
 
@@ -220,20 +224,25 @@ export class RefundService {
     refundId: string,
     input: CreateRefundInput,
   ): Promise<void> {
-    try {
-      const provider = this.invoiceProviderFactory.getProvider();
-      await provider.issueCreditNote({
-        invoiceAccessKey,
-        reason: input.reason ?? `${input.type} refund`,
-        items: [],
-        total: input.amount,
-      });
-    } catch (error) {
-      this.logger.error(
-        { error, refundId, invoiceAccessKey },
-        'Failed to issue SRI credit note for refund',
-      );
-    }
+    const provider = this.invoiceProviderFactory.getProvider();
+    await provider.issueCreditNote({
+      returnRequestId: input.returnRequestId ?? '',
+      invoiceAccessKey,
+      authorizationNumber: undefined,
+      codDocModificado: '01',
+      numDocModificado: invoiceAccessKey,
+      fechaEmisionDocumentoModificado: this.formatDate(new Date()),
+      reason: input.reason ?? `${input.type} refund`,
+      items: [],
+      total: input.amount,
+    });
+  }
+
+  private formatDate(date: Date): string {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   }
 
   private toRefundRecord(r: {

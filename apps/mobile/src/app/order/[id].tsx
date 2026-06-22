@@ -7,6 +7,13 @@ import { api } from '../../lib/api.js';
 import { formatPrice, orderStatusLabel } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
 
+function isReturnable(order: Order): boolean {
+  if (order.status !== 'DELIVERED') return false;
+  const deliveredAt = new Date(order.createdAt);
+  const windowDays = 30;
+  return deliveredAt.getTime() + windowDays * 24 * 60 * 60 * 1000 >= Date.now();
+}
+
 export default function OrderDetailScreen(): React.ReactElement {
   const router = useRouter();
   const params = useLocalSearchParams<{ id: string }>();
@@ -109,6 +116,16 @@ export default function OrderDetailScreen(): React.ReactElement {
               {order.shippingAddress.zipCode ? ` ${order.shippingAddress.zipCode}` : ''}
             </Text>
           </Card>
+        ) : null}
+
+        {isReturnable(order) ? (
+          <Button
+            variant="outline"
+            onPress={() => router.push(`/order/${orderId}/return`)}
+            size="lg"
+          >
+            Request return
+          </Button>
         ) : null}
 
         <Button onPress={() => router.replace('/(tabs)/account')} size="lg">

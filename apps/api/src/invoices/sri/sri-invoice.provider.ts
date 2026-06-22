@@ -1,5 +1,7 @@
-import { Injectable, Logger, NotImplementedException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Prisma, CreditNoteStatus } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service.js';
 import { InvoiceStatus } from '../invoice-status.enum.js';
 import {
   CreditNoteInput,
@@ -10,6 +12,7 @@ import {
 import { InvoiceSequenceService } from '../invoice-sequence.service.js';
 import { SriAccessKeyBuilder } from './sri-access-key.builder.js';
 import { SriXmlBuilder } from './sri-xml.builder.js';
+import { SriCreditNoteXmlBuilder } from './sri-credit-note-xml.builder.js';
 import { SriSignerService } from './sri-signer.service.js';
 import { SriSoapClient } from './sri-soap.client.js';
 
@@ -19,8 +22,10 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
 
   constructor(
     private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
     private readonly accessKeyBuilder: SriAccessKeyBuilder,
     private readonly xmlBuilder: SriXmlBuilder,
+    private readonly creditNoteXmlBuilder: SriCreditNoteXmlBuilder,
     private readonly signerService: SriSignerService,
     private readonly soapClient: SriSoapClient,
     private readonly invoiceSequenceService: InvoiceSequenceService,
@@ -129,13 +134,186 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
   }
 
   async issueCreditNote(returnRequest: CreditNoteInput): Promise<InvoiceResult> {
-    this.logger.warn(
-      { invoiceAccessKey: returnRequest.invoiceAccessKey },
-      'Credit note not implemented',
+    const establishmentCode = this.configService.getOrThrow<string>(
+      'SRI_ESTABLISHMENT_CODE',
     );
-    throw new NotImplementedException(
-      'SRI credit note (nota de credito 04) is not implemented yet',
+    const emissionPointCode = this.configService.getOrThrow<string>(
+      'SRI_EMISSION_POINT_CODE',
     );
+
+    const sequenceNumber =
+      await this.invoiceSequenceService.allocateNext(
+        '04',
+        establishmentCode,
+        emissionPointCode,
+      );
+
+    const accessKey = this.accessKeyBuilder.build({
+      date: new Date(),
+      documentType: '04',
+      ruc: this.configService.getOrThrow<string>('SRI_RUC'),
+      environment: this.getEnvironmentCode(),
+      establishmentCode,
+      emissionPointCode,
+      sequenceNumber,
+    });
+
+    const returnRecord = await this.prisma.returnRequest.findUnique({
+      where: { id: returnRequest.returnRequestId },
+      include: { order: true },
+    });
+
+    if (!returnRecord) {
+      throw new Error(
+        `Return request ${returnRequest.returnRequestId} not found`,
+      );
+    }
+
+    const xml = this.creditNoteXmlBuilder.buildNotaDeCredito({
+      accessKey,
+      customerName: returnRecord.order.customerEmail,
+      customerEmail: returnRecord.order.customerEmail,
+      customerPhone: returnRecord.order.customerPhone ?? undefined,
+      creditNote: returnRequest,
+      establishmentCode,
+      emissionPointCode,
+      sequenceNumber,
+      environment: this.getEnvironmentCode(),
+      companyRuc: this.configService.getOrThrow<string>('SRI_RUC'),
+      companyName: 'Empresa E-commerce',
+      companyTradeName: 'E-commerce',
+      companyAddress: 'Direccion matriz',
+    });
+
+    const certificatePath = this.configService.getOrThrow<string>(
+      'SRI_DIGITAL_CERTIFICATE_PATH',
+    );
+    const certificatePassword = this.configService.getOrThrow<string>(
+      'SRI_DIGITAL_CERTIFICATE_PASSWORD',
+    );
+
+    const p12Buffer = this.signerService.loadCertificateFileAsBuffer(certificatePath);
+    const signedXml = this.signerService.sign(xml, p12Buffer, certificatePassword);
+
+    const reception = await this.soapClient.submit(signedXml);
+
+    if (reception.estado !== 'RECIBIDA') {
+      const creditNote = await this.persistCreditNote({
+        accessKey,
+        returnRequestId: returnRequest.returnRequestId,
+        total: returnRequest.total,
+        signedXml,
+        status: InvoiceStatus.REJECTED,
+        sriResponse: reception,
+      });
+
+      return {
+        accessKey,
+        status: InvoiceStatus.REJECTED,
+        xmlContent: signedXml,
+        sriResponse: reception,
+      };
+    }
+
+    const authorization = await this.soapClient.poll(accessKey);
+    const auth = authorization.autorizaciones?.[0];
+
+    if (auth?.estado === 'AUTORIZADO') {
+      await this.persistCreditNote({
+        accessKey,
+        returnRequestId: returnRequest.returnRequestId,
+        total: returnRequest.total,
+        signedXml,
+        status: InvoiceStatus.AUTHORIZED,
+        authorizationNumber: auth.numeroAutorizacion,
+        sriResponse: authorization,
+      });
+
+      return {
+        accessKey,
+        authorizationNumber: auth.numeroAutorizacion,
+        status: InvoiceStatus.AUTHORIZED,
+        xmlContent: signedXml,
+        sriResponse: authorization,
+      };
+    }
+
+    if (auth?.estado === 'RECHAZADO') {
+      await this.persistCreditNote({
+        accessKey,
+        returnRequestId: returnRequest.returnRequestId,
+        total: returnRequest.total,
+        signedXml,
+        status: InvoiceStatus.REJECTED,
+        sriResponse: authorization,
+      });
+
+      return {
+        accessKey,
+        status: InvoiceStatus.REJECTED,
+        xmlContent: signedXml,
+        sriResponse: authorization,
+      };
+    }
+
+    await this.persistCreditNote({
+      accessKey,
+      returnRequestId: returnRequest.returnRequestId,
+      total: returnRequest.total,
+      signedXml,
+      status: InvoiceStatus.SUBMITTED,
+      sriResponse: authorization,
+    });
+
+    return {
+      accessKey,
+      status: InvoiceStatus.SUBMITTED,
+      xmlContent: signedXml,
+      sriResponse: authorization,
+    };
+  }
+
+  private async persistCreditNote(input: {
+    accessKey: string;
+    returnRequestId: string;
+    total: number;
+    signedXml: string;
+    status: InvoiceStatus;
+    authorizationNumber?: string;
+    sriResponse?: unknown;
+  }) {
+    const creditNoteStatus = input.status as CreditNoteStatus;
+
+    const creditNote = await this.prisma.creditNote.create({
+      data: {
+        accessKey: input.accessKey,
+        status: creditNoteStatus,
+        xmlContent: input.signedXml,
+        signedXml: input.signedXml,
+        totalAmount: new Prisma.Decimal(input.total),
+        authorizationNumber: input.authorizationNumber ?? null,
+        sriResponse: input.sriResponse
+          ? (input.sriResponse as unknown as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
+      },
+    });
+
+    await this.prisma.returnRequest.update({
+      where: { id: input.returnRequestId },
+      data: { creditNoteId: creditNote.id },
+    });
+
+    this.logger.log(
+      {
+        creditNoteId: creditNote.id,
+        accessKey: input.accessKey,
+        returnRequestId: input.returnRequestId,
+        status: input.status,
+      },
+      'Credit note persisted',
+    );
+
+    return creditNote;
   }
 
   private getEnvironmentCode(): '1' | '2' {

@@ -34,6 +34,11 @@ import type {
   Refund,
   ReceiptResponse,
   PaginatedResponse,
+  ReturnRequest,
+  CreateReturnRequestDto,
+  UpdateReturnStatusDto,
+  ResolveReturnDto,
+  StoreCreditBalance,
 } from '@repo/shared-types';
 import type { ApiClient } from './client.js';
 
@@ -53,6 +58,9 @@ export const queryKeys = {
   inventory: ['inventory'] as const,
   inventoryItem: (id: string) => ['inventory', id] as const,
   me: ['auth', 'me'] as const,
+  returns: (filters?: Record<string, string | number | undefined>) => ['returns', filters ?? {}] as const,
+  return: (id: string) => ['returns', id] as const,
+  storeCredit: ['returns', 'store-credit'] as const,
 };
 
 export function createQueryHooks(client: ApiClient) {
@@ -391,6 +399,77 @@ export function createQueryHooks(client: ApiClient) {
         queryKey: ['orders', orderId, 'receipt'],
         queryFn: () => client.orders.getReceipt(orderId),
         enabled: Boolean(orderId),
+        ...options,
+      }),
+
+    useReturns: (
+      filters?: Record<string, string | number | undefined>,
+      options?: Omit<UseQueryOptions<ReturnRequest[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.returns(filters),
+        queryFn: () => client.returns.findAll(filters),
+        ...options,
+      }),
+
+    useReturn: (
+      id: string,
+      options?: Omit<UseQueryOptions<ReturnRequest, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.return(id),
+        queryFn: () => client.returns.findOne(id),
+        enabled: Boolean(id),
+        ...options,
+      }),
+
+    useCreateReturnRequest: (
+      options?: UseMutationOptions<ReturnRequest, Error, { orderId: string; data: CreateReturnRequestDto }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ orderId, data }) => client.returns.createForOrder(orderId, data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.orders() });
+        },
+        ...options,
+      });
+    },
+
+    useUpdateReturnStatus: (
+      options?: UseMutationOptions<ReturnRequest, Error, { id: string; data: UpdateReturnStatusDto }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, data }) => client.returns.updateStatus(id, data),
+        onSuccess: (_, { id }) => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.returns() });
+          queryClient.invalidateQueries({ queryKey: queryKeys.return(id) });
+        },
+        ...options,
+      });
+    },
+
+    useResolveReturn: (
+      options?: UseMutationOptions<ReturnRequest, Error, { id: string; data: ResolveReturnDto }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, data }) => client.returns.resolve(id, data),
+        onSuccess: (_, { id }) => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.returns() });
+          queryClient.invalidateQueries({ queryKey: queryKeys.return(id) });
+        },
+        ...options,
+      });
+    },
+
+    useMyStoreCredit: (
+      options?: Omit<UseQueryOptions<StoreCreditBalance, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.storeCredit,
+        queryFn: () => client.returns.myStoreCredit(),
         ...options,
       }),
   };
