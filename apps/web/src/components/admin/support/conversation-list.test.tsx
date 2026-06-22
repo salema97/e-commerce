@@ -80,4 +80,55 @@ describe('ConversationList', () => {
     fireEvent.click(screen.getByRole('button', { name: /Asignados a mí/i }));
     expect(onFilterChange).toHaveBeenCalledWith({ assignedToMe: true });
   });
+
+  it('changes status filter', () => {
+    const onFilterChange = vi.fn();
+    render(
+      <ConversationList
+        conversations={[]}
+        filter={{ search: '', status: '', assignedToMe: false }}
+        onFilterChange={onFilterChange}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText(/Filtrar por estado/i), {
+      target: { value: 'PENDING' },
+    });
+
+    expect(onFilterChange).toHaveBeenCalledWith({ status: 'PENDING' });
+  });
+
+  it('changes search filter', () => {
+    const onFilterChange = vi.fn();
+    render(
+      <ConversationList
+        conversations={[]}
+        filter={{ search: '', status: '', assignedToMe: false }}
+        onFilterChange={onFilterChange}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/Buscar teléfono o nombre/i), {
+      target: { value: 'Juan' },
+    });
+
+    expect(onFilterChange).toHaveBeenCalledWith({ search: 'Juan' });
+  });
+
+  it('marks the selected conversation visually', () => {
+    const conversations = [makeConversation()];
+    render(
+      <ConversationList
+        conversations={conversations}
+        selectedId="c1"
+        filter={{ search: '', status: '', assignedToMe: false }}
+        onFilterChange={vi.fn()}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('conversation-item-c1')).toHaveClass('bg-primary/10');
+  });
 });

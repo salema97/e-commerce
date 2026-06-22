@@ -89,4 +89,75 @@ describe('ConversationDetail', () => {
     fireEvent.click(screen.getByRole('button', { name: /Asignarme/i }));
     expect(onUpdateConversation).toHaveBeenCalledWith({ assignedAgentId: 'u1' });
   });
+
+  it('changes conversation status', () => {
+    const onUpdateConversation = vi.fn();
+    render(
+      <ConversationDetail
+        conversation={makeConversation()}
+        messages={[]}
+        quickReplies={[]}
+        currentUserId="u1"
+        onSendMessage={vi.fn()}
+        onUpdateConversation={onUpdateConversation}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText(/Estado de la conversación/i), {
+      target: { value: 'RESOLVED' },
+    });
+
+    expect(onUpdateConversation).toHaveBeenCalledWith({ status: 'RESOLVED' });
+  });
+
+  it('inserts a quick reply into the textarea', () => {
+    render(
+      <ConversationDetail
+        conversation={makeConversation()}
+        messages={[]}
+        quickReplies={[{ id: 'greeting', label: 'Saludo', text: 'Hola, ¿cómo estás?' }]}
+        currentUserId="u1"
+        onSendMessage={vi.fn()}
+        onUpdateConversation={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText(/Respuestas rápidas/i), {
+      target: { value: 'greeting' },
+    });
+
+    expect(screen.getByDisplayValue('Hola, ¿cómo estás?')).toBeInTheDocument();
+  });
+
+  it('disables send button while sending', () => {
+    render(
+      <ConversationDetail
+        conversation={makeConversation()}
+        messages={[]}
+        quickReplies={[]}
+        currentUserId="u1"
+        onSendMessage={vi.fn()}
+        onUpdateConversation={vi.fn()}
+        isSending
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /Enviando/i })).toBeDisabled();
+  });
+
+  it('shows loading skeleton when messages are loading', () => {
+    render(
+      <ConversationDetail
+        conversation={makeConversation()}
+        messages={[]}
+        isLoadingMessages
+        quickReplies={[]}
+        currentUserId="u1"
+        onSendMessage={vi.fn()}
+        onUpdateConversation={vi.fn()}
+      />,
+    );
+
+    expect(document.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
+  });
 });
