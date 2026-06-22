@@ -5,36 +5,62 @@ import { UnauthorizedException } from '@nestjs/common';
 import { StripeWebhookService } from './stripe-webhook.service.js';
 import { StripeProvider } from './stripe.provider.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { PaymentStatus, RefundStatus } from '../entities/payment-status.enum.js';
+import { PaymentStatus } from '../entities/payment-status.enum.js';
 import { OrderStatus } from '@prisma/client';
 import { InvoicesService } from '../../invoices/invoices.service.js';
+import { InventoryReservationService } from '../../inventory/inventory-reservation.service.js';
+import { AuditLogService } from '../../audit/audit-log.service.js';
 
 describe('StripeWebhookService', () => {
   let service: StripeWebhookService;
   let stripeProvider: { validateWebhookSignature: ReturnType<typeof vi.fn> };
   let invoicesService: { issueInvoiceForOrder: ReturnType<typeof vi.fn> };
+  let reservationService: { confirm: ReturnType<typeof vi.fn> };
+  let auditLogService: { log: ReturnType<typeof vi.fn> };
   let prisma: {
     payment: {
       findFirst: ReturnType<typeof vi.fn>;
+      findUnique: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
+      create: ReturnType<typeof vi.fn>;
+    };
+    order: {
+      findUnique: ReturnType<typeof vi.fn>;
       update: ReturnType<typeof vi.fn>;
     };
     orderStatusHistory: { create: ReturnType<typeof vi.fn> };
+    auditLog: { findFirst: ReturnType<typeof vi.fn> };
     $transaction: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
     stripeProvider = { validateWebhookSignature: vi.fn() };
     invoicesService = { issueInvoiceForOrder: vi.fn() };
-    prisma = {
+    reservationService = { confirm: vi.fn() };
+    auditLogService = { log: vi.fn() };
+
+    const tx = {
       payment: {
         findFirst: vi.fn(),
-        update: vi.fn(),
+        findUnique: vi.fn(),
+        update: vi.fn().mockResolvedValue({}),
+        create: vi.fn().mockResolvedValue({}),
       },
-      orderStatusHistory: { create: vi.fn() },
-      $transaction: vi.fn(async (ops: unknown[]) => {
-        for (const op of ops) {
-          await op;
+      order: {
+        findUnique: vi.fn(),
+        update: vi.fn().mockResolvedValue({}),
+      },
+      orderStatusHistory: { create: vi.fn().mockResolvedValue({}) },
+    };
+
+    prisma = {
+      ...tx,
+      auditLog: { findFirst: vi.fn() },
+      $transaction: vi.fn((cb) => {
+        if (typeof cb === 'function') {
+          return cb(tx);
         }
+        return Promise.all(cb.map((op: unknown) => op));
       }),
     };
 
@@ -48,11 +74,17 @@ describe('StripeWebhookService', () => {
         { provide: StripeProvider, useValue: stripeProvider },
         { provide: PrismaService, useValue: prisma },
         { provide: InvoicesService, useValue: invoicesService },
+        { provide: InventoryReservationService, useValue: reservationService },
+        { provide: AuditLogService, useValue: auditLogService },
       ],
     }).compile();
 
     service = module.get(StripeWebhookService);
   });
+
+  function buildWebhookPayload(type: string, object: Record<string, unknown>, eventId = 'evt_1') {
+    return Buffer.from(JSON.stringify({ id: eventId, type, data: { object } }));
+  }
 
   it('rejects webhooks with invalid signature', async () => {
     stripeProvider.validateWebhookSignature.mockReturnValue(false);
@@ -62,23 +94,33 @@ describe('StripeWebhookService', () => {
     ).rejects.toThrow(UnauthorizedException);
   });
 
-  it('updates payment to COMPLETED on payment_intent.succeeded and records history', async () => {
+  it('skips already processed events', async () => {
+    stripeProvider.validateWebhookSignature.mockReturnValue(true);
+    prisma.auditLog.findFirst.mockResolvedValue({ id: 'log_1' });
+
+    await service.handleWebhook(
+      buildWebhookPayload('payment_intent.succeeded', { id: 'pi_123' }, 'evt_duplicate'),
+      'signature',
+    );
+
+    expect(prisma.payment.findFirst).not.toHaveBeenCalled();
+  });
+
+  it('updates payment, order, inventory and audit on payment_intent.succeeded', async () => {
     stripeProvider.validateWebhookSignature.mockReturnValue(true);
     const payment = {
       id: 'pay_1',
       orderId: 'order_1',
+      status: PaymentStatus.PENDING,
       metadata: { clientSecret: 'secret' },
     };
     prisma.payment.findFirst.mockResolvedValue(payment);
+    prisma.payment.findUnique.mockResolvedValue(payment);
     prisma.payment.update.mockResolvedValue({ ...payment, status: PaymentStatus.COMPLETED });
+    prisma.order.update.mockResolvedValue({ id: 'order_1', status: OrderStatus.PROCESSING });
 
     await service.handleWebhook(
-      Buffer.from(
-        JSON.stringify({
-          type: 'payment_intent.succeeded',
-          data: { object: { id: 'pi_123' } },
-        }),
-      ),
+      buildWebhookPayload('payment_intent.succeeded', { id: 'pi_123' }),
       'signature',
     );
 
@@ -90,16 +132,68 @@ describe('StripeWebhookService', () => {
         }),
       }),
     );
+    expect(prisma.order.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'order_1' },
+        data: { status: OrderStatus.PROCESSING },
+      }),
+    );
     expect(prisma.orderStatusHistory.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: {
           orderId: 'order_1',
           status: OrderStatus.PROCESSING,
-          notes: 'Payment confirmed via Stripe',
+          notes: 'Payment confirmed via Stripe (payment_intent.succeeded)',
         },
       }),
     );
+    expect(reservationService.confirm).toHaveBeenCalledWith('order_1');
+    expect(auditLogService.log).toHaveBeenCalled();
     expect(invoicesService.issueInvoiceForOrder).toHaveBeenCalledWith('order_1');
+  });
+
+  it('creates payment record and confirms order on checkout.session.completed', async () => {
+    stripeProvider.validateWebhookSignature.mockReturnValue(true);
+    prisma.payment.findFirst.mockResolvedValue(null);
+    prisma.order.findUnique.mockResolvedValue({
+      id: 'order_2',
+      total: 99.99,
+    });
+    prisma.payment.create.mockResolvedValue({
+      id: 'pay_2',
+      orderId: 'order_2',
+      status: PaymentStatus.PENDING,
+    });
+    prisma.payment.findUnique.mockResolvedValue({
+      id: 'pay_2',
+      orderId: 'order_2',
+      status: PaymentStatus.PENDING,
+      metadata: {},
+    });
+
+    await service.handleWebhook(
+      buildWebhookPayload('checkout.session.completed', {
+        id: 'cs_123',
+        payment_intent: 'pi_456',
+        amount_total: 9999,
+        currency: 'usd',
+        metadata: { orderId: 'order_2' },
+      }),
+      'signature',
+    );
+
+    expect(prisma.payment.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          orderId: 'order_2',
+          providerTransactionId: 'pi_456',
+          checkoutSessionId: 'cs_123',
+          amount: 99.99,
+          currency: 'USD',
+        }),
+      }),
+    );
+    expect(reservationService.confirm).toHaveBeenCalledWith('order_2');
   });
 
   it('continues when invoice auto-issue fails on payment_intent.succeeded', async () => {
@@ -107,19 +201,16 @@ describe('StripeWebhookService', () => {
     const payment = {
       id: 'pay_1b',
       orderId: 'order_1b',
+      status: PaymentStatus.PENDING,
       metadata: {},
     };
     prisma.payment.findFirst.mockResolvedValue(payment);
+    prisma.payment.findUnique.mockResolvedValue(payment);
     prisma.payment.update.mockResolvedValue({ ...payment, status: PaymentStatus.COMPLETED });
     invoicesService.issueInvoiceForOrder.mockRejectedValue(new Error('SRI unavailable'));
 
     await service.handleWebhook(
-      Buffer.from(
-        JSON.stringify({
-          type: 'payment_intent.succeeded',
-          data: { object: { id: 'pi_123b' } },
-        }),
-      ),
+      buildWebhookPayload('payment_intent.succeeded', { id: 'pi_123b' }),
       'signature',
     );
 
@@ -127,28 +218,22 @@ describe('StripeWebhookService', () => {
     expect(invoicesService.issueInvoiceForOrder).toHaveBeenCalledWith('order_1b');
   });
 
-  it('updates payment to FAILED on payment_intent.payment_failed', async () => {
+  it('updates payment and order to FAILED on payment_intent.payment_failed', async () => {
     stripeProvider.validateWebhookSignature.mockReturnValue(true);
     const payment = {
       id: 'pay_2',
       orderId: 'order_2',
+      status: PaymentStatus.PENDING,
       metadata: {},
     };
     prisma.payment.findFirst.mockResolvedValue(payment);
     prisma.payment.update.mockResolvedValue({ ...payment, status: PaymentStatus.FAILED });
 
     await service.handleWebhook(
-      Buffer.from(
-        JSON.stringify({
-          type: 'payment_intent.payment_failed',
-          data: {
-            object: {
-              id: 'pi_456',
-              last_payment_error: { message: 'Card declined' },
-            },
-          },
-        }),
-      ),
+      buildWebhookPayload('payment_intent.payment_failed', {
+        id: 'pi_456',
+        last_payment_error: { message: 'Card declined' },
+      }),
       'signature',
     );
 
@@ -160,25 +245,27 @@ describe('StripeWebhookService', () => {
         }),
       }),
     );
+    expect(prisma.order.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'order_2' },
+        data: { status: OrderStatus.PAYMENT_FAILED },
+      }),
+    );
   });
 
-  it('updates payment to REFUNDED on charge.refunded and records history', async () => {
+  it('updates payment and order to REFUNDED on charge.refunded', async () => {
     stripeProvider.validateWebhookSignature.mockReturnValue(true);
     const payment = {
       id: 'pay_3',
       orderId: 'order_3',
+      status: PaymentStatus.COMPLETED,
       metadata: {},
     };
     prisma.payment.findFirst.mockResolvedValue(payment);
     prisma.payment.update.mockResolvedValue({ ...payment, status: PaymentStatus.REFUNDED });
 
     await service.handleWebhook(
-      Buffer.from(
-        JSON.stringify({
-          type: 'charge.refunded',
-          data: { object: { id: 'ch_123', payment_intent: 'pi_789' } },
-        }),
-      ),
+      buildWebhookPayload('charge.refunded', { id: 'ch_123', payment_intent: 'pi_789' }),
       'signature',
     );
 
@@ -190,28 +277,20 @@ describe('StripeWebhookService', () => {
         }),
       }),
     );
-    expect(prisma.orderStatusHistory.create).toHaveBeenCalledWith(
+    expect(prisma.order.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: {
-          orderId: 'order_3',
-          status: OrderStatus.REFUNDED,
-          notes: 'Refund confirmed via Stripe',
-        },
+        where: { id: 'order_3' },
+        data: { status: OrderStatus.REFUNDED },
       }),
     );
   });
 
-  it('logs and returns early when payment record is missing', async () => {
+  it('logs and returns early when payment record is missing for payment_intent.succeeded', async () => {
     stripeProvider.validateWebhookSignature.mockReturnValue(true);
     prisma.payment.findFirst.mockResolvedValue(null);
 
     await service.handleWebhook(
-      Buffer.from(
-        JSON.stringify({
-          type: 'payment_intent.succeeded',
-          data: { object: { id: 'pi_missing' } },
-        }),
-      ),
+      buildWebhookPayload('payment_intent.succeeded', { id: 'pi_missing' }),
       'signature',
     );
 
