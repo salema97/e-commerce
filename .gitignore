@@ -10,3 +10,6 @@ expo-router/
 .atl/
 
 *.tsbuildinfo
+*.d.ts.map
+packages/shared-config/tailwind.config.d.ts
+packages/shared-config/tailwind.config.js

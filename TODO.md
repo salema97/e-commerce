@@ -113,11 +113,11 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 ## Phase 2 — Shared Packages
 
-- [ ] `shared-config`: ESLint, Prettier, TypeScript base configs, Tailwind config.
-- [ ] `shared-types`: pure TypeScript interfaces/DTOs (no runtime deps).
-- [ ] `shared-utils`: Zod schemas, price/date formatters, slug helpers, address validators.
-- [ ] `shared-ui`: button, input, card, badge, modal, chat-bubble primitives compatible with web and mobile.
-- [ ] `api-client`: generate fetch client from OpenAPI spec; add TanStack Query hooks.
+- [x] `shared-config`: ESLint, Prettier, TypeScript base configs, Tailwind config.
+- [x] `shared-types`: pure TypeScript interfaces/DTOs (no runtime deps).
+- [x] `shared-utils`: Zod schemas, price/date formatters, slug helpers, address validators.
+- [x] `shared-ui`: button, input, card, badge, modal, chat-bubble primitives compatible with web and mobile.
+- [x] `api-client`: generate fetch client from OpenAPI spec; add TanStack Query hooks.
 
 ## Phase 3 — Web App (`apps/web`)
 

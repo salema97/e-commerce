@@ -67,8 +67,8 @@
     "dotenv-cli": "11.0.0",
     "prisma": "7.8.0",
     "supertest": "7.2.2",
-    "tsx": "4.22.4",
+    "tsx": "catalog:",
     "typescript": "catalog:",
-    "vitest": "4.1.9"
+    "vitest": "catalog:"
   }
 }

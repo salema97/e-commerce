@@ -1,0 +1,186 @@
+import type {
+  Category,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+  Product,
+  CreateProductDto,
+  UpdateProductDto,
+  Inventory,
+  CreateInventoryDto,
+  UpdateInventoryDto,
+  ReserveInventoryDto,
+  Supplier,
+  CreateSupplierDto,
+  UpdateSupplierDto,
+  User,
+  CreateUserDto,
+  UpdateUserDto,
+  Order,
+  CreateOrderDto,
+  UpdateOrderStatusDto,
+  CreatePaymentIntentDto,
+  PaymentIntentResult,
+  InvoiceResponseDto,
+  IssueInvoiceDto,
+  AddCartItemDto,
+  UpdateCartItemDto,
+  Cart,
+  CreateRefundDto,
+  Refund,
+  PaginatedResponse,
+} from '@repo/shared-types';
+
+export interface ApiClientOptions {
+  baseURL: string;
+  getToken?: () => string | null | Promise<string | null>;
+  onError?: (error: ApiClientError) => void;
+}
+
+export class ApiClientError extends Error {
+  constructor(
+    message: string,
+    public readonly statusCode: number,
+    public readonly response?: Record<string, unknown>,
+  ) {
+    super(message);
+    this.name = 'ApiClientError';
+  }
+}
+
+async function parseResponse(response: Response): Promise<unknown> {
+  const contentType = response.headers.get('content-type') ?? '';
+
+  if (contentType.includes('application/json')) {
+    return response.json();
+  }
+
+  return response.text();
+}
+
+function buildURL(baseURL: string, path: string, query?: Record<string, string | number | boolean | undefined>): string {
+  const url = new URL(path, baseURL);
+
+  if (query) {
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined) {
+        url.searchParams.set(key, String(value));
+      }
+    }
+  }
+
+  return url.toString();
+}
+
+export function createApiClient(options: ApiClientOptions) {
+  const { baseURL, getToken, onError } = options;
+
+  async function request<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+    query?: Record<string, string | number | boolean | undefined>,
+  ): Promise<T> {
+    const token = getToken ? await getToken() : null;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(buildURL(baseURL, path, query), {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    if (!response.ok) {
+      const data = await parseResponse(response);
+      const error = new ApiClientError(
+        typeof data === 'object' && data !== null && 'message' in data
+          ? String(data.message)
+          : `HTTP ${response.status} error`,
+        response.status,
+        typeof data === 'object' ? (data as Record<string, unknown>) : undefined,
+      );
+      onError?.(error);
+      throw error;
+    }
+
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
+    return parseResponse(response) as Promise<T>;
+  }
+
+  return {
+    auth: {
+      getMe: () => request<User>('GET', '/auth/me'),
+    },
+    users: {
+      findAll: () => request<User[]>('GET', '/users'),
+      findOne: (id: string) => request<User>('GET', `/users/${id}`),
+      create: (data: CreateUserDto) => request<User>('POST', '/users', data),
+      update: (id: string, data: UpdateUserDto) => request<User>('PATCH', `/users/${id}`, data),
+      remove: (id: string) => request<User>('DELETE', `/users/${id}`),
+    },
+    categories: {
+      findAll: () => request<Category[]>('GET', '/categories'),
+      findOne: (id: string) => request<Category>('GET', `/categories/${id}`),
+      create: (data: CreateCategoryDto) => request<Category>('POST', '/categories', data),
+      update: (id: string, data: UpdateCategoryDto) => request<Category>('PATCH', `/categories/${id}`, data),
+      remove: (id: string) => request<Category>('DELETE', `/categories/${id}`),
+    },
+    products: {
+      findAll: (query?: { categoryId?: string; status?: string }) =>
+        request<Product[]>('GET', '/products', undefined, query),
+      findOne: (id: string) => request<Product>('GET', `/products/${id}`),
+      findBySlug: (slug: string) => request<Product>('GET', `/products/slug/${slug}`),
+      create: (data: CreateProductDto) => request<Product>('POST', '/products', data),
+      update: (id: string, data: UpdateProductDto) => request<Product>('PATCH', `/products/${id}`, data),
+      remove: (id: string) => request<Product>('DELETE', `/products/${id}`),
+    },
+    inventory: {
+      findAll: () => request<Inventory[]>('GET', '/inventory'),
+      findOne: (id: string) => request<Inventory>('GET', `/inventory/${id}`),
+      create: (data: CreateInventoryDto) => request<Inventory>('POST', '/inventory', data),
+      update: (id: string, data: UpdateInventoryDto) => request<Inventory>('PATCH', `/inventory/${id}`, data),
+      reserve: (id: string, data: ReserveInventoryDto) => request<Inventory>('POST', `/inventory/${id}/reserve`, data),
+    },
+    suppliers: {
+      findAll: () => request<Supplier[]>('GET', '/suppliers'),
+      findOne: (id: string) => request<Supplier>('GET', `/suppliers/${id}`),
+      create: (data: CreateSupplierDto) => request<Supplier>('POST', '/suppliers', data),
+      update: (id: string, data: UpdateSupplierDto) => request<Supplier>('PATCH', `/suppliers/${id}`, data),
+      remove: (id: string) => request<Supplier>('DELETE', `/suppliers/${id}`),
+    },
+    orders: {
+      findAll: (query?: { page?: number; limit?: number; status?: string }) =>
+        request<PaginatedResponse<Order>>('GET', '/orders', undefined, query),
+      findOne: (id: string) => request<Order>('GET', `/orders/${id}`),
+      create: (data: CreateOrderDto) => request<Order>('POST', '/orders', data),
+      updateStatus: (id: string, data: UpdateOrderStatusDto) =>
+        request<Order>('PATCH', `/orders/${id}/status`, data),
+      createPaymentIntent: (id: string, data: CreatePaymentIntentDto) => request<PaymentIntentResult>('POST', `/orders/${id}/payment-intent`, data),
+    },
+    payments: {
+      createIntent: (data: CreatePaymentIntentDto) => request<PaymentIntentResult>('POST', '/payments/intent', data),
+    },
+    refunds: {
+      create: (data: CreateRefundDto) => request<Refund>('POST', '/refunds', data),
+    },
+    invoices: {
+      issue: (data: IssueInvoiceDto) => request<InvoiceResponseDto>('POST', '/invoices', data),
+    },
+    cart: {
+      findOne: (id: string) => request<Cart>('GET', `/cart/${id}`),
+      addItem: (data: AddCartItemDto) => request<Cart>('POST', '/cart/items', data),
+      updateItem: (id: string, data: UpdateCartItemDto) => request<Cart>('PATCH', `/cart/items/${id}`, data),
+      removeItem: (id: string) => request<Cart>('DELETE', `/cart/items/${id}`),
+    },
+  };
+}
+
+export type ApiClient = ReturnType<typeof createApiClient>;

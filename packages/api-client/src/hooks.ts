@@ -1,0 +1,363 @@
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type UseQueryOptions,
+  type UseMutationOptions,
+} from '@tanstack/react-query';
+import type {
+  Category,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+  Product,
+  CreateProductDto,
+  UpdateProductDto,
+  Order,
+  CreateOrderDto,
+  UpdateOrderStatusDto,
+  CreatePaymentIntentDto,
+  PaymentIntentResult,
+  Cart,
+  AddCartItemDto,
+  UpdateCartItemDto,
+  User,
+  Supplier,
+  CreateSupplierDto,
+  UpdateSupplierDto,
+  Inventory,
+  CreateInventoryDto,
+  UpdateInventoryDto,
+  IssueInvoiceDto,
+  InvoiceResponseDto,
+  CreateRefundDto,
+  Refund,
+  PaginatedResponse,
+} from '@repo/shared-types';
+import type { ApiClient } from './client.js';
+
+export const queryKeys = {
+  categories: ['categories'] as const,
+  category: (id: string) => ['categories', id] as const,
+  products: (filters?: Record<string, string | undefined>) => ['products', filters ?? {}] as const,
+  product: (id: string) => ['products', id] as const,
+  productBySlug: (slug: string) => ['products', 'slug', slug] as const,
+  orders: (filters?: Record<string, string | number | undefined>) => ['orders', filters ?? {}] as const,
+  order: (id: string) => ['orders', id] as const,
+  cart: (id: string) => ['cart', id] as const,
+  users: ['users'] as const,
+  user: (id: string) => ['users', id] as const,
+  suppliers: ['suppliers'] as const,
+  supplier: (id: string) => ['suppliers', id] as const,
+  inventory: ['inventory'] as const,
+  inventoryItem: (id: string) => ['inventory', id] as const,
+  me: ['auth', 'me'] as const,
+};
+
+export function createQueryHooks(client: ApiClient) {
+  return {
+    useMe: (options?: Omit<UseQueryOptions<User, Error>, 'queryKey' | 'queryFn'>) =>
+      useQuery({
+        queryKey: queryKeys.me,
+        queryFn: () => client.auth.getMe(),
+        ...options,
+      }),
+
+    useCategories: (options?: Omit<UseQueryOptions<Category[], Error>, 'queryKey' | 'queryFn'>) =>
+      useQuery({
+        queryKey: queryKeys.categories,
+        queryFn: () => client.categories.findAll(),
+        ...options,
+      }),
+
+    useCategory: (
+      id: string,
+      options?: Omit<UseQueryOptions<Category, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.category(id),
+        queryFn: () => client.categories.findOne(id),
+        enabled: Boolean(id),
+        ...options,
+      }),
+
+    useCreateCategory: (
+      options?: UseMutationOptions<Category, Error, CreateCategoryDto>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.categories.create(data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.categories }),
+        ...options,
+      });
+    },
+
+    useUpdateCategory: (
+      options?: UseMutationOptions<Category, Error, { id: string; data: UpdateCategoryDto }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, data }) => client.categories.update(id, data),
+        onSuccess: (_, { id }) => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.categories });
+          queryClient.invalidateQueries({ queryKey: queryKeys.category(id) });
+        },
+        ...options,
+      });
+    },
+
+    useProducts: (
+      filters?: Record<string, string | undefined>,
+      options?: Omit<UseQueryOptions<Product[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.products(filters),
+        queryFn: () => client.products.findAll(filters),
+        ...options,
+      }),
+
+    useProduct: (
+      id: string,
+      options?: Omit<UseQueryOptions<Product, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.product(id),
+        queryFn: () => client.products.findOne(id),
+        enabled: Boolean(id),
+        ...options,
+      }),
+
+    useProductBySlug: (
+      slug: string,
+      options?: Omit<UseQueryOptions<Product, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.productBySlug(slug),
+        queryFn: () => client.products.findBySlug(slug),
+        enabled: Boolean(slug),
+        ...options,
+      }),
+
+    useCreateProduct: (
+      options?: UseMutationOptions<Product, Error, CreateProductDto>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.products.create(data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.products() }),
+        ...options,
+      });
+    },
+
+    useUpdateProduct: (
+      options?: UseMutationOptions<Product, Error, { id: string; data: UpdateProductDto }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, data }) => client.products.update(id, data),
+        onSuccess: (_, { id }) => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.products() });
+          queryClient.invalidateQueries({ queryKey: queryKeys.product(id) });
+        },
+        ...options,
+      });
+    },
+
+    useOrders: (
+      filters?: Record<string, string | number | undefined>,
+      options?: Omit<UseQueryOptions<PaginatedResponse<Order>, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.orders(filters),
+        queryFn: () => client.orders.findAll(filters),
+        ...options,
+      }),
+
+    useOrder: (
+      id: string,
+      options?: Omit<UseQueryOptions<Order, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.order(id),
+        queryFn: () => client.orders.findOne(id),
+        enabled: Boolean(id),
+        ...options,
+      }),
+
+    useCreateOrder: (
+      options?: UseMutationOptions<Order, Error, CreateOrderDto>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.orders.create(data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.orders() }),
+        ...options,
+      });
+    },
+
+    useUpdateOrderStatus: (
+      options?: UseMutationOptions<Order, Error, { id: string; data: UpdateOrderStatusDto }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, data }) => client.orders.updateStatus(id, data),
+        onSuccess: (_, { id }) => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.orders() });
+          queryClient.invalidateQueries({ queryKey: queryKeys.order(id) });
+        },
+        ...options,
+      });
+    },
+
+    useCreatePaymentIntent: (
+      options?: UseMutationOptions<PaymentIntentResult, Error, CreatePaymentIntentDto>,
+    ) => useMutation({ mutationFn: (data) => client.payments.createIntent(data), ...options }),
+
+    useCart: (
+      id: string,
+      options?: Omit<UseQueryOptions<Cart, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.cart(id),
+        queryFn: () => client.cart.findOne(id),
+        enabled: Boolean(id),
+        ...options,
+      }),
+
+    useAddCartItem: (
+      options?: UseMutationOptions<Cart, Error, { cartId: string; data: AddCartItemDto }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ cartId, data }) => client.cart.addItem(data),
+        onSuccess: (_, { cartId }) => queryClient.invalidateQueries({ queryKey: queryKeys.cart(cartId) }),
+        ...options,
+      });
+    },
+
+    useUpdateCartItem: (
+      options?: UseMutationOptions<Cart, Error, { cartId: string; id: string; data: UpdateCartItemDto }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, data }) => client.cart.updateItem(id, data),
+        onSuccess: (_, { cartId }) => queryClient.invalidateQueries({ queryKey: queryKeys.cart(cartId) }),
+        ...options,
+      });
+    },
+
+    useRemoveCartItem: (
+      options?: UseMutationOptions<Cart, Error, { cartId: string; id: string }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id }) => client.cart.removeItem(id),
+        onSuccess: (_, { cartId }) => queryClient.invalidateQueries({ queryKey: queryKeys.cart(cartId) }),
+        ...options,
+      });
+    },
+
+    useUsers: (options?: Omit<UseQueryOptions<User[], Error>, 'queryKey' | 'queryFn'>) =>
+      useQuery({
+        queryKey: queryKeys.users,
+        queryFn: () => client.users.findAll(),
+        ...options,
+      }),
+
+    useSuppliers: (
+      options?: Omit<UseQueryOptions<Supplier[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.suppliers,
+        queryFn: () => client.suppliers.findAll(),
+        ...options,
+      }),
+
+    useCreateSupplier: (
+      options?: UseMutationOptions<Supplier, Error, CreateSupplierDto>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.suppliers.create(data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.suppliers }),
+        ...options,
+      });
+    },
+
+    useUpdateSupplier: (
+      options?: UseMutationOptions<Supplier, Error, { id: string; data: UpdateSupplierDto }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, data }) => client.suppliers.update(id, data),
+        onSuccess: (_, { id }) => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.suppliers });
+          queryClient.invalidateQueries({ queryKey: queryKeys.supplier(id) });
+        },
+        ...options,
+      });
+    },
+
+    useInventory: (
+      options?: Omit<UseQueryOptions<Inventory[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.inventory,
+        queryFn: () => client.inventory.findAll(),
+        ...options,
+      }),
+
+    useCreateInventory: (
+      options?: UseMutationOptions<Inventory, Error, CreateInventoryDto>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.inventory.create(data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.inventory }),
+        ...options,
+      });
+    },
+
+    useUpdateInventory: (
+      options?: UseMutationOptions<Inventory, Error, { id: string; data: UpdateInventoryDto }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, data }) => client.inventory.update(id, data),
+        onSuccess: (_, { id }) => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.inventory });
+          queryClient.invalidateQueries({ queryKey: queryKeys.inventoryItem(id) });
+        },
+        ...options,
+      });
+    },
+
+    useIssueInvoice: (
+      options?: UseMutationOptions<InvoiceResponseDto, Error, IssueInvoiceDto>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.invoices.issue(data),
+        onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.orders() }),
+        ...options,
+      });
+    },
+
+    useCreateRefund: (
+      options?: UseMutationOptions<Refund, Error, CreateRefundDto>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.refunds.create(data),
+        onSuccess: (_, data) => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.orders() });
+          if (data.orderId) {
+            queryClient.invalidateQueries({ queryKey: queryKeys.order(data.orderId) });
+          }
+        },
+        ...options,
+      });
+    },
+  };
+}
+
+export type ApiQueryHooks = ReturnType<typeof createQueryHooks>;

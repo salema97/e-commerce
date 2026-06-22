@@ -16,14 +16,16 @@
     "build": "tsc -p tsconfig.json",
     "lint": "echo 'No lint configured'",
     "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
     "clean": "rm -rf dist .turbo"
-  },
-  "devDependencies": {
-    "typescript": "catalog:",
-    "zod": "catalog:"
   },
   "dependencies": {
     "@repo/shared-config": "workspace:^",
-    "@repo/shared-types": "workspace:^"
+    "@repo/shared-types": "workspace:^",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }
