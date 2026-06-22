@@ -1,3 +1,4 @@
+import './env.js';
 import { describe, it, beforeAll, afterAll, expect, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';

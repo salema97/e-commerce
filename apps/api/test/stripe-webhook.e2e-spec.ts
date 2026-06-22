@@ -1,3 +1,4 @@
+import './env.js';
 import { describe, it, beforeAll, afterAll, expect, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
@@ -47,21 +48,45 @@ describe('Stripe Webhook (e2e)', () => {
     const prismaMock = {
       payment: {
         findFirst: paymentFindFirstMock,
+        findUnique: vi.fn().mockResolvedValue({
+          id: 'pay_1',
+          orderId: 'order_1',
+          status: PaymentStatus.PENDING,
+          metadata: {},
+        }),
         update: paymentUpdateMock,
       },
       order: {
         findUnique: orderFindUniqueMock,
+        update: vi.fn().mockResolvedValue({ id: 'order_1', status: 'PROCESSING' }),
       },
       invoice: {
         findUnique: invoiceFindUniqueMock,
         create: invoiceCreateMock,
       },
+      inventory: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: 'inv_1',
+          productId: 'SKU-001',
+          variantId: null,
+          quantity: 100,
+          reservedQuantity: 1,
+        }),
+        update: vi.fn().mockResolvedValue({}),
+      },
       orderStatusHistory: {
         create: orderStatusHistoryCreateMock,
       },
-      $transaction: vi.fn(async (ops: unknown[]) => {
-        for (const op of ops) {
-          await op;
+      auditLog: {
+        findFirst: vi.fn().mockResolvedValue(null),
+        create: vi.fn(),
+      },
+      $transaction: vi.fn((arg: unknown) => {
+        if (typeof arg === 'function') {
+          return arg(prismaMock);
+        }
+        for (const op of arg as unknown[]) {
+          void op;
         }
       }),
       $connect: vi.fn(),
