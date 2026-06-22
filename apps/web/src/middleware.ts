@@ -3,8 +3,10 @@ import { NextResponse } from 'next/server';
 import { getTestAuthSession, isTestAuthEnabled } from './lib/test-auth';
 
 const isAdminRoute = createRouteMatcher(['/admin(.*)']);
+const isSupportRoute = createRouteMatcher(['/admin/support(.*)']);
 
 const ADMIN_ROLES = new Set(['SUPER_ADMIN', 'ADMIN']);
+const SUPPORT_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'SUPPORT']);
 
 export default clerkMiddleware(async (auth, req) => {
   if (isAdminRoute(req)) {
@@ -12,11 +14,12 @@ export default clerkMiddleware(async (auth, req) => {
     const metadata = sessionClaims?.public_metadata as { role?: string } | undefined;
     const role = metadata?.role;
 
-    let isAuthenticatedAdmin = Boolean(userId && typeof role === 'string' && ADMIN_ROLES.has(role));
+    const allowedRoles = isSupportRoute(req) ? SUPPORT_ROLES : ADMIN_ROLES;
+    let isAuthenticatedAdmin = Boolean(userId && typeof role === 'string' && allowedRoles.has(role));
 
     if (!isAuthenticatedAdmin && isTestAuthEnabled()) {
       const testSession = await getTestAuthSession();
-      if (testSession && ADMIN_ROLES.has(testSession.role)) {
+      if (testSession && allowedRoles.has(testSession.role)) {
         isAuthenticatedAdmin = true;
       }
     }

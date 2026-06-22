@@ -14,27 +14,41 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { Role } from '@repo/shared-types';
 
-const adminNav = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/products', label: 'Products', icon: Package },
-  { href: '/admin/categories', label: 'Categories', icon: Tags },
-  { href: '/admin/inventory', label: 'Inventory', icon: Warehouse },
-  { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
-  { href: '/admin/returns', label: 'Returns', icon: RotateCcw },
-  { href: '/admin/customers', label: 'Customers', icon: Users },
-  { href: '/admin/support', label: 'Support', icon: MessageSquare },
-  { href: '/admin/finance', label: 'Finance', icon: BarChart3 },
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  roles: Role[];
+}
+
+const adminNav: NavItem[] = [
+  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { href: '/admin/products', label: 'Products', icon: Package, roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { href: '/admin/categories', label: 'Categories', icon: Tags, roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { href: '/admin/inventory', label: 'Inventory', icon: Warehouse, roles: ['SUPER_ADMIN', 'ADMIN', 'INVENTORY'] },
+  { href: '/admin/orders', label: 'Orders', icon: ShoppingBag, roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { href: '/admin/returns', label: 'Returns', icon: RotateCcw, roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { href: '/admin/customers', label: 'Customers', icon: Users, roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { href: '/admin/support', label: 'Support', icon: MessageSquare, roles: ['SUPER_ADMIN', 'ADMIN', 'SUPPORT'] },
+  { href: '/admin/finance', label: 'Finance', icon: BarChart3, roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] },
 ];
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  role: Role;
+}
+
+export function AdminSidebar({ role }: AdminSidebarProps) {
   const pathname = usePathname();
+
+  const visibleNav = adminNav.filter((item) => item.roles.includes(role));
 
   return (
     <aside className="hidden lg:flex w-64 flex-col border-r bg-muted/30">
       <div className="p-4 font-semibold">Admin Panel</div>
       <nav className="flex flex-col gap-1 px-3">
-        {adminNav.map((item) => {
+        {visibleNav.map((item) => {
           const Icon = item.icon;
           const active = pathname.startsWith(item.href);
           return (
