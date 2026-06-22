@@ -189,14 +189,14 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 > **SDD phase**: required. Linked to SRI credit notes and complex business flow; spec required before implementation.
 
-- [ ] Prisma schema additions:
-  - [ ] `ReturnRequest` / `Rma` (order relation, reason, status, items, resolution)
-  - [ ] `ReturnItem` (product/variant, quantity, condition, refund value)
-- [ ] Customer return request flow from account/order detail.
-- [ ] Admin RMA management: list, approve, reject, request inspection, update status.
-- [ ] Link approved returns to SRI credit notes (nota de crédito 04).
-- [ ] Refund method options: original payment, store credit, or exchange.
-- [ ] Admin panel: `/admin/returns` list, detail, and resolution actions.
+- [x] Prisma schema additions:
+  - [x] `ReturnRequest` / `Rma` (order relation, reason, status, items, resolution)
+  - [x] `ReturnItem` (product/variant, quantity, condition, refund value)
+- [x] Customer return request flow from account/order detail.
+- [x] Admin RMA management: list, approve, reject, request inspection, update status.
+- [x] Link approved returns to SRI credit notes (nota de crédito 04).
+- [x] Refund method options: original payment, store credit, or exchange.
+- [x] Admin panel: `/admin/returns` list, detail, and resolution actions.
 - [ ] Email/WhatsApp notifications for return status updates.
 
 ## Phase 6 — WhatsApp Integration (Evolution API)

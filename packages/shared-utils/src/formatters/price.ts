@@ -1,4 +1,4 @@
-import type { OrderStatus, PaymentStatus, RefundStatus } from '@repo/shared-types';
+import type { OrderStatus, PaymentStatus, RefundStatus, ReturnStatus, RefundMethod } from '@repo/shared-types';
 
 const DEFAULT_CURRENCY = 'USD';
 const DEFAULT_LOCALE = 'es-EC';
@@ -79,4 +79,26 @@ export function refundStatusLabel(status: RefundStatus): string {
     REJECTED: 'Rejected',
   };
   return labels[status] ?? status;
+}
+
+export function returnStatusLabel(status: ReturnStatus): string {
+  const labels: Record<ReturnStatus, string> = {
+    REQUESTED: 'Requested',
+    APPROVED: 'Approved',
+    REJECTED: 'Rejected',
+    INSPECTION: 'Inspection',
+    RESOLVED: 'Resolved',
+    RESOLUTION_PENDING_CREDIT_NOTE: 'Pending credit note',
+    CLOSED: 'Closed',
+  };
+  return labels[status] ?? status;
+}
+
+export function refundMethodLabel(method: RefundMethod): string {
+  const labels: Record<RefundMethod, string> = {
+    ORIGINAL_PAYMENT: 'Original payment',
+    STORE_CREDIT: 'Store credit',
+    EXCHANGE: 'Exchange',
+  };
+  return labels[method] ?? method;
 }

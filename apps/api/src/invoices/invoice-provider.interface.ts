@@ -33,10 +33,19 @@ export interface InvoiceResult {
   sriResponse?: unknown;
 }
 
+export interface CreditNoteItem extends InvoiceItem {
+  reason?: string;
+}
+
 export interface CreditNoteInput {
+  returnRequestId: string;
   invoiceAccessKey: string;
+  authorizationNumber?: string;
+  codDocModificado: string;
+  numDocModificado: string;
+  fechaEmisionDocumentoModificado: string;
   reason: string;
-  items: InvoiceItem[];
+  items: CreditNoteItem[];
   total: number;
 }
 

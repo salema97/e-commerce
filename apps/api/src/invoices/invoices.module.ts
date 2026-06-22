@@ -8,6 +8,7 @@ import { SriXmlBuilder } from './sri/sri-xml.builder.js';
 import { SriSignerService } from './sri/sri-signer.service.js';
 import { SriSoapClient } from './sri/sri-soap.client.js';
 import { InvoiceSequenceService } from './invoice-sequence.service.js';
+import { SriCreditNoteXmlBuilder } from './sri/sri-credit-note-xml.builder.js';
 import { PrismaModule } from '../prisma/prisma.module.js';
 
 @Module({
@@ -19,6 +20,7 @@ import { PrismaModule } from '../prisma/prisma.module.js';
     DirectSriInvoiceProvider,
     SriAccessKeyBuilder,
     SriXmlBuilder,
+    SriCreditNoteXmlBuilder,
     SriSignerService,
     SriSoapClient,
     InvoiceSequenceService,

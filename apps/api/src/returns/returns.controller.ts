@@ -18,6 +18,7 @@ import { ReturnsService } from './returns.service.js';
 import { StoreCreditService } from './store-credit.service.js';
 import { CreateReturnDto } from './dto/create-return.dto.js';
 import { UpdateReturnStatusDto } from './dto/update-return-status.dto.js';
+import { ResolveReturnDto } from './dto/resolve-return.dto.js';
 import { ReturnStatus } from '@prisma/client';
 
 /**
@@ -65,12 +66,14 @@ export class ReturnsController {
   @ApiQuery({ name: 'status', required: false, enum: ReturnStatus })
   @ApiQuery({ name: 'orderId', required: false })
   @ApiQuery({ name: 'userId', required: false })
+  @ApiQuery({ name: 'customerEmail', required: false })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'offset', required: false })
   listReturns(
     @Query('status') status?: ReturnStatus,
     @Query('orderId') orderId?: string,
     @Query('userId') userId?: string,
+    @Query('customerEmail') customerEmail?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
@@ -78,6 +81,7 @@ export class ReturnsController {
       status,
       orderId,
       userId,
+      customerEmail,
       limit: limit ? Number(limit) : undefined,
       offset: offset ? Number(offset) : undefined,
     });
@@ -124,5 +128,21 @@ export class ReturnsController {
     @CurrentUser('userId') userId?: string,
   ) {
     return this.returnsService.updateStatus(id, dto, userId ?? 'system');
+  }
+
+  @Post(':id/resolve')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resolve a return request (admin)' })
+  @ApiResponse({ status: 200, description: 'Return resolved' })
+  @ApiResponse({ status: 400, description: 'Invalid transition or missing data' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Return not found' })
+  resolveReturn(
+    @Param('id') id: string,
+    @Body() dto: ResolveReturnDto,
+    @CurrentUser('userId') userId?: string,
+  ) {
+    return this.returnsService.resolveReturn(id, dto, userId ?? 'system');
   }
 }

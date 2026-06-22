@@ -30,6 +30,11 @@ import type {
   Refund,
   ReceiptResponse,
   PaginatedResponse,
+  ReturnRequest,
+  CreateReturnRequestDto,
+  UpdateReturnStatusDto,
+  ResolveReturnDto,
+  StoreCreditBalance,
 } from '@repo/shared-types';
 
 export interface ApiClientOptions {
@@ -179,6 +184,20 @@ export function createApiClient(options: ApiClientOptions) {
     },
     invoices: {
       issue: (data: IssueInvoiceDto) => request<InvoiceResponseDto>('POST', '/invoices', data),
+      issueCreditNote: (data: { returnRequestId: string; total?: string }) =>
+        request<InvoiceResponseDto>('POST', '/invoices/credit-notes', data),
+    },
+    returns: {
+      findAll: (query?: { status?: string; orderId?: string; userId?: string; customerEmail?: string; limit?: number; offset?: number }) =>
+        request<ReturnRequest[]>('GET', '/returns', undefined, query),
+      findOne: (id: string) => request<ReturnRequest>('GET', `/returns/${id}`),
+      createForOrder: (orderId: string, data: CreateReturnRequestDto) =>
+        request<ReturnRequest>('POST', `/orders/${orderId}/returns`, data),
+      updateStatus: (id: string, data: UpdateReturnStatusDto) =>
+        request<ReturnRequest>('PATCH', `/returns/${id}/status`, data),
+      resolve: (id: string, data: ResolveReturnDto) =>
+        request<ReturnRequest>('POST', `/returns/${id}/resolve`, data),
+      myStoreCredit: () => request<StoreCreditBalance>('GET', '/returns/store-credit/me'),
     },
     cart: {
       findOne: (id: string) => request<Cart>('GET', `/cart/${id}`),

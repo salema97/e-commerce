@@ -6,11 +6,16 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma, ReturnStatus, RefundMethod, OrderStatus } from '@prisma/client';
+import { Prisma, ReturnStatus, RefundMethod, OrderStatus, OrderChannel } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AuditLogService } from '../audit/audit-log.service.js';
+import { RefundService } from '../payments/refund.service.js';
+import { StoreCreditService } from './store-credit.service.js';
+import { InvoicesService } from '../invoices/invoices.service.js';
+import { ReturnNotificationService } from './notifications/return-notification.service.js';
 import { CreateReturnDto } from './dto/create-return.dto.js';
 import { UpdateReturnStatusDto } from './dto/update-return-status.dto.js';
+import { ResolveReturnDto } from './dto/resolve-return.dto.js';
 
 /**
  * Allowed transitions for the ReturnRequest state machine.
@@ -19,8 +24,9 @@ import { UpdateReturnStatusDto } from './dto/update-return-status.dto.js';
 const ALLOWED_TRANSITIONS: Record<ReturnStatus, ReturnStatus[]> = {
   [ReturnStatus.REQUESTED]: [ReturnStatus.APPROVED, ReturnStatus.REJECTED],
   [ReturnStatus.APPROVED]: [ReturnStatus.INSPECTION, ReturnStatus.REJECTED, ReturnStatus.RESOLVED],
-  [ReturnStatus.INSPECTION]: [ReturnStatus.RESOLVED, ReturnStatus.REJECTED],
+  [ReturnStatus.INSPECTION]: [ReturnStatus.RESOLVED, ReturnStatus.REJECTED, ReturnStatus.RESOLUTION_PENDING_CREDIT_NOTE],
   [ReturnStatus.RESOLVED]: [ReturnStatus.CLOSED],
+  [ReturnStatus.RESOLUTION_PENDING_CREDIT_NOTE]: [ReturnStatus.RESOLVED, ReturnStatus.REJECTED],
   [ReturnStatus.REJECTED]: [ReturnStatus.CLOSED],
   [ReturnStatus.CLOSED]: [],
 };
@@ -34,6 +40,7 @@ export interface ListReturnsFilter {
   status?: ReturnStatus;
   orderId?: string;
   userId?: string;
+  customerEmail?: string;
   limit?: number;
   offset?: number;
 }
@@ -46,6 +53,10 @@ export class ReturnsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLog: AuditLogService,
+    private readonly refundService: RefundService,
+    private readonly storeCreditService: StoreCreditService,
+    private readonly invoicesService: InvoicesService,
+    private readonly notificationService: ReturnNotificationService,
     configService: ConfigService,
   ) {
     const configured = configService.get<number>('RETURN_WINDOW_DAYS');
@@ -116,6 +127,8 @@ export class ReturnsService {
       after: { orderId: order.id, status: created.status, itemCount: created.items.length },
     });
 
+    await this.notificationService.onReturnRequested(created as never);
+
     return created;
   }
 
@@ -124,10 +137,13 @@ export class ReturnsService {
     if (filter.status) where.status = filter.status;
     if (filter.orderId) where.orderId = filter.orderId;
     if (filter.userId) where.userId = filter.userId;
+    if (filter.customerEmail) {
+      where.order = { customerEmail: { contains: filter.customerEmail, mode: 'insensitive' } };
+    }
 
     return this.prisma.returnRequest.findMany({
       where,
-      include: { items: true },
+      include: { items: true, order: { select: { orderNumber: true, customerEmail: true } }, creditNote: { select: { id: true, accessKey: true, status: true } } },
       orderBy: { createdAt: 'desc' },
       take: filter.limit ?? 50,
       skip: filter.offset ?? 0,
@@ -137,7 +153,7 @@ export class ReturnsService {
   async getReturn(id: string) {
     const record = await this.prisma.returnRequest.findUnique({
       where: { id },
-      include: { items: true },
+      include: { items: true, order: { select: { orderNumber: true, customerEmail: true } }, creditNote: { select: { id: true, accessKey: true, status: true } } },
     });
     if (!record) {
       throw new NotFoundException(`Return request ${id} not found`);
@@ -183,7 +199,7 @@ export class ReturnsService {
     if (to === ReturnStatus.APPROVED) patch.approvedById = actorClerkUserId;
     if (to === ReturnStatus.REJECTED) patch.rejectedById = actorClerkUserId;
     if (to === ReturnStatus.INSPECTION) patch.inspectedAt = new Date();
-    if (to === ReturnStatus.RESOLVED) {
+    if (to === ReturnStatus.RESOLVED || to === ReturnStatus.RESOLUTION_PENDING_CREDIT_NOTE) {
       patch.resolvedAt = new Date();
       if (dto.refundMethod) patch.refundMethod = dto.refundMethod;
       if (dto.creditNoteId) patch.creditNote = { connect: { id: dto.creditNoteId } };
@@ -208,7 +224,219 @@ export class ReturnsService {
 
     this.logger.log({ returnId: id, from, to }, 'Return status transition applied');
 
+    await this.notificationService.onReturnStatusChanged(updated as never, from, to);
+
     return updated;
+  }
+
+  /**
+   * Resolve a return request that has been inspected. Executes the selected
+   * refund method, restocks the returned items, issues an SRI credit note when
+   * the original order was invoiced, and moves the request to RESOLVED (or to
+   * the RESOLUTION_PENDING_CREDIT_NOTE compensating state on credit-note
+   * failure).
+   */
+  async resolveReturn(
+    id: string,
+    dto: ResolveReturnDto,
+    actorClerkUserId: string,
+  ) {
+    const current = await this.prisma.returnRequest.findUnique({
+      where: { id },
+      include: {
+        items: true,
+        order: { include: { items: true, invoice: true } },
+      },
+    });
+
+    if (!current) {
+      throw new NotFoundException(`Return request ${id} not found`);
+    }
+
+    if (current.status !== ReturnStatus.INSPECTION) {
+      throw new BadRequestException(
+        `Return ${id} cannot be resolved from status ${current.status}`,
+      );
+    }
+
+    const totalAmount = this.computeRefundTotal(current.items, current.order.items);
+
+    const basePatch: Prisma.ReturnRequestUpdateInput = {
+      refundMethod: dto.refundMethod,
+      resolvedAt: new Date(),
+    };
+
+    if (dto.refundMethod === RefundMethod.ORIGINAL_PAYMENT) {
+      await this.refundService.createRefund({
+        orderId: current.order.id,
+        amount: totalAmount,
+        type: totalAmount >= Number(current.order.total) ? 'full' : 'partial',
+        reason: current.reason,
+        returnRequestId: current.id,
+        requestedById: actorClerkUserId,
+      });
+    } else if (dto.refundMethod === RefundMethod.STORE_CREDIT) {
+      if (!current.userId) {
+        throw new BadRequestException('Store credit requires a registered customer');
+      }
+      await this.storeCreditService.issue({
+        userId: current.userId,
+        amount: totalAmount,
+      });
+    } else if (dto.refundMethod === RefundMethod.EXCHANGE) {
+      const exchangeOrder = await this.createExchangeOrder(current, dto.exchangeProductIds);
+      basePatch.exchangeOrderId = exchangeOrder.id;
+    }
+
+    await this.restockItems(current.items);
+
+    let updated = await this.prisma.returnRequest.update({
+      where: { id },
+      data: { ...basePatch, status: ReturnStatus.RESOLVED },
+      include: { items: true },
+    });
+
+    if (current.order.invoice) {
+      try {
+        await this.invoicesService.issueCreditNote(
+          { returnRequestId: current.id, total: String(totalAmount) },
+          actorClerkUserId,
+          true,
+        );
+      } catch (error) {
+        this.logger.error(
+          { error, returnId: id },
+          'SRI credit note failed during return resolution',
+        );
+        updated = await this.prisma.returnRequest.update({
+          where: { id },
+          data: { status: ReturnStatus.RESOLUTION_PENDING_CREDIT_NOTE },
+          include: { items: true },
+        });
+      }
+    }
+
+    await this.auditLog.log({
+      actorClerkUserId,
+      resource: 'ReturnRequest',
+      action: 'RESOLVE',
+      resourceId: id,
+      before: { status: current.status, refundMethod: current.refundMethod },
+      after: {
+        status: updated.status,
+        refundMethod: dto.refundMethod,
+        totalAmount,
+        notes: dto.notes ?? null,
+      },
+      metadata: dto.notes ? { notes: dto.notes } : undefined,
+    });
+
+    await this.notificationService.onReturnStatusChanged(
+      updated as never,
+      current.status,
+      updated.status,
+    );
+
+    return updated;
+  }
+
+  private computeRefundTotal(
+    items: Array<{ productId: string; productVariantId: string | null; quantity: number; refundValue: Prisma.Decimal | null }>,
+    orderItems: Array<{ productId: string; variantId: string | null; price: Prisma.Decimal }>,
+  ): number {
+    return items.reduce((sum, item) => {
+      const unitPrice = item.refundValue
+        ? Number(item.refundValue)
+        : Number(
+            orderItems.find(
+              (oi) =>
+                oi.productId === item.productId &&
+                oi.variantId === item.productVariantId,
+            )?.price ?? 0,
+          );
+      return sum + unitPrice * item.quantity;
+    }, 0);
+  }
+
+  private async restockItems(
+    items: Array<{ productId: string; productVariantId: string | null; quantity: number }>,
+  ): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      for (const item of items) {
+        const inv = await tx.inventory.findFirst({
+          where: {
+            productId: item.productId,
+            variantId: item.productVariantId ?? null,
+          },
+        });
+        if (inv) {
+          await tx.inventory.update({
+            where: { id: inv.id },
+            data: { quantity: { increment: item.quantity } },
+          });
+        }
+      }
+    });
+  }
+
+  private async createExchangeOrder(
+    returnRequest: {
+      id: string;
+      orderId: string;
+      userId: string | null;
+      order: { customerEmail: string; customerPhone: string | null };
+      items: Array<{ productId: string; productVariantId: string | null; quantity: number }>;
+    },
+    exchangeProductIds?: string[],
+  ) {
+    const fallbackItems: Array<{ productId: string; variantId?: string; quantity: number }> = returnRequest.items.map((item) => ({
+      productId: item.productId,
+      variantId: item.productVariantId ?? undefined,
+      quantity: item.quantity,
+    }));
+
+    const replacementItems: Array<{ productId: string; variantId?: string; quantity: number }> = exchangeProductIds?.length
+      ? exchangeProductIds.map((id) => ({ productId: id, quantity: 1 }))
+      : fallbackItems;
+
+    const orderItems = await Promise.all(
+      replacementItems.map(async (item) => {
+        const product = await this.prisma.product.findUnique({
+          where: { id: item.productId },
+          include: { variants: true },
+        });
+        const variant = item.variantId
+          ? product?.variants.find((v) => v.id === item.variantId)
+          : product?.variants[0];
+        return {
+          productId: item.productId,
+          variantId: variant?.id ?? null,
+          name: product?.name ?? 'Exchange item',
+          sku: variant?.sku ?? product?.sku ?? `EXC-${item.productId}`,
+          price: Number(variant?.price ?? product?.price ?? 0),
+          quantity: item.quantity,
+        };
+      }),
+    );
+
+    const total = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    return this.prisma.order.create({
+      data: {
+        orderNumber: `EXC-${returnRequest.id.slice(0, 8)}`,
+        userId: returnRequest.userId,
+        customerEmail: returnRequest.order.customerEmail,
+        customerPhone: returnRequest.order.customerPhone,
+        status: OrderStatus.PENDING,
+        subtotal: new Prisma.Decimal(total),
+        taxAmount: new Prisma.Decimal(0),
+        shippingAmount: new Prisma.Decimal(0),
+        discountAmount: new Prisma.Decimal(0),
+        total: new Prisma.Decimal(total),
+        channel: OrderChannel.WEB,
+        items: { create: orderItems },
+      },
+    });
   }
 
   private assertWithinReturnWindow(deliveryTimestamp: Date): void {

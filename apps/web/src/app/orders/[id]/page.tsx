@@ -1,15 +1,24 @@
 import { redirect, notFound } from 'next/navigation';
 import { auth } from '@clerk/nextjs/server';
+import Link from 'next/link';
 import { getServerApiClient } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 import { formatPrice, orderStatusLabel } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
 import { PaymentStatus } from './payment-status';
 
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;
+}
+
+function isReturnable(order: Order): boolean {
+  if (order.status !== 'DELIVERED') return false;
+  const deliveredAt = new Date(order.updatedAt);
+  const windowDays = 30;
+  return deliveredAt.getTime() + windowDays * 24 * 60 * 60 * 1000 >= Date.now();
 }
 
 export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
@@ -111,6 +120,13 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
               </div>
               <Separator />
               <PaymentStatus orderId={order.id} payments={order.payments} />
+              {isReturnable(order) ? (
+                <Link href={`/orders/${order.id}/return`}>
+                  <Button variant="outline" className="w-full">
+                    Request return
+                  </Button>
+                </Link>
+              ) : null}
             </CardContent>
           </Card>
 
