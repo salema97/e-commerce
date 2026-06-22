@@ -1,0 +1,16 @@
+{
+  "extends": "@repo/shared-config/tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*"],
+  "references": [
+    { "path": "../../packages/shared-config" },
+    { "path": "../../packages/shared-types" },
+    { "path": "../../packages/shared-utils" },
+    { "path": "../../packages/shared-ui" },
+    { "path": "../../packages/api-client" }
+  ]
+}

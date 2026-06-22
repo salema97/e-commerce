@@ -1,0 +1,31 @@
+{
+  "name": "@repo/shared-ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cross-platform shared UI primitives",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "echo 'No lint configured'",
+    "typecheck": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist .turbo"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "dependencies": {
+    "@repo/shared-config": "workspace:^",
+    "@repo/shared-types": "workspace:^",
+    "@repo/shared-utils": "workspace:^"
+  }
+}

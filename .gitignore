@@ -1,0 +1,12 @@
+.env
+node_modules/
+dist/
+.next/
+.turbo/
+*.log
+.expo/
+expo-router/
+.playwright-mcp/
+.atl/
+
+*.tsbuildinfo

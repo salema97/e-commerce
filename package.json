@@ -1,0 +1,27 @@
+{
+  "name": "e-commerce",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.34.3",
+  "description": "Full-stack e-commerce platform monorepo",
+  "engines": {
+    "node": ">=22.23.0 <25.0.0",
+    "pnpm": ">=10.34.3 <11.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,mjs,cjs,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,mjs,cjs,md,yml,yaml}\"",
+    "clean": "turbo run clean && rm -rf node_modules .turbo"
+  },
+  "devDependencies": {
+    "turbo": "2.9.18",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  }
+}

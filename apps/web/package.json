@@ -1,0 +1,28 @@
+{
+  "name": "@repo/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Next.js web app placeholder package",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "echo 'No dev server configured'",
+    "lint": "echo 'No lint configured'",
+    "typecheck": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist .turbo"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "@types/react": "^19.0.0",
+    "@types/node": "^22.0.0"
+  },
+  "dependencies": {
+    "@repo/shared-config": "workspace:^",
+    "@repo/shared-types": "workspace:^",
+    "@repo/shared-utils": "workspace:^",
+    "@repo/shared-ui": "workspace:^",
+    "@repo/api-client": "workspace:^"
+  }
+}

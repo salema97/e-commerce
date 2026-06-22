@@ -1,0 +1,63 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local", "**/.env", ".env"],
+  "globalEnv": [
+    "NODE_ENV",
+    "DATABASE_URL",
+    "REDIS_URL",
+    "MEILI_HOST",
+    "MEILI_API_KEY",
+    "CLERK_SECRET_KEY",
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+    "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
+    "CLERK_WEBHOOK_SECRET",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    "R2_ACCOUNT_ID",
+    "R2_ACCESS_KEY_ID",
+    "R2_SECRET_ACCESS_KEY",
+    "R2_BUCKET_NAME",
+    "R2_PUBLIC_URL",
+    "EVOLUTION_API_URL",
+    "EVOLUTION_API_KEY",
+    "EVOLUTION_WEBHOOK_SECRET",
+    "EVOLUTION_INSTANCE_NAME",
+    "RESEND_API_KEY",
+    "POSTHOG_KEY",
+    "SRI_MODE",
+    "SRI_RUC",
+    "SRI_SOL_KEY",
+    "SRI_DIGITAL_CERTIFICATE_PATH",
+    "SRI_DIGITAL_CERTIFICATE_PASSWORD",
+    "SRI_ESTABLISHMENT_CODE",
+    "SRI_EMISSION_POINT_CODE",
+    "SRI_TEST_ENVIRONMENT"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "expo-router/**"],
+      "env": ["NODE_ENV"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "dependsOn": ["^build"]
+    },
+    "test:e2e": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "typecheck": {
+      "dependsOn": ["^build"]
+    },
+    "clean": {
+      "cache": false
+    }
+  }
+}

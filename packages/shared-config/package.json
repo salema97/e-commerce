@@ -1,0 +1,25 @@
+{
+  "name": "@repo/shared-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared tooling configurations for the e-commerce monorepo",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./eslint.config.mjs": "./eslint.config.mjs",
+    "./prettier.config.mjs": "./prettier.config.mjs",
+    "./tailwind.config.ts": "./tailwind.config.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "echo 'No lint configured'",
+    "typecheck": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist .turbo"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "tailwindcss": "catalog:"
+  }
+}
