@@ -7,15 +7,19 @@ import {
   PaymentProvider,
   PaymentResult,
   RefundResult,
+  PaymentOrder,
+  CheckoutSessionResult,
 } from '../payment-provider.interface.js';
 import { PaymentStatus, RefundStatus } from '../entities/payment-status.enum.js';
 
 @Injectable()
 export class StripeProvider extends PaymentProvider {
   private readonly stripe: Stripe;
+  private readonly configService: ConfigService;
 
   constructor(configService: ConfigService) {
     super();
+    this.configService = configService;
     this.stripe = new Stripe(configService.getOrThrow<string>('STRIPE_SECRET_KEY'), {
       apiVersion: '2025-06-30.basil',
     });
@@ -29,6 +33,7 @@ export class StripeProvider extends PaymentProvider {
         amount: order.amount,
         currency: order.currency.toLowerCase(),
         receipt_email: order.customerEmail,
+        customer: order.customerId,
         metadata: {
           orderId: order.orderId,
           orderNumber: order.orderNumber,
@@ -45,6 +50,51 @@ export class StripeProvider extends PaymentProvider {
       clientSecret: paymentIntent.client_secret ?? '',
       status: this.mapPaymentIntentStatus(paymentIntent.status),
     };
+  }
+
+  async createCheckoutSession(order: PaymentOrder): Promise<CheckoutSessionResult> {
+    const session = await this.stripe.checkout.sessions.create(
+      {
+        mode: 'payment',
+        line_items: [
+          {
+            price_data: {
+              currency: order.currency.toLowerCase(),
+              product_data: {
+                name: `Order ${order.orderNumber}`,
+              },
+              unit_amount: order.amount,
+            },
+            quantity: 1,
+          },
+        ],
+        customer: order.customerId,
+        customer_email: order.customerId ? undefined : order.customerEmail,
+        metadata: {
+          orderId: order.orderId,
+          orderNumber: order.orderNumber,
+          ...order.metadata,
+        },
+        success_url: this.configService.getOrThrow<string>('STRIPE_SUCCESS_URL'),
+        cancel_url: this.configService.getOrThrow<string>('STRIPE_CANCEL_URL'),
+      },
+      {
+        idempotencyKey: `checkout-${order.orderId}`,
+      },
+    );
+
+    if (!session.url) {
+      throw new Error('Stripe Checkout session did not return a URL');
+    }
+
+    return {
+      sessionId: session.id,
+      url: session.url,
+    };
+  }
+
+  async capturePayment(externalId: string): Promise<void> {
+    await this.stripe.paymentIntents.capture(externalId);
   }
 
   async confirmPayment(externalId: string): Promise<PaymentResult> {

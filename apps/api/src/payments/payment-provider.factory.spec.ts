@@ -53,4 +53,27 @@ describe('PaymentProviderFactory', () => {
       'Unsupported payment provider: UNKNOWN',
     );
   });
+
+  it('resolves Stripe by default for non-local contexts', () => {
+    expect(factory.resolveProvider({ country: 'US' })).toBe(stripeProvider);
+  });
+
+  it('resolves local provider by method for Ecuador orders', () => {
+    expect(factory.resolveProvider({ country: 'Ecuador', method: 'kushki' })).toBe(kushkiProvider);
+    expect(factory.resolveProvider({ country: 'EC', method: 'payphone' })).toBe(payPhoneProvider);
+    expect(factory.resolveProvider({ country: 'Ecuador', method: 'mercadopago' })).toBe(mercadoPagoProvider);
+    expect(factory.resolveProvider({ country: 'EC', method: 'placetopay' })).toBe(placeToPayProvider);
+  });
+
+  it('respects admin override', () => {
+    expect(factory.resolveProvider({ country: 'Ecuador', method: 'kushki', adminOverride: 'STRIPE' })).toBe(stripeProvider);
+  });
+
+  it('maps provider instance back to enum name', () => {
+    expect(factory.getProviderName(stripeProvider)).toBe(PaymentProviderEnum.STRIPE);
+    expect(factory.getProviderName(kushkiProvider)).toBe(PaymentProviderEnum.KUSHKI);
+    expect(factory.getProviderName(payPhoneProvider)).toBe(PaymentProviderEnum.PAYPHONE);
+    expect(factory.getProviderName(mercadoPagoProvider)).toBe(PaymentProviderEnum.MERCADOPAGO);
+    expect(factory.getProviderName(placeToPayProvider)).toBe(PaymentProviderEnum.PLACETOPAY);
+  });
 });

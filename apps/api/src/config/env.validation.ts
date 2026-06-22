@@ -9,6 +9,8 @@ const envSchema = z.object({
   CLERK_WEBHOOK_SECRET: z.string().min(1),
   STRIPE_SECRET_KEY: z.string().min(1),
   STRIPE_WEBHOOK_SECRET: z.string().min(1),
+  STRIPE_SUCCESS_URL: z.string().min(1),
+  STRIPE_CANCEL_URL: z.string().min(1),
   SRI_MODE: z.enum(['direct', 'intermediary']).default('direct'),
   SRI_RUC: z.string().min(1),
   SRI_SOL_KEY: z.string().min(1),

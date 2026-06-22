@@ -38,5 +38,13 @@ export class CreatePaymentIntentDto {
   customerEmail?: string;
 
   @IsOptional()
+  @IsString()
+  customerId?: string;
+
+  @IsOptional()
+  @IsString()
+  channel?: string;
+
+  @IsOptional()
   metadata?: Record<string, string>;
 }
