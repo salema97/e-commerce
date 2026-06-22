@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { InventoryReservationService } from '../inventory/inventory-reservation.service.js';
 import { PromotionService } from '../promotions/promotion.service.js';
+import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
 import { CreateOrderDto, CreateOrderItemDto } from './dto/create-order.dto.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
 
@@ -27,6 +28,7 @@ export class OrdersService {
     private readonly prisma: PrismaService,
     private readonly reservationService: InventoryReservationService,
     private readonly promotionService: PromotionService,
+    private readonly notificationService: WhatsAppNotificationService,
   ) {}
 
   async createOrder(userId: string | undefined, dto: CreateOrderDto): Promise<CreatedOrderResult> {
@@ -100,6 +102,7 @@ export class OrdersService {
       where: { id },
       data: { status, statusHistory: { create: { status, notes: 'Status updated by admin' } } },
     });
+    await this.notifyStatusChange(id, status);
     return { id, status };
   }
 
@@ -143,6 +146,45 @@ export class OrdersService {
         quantity: item.quantity,
       };
     }));
+  }
+
+  private async notifyStatusChange(id: string, status: OrderStatus): Promise<void> {
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: { user: { select: { whatsappOptOut: true } } },
+    });
+
+    if (!order || !order.customerPhone) {
+      return;
+    }
+
+    const phone = order.customerPhone;
+    const customerName = 'Cliente';
+    const total = `USD ${Number(order.total).toFixed(2)}`;
+
+    try {
+      if (status === OrderStatus.PROCESSING) {
+        await this.notificationService.notify(id, 'ORDER_CONFIRMED', phone, {
+          customerName,
+          orderNumber: order.orderNumber,
+          total,
+        });
+      } else if (status === OrderStatus.SHIPPED) {
+        await this.notificationService.notify(id, 'ORDER_SHIPPED', phone, {
+          customerName,
+          orderNumber: order.orderNumber,
+          carrier: 'Transportista asignado',
+          trackingNumber: 'Pendiente',
+        });
+      } else if (status === OrderStatus.DELIVERED) {
+        await this.notificationService.notify(id, 'ORDER_DELIVERED', phone, {
+          customerName,
+          orderNumber: order.orderNumber,
+        });
+      }
+    } catch {
+      // Notifications are best-effort and must not fail the status update.
+    }
   }
 
   private generateOrderNumber() {

@@ -6,6 +6,7 @@ import { OrdersService } from './orders.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { InventoryReservationService } from '../inventory/inventory-reservation.service.js';
 import { PromotionService } from '../promotions/promotion.service.js';
+import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
 
 describe('OrdersService', () => {
@@ -17,6 +18,7 @@ describe('OrdersService', () => {
     calculateOrderTotals: ReturnType<typeof vi.fn>;
     incrementCouponUsage: ReturnType<typeof vi.fn>;
   };
+  let notificationService: { notify: ReturnType<typeof vi.fn> };
 
   function mockPrisma() {
     return {
@@ -34,12 +36,14 @@ describe('OrdersService', () => {
       calculateOrderTotals: vi.fn(),
       incrementCouponUsage: vi.fn(),
     };
+    notificationService = { notify: vi.fn().mockResolvedValue(undefined) };
     const module = await Test.createTestingModule({
       providers: [
         OrdersService,
         { provide: PrismaService, useValue: prisma },
         { provide: InventoryReservationService, useValue: reservation },
         { provide: PromotionService, useValue: promotion },
+        { provide: WhatsAppNotificationService, useValue: notificationService },
       ],
     }).compile();
     service = module.get(OrdersService);
@@ -108,6 +112,27 @@ describe('OrdersService', () => {
     prisma.order.findUnique.mockResolvedValue({ id: 'o1', status: OrderStatus.PAYMENT_PENDING });
     await service.updateOrderStatus('o1', OrderStatus.PROCESSING);
     expect(prisma.order.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: OrderStatus.PROCESSING }) }));
+  });
+
+  it('sends a WhatsApp confirmation when order moves to PROCESSING', async () => {
+    prisma.order.findUnique.mockResolvedValue({
+      id: 'o1',
+      status: OrderStatus.PAYMENT_PENDING,
+      customerPhone: '+593991234567',
+      orderNumber: 'ORD-1',
+      total: new Prisma.Decimal(45.98),
+      user: { whatsappOptOut: false },
+    });
+    prisma.order.update.mockResolvedValue({ id: 'o1', status: OrderStatus.PROCESSING });
+
+    await service.updateOrderStatus('o1', OrderStatus.PROCESSING);
+
+    expect(notificationService.notify).toHaveBeenCalledWith(
+      'o1',
+      'ORDER_CONFIRMED',
+      '+593991234567',
+      expect.objectContaining({ orderNumber: 'ORD-1', total: 'USD 45.98' }),
+    );
   });
 
   it('cancels an order and releases reservation', async () => {
