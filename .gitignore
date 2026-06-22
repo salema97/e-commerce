@@ -13,3 +13,4 @@ expo-router/
 *.d.ts.map
 packages/shared-config/tailwind.config.d.ts
 packages/shared-config/tailwind.config.js
+apps/web/next-env.d.ts

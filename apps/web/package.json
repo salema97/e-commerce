@@ -3,26 +3,40 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Next.js web app placeholder package",
+  "description": "Next.js web app for the e-commerce platform",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "dev": "echo 'No dev server configured'",
-    "lint": "echo 'No lint configured'",
-    "typecheck": "tsc -p tsconfig.json",
-    "clean": "rm -rf dist .turbo"
-  },
-  "devDependencies": {
-    "typescript": "catalog:",
-    "react": "catalog:",
-    "react-dom": "catalog:",
-    "@types/react": "^19.0.0",
-    "@types/node": "^22.0.0"
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist .next .turbo"
   },
   "dependencies": {
+    "@clerk/nextjs": "7.5.7",
+    "@repo/api-client": "workspace:^",
     "@repo/shared-config": "workspace:^",
     "@repo/shared-types": "workspace:^",
     "@repo/shared-utils": "workspace:^",
-    "@repo/shared-ui": "workspace:^",
-    "@repo/api-client": "workspace:^"
+    "@stripe/react-stripe-js": "^4.0.0",
+    "@stripe/stripe-js": "^7.0.0",
+    "@tanstack/react-query": "catalog:",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.511.0",
+    "next": "16.2.9",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tailwind-merge": "^3.2.0",
+    "zustand": "^5.0.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.1",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "postcss": "^8.5.3",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:"
   }
 }

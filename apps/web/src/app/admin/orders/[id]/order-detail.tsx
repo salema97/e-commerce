@@ -1,0 +1,136 @@
+'use client';
+
+import * as React from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Select } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { useApiClient } from '@/lib/client-api';
+import { formatPrice, orderStatusLabel } from '@repo/shared-utils';
+import type { Order, OrderStatus } from '@repo/shared-types';
+
+const ORDER_STATUSES: OrderStatus[] = [
+  'PENDING',
+  'PAYMENT_PENDING',
+  'PROCESSING',
+  'SHIPPED',
+  'DELIVERED',
+  'CANCELLED',
+  'REFUNDED',
+];
+
+export default function AdminOrderDetailPage({ order }: { order: Order }) {
+  const router = useRouter();
+  const api = useApiClient();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  async function handleStatusUpdate(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsSubmitting(true);
+    const formData = new FormData(event.currentTarget);
+    try {
+      await api.orders.updateStatus(order.id, {
+        status: String(formData.get('status')) as OrderStatus,
+        notes: String(formData.get('notes')),
+      });
+      router.refresh();
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Order {order.orderNumber}</h1>
+        <Badge variant="outline">{orderStatusLabel(order.status)}</Badge>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Items</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              {order.items.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between"
+                >
+                  <div>
+                    <p className="font-medium">{item.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      SKU: {item.sku} · Qty: {item.quantity}
+                    </p>
+                  </div>
+                  <span className="font-semibold">
+                    {formatPrice(item.price * item.quantity)}
+                  </span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              <div className="flex justify-between text-sm">
+                <span>Subtotal</span>
+                <span>{formatPrice(order.subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Tax</span>
+                <span>{formatPrice(order.taxAmount)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Shipping</span>
+                <span>{formatPrice(order.shippingAmount)}</span>
+              </div>
+              <Separator />
+              <div className="flex justify-between font-semibold">
+                <span>Total</span>
+                <span>{formatPrice(order.total)}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Update Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleStatusUpdate} className="flex flex-col gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select id="status" name="status" defaultValue={order.status}>
+                    {ORDER_STATUSES.map((status) => (
+                      <option key={status} value={status}>
+                        {orderStatusLabel(status)}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea id="notes" name="notes" />
+                </div>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Updating...' : 'Update status'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
