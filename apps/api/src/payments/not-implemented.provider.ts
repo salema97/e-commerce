@@ -1,9 +1,12 @@
 import {
   CreatePaymentIntentOptions,
   PaymentIntentResult,
+  PaymentOrder,
   PaymentProvider,
   PaymentResult,
+  ProviderPaymentResult,
   RefundResult,
+  CheckoutSessionResult,
 } from './payment-provider.interface.js';
 
 export abstract class NotImplementedPaymentProvider extends PaymentProvider {
@@ -12,6 +15,14 @@ export abstract class NotImplementedPaymentProvider extends PaymentProvider {
   }
 
   async createPaymentIntent(): Promise<PaymentIntentResult> {
+    this.notImplemented();
+  }
+
+  async createCheckoutSession(): Promise<CheckoutSessionResult> {
+    this.notImplemented();
+  }
+
+  async capturePayment(): Promise<void> {
     this.notImplemented();
   }
 
@@ -24,6 +35,10 @@ export abstract class NotImplementedPaymentProvider extends PaymentProvider {
   }
 
   validateWebhookSignature(): boolean {
+    this.notImplemented();
+  }
+
+  async parseWebhookPayload(): Promise<ProviderPaymentResult> {
     this.notImplemented();
   }
 }

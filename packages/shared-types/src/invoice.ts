@@ -44,3 +44,12 @@ export interface InvoiceSequence {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface ReceiptResponse {
+  id: string;
+  orderId: string;
+  number: string;
+  url: string | null;
+  emailDelivered: boolean;
+  createdAt: string;
+}

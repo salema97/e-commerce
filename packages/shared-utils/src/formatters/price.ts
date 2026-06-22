@@ -1,4 +1,4 @@
-import type { OrderStatus } from '@repo/shared-types';
+import type { OrderStatus, PaymentStatus, RefundStatus } from '@repo/shared-types';
 
 const DEFAULT_CURRENCY = 'USD';
 const DEFAULT_LOCALE = 'es-EC';
@@ -51,11 +51,32 @@ export function orderStatusLabel(status: OrderStatus): string {
   const labels: Record<OrderStatus, string> = {
     PENDING: 'Pending',
     PAYMENT_PENDING: 'Payment pending',
+    PAYMENT_FAILED: 'Payment failed',
     PROCESSING: 'Processing',
     SHIPPED: 'Shipped',
     DELIVERED: 'Delivered',
     CANCELLED: 'Cancelled',
     REFUNDED: 'Refunded',
+    PARTIALLY_REFUNDED: 'Partially refunded',
+  };
+  return labels[status] ?? status;
+}
+
+export function paymentStatusLabel(status: PaymentStatus): string {
+  const labels: Record<PaymentStatus, string> = {
+    PENDING: 'Pending',
+    COMPLETED: 'Paid',
+    FAILED: 'Failed',
+    REFUNDED: 'Refunded',
+  };
+  return labels[status] ?? status;
+}
+
+export function refundStatusLabel(status: RefundStatus): string {
+  const labels: Record<RefundStatus, string> = {
+    PENDING: 'Pending',
+    COMPLETED: 'Completed',
+    REJECTED: 'Rejected',
   };
   return labels[status] ?? status;
 }

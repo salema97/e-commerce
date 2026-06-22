@@ -17,11 +17,15 @@ export type ProductStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 export type OrderStatus =
   | 'PENDING'
   | 'PAYMENT_PENDING'
+  | 'PAYMENT_FAILED'
   | 'PROCESSING'
   | 'SHIPPED'
   | 'DELIVERED'
   | 'CANCELLED'
-  | 'REFUNDED';
+  | 'REFUNDED'
+  | 'PARTIALLY_REFUNDED';
+
+export type PaymentChannel = 'WEB' | 'MOBILE';
 
 export type PaymentStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
 

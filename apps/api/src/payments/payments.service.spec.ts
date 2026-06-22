@@ -2,30 +2,46 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { PaymentsService } from './payments.service.js';
 import { PaymentProviderFactory } from './payment-provider.factory.js';
+import { StripeCustomerService } from './stripe/stripe-customer.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { PaymentProvider as PaymentProviderEnum } from './payment-provider.enum.js';
 import { PaymentStatus } from './entities/payment-status.enum.js';
 
 describe('PaymentsService', () => {
   let service: PaymentsService;
-  let providerFactory: { getProvider: ReturnType<typeof vi.fn> };
+  let providerFactory: { getProvider: ReturnType<typeof vi.fn>; resolveProvider: ReturnType<typeof vi.fn>; getProviderName: ReturnType<typeof vi.fn> };
   let provider: {
     createPaymentIntent: ReturnType<typeof vi.fn>;
+    createCheckoutSession: ReturnType<typeof vi.fn>;
+  };
+  let stripeCustomerService: {
+    findOrCreateEphemeralCustomer: ReturnType<typeof vi.fn>;
   };
   let prisma: {
     payment: {
       findFirst: ReturnType<typeof vi.fn>;
       create: ReturnType<typeof vi.fn>;
     };
+    order: {
+      findUnique: ReturnType<typeof vi.fn>;
+    };
   };
 
   beforeEach(async () => {
-    provider = { createPaymentIntent: vi.fn() };
-    providerFactory = { getProvider: vi.fn(() => provider) };
+    provider = { createPaymentIntent: vi.fn(), createCheckoutSession: vi.fn() };
+    providerFactory = {
+      getProvider: vi.fn(() => provider),
+      resolveProvider: vi.fn(() => provider),
+      getProviderName: vi.fn(() => PaymentProviderEnum.STRIPE),
+    };
+    stripeCustomerService = { findOrCreateEphemeralCustomer: vi.fn() };
     prisma = {
       payment: {
         findFirst: vi.fn(),
         create: vi.fn(),
+      },
+      order: {
+        findUnique: vi.fn(),
       },
     };
 
@@ -33,6 +49,7 @@ describe('PaymentsService', () => {
       providers: [
         PaymentsService,
         { provide: PaymentProviderFactory, useValue: providerFactory },
+        { provide: StripeCustomerService, useValue: stripeCustomerService },
         { provide: PrismaService, useValue: prisma },
       ],
     }).compile();
@@ -132,5 +149,134 @@ describe('PaymentsService', () => {
 
     expect(result.idempotencyKey).toBeDefined();
     expect(result.idempotencyKey.length).toBeGreaterThan(0);
+  });
+
+  it('creates an ephemeral Stripe customer for guest checkout', async () => {
+    prisma.payment.findFirst.mockResolvedValue(null);
+    stripeCustomerService.findOrCreateEphemeralCustomer.mockResolvedValue('cus_guest');
+    provider.createPaymentIntent.mockResolvedValue({
+      providerTransactionId: 'pi_guest',
+      clientSecret: 'pi_guest_secret',
+      status: PaymentStatus.PENDING,
+    });
+    prisma.payment.create.mockResolvedValue({
+      id: 'pay_guest',
+      providerTransactionId: 'pi_guest',
+      status: PaymentStatus.PENDING,
+    });
+
+    await service.createPaymentIntent({
+      orderId: 'order_guest',
+      orderNumber: 'ORD-GUEST',
+      amount: 1000,
+      provider: PaymentProviderEnum.STRIPE,
+      customerEmail: 'guest@example.com',
+    });
+
+    expect(stripeCustomerService.findOrCreateEphemeralCustomer).toHaveBeenCalledWith('guest@example.com');
+    expect(provider.createPaymentIntent).toHaveBeenCalledWith(
+      expect.objectContaining({ customerId: 'cus_guest' }),
+    );
+  });
+
+  it('creates a checkout session and persists the payment', async () => {
+    prisma.payment.findFirst.mockResolvedValue(null);
+    provider.createCheckoutSession.mockResolvedValue({
+      sessionId: 'cs_123',
+      url: 'https://checkout.stripe.com/cs_123',
+    });
+    prisma.payment.create.mockResolvedValue({
+      id: 'pay_cs',
+      checkoutSessionId: 'cs_123',
+      status: PaymentStatus.PENDING,
+    });
+
+    const result = await service.createCheckoutSession({
+      orderId: 'order_cs',
+      orderNumber: 'ORD-CS',
+      amount: 1000,
+      provider: PaymentProviderEnum.STRIPE,
+      idempotencyKey: 'idem_cs',
+    });
+
+    expect(provider.createCheckoutSession).toHaveBeenCalled();
+    expect(prisma.payment.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          checkoutSessionId: 'cs_123',
+          amount: 10,
+        }),
+      }),
+    );
+    expect(result.url).toBe('https://checkout.stripe.com/cs_123');
+  });
+
+  it('resolves provider by context', () => {
+    service.resolveProviderByContext({ country: 'Ecuador', method: 'kushki' });
+    expect(providerFactory.resolveProvider).toHaveBeenCalledWith({ country: 'Ecuador', method: 'kushki' });
+  });
+
+  it('rejects payment intent when order does not belong to the actor', async () => {
+    prisma.order.findUnique.mockResolvedValue({ id: 'order_1', userId: 'other_user' });
+
+    await expect(
+      service.createPaymentIntent(
+        {
+          orderId: 'order_1',
+          orderNumber: 'ORD-001',
+          amount: 1000,
+          provider: PaymentProviderEnum.STRIPE,
+        },
+        'user_authed',
+      ),
+    ).rejects.toThrowError(/does not belong to the authenticated user/);
+
+    expect(provider.createPaymentIntent).not.toHaveBeenCalled();
+    expect(prisma.payment.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects payment intent when order is missing', async () => {
+    prisma.order.findUnique.mockResolvedValue(null);
+
+    await expect(
+      service.createPaymentIntent(
+        {
+          orderId: 'order_missing',
+          orderNumber: 'ORD-001',
+          amount: 1000,
+          provider: PaymentProviderEnum.STRIPE,
+        },
+        'user_authed',
+      ),
+    ).rejects.toThrowError(/not found/);
+  });
+
+  it('creates a payment intent when order belongs to the actor', async () => {
+    prisma.order.findUnique.mockResolvedValue({ id: 'order_1', userId: 'user_authed' });
+    prisma.payment.findFirst.mockResolvedValue(null);
+    provider.createPaymentIntent.mockResolvedValue({
+      providerTransactionId: 'pi_123',
+      clientSecret: 'pi_123_secret',
+      status: PaymentStatus.PENDING,
+    });
+    prisma.payment.create.mockResolvedValue({
+      id: 'pay_1',
+      providerTransactionId: 'pi_123',
+      status: PaymentStatus.PENDING,
+      metadata: { clientSecret: 'pi_123_secret' },
+    });
+
+    const result = await service.createPaymentIntent(
+      {
+        orderId: 'order_1',
+        orderNumber: 'ORD-001',
+        amount: 1000,
+        provider: PaymentProviderEnum.STRIPE,
+      },
+      'user_authed',
+    );
+
+    expect(result.paymentId).toBe('pay_1');
+    expect(prisma.payment.create).toHaveBeenCalled();
   });
 });

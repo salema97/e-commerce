@@ -6,6 +6,10 @@ import {
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateInventoryDto } from './dto/create-inventory.dto.js';
 import { UpdateInventoryDto } from './dto/update-inventory.dto.js';
+import {
+  InventoryReservationService,
+  ReservationItem,
+} from './inventory-reservation.service.js';
 
 const inventoryInclude = {
   product: { select: { id: true, name: true, slug: true } },
@@ -14,7 +18,10 @@ const inventoryInclude = {
 
 @Injectable()
 export class InventoryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly reservationService: InventoryReservationService,
+  ) {}
 
   create(data: CreateInventoryDto) {
     return this.prisma.inventory.create({
@@ -87,5 +94,17 @@ export class InventoryService {
       data: { reservedQuantity: { decrement: releasable } },
       include: inventoryInclude,
     });
+  }
+
+  reserveItems(items: ReservationItem[]): Promise<void> {
+    return this.reservationService.reserveItems(items);
+  }
+
+  releaseOrderReservation(orderId: string): Promise<void> {
+    return this.reservationService.release(orderId);
+  }
+
+  confirmOrderReservation(orderId: string): Promise<void> {
+    return this.reservationService.confirm(orderId);
   }
 }

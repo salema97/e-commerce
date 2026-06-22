@@ -9,9 +9,19 @@ function createStripeMock() {
     paymentIntents: {
       create: vi.fn(),
       retrieve: vi.fn(),
+      capture: vi.fn(),
+    },
+    checkout: {
+      sessions: {
+        create: vi.fn(),
+      },
     },
     refunds: {
       create: vi.fn(),
+    },
+    customers: {
+      create: vi.fn(),
+      update: vi.fn(),
     },
     webhooks: {
       constructEvent: vi.fn(),
@@ -31,7 +41,14 @@ describe('StripeProvider', () => {
         StripeProvider,
         {
           provide: ConfigService,
-          useValue: { getOrThrow: () => 'sk_test_xxx' },
+          useValue: {
+            getOrThrow: (key: string) => {
+              if (key === 'STRIPE_SECRET_KEY') return 'sk_test_xxx';
+              if (key === 'STRIPE_SUCCESS_URL') return 'https://example.com/success';
+              if (key === 'STRIPE_CANCEL_URL') return 'https://example.com/cancel';
+              return '';
+            },
+          },
         },
       ],
     }).compile();
@@ -162,6 +179,84 @@ describe('StripeProvider', () => {
       payment_intent: 'pi_456',
       amount: undefined,
     });
+  });
+
+  it('passes customer id when creating PaymentIntent', async () => {
+    stripeMock.paymentIntents.create.mockResolvedValue({
+      id: 'pi_789',
+      client_secret: 'pi_789_secret',
+      status: 'requires_payment_method',
+    });
+
+    await provider.createPaymentIntent({
+      orderId: 'order_3',
+      orderNumber: 'ORD-003',
+      amount: 500,
+      currency: 'USD',
+      customerId: 'cus_123',
+      idempotencyKey: 'idem_789',
+    });
+
+    expect(stripeMock.paymentIntents.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customer: 'cus_123',
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('creates a Checkout Session with success and cancel URLs', async () => {
+    stripeMock.checkout.sessions.create.mockResolvedValue({
+      id: 'cs_123',
+      url: 'https://checkout.stripe.com/session/cs_123',
+    });
+
+    const result = await provider.createCheckoutSession({
+      orderId: 'order_4',
+      orderNumber: 'ORD-004',
+      amount: 1000,
+      currency: 'USD',
+      customerEmail: 'customer@example.com',
+    });
+
+    expect(stripeMock.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: 'payment',
+        success_url: 'https://example.com/success',
+        cancel_url: 'https://example.com/cancel',
+        customer_email: 'customer@example.com',
+      }),
+      expect.anything(),
+    );
+
+    expect(result).toEqual({
+      sessionId: 'cs_123',
+      url: 'https://checkout.stripe.com/session/cs_123',
+    });
+  });
+
+  it('throws when Checkout Session does not return a URL', async () => {
+    stripeMock.checkout.sessions.create.mockResolvedValue({
+      id: 'cs_456',
+      url: null,
+    });
+
+    await expect(
+      provider.createCheckoutSession({
+        orderId: 'order_5',
+        orderNumber: 'ORD-005',
+        amount: 1000,
+        currency: 'USD',
+      }),
+    ).rejects.toThrow('Stripe Checkout session did not return a URL');
+  });
+
+  it('captures an authorized PaymentIntent', async () => {
+    stripeMock.paymentIntents.capture.mockResolvedValue({ id: 'pi_999' });
+
+    await provider.capturePayment('pi_999');
+
+    expect(stripeMock.paymentIntents.capture).toHaveBeenCalledWith('pi_999');
   });
 
   it('returns true for valid webhook signature', () => {

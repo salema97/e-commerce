@@ -37,7 +37,7 @@ export default function CartPage() {
     );
   }
 
-  const subtotal = items.reduce((sum, item) => sum + item.quantity * 10, 0);
+  const subtotal = items.reduce((sum, item) => sum + item.quantity * item.price, 0);
   const shipping = subtotal > 50 ? 0 : 5;
   const total = subtotal + shipping;
 
@@ -51,7 +51,10 @@ export default function CartPage() {
             <Card key={`${item.productId}:${item.variantId ?? ''}`}>
               <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
                 <div className="flex-1">
-                  <p className="font-medium">Product ID: {item.productId}</p>
+                  <p className="font-medium">{item.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatPrice(item.price)} each
+                  </p>
                   {item.variantId ? (
                     <p className="text-sm text-muted-foreground">
                       Variant: {item.variantId}

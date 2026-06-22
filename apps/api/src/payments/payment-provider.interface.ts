@@ -6,6 +6,7 @@ export interface PaymentOrder {
   amount: number;
   currency: string;
   customerEmail?: string;
+  customerId?: string;
   metadata?: Record<string, string>;
 }
 
@@ -19,6 +20,11 @@ export interface PaymentIntentResult {
   status: PaymentStatus;
 }
 
+export interface CheckoutSessionResult {
+  sessionId: string;
+  url: string;
+}
+
 export interface PaymentResult {
   providerTransactionId: string;
   status: PaymentStatus;
@@ -29,10 +35,28 @@ export interface RefundResult {
   status: RefundStatus;
 }
 
+export interface ProviderPaymentResult {
+  status: PaymentStatus;
+  providerTransactionId: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ProviderSelectionContext {
+  country?: string;
+  currency?: string;
+  channel?: string;
+  method?: string;
+  adminOverride?: string;
+}
+
 export abstract class PaymentProvider {
   abstract createPaymentIntent(
     order: CreatePaymentIntentOptions,
   ): Promise<PaymentIntentResult>;
+
+  abstract createCheckoutSession(order: PaymentOrder): Promise<CheckoutSessionResult>;
+
+  abstract capturePayment(externalId: string): Promise<void>;
 
   abstract confirmPayment(externalId: string): Promise<PaymentResult>;
 
@@ -43,4 +67,6 @@ export abstract class PaymentProvider {
     signature: string,
     secret: string,
   ): boolean;
+
+  abstract parseWebhookPayload(payload: unknown): Promise<ProviderPaymentResult>;
 }

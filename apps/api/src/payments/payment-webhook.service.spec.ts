@@ -1,0 +1,165 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { Test } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { PaymentProvider, PaymentStatus, OrderStatus } from '@prisma/client';
+import { PaymentWebhookService } from './payment-webhook.service.js';
+import { PaymentProviderFactory } from './payment-provider.factory.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+
+describe('PaymentWebhookService', () => {
+  let service: PaymentWebhookService;
+  let factory: {
+    getProvider: ReturnType<typeof vi.fn>;
+  };
+  let provider: {
+    validateWebhookSignature: ReturnType<typeof vi.fn>;
+    parseWebhookPayload: ReturnType<typeof vi.fn>;
+  };
+  let prisma: {
+    payment: { findFirst: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
+    order: { update: ReturnType<typeof vi.fn> };
+    orderStatusHistory: { create: ReturnType<typeof vi.fn> };
+  };
+
+  beforeEach(async () => {
+    provider = {
+      validateWebhookSignature: vi.fn(() => true),
+      parseWebhookPayload: vi.fn(),
+    };
+    factory = { getProvider: vi.fn(() => provider) };
+    prisma = {
+      payment: { findFirst: vi.fn(), update: vi.fn() },
+      order: { update: vi.fn() },
+      orderStatusHistory: { create: vi.fn() },
+    };
+
+    const module = await Test.createTestingModule({
+      providers: [
+        PaymentWebhookService,
+        {
+          provide: ConfigService,
+          useValue: {
+            getOrThrow: (key: string) => {
+              if (key === 'KUSHKI_WEBHOOK_SECRET') return 'kushki_secret';
+              if (key === 'PAYPHONE_TOKEN') return 'pp_token';
+              if (key === 'MERCADOPAGO_WEBHOOK_SECRET') return 'mp_secret';
+              if (key === 'PLACETOPAY_SECRET_KEY') return 'ptp_secret';
+              return '';
+            },
+          },
+        },
+        { provide: PaymentProviderFactory, useValue: factory },
+        { provide: PrismaService, useValue: prisma },
+      ],
+    }).compile();
+
+    service = module.get(PaymentWebhookService);
+  });
+
+  it('rejects unknown provider names', async () => {
+    await expect(
+      service.handle('unknown', {}, 'sig'),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects invalid webhook signatures', async () => {
+    provider.validateWebhookSignature.mockReturnValueOnce(false);
+
+    await expect(
+      service.handle('kushki', { foo: 'bar' }, 'bad-signature'),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('completes payment and transitions order to PROCESSING on COMPLETED webhook', async () => {
+    provider.parseWebhookPayload.mockResolvedValueOnce({
+      status: PaymentStatus.COMPLETED,
+      providerTransactionId: 'kushki_txn_1',
+      metadata: { event: 'approved' },
+    });
+    prisma.payment.findFirst.mockResolvedValueOnce({
+      id: 'pay_1',
+      orderId: 'order_1',
+      status: PaymentStatus.PENDING,
+    });
+
+    const result = await service.handle(
+      'kushki',
+      { transactionReference: 'kushki_txn_1', status: 'approved' },
+      'kushki_secret',
+    );
+
+    expect(result.status).toBe(PaymentStatus.COMPLETED);
+    expect(prisma.payment.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'pay_1' },
+        data: expect.objectContaining({ status: PaymentStatus.COMPLETED }),
+      }),
+    );
+    expect(prisma.order.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'order_1' },
+        data: { status: OrderStatus.PROCESSING },
+      }),
+    );
+    expect(prisma.orderStatusHistory.create).toHaveBeenCalled();
+  });
+
+  it('transitions order to PAYMENT_FAILED on FAILED webhook', async () => {
+    provider.parseWebhookPayload.mockResolvedValueOnce({
+      status: PaymentStatus.FAILED,
+      providerTransactionId: 'pp_txn_1',
+      metadata: { event: 'declined' },
+    });
+    prisma.payment.findFirst.mockResolvedValueOnce({
+      id: 'pay_2',
+      orderId: 'order_2',
+      status: PaymentStatus.PENDING,
+    });
+
+    const result = await service.handle(
+      'payphone',
+      { id: 'pp_txn_1', transactionStatus: -1 },
+      'pp_token',
+    );
+
+    expect(result.status).toBe(PaymentStatus.FAILED);
+    expect(prisma.order.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { status: OrderStatus.PAYMENT_FAILED },
+      }),
+    );
+  });
+
+  it('skips persistence when payment record is not found', async () => {
+    provider.parseWebhookPayload.mockResolvedValueOnce({
+      status: PaymentStatus.COMPLETED,
+      providerTransactionId: 'mp_1',
+      metadata: {},
+    });
+    prisma.payment.findFirst.mockResolvedValueOnce(null);
+
+    const result = await service.handle(
+      'mercadopago',
+      { data_id: 'mp_1', type: 'payment.updated' },
+      'mp_secret',
+    );
+
+    expect(result.providerTransactionId).toBe('mp_1');
+    expect(prisma.payment.update).not.toHaveBeenCalled();
+    expect(prisma.order.update).not.toHaveBeenCalled();
+  });
+
+  it('routes placetopay provider to the configured secret', async () => {
+    provider.parseWebhookPayload.mockResolvedValueOnce({
+      status: PaymentStatus.PENDING,
+      providerTransactionId: 'ptp_1',
+      metadata: {},
+    });
+
+    await service.handle('placetopay', { requestId: 'ptp_1' }, 'ptp_secret');
+
+    expect(factory.getProvider).toHaveBeenCalledWith(PaymentProvider.PLACETOPAY);
+    expect(provider.validateWebhookSignature).toHaveBeenCalled();
+  });
+});

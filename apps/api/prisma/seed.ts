@@ -40,10 +40,11 @@ async function main() {
       email: 'admin@example.com',
       role: 'ADMIN',
       phone: '+593999999998',
+      stripeCustomerId: 'cus_seed_admin',
     },
   });
 
-  await prisma.product.upsert({
+  const product = await prisma.product.upsert({
     where: { slug: 'sample-product' },
     update: {},
     create: {
@@ -83,6 +84,40 @@ async function main() {
           quantity: 100,
           reservedQuantity: 0,
           lowStockThreshold: 10,
+        },
+      },
+    },
+  });
+
+  await prisma.order.upsert({
+    where: { orderNumber: 'ORD-SEED-001' },
+    update: {},
+    create: {
+      orderNumber: 'ORD-SEED-001',
+      userId: user.id,
+      customerEmail: user.email,
+      customerPhone: user.phone,
+      status: 'PAYMENT_PENDING',
+      channel: 'WEB',
+      subtotal: 19.99,
+      taxAmount: 0,
+      shippingAmount: 0,
+      discountAmount: 0,
+      total: 19.99,
+      reservationExpiresAt: new Date(Date.now() + 30 * 60_000),
+      items: {
+        create: {
+          productId: product.id,
+          name: product.name,
+          sku: product.sku ?? 'N/A',
+          price: 19.99,
+          quantity: 1,
+        },
+      },
+      statusHistory: {
+        create: {
+          status: 'PAYMENT_PENDING',
+          notes: 'Seed order',
         },
       },
     },

@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { Role } from '../auth/role.enum.js';
+import { StripeCustomerService } from '../payments/stripe/stripe-customer.service.js';
 
 interface ClerkEmail {
   id: string;
@@ -22,6 +23,8 @@ interface ClerkWebhookData {
   primary_email_address_id?: string;
   phone_numbers?: ClerkPhone[];
   primary_phone_number_id?: string;
+  first_name?: string;
+  last_name?: string;
   public_metadata?: { role?: string };
 }
 
@@ -34,7 +37,10 @@ interface ClerkWebhookPayload {
 export class ClerkWebhookService {
   private readonly logger = new Logger(ClerkWebhookService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly stripeCustomerService: StripeCustomerService,
+  ) {}
 
   async handleUserWebhook(payload: ClerkWebhookPayload): Promise<void> {
     if (payload.type !== 'user.created' && payload.type !== 'user.updated') {
@@ -59,6 +65,8 @@ export class ClerkWebhookService {
       throw new BadRequestException('User payload missing email');
     }
 
+    const name = this.buildName(data.first_name, data.last_name);
+
     await this.prisma.user.upsert({
       where: { clerkUserId },
       update: { email, phone, role },
@@ -66,6 +74,21 @@ export class ClerkWebhookService {
     });
 
     this.logger.debug(`Synced Clerk user ${clerkUserId} with role ${role}`);
+
+    this.stripeCustomerService
+      .createOrUpdateCustomer(clerkUserId, email, name)
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        this.logger.error(
+          { error: message, clerkUserId },
+          'Async Stripe customer sync failed after Clerk webhook',
+        );
+      });
+  }
+
+  private buildName(firstName?: string, lastName?: string): string | undefined {
+    const name = [firstName, lastName].filter(Boolean).join(' ').trim();
+    return name || undefined;
   }
 
   private validateRole(role?: string): Role {

@@ -12,15 +12,18 @@ import { Separator } from '@/components/ui/separator';
 import { useApiClient } from '@/lib/client-api';
 import { formatPrice, orderStatusLabel } from '@repo/shared-utils';
 import type { Order, OrderStatus } from '@repo/shared-types';
+import { RefundPanel } from './refund-panel';
 
 const ORDER_STATUSES: OrderStatus[] = [
   'PENDING',
   'PAYMENT_PENDING',
+  'PAYMENT_FAILED',
   'PROCESSING',
   'SHIPPED',
   'DELIVERED',
   'CANCELLED',
   'REFUNDED',
+  'PARTIALLY_REFUNDED',
 ];
 
 export default function AdminOrderDetailPage({ order }: { order: Order }) {
@@ -87,6 +90,12 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
                 <span>Subtotal</span>
                 <span>{formatPrice(order.subtotal)}</span>
               </div>
+              {Number(order.discountAmount) > 0 ? (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Discount{order.couponCode ? ` (${order.couponCode})` : null}</span>
+                  <span>-{formatPrice(order.discountAmount)}</span>
+                </div>
+              ) : null}
               <div className="flex justify-between text-sm">
                 <span>Tax</span>
                 <span>{formatPrice(order.taxAmount)}</span>
@@ -102,6 +111,8 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
               </div>
             </CardContent>
           </Card>
+
+          <RefundPanel order={order} />
 
           <Card>
             <CardHeader>

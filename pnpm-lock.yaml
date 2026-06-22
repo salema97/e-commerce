@@ -210,6 +210,9 @@ importers:
       '@repo/shared-utils':
         specifier: workspace:^
         version: link:../../packages/shared-utils
+      '@stripe/stripe-react-native':
+        specifier: ^0.42.0
+        version: 0.42.0(expo@56.0.12)(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.0)(bufferutil@4.1.0)(react@19.2.7)(utf-8-validate@6.0.6))(react@19.2.7)
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.66.0(react@19.2.7)
@@ -3200,6 +3203,16 @@ packages:
   '@stripe/stripe-js@7.0.0':
     resolution: {integrity: sha512-0AWkP+hoIXB5O34FGY7jh687ZPlOqLqMkJDkiSXcp4TaWWidnxjsZSp0xkjyAWbIz4+j1BFXDAK01Rqb7ceBRA==}
     engines: {node: '>=12.16'}
+
+  '@stripe/stripe-react-native@0.42.0':
+    resolution: {integrity: sha512-iV8PpDJ913CBoyq1zDtAARpsZtA8dxRFsXhc7KXsIpw2qCEqlNPSrCP4LAxI7UufJLa/gYRR1xYfnH1GXCKPfw==}
+    peerDependencies:
+      expo: '>=46.0.9'
+      react: '*'
+      react-native: '*'
+    peerDependenciesMeta:
+      expo:
+        optional: true
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
@@ -9135,7 +9148,7 @@ snapshots:
       metro-babel-transformer: 0.84.4
       metro-cache: 0.84.4
       metro-cache-key: 0.84.4
-      metro-config: 0.84.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      metro-config: 0.84.4(bufferutil@4.1.0)
       metro-core: 0.84.4
       metro-file-map: 0.84.4
       metro-minify-terser: 0.84.4
@@ -10210,7 +10223,7 @@ snapshots:
       debug: 4.4.3(supports-color@9.4.0)
       invariant: 2.2.4
       metro: 0.84.4(bufferutil@4.1.0)
-      metro-config: 0.84.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      metro-config: 0.84.4(bufferutil@4.1.0)
       metro-core: 0.84.4
       semver: 7.8.1
     optionalDependencies:
@@ -10226,7 +10239,7 @@ snapshots:
       debug: 4.4.3(supports-color@9.4.0)
       invariant: 2.2.4
       metro: 0.84.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      metro-config: 0.84.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      metro-config: 0.84.4(bufferutil@4.1.0)
       metro-core: 0.84.4
       semver: 7.8.1
     optionalDependencies:
@@ -10282,7 +10295,7 @@ snapshots:
     dependencies:
       '@react-native/js-polyfills': 0.85.3
       '@react-native/metro-babel-transformer': 0.85.3(@babel/core@7.29.7)
-      metro-config: 0.84.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      metro-config: 0.84.4(bufferutil@4.1.0)
       metro-runtime: 0.84.4
     transitivePeerDependencies:
       - '@babel/core'
@@ -11080,6 +11093,13 @@ snapshots:
   '@stripe/stripe-js@5.6.0': {}
 
   '@stripe/stripe-js@7.0.0': {}
+
+  '@stripe/stripe-react-native@0.42.0(expo@56.0.12)(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.0)(bufferutil@4.1.0)(react@19.2.7)(utf-8-validate@6.0.6))(react@19.2.7)':
+    dependencies:
+      react: 19.2.7
+      react-native: 0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.0)(bufferutil@4.1.0)(react@19.2.7)(utf-8-validate@6.0.6)
+    optionalDependencies:
+      expo: 56.0.12(@babel/core@7.29.7)(@expo/dom-webview@56.0.5)(@expo/metro-runtime@56.0.15)(bufferutil@4.1.0)(expo-router@56.2.11)(react-dom@19.2.7(react@19.2.7))(react-native-web@0.20.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-native-worklets@0.9.2(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.0)(bufferutil@4.1.0)(react@19.2.7)(utf-8-validate@6.0.6))(react@19.2.7))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.0)(bufferutil@4.1.0)(react@19.2.7)(utf-8-validate@6.0.6))(react@19.2.7)(typescript@5.9.3)(utf-8-validate@6.0.6)
 
   '@swc/helpers@0.5.15':
     dependencies:
@@ -13965,12 +13985,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  metro-config@0.84.4(bufferutil@4.1.0)(utf-8-validate@6.0.6):
+  metro-config@0.84.4(bufferutil@4.1.0):
     dependencies:
       connect: 3.7.0
       flow-enums-runtime: 0.0.6
       jest-validate: 29.7.0
-      metro: 0.84.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      metro: 0.84.4(bufferutil@4.1.0)
       metro-cache: 0.84.4
       metro-core: 0.84.4
       metro-runtime: 0.84.4
@@ -14115,7 +14135,7 @@ snapshots:
       metro-babel-transformer: 0.84.4
       metro-cache: 0.84.4
       metro-cache-key: 0.84.4
-      metro-config: 0.84.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      metro-config: 0.84.4(bufferutil@4.1.0)
       metro-core: 0.84.4
       metro-file-map: 0.84.4
       metro-resolver: 0.84.4
@@ -14161,7 +14181,7 @@ snapshots:
       metro-babel-transformer: 0.84.4
       metro-cache: 0.84.4
       metro-cache-key: 0.84.4
-      metro-config: 0.84.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      metro-config: 0.84.4(bufferutil@4.1.0)
       metro-core: 0.84.4
       metro-file-map: 0.84.4
       metro-resolver: 0.84.4

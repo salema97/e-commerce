@@ -17,6 +17,7 @@ import type {
   UpdateUserDto,
   Order,
   CreateOrderDto,
+  CreatedOrderResult,
   UpdateOrderStatusDto,
   CreatePaymentIntentDto,
   PaymentIntentResult,
@@ -27,6 +28,7 @@ import type {
   Cart,
   CreateRefundDto,
   Refund,
+  ReceiptResponse,
   PaginatedResponse,
 } from '@repo/shared-types';
 
@@ -160,16 +162,20 @@ export function createApiClient(options: ApiClientOptions) {
       findAll: (query?: { page?: number; limit?: number; status?: string }) =>
         request<PaginatedResponse<Order>>('GET', '/orders', undefined, query),
       findOne: (id: string) => request<Order>('GET', `/orders/${id}`),
-      create: (data: CreateOrderDto) => request<Order>('POST', '/orders', data),
+      create: (data: CreateOrderDto) => request<CreatedOrderResult>('POST', '/orders', data),
       updateStatus: (id: string, data: UpdateOrderStatusDto) =>
         request<Order>('PATCH', `/orders/${id}/status`, data),
       createPaymentIntent: (id: string, data: CreatePaymentIntentDto) => request<PaymentIntentResult>('POST', `/orders/${id}/payment-intent`, data),
+      listRefunds: (id: string) => request<Refund[]>('GET', `/orders/${id}/refunds`),
+      createRefund: (id: string, data: CreateRefundDto) => request<Refund>('POST', `/orders/${id}/refunds`, data),
+      generateReceipt: (id: string) => request<ReceiptResponse>('POST', `/orders/${id}/receipt`),
+      getReceipt: (id: string) => request<ReceiptResponse>('GET', `/orders/${id}/receipt`),
     },
     payments: {
       createIntent: (data: CreatePaymentIntentDto) => request<PaymentIntentResult>('POST', '/payments/intent', data),
     },
     refunds: {
-      create: (data: CreateRefundDto) => request<Refund>('POST', '/refunds', data),
+      approve: (id: string) => request<Refund>('PATCH', `/refunds/${id}/approve`),
     },
     invoices: {
       issue: (data: IssueInvoiceDto) => request<InvoiceResponseDto>('POST', '/invoices', data),

@@ -1,3 +1,4 @@
+import './env.js';
 import { describe, it, beforeAll, afterAll, expect, vi } from 'vitest';
 import { Controller, Post, Module, INestApplication } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
