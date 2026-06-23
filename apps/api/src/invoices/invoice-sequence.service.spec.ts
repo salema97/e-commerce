@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, Logger } from '@nestjs/common';
 import { InvoiceSequenceService } from './invoice-sequence.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
@@ -8,20 +8,41 @@ describe('InvoiceSequenceService', () => {
   let service: InvoiceSequenceService;
   let counter: number;
   let max: number;
+  let authorizedFrom: number;
+  let authorizedTo: number;
+  let nearExhaustionAlertSent: boolean;
 
-  beforeEach(async () => {
-    counter = 0;
-    max = Number.POSITIVE_INFINITY;
-
+  function createPrismaMock() {
     const prisma = {
+      $transaction: vi.fn(async (cb: (tx: unknown) => Promise<unknown>) =>
+        cb(prisma),
+      ),
       $queryRawUnsafe: vi.fn(async () => {
         if (counter >= max) {
           return [];
         }
         counter += 1;
-        return [{ currentNumber: counter }];
+        return [
+          {
+            currentNumber: counter,
+            authorizedFrom,
+            authorizedTo,
+            nearExhaustionAlertSent,
+          },
+        ];
       }),
     } as unknown as PrismaService;
+    return prisma;
+  }
+
+  beforeEach(async () => {
+    counter = 0;
+    max = Number.POSITIVE_INFINITY;
+    authorizedFrom = 1;
+    authorizedTo = 1_000_000;
+    nearExhaustionAlertSent = false;
+
+    const prisma = createPrismaMock();
 
     const module = await Test.createTestingModule({
       providers: [
@@ -65,5 +86,44 @@ describe('InvoiceSequenceService', () => {
     await expect(
       service.allocateNext('01', '001', '001'),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('logs a warning when the sequence is near exhaustion', async () => {
+    const warnSpy = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => {
+      // noop
+    });
+    authorizedTo = 100;
+    counter = 98;
+    nearExhaustionAlertSent = false;
+
+    const number = await service.allocateNext('01', '001', '001');
+
+    expect(number).toBe('000000099');
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        documentType: '01',
+        remaining: 1,
+        authorizedTo: 100,
+      }),
+      expect.stringContaining('near exhaustion'),
+    );
+
+    warnSpy.mockRestore();
+  });
+
+  it('does not log a warning when the alert has already been sent', async () => {
+    const warnSpy = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => {
+      // noop
+    });
+    authorizedTo = 100;
+    counter = 98;
+    nearExhaustionAlertSent = true;
+
+    const number = await service.allocateNext('01', '001', '001');
+
+    expect(number).toBe('000000099');
+    expect(warnSpy).not.toHaveBeenCalled();
+
+    warnSpy.mockRestore();
   });
 });
