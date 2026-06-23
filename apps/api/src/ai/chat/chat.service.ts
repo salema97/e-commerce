@@ -2,14 +2,14 @@ import { randomUUID } from 'node:crypto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { MessageService } from '../../messages/message.service.js';
-import { SupportBotService } from '../support-bot/support-bot.service.js';
+import { ConversationOrchestrator } from '../orchestrator/conversation-orchestrator.interface.js';
 
 @Injectable()
 export class ChatService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly messageService: MessageService,
-    private readonly supportBot: SupportBotService,
+    private readonly orchestrator: ConversationOrchestrator,
   ) {}
 
   async createSession(contactName?: string) {
@@ -41,7 +41,11 @@ export class ChatService {
       contentType: 'TEXT',
     });
 
-    void this.supportBot.handleInboundWeb(conversation.id, content);
+    void this.orchestrator.handleInbound({
+      conversationId: conversation.id,
+      channel: 'WEB',
+      content,
+    });
 
     return this.listMessages(webSessionId);
   }

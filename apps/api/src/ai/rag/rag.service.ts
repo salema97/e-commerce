@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { EmbeddingProvider } from '../embedding/embedding-provider.interface.js';
+import { formatPgVector } from '../embedding/embedding.constants.js';
 
 export interface RetrievedChunk {
   id: string;
@@ -11,13 +13,55 @@ export interface RetrievedChunk {
 
 @Injectable()
 export class RagService {
+  private readonly logger = new Logger(RagService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly embeddingProvider: EmbeddingProvider,
+    private readonly config: ConfigService,
   ) {}
 
   async retrieve(query: string, topK = 5): Promise<RetrievedChunk[]> {
     const queryVector = await this.embeddingProvider.embed(query);
+
+    if (this.config.get<string>('KNOWLEDGE_USE_PGVECTOR', 'true') === 'true') {
+      const pgResults = await this.retrieveWithPgVector(queryVector, topK);
+      if (pgResults.length > 0) {
+        return pgResults;
+      }
+    }
+
+    return this.retrieveWithJsonCosine(queryVector, topK);
+  }
+
+  private async retrieveWithPgVector(queryVector: number[], topK: number): Promise<RetrievedChunk[]> {
+    const vectorLiteral = formatPgVector(queryVector);
+
+    try {
+      const rows = await this.prisma.$queryRawUnsafe<
+        Array<{ id: string; content: string; score: number }>
+      >(
+        `SELECT id, content, 1 - ("embeddingVector" <=> $1::vector) AS score
+         FROM "KnowledgeChunk"
+         WHERE "embeddingVector" IS NOT NULL
+         ORDER BY "embeddingVector" <=> $1::vector
+         LIMIT $2`,
+        vectorLiteral,
+        topK,
+      );
+
+      return rows.map((row) => ({
+        id: row.id,
+        content: row.content,
+        score: Number(row.score),
+      }));
+    } catch (error) {
+      this.logger.debug({ error }, 'pgvector retrieval unavailable; falling back to JSON cosine');
+      return [];
+    }
+  }
+
+  private async retrieveWithJsonCosine(queryVector: number[], topK: number): Promise<RetrievedChunk[]> {
     const chunks = await this.prisma.knowledgeChunk.findMany({
       where: { embedding: { not: Prisma.DbNull } },
       take: 500,

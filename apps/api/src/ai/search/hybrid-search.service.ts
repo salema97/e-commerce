@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { RagService } from '../rag/rag.service.js';
 import { MeilisearchService } from './meilisearch.service.js';
+import { isSemanticSearchEnabled } from './search.config.js';
 
 export interface SearchResultItem {
   id: string;
@@ -27,7 +28,7 @@ export class HybridSearchService {
       keywordHits.map((hit, index) => [hit.id, 1 - index / Math.max(keywordHits.length, 1)]),
     );
 
-    if (this.config.get<string>('SEMANTIC_SEARCH_ENABLED') !== 'true') {
+    if (!isSemanticSearchEnabled(this.config, this.meilisearch.isEnabled)) {
       return this.mapKeywordOnly(keywordHits);
     }
 

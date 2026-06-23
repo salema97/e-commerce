@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { KnowledgeIndexingService } from './knowledge-indexing.service.js';
+import { KnowledgeIndexQueueService } from './knowledge-index-queue.service.js';
 import { CreateCmsPageDto, UpdateCmsPageDto } from './dto/cms-page.dto.js';
 
 @Injectable()
 export class CmsPageService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly indexing: KnowledgeIndexingService,
+    private readonly indexQueue: KnowledgeIndexQueueService,
   ) {}
 
   findPublishedBySlug(slug: string) {
@@ -20,20 +20,20 @@ export class CmsPageService {
 
   async create(dto: CreateCmsPageDto) {
     const page = await this.prisma.cmsPage.create({ data: dto });
-    await this.indexing.indexCmsPage(page.id);
+    await this.indexQueue.enqueueCmsPage(page.id);
     return page;
   }
 
   async update(id: string, dto: UpdateCmsPageDto) {
     await this.ensureExists(id);
     const page = await this.prisma.cmsPage.update({ where: { id }, data: dto });
-    await this.indexing.indexCmsPage(page.id);
+    await this.indexQueue.enqueueCmsPage(page.id);
     return page;
   }
 
   async remove(id: string) {
     await this.ensureExists(id);
-    await this.prisma.knowledgeChunk.deleteMany({ where: { sourceType: 'CMS_PAGE', sourceId: id } });
+    await this.indexQueue.enqueueDeleteSource('CMS_PAGE', id);
     return this.prisma.cmsPage.delete({ where: { id } });
   }
 

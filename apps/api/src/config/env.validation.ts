@@ -81,7 +81,14 @@ const envSchema = z.object({
   LLM_TIMEOUT_MS: z.coerce.number().int().positive().default(30000),
   SUPPORT_BOT_ENABLED: z.enum(['true', 'false']).default('false'),
   BOT_CONFIDENCE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.7),
-  SEMANTIC_SEARCH_ENABLED: z.enum(['true', 'false']).default('false'),
+  SEMANTIC_SEARCH_ENABLED: z.enum(['true', 'false', 'auto']).default('auto'),
+  CONVERSATION_ORCHESTRATOR: z.enum(['native', 'dify', 'typebot']).default('native'),
+  KNOWLEDGE_INDEX_QUEUE_ENABLED: z.enum(['true', 'false']).default('true'),
+  KNOWLEDGE_INDEX_QUEUE_CONCURRENCY: z.coerce.number().int().positive().default(3),
+  KNOWLEDGE_USE_PGVECTOR: z.enum(['true', 'false']).default('true'),
+  DIFY_API_URL: z.string().optional(),
+  DIFY_API_KEY: z.string().optional(),
+  TYPEBOT_API_URL: z.string().optional(),
   ENABLE_TEST_AUTH: z.enum(['true', 'false']).default('false'),
 });
 

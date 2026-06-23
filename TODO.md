@@ -439,8 +439,8 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 ### 10.4 WhatsApp Conversation Orchestration
 
-- [ ] Choose orchestrator: Dify, LangChain, or Typebot.
-- [ ] Build `ConversationOrchestrator` abstraction.
+- [x] Choose orchestrator: Dify, LangChain, or Typebot (native default; Dify/Typebot stubs with fallback).
+- [x] Build `ConversationOrchestrator` abstraction.
 - [x] Implement flows for order status, returns, FAQs, and sales assistance (native inbox handoff).
 - [x] Handoff to Chatwoot/admin inbox when human intervention is needed.
 

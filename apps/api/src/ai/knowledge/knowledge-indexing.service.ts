@@ -1,14 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import type { KnowledgeSourceType } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { EmbeddingProvider } from '../embedding/embedding-provider.interface.js';
+import { EMBEDDING_DIMENSIONS, formatPgVector } from '../embedding/embedding.constants.js';
 
 @Injectable()
 export class KnowledgeIndexingService {
+  private readonly logger = new Logger(KnowledgeIndexingService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly embeddingProvider: EmbeddingProvider,
+    private readonly config: ConfigService,
   ) {}
+
+  async deleteSource(sourceType: KnowledgeSourceType, sourceId: string): Promise<void> {
+    await this.prisma.knowledgeChunk.deleteMany({ where: { sourceType, sourceId } });
+  }
 
   async indexText(sourceType: KnowledgeSourceType, sourceId: string, content: string): Promise<void> {
     const chunks = chunkText(content);
@@ -16,7 +25,7 @@ export class KnowledgeIndexingService {
 
     for (const chunk of chunks) {
       const embedding = await this.embeddingProvider.embed(chunk);
-      await this.prisma.knowledgeChunk.create({
+      const record = await this.prisma.knowledgeChunk.create({
         data: {
           sourceType,
           sourceId,
@@ -24,6 +33,10 @@ export class KnowledgeIndexingService {
           embedding,
         },
       });
+
+      if (this.usePgVector && embedding.length === EMBEDDING_DIMENSIONS) {
+        await this.persistPgVector(record.id, embedding);
+      }
     }
   }
 
@@ -33,9 +46,7 @@ export class KnowledgeIndexingService {
       include: { attributes: true, category: true },
     });
     if (!product || product.status !== 'ACTIVE') {
-      await this.prisma.knowledgeChunk.deleteMany({
-        where: { sourceType: 'PRODUCT', sourceId: productId },
-      });
+      await this.deleteSource('PRODUCT', productId);
       return;
     }
 
@@ -57,7 +68,7 @@ export class KnowledgeIndexingService {
   async indexFaq(faqId: string): Promise<void> {
     const faq = await this.prisma.faq.findUnique({ where: { id: faqId } });
     if (!faq || !faq.isPublished) {
-      await this.prisma.knowledgeChunk.deleteMany({ where: { sourceType: 'FAQ', sourceId: faqId } });
+      await this.deleteSource('FAQ', faqId);
       return;
     }
     await this.indexText('FAQ', faqId, `${faq.question}\n${faq.answer}`);
@@ -66,10 +77,28 @@ export class KnowledgeIndexingService {
   async indexCmsPage(pageId: string): Promise<void> {
     const page = await this.prisma.cmsPage.findUnique({ where: { id: pageId } });
     if (!page || !page.isPublished) {
-      await this.prisma.knowledgeChunk.deleteMany({ where: { sourceType: 'CMS_PAGE', sourceId: pageId } });
+      await this.deleteSource('CMS_PAGE', pageId);
       return;
     }
     await this.indexText('CMS_PAGE', pageId, `${page.title}\n${page.bodyMarkdown}`);
+  }
+
+  private get usePgVector(): boolean {
+    return this.config.get<string>('KNOWLEDGE_USE_PGVECTOR', 'true') === 'true';
+  }
+
+  private async persistPgVector(chunkId: string, embedding: number[]): Promise<void> {
+    const vectorLiteral = formatPgVector(embedding);
+
+    try {
+      await this.prisma.$executeRawUnsafe(
+        `UPDATE "KnowledgeChunk" SET "embeddingVector" = $1::vector WHERE id = $2`,
+        vectorLiteral,
+        chunkId,
+      );
+    } catch (error) {
+      this.logger.warn({ error, chunkId }, 'Failed to persist pgvector embedding; JSON fallback remains');
+    }
   }
 }
 

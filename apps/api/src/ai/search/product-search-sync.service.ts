@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { KnowledgeIndexingService } from '../knowledge/knowledge-indexing.service.js';
+import { KnowledgeIndexQueueService } from '../knowledge/knowledge-index-queue.service.js';
 import { MeilisearchService } from './meilisearch.service.js';
 
 @Injectable()
@@ -8,7 +8,7 @@ export class ProductSearchSyncService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly meilisearch: MeilisearchService,
-    private readonly knowledgeIndexing: KnowledgeIndexingService,
+    private readonly knowledgeIndexQueue: KnowledgeIndexQueueService,
   ) {}
 
   async syncProduct(productId: string): Promise<void> {
@@ -35,13 +35,11 @@ export class ProductSearchSyncService {
       status: product.status,
     });
 
-    await this.knowledgeIndexing.indexProduct(productId);
+    await this.knowledgeIndexQueue.enqueueProduct(productId);
   }
 
   async removeProduct(productId: string): Promise<void> {
     await this.meilisearch.deleteProduct(productId);
-    await this.prisma.knowledgeChunk.deleteMany({
-      where: { sourceType: 'PRODUCT', sourceId: productId },
-    });
+    await this.knowledgeIndexQueue.enqueueDeleteSource('PRODUCT', productId);
   }
 }

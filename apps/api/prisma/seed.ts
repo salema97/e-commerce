@@ -172,7 +172,7 @@ async function main() {
     create: {
       title: 'Política de devoluciones',
       slug: 'politica-devoluciones',
-      content: 'Puedes solicitar una devolución dentro de los 30 días. Contáctanos por WhatsApp o chat web.',
+      bodyMarkdown: 'Puedes solicitar una devolución dentro de los 30 días. Contáctanos por WhatsApp o chat web.',
       isPublished: true,
     },
   });
