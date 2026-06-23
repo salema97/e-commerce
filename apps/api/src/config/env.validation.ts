@@ -30,6 +30,10 @@ const envSchema = z.object({
   SRI_EMISSION_POINT_CODE: z.string().min(1),
   SRI_TEST_ENVIRONMENT: z.enum(['true', 'false']).default('true'),
   RETURN_WINDOW_DAYS: z.coerce.number().int().positive().default(30),
+  EVOLUTION_API_URL: z.string().min(1),
+  EVOLUTION_API_KEY: z.string().min(1),
+  EVOLUTION_WEBHOOK_SECRET: z.string().min(1),
+  EVOLUTION_INSTANCE_NAME: z.string().min(1),
 });
 
 export type Env = z.infer<typeof envSchema>;
