@@ -23,6 +23,7 @@ import type {
   PaymentIntentResult,
   InvoiceResponseDto,
   IssueInvoiceDto,
+  CreditNoteResponse,
   AddCartItemDto,
   UpdateCartItemDto,
   Cart,
@@ -195,6 +196,32 @@ export function createApiClient(options: ApiClientOptions) {
       issue: (data: IssueInvoiceDto) => request<InvoiceResponseDto>('POST', '/invoices', data),
       issueCreditNote: (data: { returnRequestId: string; total?: string }) =>
         request<InvoiceResponseDto>('POST', '/invoices/credit-notes', data),
+      findAll: (query?: {
+        orderId?: string;
+        status?: string;
+        from?: string;
+        to?: string;
+        limit?: number;
+        offset?: number;
+      }) => request<InvoiceResponseDto[]>('GET', '/invoices', undefined, query),
+      findOne: (id: string) => request<InvoiceResponseDto>('GET', `/invoices/${id}`),
+      retry: (id: string) => request<InvoiceResponseDto>('POST', `/invoices/${id}/retry`),
+      downloadXml: (id: string) => `${baseURL}/invoices/${id}/xml`,
+      downloadPdf: (id: string) => `${baseURL}/invoices/${id}/pdf`,
+    },
+    creditNotes: {
+      findAll: (query?: {
+        returnRequestId?: string;
+        status?: string;
+        from?: string;
+        to?: string;
+        limit?: number;
+        offset?: number;
+      }) => request<CreditNoteResponse[]>('GET', '/credit-notes', undefined, query),
+      findOne: (id: string) => request<CreditNoteResponse>('GET', `/credit-notes/${id}`),
+      retry: (id: string) => request<CreditNoteResponse>('POST', `/credit-notes/${id}/retry`),
+      downloadXml: (id: string) => `${baseURL}/credit-notes/${id}/xml`,
+      downloadPdf: (id: string) => `${baseURL}/credit-notes/${id}/pdf`,
     },
     returns: {
       findAll: (query?: { status?: string; orderId?: string; userId?: string; customerEmail?: string; limit?: number; offset?: number }) =>
