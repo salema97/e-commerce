@@ -63,7 +63,7 @@ export class SriXmlBuilder {
           razonSocialComprador:
             input.order.customerName ?? 'CONSUMIDOR FINAL',
           identificacionComprador:
-            input.order.customerIdentification ?? '9999999999',
+            input.order.customerIdentification ?? '9999999999999',
           direccionComprador:
             input.order.customerAddress ?? 'Direccion comprador',
           totalSinImpuestos: this.formatNumber(input.order.subtotal),

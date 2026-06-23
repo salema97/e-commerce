@@ -62,11 +62,17 @@ export function isValidRuc(ruc: string): boolean {
   return false;
 }
 
-function validateCedula(cedula: string): boolean {
-  if (cedula.length !== 10) {
+export function isValidCedula(cedula: string): boolean {
+  const cleaned = cedula.replace(/\D/g, '');
+
+  if (cleaned.length !== 10) {
     return false;
   }
 
+  return validateCedula(cleaned);
+}
+
+function validateCedula(cedula: string): boolean {
   const provinceCode = Number.parseInt(cedula.slice(0, 2), 10);
   if (provinceCode < 1 || provinceCode > 24) {
     return false;
@@ -126,6 +132,20 @@ export function isValidEcuadorPhone(phone: string): boolean {
   const normalized = normalizeEcuadorPhone(phone);
   const digits = normalized.replace(/\D/g, '');
   return /^\+?5939\d{8}$/.test(normalized) || /^\+?593[2-7]\d{7}$/.test(normalized);
+}
+
+export function isValidEcuadorCustomerIdentification(identification: string): boolean {
+  const cleaned = identification.replace(/\D/g, '');
+
+  if (cleaned.length === 10) {
+    return isValidCedula(cleaned);
+  }
+
+  if (cleaned.length === 13) {
+    return isValidRuc(cleaned) || cleaned === '9999999999999';
+  }
+
+  return false;
 }
 
 export function rucType(ruc: string): 'natural' | 'juridica' | 'publico' | 'unknown' {

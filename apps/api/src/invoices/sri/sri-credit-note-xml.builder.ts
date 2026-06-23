@@ -78,7 +78,7 @@ export class SriCreditNoteXmlBuilder {
           razonSocialComprador:
             input.customerName ?? 'CONSUMIDOR FINAL',
           identificacionComprador:
-            input.customerIdentification ?? '9999999999',
+            input.customerIdentification ?? '9999999999999',
           direccionComprador:
             input.customerAddress ?? 'Direccion comprador',
           codDocModificado: input.creditNote.codDocModificado,

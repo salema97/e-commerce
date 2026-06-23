@@ -83,4 +83,20 @@ describe('SriXmlBuilder', () => {
 
     expect(xml).toContain('<tipoIdentificacionComprador>04</tipoIdentificacionComprador>');
   });
+
+  it('uses 13-digit consumidor final identification when buyer identification is missing', () => {
+    const xml = builder.buildFactura({
+      accessKey: '1501202401017921467390011001001001000000001000000001',
+      order: { ...order, customerIdentification: undefined },
+      establishmentCode: '001',
+      emissionPointCode: '001',
+      sequenceNumber: '000000001',
+      environment: '1',
+      companyRuc: '1792146739001',
+      companyName: 'Test Company',
+    });
+
+    expect(xml).toContain('<tipoIdentificacionComprador>07</tipoIdentificacionComprador>');
+    expect(xml).toContain('<identificacionComprador>9999999999999</identificacionComprador>');
+  });
 });
