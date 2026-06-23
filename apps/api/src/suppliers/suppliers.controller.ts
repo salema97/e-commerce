@@ -30,6 +30,7 @@ export class SuppliersController {
   }
 
   @Get()
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE, Role.INVENTORY)
   @ApiOperation({ summary: 'List all suppliers' })
   @ApiResponse({ status: 200, description: 'Suppliers returned' })
   findAll() {
@@ -37,6 +38,7 @@ export class SuppliersController {
   }
 
   @Get(':id')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE, Role.INVENTORY)
   @ApiOperation({ summary: 'Get a supplier by id' })
   @ApiResponse({ status: 200, description: 'Supplier found' })
   @ApiResponse({ status: 404, description: 'Supplier not found' })
