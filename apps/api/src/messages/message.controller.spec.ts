@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { BadRequestException } from '@nestjs/common';
 import { MessageController } from './message.controller.js';
 import { MessageService } from './message.service.js';
 
@@ -37,6 +38,18 @@ describe('MessageController', () => {
 
     expect(service.createOutbound).toHaveBeenCalledWith('c1', { content: 'Hello' });
     expect(result.id).toBe('m1');
+  });
+
+  it('rejects empty message content', async () => {
+    await expect(controller.create('c1', { content: '' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+  });
+
+  it('rejects message content over 4096 characters', async () => {
+    await expect(controller.create('c1', { content: 'a'.repeat(4097) })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 
   it('passes empty pagination defaults to the service', async () => {
