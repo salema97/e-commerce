@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { ecuadorPhoneSchema } from '@repo/shared-utils';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ListConversationsQueryDto } from './dto/list-conversations.query.dto.js';
 import { UpdateConversationDto } from './dto/update-conversation.dto.js';
@@ -14,6 +15,11 @@ export class ConversationService {
     contactName?: string;
     status?: 'OPEN' | 'PENDING' | 'RESOLVED' | 'CLOSED';
   }) {
+    const phoneValidation = ecuadorPhoneSchema.safeParse(data.remoteJid);
+    if (!phoneValidation.success) {
+      throw new BadRequestException(phoneValidation.error.flatten());
+    }
+
     return this.prisma.conversation.create({
       data: {
         remoteJid: data.remoteJid,

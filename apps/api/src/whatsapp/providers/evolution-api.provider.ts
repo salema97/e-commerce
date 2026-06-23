@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHmac, timingSafeEqual } from 'crypto';
 import type { SendWhatsAppResult, WhatsAppTemplate, MessageStatus } from '@repo/shared-types';
+import { ecuadorPhoneSchema } from '@repo/shared-utils';
 import { WhatsAppProvider } from '../whatsapp-provider.interface.js';
 import { WhatsAppProviderError } from '../whatsapp-provider.error.js';
 
@@ -29,13 +30,14 @@ export class EvolutionApiProvider extends WhatsAppProvider {
   }
 
   async sendText(phone: string, text: string): Promise<SendWhatsAppResult> {
-    this.logger.debug({ phone: maskPhone(phone) }, 'Sending WhatsApp text message');
+    const normalizedPhone = this.validatePhone(phone);
+    this.logger.debug({ phone: maskPhone(normalizedPhone) }, 'Sending WhatsApp text message');
 
     const response = await this.fetchWithRetry(this.buildUrl('sendText'), {
       method: 'POST',
       headers: this.headers(),
       body: JSON.stringify({
-        number: normalizePhone(phone),
+        number: normalizedPhone,
         text,
         options: { delay: 1_200 },
       }),
@@ -49,13 +51,14 @@ export class EvolutionApiProvider extends WhatsAppProvider {
     template: WhatsAppTemplate,
     variables: Record<string, string>,
   ): Promise<SendWhatsAppResult> {
-    this.logger.debug({ phone: maskPhone(phone), template }, 'Sending WhatsApp template message');
+    const normalizedPhone = this.validatePhone(phone);
+    this.logger.debug({ phone: maskPhone(normalizedPhone), template }, 'Sending WhatsApp template message');
 
     const response = await this.fetchWithRetry(this.buildUrl('sendTemplate'), {
       method: 'POST',
       headers: this.headers(),
       body: JSON.stringify({
-        number: normalizePhone(phone),
+        number: normalizedPhone,
         template: template.toLowerCase(),
         language: 'es',
         components: Object.entries(variables).map(([, text]) => ({
@@ -108,6 +111,14 @@ export class EvolutionApiProvider extends WhatsAppProvider {
 
   private get webhookSecret(): string {
     return this.configService.getOrThrow<string>('EVOLUTION_WEBHOOK_SECRET');
+  }
+
+  private validatePhone(phone: string): string {
+    const result = ecuadorPhoneSchema.safeParse(phone);
+    if (!result.success) {
+      throw new BadRequestException(result.error.flatten());
+    }
+    return result.data;
   }
 
   private headers(): Record<string, string> {
@@ -219,10 +230,6 @@ export class EvolutionApiProvider extends WhatsAppProvider {
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
-}
-
-function normalizePhone(phone: string): string {
-  return phone.replace(/\s/g, '');
 }
 
 function maskPhone(phone: string): string {
