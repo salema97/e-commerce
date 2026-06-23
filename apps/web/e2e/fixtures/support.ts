@@ -1,7 +1,15 @@
 import { APIRequestContext } from '@playwright/test';
 import { createHmac } from 'crypto';
 
-const WEBHOOK_SECRET = process.env.EVOLUTION_WEBHOOK_SECRET ?? 'whsec_xxx';
+function requireWebhookSecret(): string {
+  const secret = process.env.EVOLUTION_WEBHOOK_SECRET;
+  if (!secret) {
+    throw new Error('EVOLUTION_WEBHOOK_SECRET is required for webhook E2E fixtures');
+  }
+  return secret;
+}
+
+const WEBHOOK_SECRET = requireWebhookSecret();
 
 export interface CreateConversationResult {
   remoteJid: string;
