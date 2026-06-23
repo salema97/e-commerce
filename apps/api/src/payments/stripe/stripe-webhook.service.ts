@@ -8,7 +8,7 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { StripeProvider } from './stripe.provider.js';
 import { PaymentStatus } from '../entities/payment-status.enum.js';
 import { OrderStatus, PaymentProvider } from '@prisma/client';
-import { InvoicesService } from '../../invoices/invoices.service.js';
+import { SriQueueService } from '../../invoices/sri/sri-queue.service.js';
 import { InventoryReservationService } from '../../inventory/inventory-reservation.service.js';
 import { AuditLogService } from '../../audit/audit-log.service.js';
 
@@ -31,7 +31,7 @@ export class StripeWebhookService {
     private readonly configService: ConfigService,
     private readonly stripeProvider: StripeProvider,
     private readonly prisma: PrismaService,
-    private readonly invoicesService: InvoicesService,
+    private readonly sriQueue: SriQueueService,
     private readonly reservationService: InventoryReservationService,
     private readonly auditLogService: AuditLogService,
   ) {}
@@ -272,16 +272,22 @@ export class StripeWebhookService {
 
     this.logger.log(`Payment ${paymentId} marked as COMPLETED`);
 
-    try {
-      await this.invoicesService.issueInvoiceForOrder(orderId);
-      this.logger.log(`Invoice auto-issued for order ${orderId}`);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      this.logger.error(
-        { error: message, orderId },
-        'Failed to auto-issue invoice for paid order',
-      );
-    }
+    this.enqueueInvoice(orderId);
+  }
+
+  private enqueueInvoice(orderId: string): void {
+    this.sriQueue
+      .addIssueInvoiceJob(orderId)
+      .then(() => {
+        this.logger.log(`SRI invoice job enqueued for order ${orderId}`);
+      })
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        this.logger.error(
+          { error: message, orderId },
+          'Failed to enqueue SRI invoice job from Stripe webhook',
+        );
+      });
   }
 
   private async upsertPaymentForWebhook(

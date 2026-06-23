@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { OrderStatus, PaymentProvider as PaymentProviderEnum, PaymentStatus } from '@prisma/client';
@@ -6,14 +6,18 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { PaymentProviderFactory } from './payment-provider.factory.js';
 import { ProviderPaymentResult } from './payment-provider.interface.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
+import { InvoicesService } from '../invoices/invoices.service.js';
 
 @Injectable()
 export class PaymentWebhookService {
+  private readonly logger = new Logger(PaymentWebhookService.name);
+
   constructor(
     private readonly providerFactory: PaymentProviderFactory,
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
     private readonly notificationService: WhatsAppNotificationService,
+    private readonly invoicesService: InvoicesService,
   ) {}
 
   async handle(
@@ -98,7 +102,23 @@ export class PaymentWebhookService {
         },
       });
       await this.sendStatusNotification(payment.orderId, orderStatus);
+
+      if (orderStatus === OrderStatus.PROCESSING) {
+        this.enqueueInvoice(payment.orderId);
+      }
     }
+  }
+
+  private enqueueInvoice(orderId: string): void {
+    this.invoicesService
+      .enqueueInvoiceForOrder(orderId)
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        this.logger.error(
+          { error: message, orderId },
+          'Failed to enqueue SRI invoice job from payment webhook',
+        );
+      });
   }
 
   private async sendStatusNotification(

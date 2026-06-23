@@ -7,14 +7,14 @@ import { StripeProvider } from './stripe.provider.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { PaymentStatus } from '../entities/payment-status.enum.js';
 import { OrderStatus } from '@prisma/client';
-import { InvoicesService } from '../../invoices/invoices.service.js';
+import { SriQueueService } from '../../invoices/sri/sri-queue.service.js';
 import { InventoryReservationService } from '../../inventory/inventory-reservation.service.js';
 import { AuditLogService } from '../../audit/audit-log.service.js';
 
 describe('StripeWebhookService', () => {
   let service: StripeWebhookService;
   let stripeProvider: { validateWebhookSignature: ReturnType<typeof vi.fn> };
-  let invoicesService: { issueInvoiceForOrder: ReturnType<typeof vi.fn> };
+  let sriQueue: { addIssueInvoiceJob: ReturnType<typeof vi.fn> };
   let reservationService: { confirm: ReturnType<typeof vi.fn> };
   let auditLogService: { log: ReturnType<typeof vi.fn> };
   let prisma: {
@@ -35,7 +35,7 @@ describe('StripeWebhookService', () => {
 
   beforeEach(async () => {
     stripeProvider = { validateWebhookSignature: vi.fn() };
-    invoicesService = { issueInvoiceForOrder: vi.fn() };
+    sriQueue = { addIssueInvoiceJob: vi.fn().mockResolvedValue({ id: 'job_1' }) };
     reservationService = { confirm: vi.fn() };
     auditLogService = { log: vi.fn() };
 
@@ -73,7 +73,7 @@ describe('StripeWebhookService', () => {
         },
         { provide: StripeProvider, useValue: stripeProvider },
         { provide: PrismaService, useValue: prisma },
-        { provide: InvoicesService, useValue: invoicesService },
+        { provide: SriQueueService, useValue: sriQueue },
         { provide: InventoryReservationService, useValue: reservationService },
         { provide: AuditLogService, useValue: auditLogService },
       ],
@@ -149,7 +149,7 @@ describe('StripeWebhookService', () => {
     );
     expect(reservationService.confirm).toHaveBeenCalledWith('order_1');
     expect(auditLogService.log).toHaveBeenCalled();
-    expect(invoicesService.issueInvoiceForOrder).toHaveBeenCalledWith('order_1');
+    expect(sriQueue.addIssueInvoiceJob).toHaveBeenCalledWith('order_1');
   });
 
   it('creates payment record and confirms order on checkout.session.completed', async () => {
@@ -194,9 +194,10 @@ describe('StripeWebhookService', () => {
       }),
     );
     expect(reservationService.confirm).toHaveBeenCalledWith('order_2');
+    expect(sriQueue.addIssueInvoiceJob).toHaveBeenCalledWith('order_2');
   });
 
-  it('continues when invoice auto-issue fails on payment_intent.succeeded', async () => {
+  it('continues when invoice enqueue fails on payment_intent.succeeded', async () => {
     stripeProvider.validateWebhookSignature.mockReturnValue(true);
     const payment = {
       id: 'pay_1b',
@@ -207,7 +208,7 @@ describe('StripeWebhookService', () => {
     prisma.payment.findFirst.mockResolvedValue(payment);
     prisma.payment.findUnique.mockResolvedValue(payment);
     prisma.payment.update.mockResolvedValue({ ...payment, status: PaymentStatus.COMPLETED });
-    invoicesService.issueInvoiceForOrder.mockRejectedValue(new Error('SRI unavailable'));
+    sriQueue.addIssueInvoiceJob.mockRejectedValue(new Error('Queue unavailable'));
 
     await service.handleWebhook(
       buildWebhookPayload('payment_intent.succeeded', { id: 'pi_123b' }),
@@ -215,7 +216,7 @@ describe('StripeWebhookService', () => {
     );
 
     expect(prisma.payment.update).toHaveBeenCalled();
-    expect(invoicesService.issueInvoiceForOrder).toHaveBeenCalledWith('order_1b');
+    expect(sriQueue.addIssueInvoiceJob).toHaveBeenCalledWith('order_1b');
   });
 
   it('updates payment and order to FAILED on payment_intent.payment_failed', async () => {
