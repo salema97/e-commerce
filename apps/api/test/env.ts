@@ -13,3 +13,4 @@ process.env.SRI_COMPANY_NAME = process.env.SRI_COMPANY_NAME ?? 'Empresa E-commer
 process.env.SRI_COMPANY_TRADE_NAME = process.env.SRI_COMPANY_TRADE_NAME ?? 'E-commerce';
 process.env.SRI_COMPANY_ADDRESS = process.env.SRI_COMPANY_ADDRESS ?? 'Direccion matriz';
 process.env.SRI_RECONCILIATION_CRON = process.env.SRI_RECONCILIATION_CRON ?? '0 * * * *';
+process.env.SRI_QUEUE_ENABLED = process.env.SRI_QUEUE_ENABLED ?? 'false';

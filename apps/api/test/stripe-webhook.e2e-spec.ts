@@ -119,6 +119,7 @@ describe('Stripe Webhook (e2e)', () => {
       SRI_ESTABLISHMENT_CODE: '001',
       SRI_EMISSION_POINT_CODE: '001',
       SRI_TEST_ENVIRONMENT: 'true',
+      SRI_QUEUE_ENABLED: 'false',
     });
 
     const stripeProviderMock = {

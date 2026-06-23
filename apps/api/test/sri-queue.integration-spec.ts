@@ -19,7 +19,7 @@ class DummyInvoicesModule {}
 describe('SriQueueModule integration', () => {
   let service: SriQueueService;
   let prismaMock: ReturnType<typeof buildPrismaMock>;
-  let queueMock: { add: ReturnType<typeof vi.fn> };
+  let queueMock: { add: ReturnType<typeof vi.fn>; getJob: ReturnType<typeof vi.fn> };
 
   function buildPrismaMock() {
     return {
@@ -62,6 +62,7 @@ describe('SriQueueModule integration', () => {
       add: vi.fn().mockResolvedValue({
         id: `${SRI_QUEUE_NAME}:issue-invoice:01:order_1`,
       }),
+      getJob: vi.fn().mockResolvedValue(null),
     };
 
     const module = await Test.createTestingModule({

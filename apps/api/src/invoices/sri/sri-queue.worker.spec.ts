@@ -111,6 +111,7 @@ describe('SriQueueWorker', () => {
         }),
       },
     invoice: {
+      findUnique: vi.fn().mockResolvedValue(null),
       upsert: vi.fn().mockResolvedValue({ id: 'inv-1', orderId: 'order_1' }),
       update: vi.fn().mockResolvedValue({}),
     },
@@ -204,6 +205,7 @@ describe('SriQueueWorker', () => {
             get: (key: string) => {
               if (key === 'SRI_TEST_ENVIRONMENT') return 'true';
               if (key === 'sriQueue.concurrency') return 5;
+              if (key === 'sriQueue.enabled') return true;
               return undefined;
             },
           },

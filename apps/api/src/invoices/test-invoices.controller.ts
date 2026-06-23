@@ -38,7 +38,6 @@ export class TestInvoicesController {
         accessKey: dto.accessKey ?? `TEST-${Date.now()}`,
         status: dto.status ?? InvoiceStatus.DRAFT,
         authorizationNumber: dto.authorizationNumber ?? null,
-        xmlContent: null,
         sriResponse: Prisma.JsonNull,
       },
     });
