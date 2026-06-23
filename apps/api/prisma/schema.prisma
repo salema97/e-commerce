@@ -149,6 +149,22 @@ enum CreditNoteStatus {
   FAILED
 }
 
+enum SriDocumentStatus {
+  PENDING
+  SUBMITTED
+  AUTHORIZED
+  REJECTED
+  FAILED
+}
+
+enum SriDocumentJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  DLQ
+}
+
 model User {
   id               String    @id @default(uuid())
   clerkUserId      String    @unique
@@ -465,36 +481,44 @@ model Receipt {
 }
 
 model Invoice {
-  id                  String        @id @default(uuid())
-  orderId             String        @unique
-  documentType        String        @default("01")
-  accessKey           String        @unique
+  id                  String            @id @default(uuid())
+  orderId             String            @unique
+  documentType        String            @default("01")
+  sequenceNumber      String?
+  accessKey           String            @unique
   authorizationNumber String?
-  status              InvoiceStatus @default(DRAFT)
-  xmlContent          String?       @db.Text
+  authorizationDate   DateTime?
+  status              InvoiceStatus     @default(DRAFT)
+  sriStatus           SriDocumentStatus @default(PENDING)
+  xmlContent          String?           @db.Text
+  xmlUrl              String?
   pdfUrl              String?
+  retryCount          Int               @default(0)
+  lastError           String?
   sriResponse         Json?
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([accessKey])
   @@index([status])
+  @@index([sriStatus])
   @@index([createdAt])
 }
 
 model InvoiceSequence {
-  id                String   @id @default(uuid())
-  documentType      String
-  establishmentCode String   @default("001")
-  emissionPointCode String   @default("001")
-  currentNumber     Int      @default(0)
-  startNumber       Int
-  endNumber         Int
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                    String   @id @default(uuid())
+  documentType          String
+  establishmentCode     String   @default("001")
+  emissionPointCode     String   @default("001")
+  currentNumber         Int      @default(0)
+  authorizedFrom        Int
+  authorizedTo          Int
+  nearExhaustionAlertSent Boolean @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   @@unique([documentType, establishmentCode, emissionPointCode])
 }
@@ -785,24 +809,50 @@ model ReturnItem {
 }
 
 model CreditNote {
-  id                     String           @id @default(uuid())
-  accessKey              String           @unique
+  id                     String            @id @default(uuid())
+  accessKey              String            @unique
   parentInvoiceAccessKey String?
+  sequenceNumber         String?
   authorizationNumber    String?
-  status                 CreditNoteStatus @default(DRAFT)
-  xmlContent             String?          @db.Text
-  signedXml              String?          @db.Text
+  authorizationDate      DateTime?
+  status                 CreditNoteStatus  @default(DRAFT)
+  sriStatus              SriDocumentStatus @default(PENDING)
+  xmlContent             String?           @db.Text
+  xmlUrl                 String?
+  signedXml              String?           @db.Text
+  pdfUrl                 String?
+  retryCount             Int               @default(0)
+  lastError              String?
   sriResponse            Json?
-  totalAmount            Decimal          @db.Decimal(12, 2)
-  createdAt              DateTime         @default(now())
-  updatedAt              DateTime         @updatedAt
+  totalAmount            Decimal           @db.Decimal(12, 2)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
 
   returnRequest ReturnRequest?
 
   @@index([accessKey])
   @@index([parentInvoiceAccessKey])
   @@index([status])
+  @@index([sriStatus])
   @@index([createdAt])
+}
+
+model SriDocumentJob {
+  id           String               @id @default(uuid())
+  documentType String
+  documentId   String
+  jobId        String               @unique
+  status       SriDocumentJobStatus @default(PENDING)
+  attempts     Int                  @default(0)
+  maxAttempts  Int                  @default(5)
+  lastError    String?
+  payload      Json?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  @@index([documentId])
+  @@index([status])
+  @@index([documentType, status])
 }
 
 model StoreCredit {
