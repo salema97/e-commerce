@@ -142,6 +142,41 @@ async function main() {
     },
   });
 
+  await prisma.faq.upsert({
+    where: { id: '00000000-0000-0000-0000-000000000010' },
+    update: {},
+    create: {
+      id: '00000000-0000-0000-0000-000000000010',
+      question: '¿Cuál es la política de devoluciones?',
+      answer: 'Aceptamos devoluciones dentro de los 30 días posteriores a la entrega, siempre que el producto esté en su estado original.',
+      isPublished: true,
+      sortOrder: 1,
+    },
+  });
+
+  await prisma.faq.upsert({
+    where: { id: '00000000-0000-0000-0000-000000000011' },
+    update: {},
+    create: {
+      id: '00000000-0000-0000-0000-000000000011',
+      question: '¿Cuánto tarda el envío?',
+      answer: 'Los envíos dentro de Ecuador suelen tardar entre 2 y 5 días hábiles según la ciudad.',
+      isPublished: true,
+      sortOrder: 2,
+    },
+  });
+
+  await prisma.cmsPage.upsert({
+    where: { slug: 'politica-devoluciones' },
+    update: {},
+    create: {
+      title: 'Política de devoluciones',
+      slug: 'politica-devoluciones',
+      content: 'Puedes solicitar una devolución dentro de los 30 días. Contáctanos por WhatsApp o chat web.',
+      isPublished: true,
+    },
+  });
+
   // eslint-disable-next-line no-console
   console.log('Seed data created:', { supplier: supplier.name, category: category.name, user: user.email });
 }
