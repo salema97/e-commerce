@@ -19,7 +19,7 @@ export interface CreatedOrderResult {
   total: number;
   couponCode?: string;
   reservationExpiresAt: Date;
-  items: Array<{ productId: string; variantId?: string; name: string; sku: string; price: number; quantity: number }>;
+  items: Array<{ productId: string; variantId?: string; name: string; sku: string; price: number; quantity: number; taxRate?: number; taxAmount?: number; discountAmount?: number }>;
 }
 
 @Injectable()
@@ -33,8 +33,8 @@ export class OrdersService {
 
   async createOrder(userId: string | undefined, dto: CreateOrderDto): Promise<CreatedOrderResult> {
     const channel = dto.channel ?? OrderChannel.WEB;
-    const customerEmail = userId ? (await this.prisma.user.findUnique({ where: { id: userId } }))?.email ?? dto.customerEmail : dto.customerEmail;
-    if (!customerEmail) throw new BadRequestException('customerEmail required for guest orders');
+    const customerProfile = await this.resolveCustomerProfile(userId, dto);
+    if (!customerProfile.email) throw new BadRequestException('customerEmail required for guest orders');
     if (!dto.items?.length) throw new BadRequestException('Order must contain at least one item');
 
     // Validate coupon BEFORE reserving inventory so an invalid code fails fast without
@@ -46,11 +46,12 @@ export class OrdersService {
     const reservationItems = await this.validateItems(dto.items);
     await this.reservationService.reserveItems(reservationItems);
 
-    const orderItems = await this.buildOrderItems(dto.items);
     const totals = await this.promotionService.calculateOrderTotals(
-      orderItems.map((i) => ({ productId: i.productId, variantId: i.variantId ?? undefined, price: Number(i.price), quantity: i.quantity })),
+      dto.items.map((i) => ({ productId: i.productId, variantId: i.variantId ?? undefined, price: i.price, quantity: i.quantity })),
       dto.couponCode,
     );
+
+    const orderItems = await this.buildOrderItems(dto.items, totals);
 
     const subtotal = new Prisma.Decimal(totals.subtotal);
     const taxAmount = new Prisma.Decimal(totals.taxAmount);
@@ -62,9 +63,21 @@ export class OrdersService {
 
     const order = await this.prisma.order.create({
       data: {
-        orderNumber, userId, customerEmail, customerPhone: dto.customerPhone,
-        status: OrderStatus.PAYMENT_PENDING, channel, couponCode: dto.couponCode,
-        subtotal, taxAmount, shippingAmount, discountAmount, total,
+        orderNumber,
+        userId,
+        customerEmail: customerProfile.email,
+        customerPhone: dto.customerPhone,
+        customerName: customerProfile.name,
+        customerIdentification: customerProfile.identification,
+        customerAddress: customerProfile.address,
+        status: OrderStatus.PAYMENT_PENDING,
+        channel,
+        couponCode: dto.couponCode,
+        subtotal,
+        taxAmount,
+        shippingAmount,
+        discountAmount,
+        total,
         shippingAddress: (dto.shippingAddress as Prisma.InputJsonValue) ?? Prisma.JsonNull,
         billingAddress: (dto.billingAddress as Prisma.InputJsonValue) ?? Prisma.JsonNull,
         reservationExpiresAt,
@@ -84,8 +97,9 @@ export class OrdersService {
       shippingAmount: Number(order.shippingAmount), discountAmount: Number(order.discountAmount),
       total: Number(order.total), couponCode: order.couponCode ?? undefined,
       reservationExpiresAt: order.reservationExpiresAt!,
-      items: (order as typeof order & { items: Array<{ productId: string; variantId: string | null; name: string; sku: string; price: Prisma.Decimal; quantity: number }> }).items.map((i) => ({
+      items: (order as typeof order & { items: Array<{ productId: string; variantId: string | null; name: string; sku: string; price: Prisma.Decimal; quantity: number; taxRate: Prisma.Decimal; taxAmount: Prisma.Decimal; discountAmount: Prisma.Decimal }> }).items.map((i) => ({
         productId: i.productId, variantId: i.variantId ?? undefined, name: i.name, sku: i.sku, price: Number(i.price), quantity: i.quantity,
+        taxRate: Number(i.taxRate), taxAmount: Number(i.taxAmount), discountAmount: Number(i.discountAmount),
       })),
     };
   }
@@ -132,20 +146,115 @@ export class OrdersService {
     }));
   }
 
-  private async buildOrderItems(items: CreateOrderItemDto[]) {
-    return Promise.all(items.map(async (item) => {
-      const product = await this.prisma.product.findUnique({ where: { id: item.productId }, include: { variants: true } });
-      if (!product) throw new BadRequestException(`Product ${item.productId} not found`);
-      const variant = product.variants.find((v) => v.id === item.variantId);
+  private async resolveCustomerProfile(
+    userId: string | undefined,
+    dto: CreateOrderDto,
+  ): Promise<{ email: string | undefined; name?: string; identification?: string; address?: string }> {
+    let email = dto.customerEmail;
+    let name = dto.customerName;
+    let identification = dto.customerIdentification;
+
+    if (userId) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true, name: true, identification: true },
+      });
+      if (user) {
+        email = user.email ?? email;
+        name = name ?? user.name ?? undefined;
+        identification = identification ?? user.identification ?? undefined;
+      }
+    }
+
+    const address = dto.customerAddress ?? this.formatAddress(dto.billingAddress) ?? this.formatAddress(dto.shippingAddress);
+
+    return { email, name, identification, address };
+  }
+
+  private formatAddress(address?: Record<string, unknown>): string | undefined {
+    if (!address) return undefined;
+    const parts = [
+      address.street,
+      address.city,
+      address.state,
+      address.country,
+    ].filter((v): v is string => typeof v === 'string' && v.length > 0);
+    return parts.length > 0 ? parts.join(', ') : undefined;
+  }
+
+  private async buildOrderItems(
+    items: CreateOrderItemDto[],
+    totals: { subtotal: number; discount: number; taxAmount: number },
+  ) {
+    const productItems = await Promise.all(
+      items.map(async (item) => {
+        const product = await this.prisma.product.findUnique({ where: { id: item.productId }, include: { variants: true } });
+        if (!product) throw new BadRequestException(`Product ${item.productId} not found`);
+        const variant = product.variants.find((v) => v.id === item.variantId);
+        return {
+          productId: item.productId,
+          variantId: item.variantId ?? null,
+          name: product.name,
+          sku: variant?.sku ?? product.sku ?? 'N/A',
+          price: new Prisma.Decimal(item.price),
+          quantity: item.quantity,
+        };
+      }),
+    );
+
+    return this.allocateItemTotals(productItems, totals);
+  }
+
+  private allocateItemTotals(
+    items: Array<{ productId: string; variantId: string | null; name: string; sku: string; price: Prisma.Decimal; quantity: number }>,
+    totals: { subtotal: number; discount: number; taxAmount: number },
+  ) {
+    const lineSubtotals = items.map((i) => Number(i.price) * i.quantity);
+    const subtotal = lineSubtotals.reduce((sum, v) => sum + v, 0);
+
+    let remainingDiscount = totals.discount;
+    let remainingTax = totals.taxAmount;
+
+    const allocated = items.map((item, index) => {
+      const lineSubtotal = lineSubtotals[index];
+      const isLast = index === items.length - 1;
+
+      const discount = isLast
+        ? remainingDiscount
+        : Number(
+            new Prisma.Decimal(
+              subtotal > 0 ? (lineSubtotal / subtotal) * totals.discount : 0,
+            ).toFixed(2),
+          );
+      const tax = isLast
+        ? remainingTax
+        : Number(
+            new Prisma.Decimal(
+              subtotal > 0 ? (lineSubtotal / subtotal) * totals.taxAmount : 0,
+            ).toFixed(2),
+          );
+
+      remainingDiscount = Number(
+        new Prisma.Decimal(remainingDiscount).minus(discount).toFixed(2),
+      );
+      remainingTax = Number(
+        new Prisma.Decimal(remainingTax).minus(tax).toFixed(2),
+      );
+
       return {
         productId: item.productId,
-        variantId: item.variantId ?? null,
-        name: product.name,
-        sku: variant?.sku ?? product.sku ?? 'N/A',
-        price: new Prisma.Decimal(item.price),
+        variantId: item.variantId,
+        name: item.name,
+        sku: item.sku,
+        price: item.price,
         quantity: item.quantity,
+        taxRate: new Prisma.Decimal(15),
+        taxAmount: new Prisma.Decimal(tax),
+        discountAmount: new Prisma.Decimal(discount),
       };
-    }));
+    });
+
+    return allocated;
   }
 
   private async notifyStatusChange(id: string, status: OrderStatus): Promise<void> {

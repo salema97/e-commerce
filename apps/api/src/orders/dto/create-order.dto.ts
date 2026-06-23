@@ -46,6 +46,15 @@ export class CreateOrderDto {
   @ApiPropertyOptional()
   @IsOptional() @IsString() customerPhone?: string;
 
+  @ApiPropertyOptional()
+  @IsOptional() @IsString() customerName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional() @IsString() customerIdentification?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional() @IsString() customerAddress?: string;
+
   @ApiPropertyOptional() @IsOptional() shippingAddress?: Record<string, unknown>;
   @ApiPropertyOptional() @IsOptional() billingAddress?: Record<string, unknown>;
 }

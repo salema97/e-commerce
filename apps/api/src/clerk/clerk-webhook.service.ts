@@ -25,7 +25,10 @@ interface ClerkWebhookData {
   primary_phone_number_id?: string;
   first_name?: string;
   last_name?: string;
-  public_metadata?: { role?: string };
+  public_metadata?: {
+    role?: string;
+    identification?: string;
+  };
 }
 
 interface ClerkWebhookPayload {
@@ -66,11 +69,12 @@ export class ClerkWebhookService {
     }
 
     const name = this.buildName(data.first_name, data.last_name);
+    const identification = data.public_metadata?.identification;
 
     await this.prisma.user.upsert({
       where: { clerkUserId },
-      update: { email, phone, role },
-      create: { clerkUserId, email, phone, role },
+      update: { email, phone, role, name, identification },
+      create: { clerkUserId, email, phone, role, name, identification },
     });
 
     this.logger.debug(`Synced Clerk user ${clerkUserId} with role ${role}`);
