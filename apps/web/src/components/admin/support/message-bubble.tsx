@@ -10,6 +10,7 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isOutbound = message.direction === 'OUTBOUND';
+  const isBot = message.senderType === 'BOT';
 
   function statusIcon() {
     if (message.status === 'FAILED') {
@@ -32,10 +33,13 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       <div
         className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
           isOutbound
-            ? 'bg-primary text-primary-foreground rounded-br-none'
+            ? isBot
+              ? 'bg-violet-600 text-white rounded-br-none'
+              : 'bg-primary text-primary-foreground rounded-br-none'
             : 'bg-muted text-foreground rounded-bl-none'
         }`}
       >
+        {isBot ? <p className="mb-1 text-[10px] font-medium uppercase opacity-80">Bot</p> : null}
         <p className="whitespace-pre-wrap">{message.content}</p>
         <div className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${isOutbound ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
           <span>{message.sentAt ? formatDateTime(message.sentAt) : formatDateTime(message.createdAt)}</span>

@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +16,60 @@ import type { Product, ProductStatus } from '@repo/shared-types';
 export default function EditProductPage({ product }: { product: Product }) {
   const router = useRouter();
   const api = useApiClient();
+  const { getToken } = useAuth();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isGenerating, setIsGenerating] = React.useState(false);
+  const [draft, setDraft] = React.useState<{
+    description?: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    status?: string;
+  } | null>(null);
+
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001/v1';
+
+  async function authHeaders(): Promise<HeadersInit> {
+    const token = await getToken();
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  }
+
+  async function handleGenerateContent() {
+    setIsGenerating(true);
+    try {
+      const response = await fetch(`${apiBase}/ai/products/${product.id}/generate-content`, {
+        method: 'POST',
+        headers: await authHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setDraft(data);
+      }
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
+  async function handleApproveDraft() {
+    const response = await fetch(`${apiBase}/ai/products/${product.id}/content-draft/approve`, {
+      method: 'POST',
+      headers: await authHeaders(),
+    });
+    if (response.ok) {
+      router.refresh();
+      setDraft(null);
+    }
+  }
+
+  async function handleRejectDraft() {
+    await fetch(`${apiBase}/ai/products/${product.id}/content-draft/reject`, {
+      method: 'POST',
+      headers: await authHeaders(),
+    });
+    setDraft(null);
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -126,6 +180,33 @@ export default function EditProductPage({ product }: { product: Product }) {
               />
               <Label htmlFor="isFeatured">Featured product</Label>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Contenido con IA</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <Button type="button" variant="secondary" disabled={isGenerating} onClick={() => void handleGenerateContent()}>
+              {isGenerating ? 'Generando...' : 'Generar con IA'}
+            </Button>
+            {draft ? (
+              <div className="rounded-md border p-4 text-sm">
+                <p className="font-medium">Borrador pendiente ({draft.status ?? 'PENDING'})</p>
+                {draft.metaTitle ? <p className="mt-2"><strong>Meta título:</strong> {draft.metaTitle}</p> : null}
+                {draft.metaDescription ? <p className="mt-1"><strong>Meta descripción:</strong> {draft.metaDescription}</p> : null}
+                {draft.description ? <p className="mt-1 whitespace-pre-wrap"><strong>Descripción:</strong> {draft.description}</p> : null}
+                <div className="mt-3 flex gap-2">
+                  <Button type="button" size="sm" onClick={() => void handleApproveDraft()}>
+                    Aprobar y publicar
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={() => void handleRejectDraft()}>
+                    Rechazar
+                  </Button>
+                </div>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 

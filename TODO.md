@@ -418,38 +418,38 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 ### 10.1 LLM Provider Abstraction
 
-- [ ] Choose default LLM: OpenAI GPT-4o or Anthropic Claude 3.5 Sonnet (evaluate per task).
-- [ ] Add `OPENAI_API_KEY` and/or `ANTHROPIC_API_KEY` env vars.
-- [ ] Build `LlmProvider` port in `apps/api`.
-- [ ] Implement `OpenAiProvider` and `AnthropicProvider` adapters.
-- [ ] Add guardrails: prompt injection filtering, PII redaction, max tokens, timeout, retries.
+- [x] Choose default LLM: OpenAI GPT-4o or Anthropic Claude 3.5 Sonnet (evaluate per task).
+- [x] Add `OPENAI_API_KEY` and/or `ANTHROPIC_API_KEY` env vars.
+- [x] Build `LlmProvider` port in `apps/api`.
+- [x] Implement `OpenAiProvider` and `AnthropicProvider` adapters.
+- [x] Add guardrails: prompt injection filtering, PII redaction, max tokens, timeout, retries.
 
 ### 10.2 Support Bot
 
-- [ ] RAG pipeline over product catalog, FAQ, and policies.
-- [ ] Answer common support questions via WhatsApp and web chat.
-- [ ] Escalate to human agent when confidence is low or user requests it.
-- [ ] Log bot conversations for quality review.
+- [x] RAG pipeline over product catalog, FAQ, and policies.
+- [x] Answer common support questions via WhatsApp and web chat.
+- [x] Escalate to human agent when confidence is low or user requests it.
+- [x] Log bot conversations for quality review.
 
 ### 10.3 Product Content
 
-- [ ] Generate product descriptions from attributes/images.
-- [ ] Generate SEO metadata and alt text.
-- [ ] Admin review/approval workflow before publishing generated content.
+- [x] Generate product descriptions from attributes/images.
+- [x] Generate SEO metadata and alt text.
+- [x] Admin review/approval workflow before publishing generated content.
 
 ### 10.4 WhatsApp Conversation Orchestration
 
 - [ ] Choose orchestrator: Dify, LangChain, or Typebot.
 - [ ] Build `ConversationOrchestrator` abstraction.
-- [ ] Implement flows for order status, returns, FAQs, and sales assistance.
-- [ ] Handoff to Chatwoot/admin inbox when human intervention is needed.
+- [x] Implement flows for order status, returns, FAQs, and sales assistance (native inbox handoff).
+- [x] Handoff to Chatwoot/admin inbox when human intervention is needed.
 
 ### 10.5 Semantic Search
 
-- [ ] Generate product embeddings with LLM.
-- [ ] Store embeddings in vector-capable store (pgvector, Pinecone, etc.).
-- [ ] Implement natural-language product search endpoint.
-- [ ] Combine semantic results with Meilisearch keyword results.
+- [x] Generate product embeddings with LLM.
+- [x] Store embeddings in vector-capable store (pgvector, Pinecone, etc.) — JSON embeddings + cosine in API.
+- [x] Implement natural-language product search endpoint.
+- [x] Combine semantic results with Meilisearch keyword results.
 
 ## Phase 11 — Advanced Analytics & Event Tracking
 

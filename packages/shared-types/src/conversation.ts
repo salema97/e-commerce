@@ -11,6 +11,7 @@ export interface Message {
   remoteJid: string;
   instance: string;
   direction: MessageDirection;
+  senderType?: 'CUSTOMER' | 'AGENT' | 'BOT' | 'SYSTEM';
   contentType: MessageContentType;
   content: string;
   mediaUrl?: string | null;

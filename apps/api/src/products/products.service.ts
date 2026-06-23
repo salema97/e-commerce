@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { ProductSearchSyncService } from '../ai/search/product-search-sync.service.js';
 import { CreateProductDto } from './dto/create-product.dto.js';
 import { UpdateProductDto } from './dto/update-product.dto.js';
 
@@ -14,12 +15,15 @@ const productInclude = {
 
 @Injectable()
 export class ProductsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly searchSync: ProductSearchSyncService,
+  ) {}
 
-  create(data: CreateProductDto) {
+  async create(data: CreateProductDto) {
     const { variants, attributes, images, ...rest } = data;
 
-    return this.prisma.product.create({
+    const product = await this.prisma.product.create({
       data: {
         ...rest,
         status: rest.status ?? 'DRAFT',
@@ -29,6 +33,9 @@ export class ProductsService {
       },
       include: productInclude,
     });
+
+    void this.searchSync.syncProduct(product.id);
+    return product;
   }
 
   findAll() {
@@ -53,7 +60,7 @@ export class ProductsService {
     await this.findOne(id);
     const { variants, attributes, images, ...rest } = data;
 
-    return this.prisma.product.update({
+    const product = await this.prisma.product.update({
       where: { id },
       data: {
         ...rest,
@@ -63,10 +70,14 @@ export class ProductsService {
       },
       include: productInclude,
     });
+
+    void this.searchSync.syncProduct(product.id);
+    return product;
   }
 
   async remove(id: string) {
     await this.findOne(id);
+    void this.searchSync.removeProduct(id);
     return this.prisma.product.delete({
       where: { id },
       include: productInclude,
