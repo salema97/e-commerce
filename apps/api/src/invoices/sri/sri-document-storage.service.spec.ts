@@ -19,7 +19,6 @@ describe('SriDocumentStorageService', () => {
     storage = {
       uploadBuffer: vi.fn().mockResolvedValue({
         key: 'sri/invoices/1/invoice.xml',
-        publicUrl: 'https://public.example.com/sri/invoices/1/invoice.xml',
       }),
       getSignedUrl: vi.fn().mockResolvedValue('https://signed.example.com/doc'),
     };
@@ -44,11 +43,9 @@ describe('SriDocumentStorageService', () => {
     storage.uploadBuffer
       .mockResolvedValueOnce({
         key: 'sri/invoices/inv-1/invoice.xml',
-        publicUrl: 'https://public.example.com/sri/invoices/inv-1/invoice.xml',
       })
       .mockResolvedValueOnce({
         key: 'sri/invoices/inv-1/ride.pdf',
-        publicUrl: 'https://public.example.com/sri/invoices/inv-1/ride.pdf',
       });
 
     const result = await service.uploadInvoiceDocuments(
@@ -70,15 +67,13 @@ describe('SriDocumentStorageService', () => {
     expect(prisma.invoice.update).toHaveBeenCalledWith({
       where: { id: 'inv-1' },
       data: {
-        xmlUrl: 'https://public.example.com/sri/invoices/inv-1/invoice.xml',
-        pdfUrl: 'https://public.example.com/sri/invoices/inv-1/ride.pdf',
+        xmlKey: 'sri/invoices/inv-1/invoice.xml',
+        pdfKey: 'sri/invoices/inv-1/ride.pdf',
       },
     });
     expect(result).toEqual({
-      xmlUrl: 'https://public.example.com/sri/invoices/inv-1/invoice.xml',
-      pdfUrl: 'https://public.example.com/sri/invoices/inv-1/ride.pdf',
-      xmlKey: 'sri/invoices/inv-1/invoice.xml',
-      pdfKey: 'sri/invoices/inv-1/ride.pdf',
+      xmlUrl: 'https://signed.example.com/doc',
+      pdfUrl: 'https://signed.example.com/doc',
     });
   });
 
@@ -86,11 +81,9 @@ describe('SriDocumentStorageService', () => {
     storage.uploadBuffer
       .mockResolvedValueOnce({
         key: 'sri/credit-notes/cn-1/credit-note.xml',
-        publicUrl: 'https://public.example.com/sri/credit-notes/cn-1/credit-note.xml',
       })
       .mockResolvedValueOnce({
         key: 'sri/credit-notes/cn-1/ride.pdf',
-        publicUrl: 'https://public.example.com/sri/credit-notes/cn-1/ride.pdf',
       });
 
     const result = await service.uploadCreditNoteDocuments(
@@ -112,11 +105,11 @@ describe('SriDocumentStorageService', () => {
     expect(prisma.creditNote.update).toHaveBeenCalledWith({
       where: { id: 'cn-1' },
       data: {
-        xmlUrl: 'https://public.example.com/sri/credit-notes/cn-1/credit-note.xml',
-        pdfUrl: 'https://public.example.com/sri/credit-notes/cn-1/ride.pdf',
+        xmlKey: 'sri/credit-notes/cn-1/credit-note.xml',
+        pdfKey: 'sri/credit-notes/cn-1/ride.pdf',
       },
     });
-    expect(result.pdfKey).toBe('sri/credit-notes/cn-1/ride.pdf');
-    expect(result.xmlKey).toBe('sri/credit-notes/cn-1/credit-note.xml');
+    expect(result.pdfUrl).toBe('https://signed.example.com/doc');
+    expect(result.xmlUrl).toBe('https://signed.example.com/doc');
   });
 });

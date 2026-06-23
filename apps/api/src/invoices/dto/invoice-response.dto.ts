@@ -7,8 +7,6 @@ export class InvoiceResponseDto {
   accessKey!: string;
   authorizationNumber?: string | null;
   status!: InvoiceStatus;
-  xmlContent?: string | null;
-  pdfUrl?: string | null;
   createdAt!: Date;
   updatedAt!: Date;
 }

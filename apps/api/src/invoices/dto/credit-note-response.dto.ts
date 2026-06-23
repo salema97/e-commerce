@@ -6,7 +6,6 @@ export class CreditNoteResponseDto {
   parentInvoiceAccessKey?: string | null;
   authorizationNumber?: string | null;
   status!: CreditNoteStatus;
-  xmlContent?: string | null;
   totalAmount!: number;
   returnRequestId?: string | null;
   createdAt!: Date;

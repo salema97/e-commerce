@@ -179,9 +179,11 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
 
     const xml = this.creditNoteXmlBuilder.buildNotaDeCredito({
       accessKey,
-      customerName: returnRecord.order.customerEmail,
+      customerName: returnRecord.order.customerName ?? returnRecord.order.customerEmail,
+      customerIdentification: returnRecord.order.customerIdentification ?? undefined,
       customerEmail: returnRecord.order.customerEmail,
       customerPhone: returnRecord.order.customerPhone ?? undefined,
+      customerAddress: returnRecord.order.customerAddress ?? undefined,
       creditNote: returnRequest,
       establishmentCode,
       emissionPointCode,
@@ -302,7 +304,6 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
         accessKey: input.accessKey,
         parentInvoiceAccessKey: input.parentInvoiceAccessKey ?? null,
         status: creditNoteStatus,
-        xmlContent: input.signedXml,
         signedXml: input.signedXml,
         totalAmount: new Prisma.Decimal(input.total),
         authorizationNumber: input.authorizationNumber ?? null,

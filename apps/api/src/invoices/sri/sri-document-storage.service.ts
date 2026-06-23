@@ -2,21 +2,15 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { StorageService } from '../../storage/storage.service.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 
-export interface StoredDocumentUrls {
-  xmlUrl: string;
-  pdfUrl: string;
-  xmlKey: string;
-  pdfKey: string;
-}
-
 export interface SignedDocumentUrls {
   xmlUrl: string;
   pdfUrl: string;
 }
 
 /**
- * Uploads signed XML and RIDE PDF for SRI documents to R2 and persists the
- * resulting URLs in Prisma.
+ * Uploads signed XML and RIDE PDF for SRI documents to R2 and persists only
+ * the object keys in Prisma. Signed URLs are generated on demand and expire
+ * quickly; public URLs are never stored.
  */
 @Injectable()
 export class SriDocumentStorageService {
@@ -29,7 +23,7 @@ export class SriDocumentStorageService {
     invoiceId: string,
     signedXml: string,
     pdfBuffer: Buffer,
-  ): Promise<StoredDocumentUrls> {
+  ): Promise<SignedDocumentUrls> {
     const xmlKey = this.invoiceXmlKey(invoiceId);
     const pdfKey = this.invoicePdfKey(invoiceId);
 
@@ -41,24 +35,19 @@ export class SriDocumentStorageService {
     await this.prisma.invoice.update({
       where: { id: invoiceId },
       data: {
-        xmlUrl: xml.publicUrl,
-        pdfUrl: pdf.publicUrl,
+        xmlKey: xml.key,
+        pdfKey: pdf.key,
       },
     });
 
-    return {
-      xmlUrl: xml.publicUrl,
-      pdfUrl: pdf.publicUrl,
-      xmlKey,
-      pdfKey,
-    };
+    return this.keysToSignedUrls(xml.key, pdf.key);
   }
 
   async uploadCreditNoteDocuments(
     creditNoteId: string,
     signedXml: string,
     pdfBuffer: Buffer,
-  ): Promise<StoredDocumentUrls> {
+  ): Promise<SignedDocumentUrls> {
     const xmlKey = this.creditNoteXmlKey(creditNoteId);
     const pdfKey = this.creditNotePdfKey(creditNoteId);
 
@@ -70,17 +59,12 @@ export class SriDocumentStorageService {
     await this.prisma.creditNote.update({
       where: { id: creditNoteId },
       data: {
-        xmlUrl: xml.publicUrl,
-        pdfUrl: pdf.publicUrl,
+        xmlKey: xml.key,
+        pdfKey: pdf.key,
       },
     });
 
-    return {
-      xmlUrl: xml.publicUrl,
-      pdfUrl: pdf.publicUrl,
-      xmlKey,
-      pdfKey,
-    };
+    return this.keysToSignedUrls(xml.key, pdf.key);
   }
 
   private invoiceXmlKey(invoiceId: string): string {
@@ -101,7 +85,6 @@ export class SriDocumentStorageService {
 
   /**
    * Generate time-limited signed URLs for an invoice's XML and PDF.
-   * Falls back to deterministic keys when stored URLs are unavailable.
    */
   async getInvoiceSignedUrls(invoiceId: string): Promise<SignedDocumentUrls> {
     const invoice = await this.prisma.invoice.findUnique({
@@ -112,22 +95,14 @@ export class SriDocumentStorageService {
       throw new NotFoundException(`Invoice ${invoiceId} not found`);
     }
 
-    const xmlKey = invoice.xmlUrl
-      ? this.extractKeyFromPublicUrl(invoice.xmlUrl)
-      : this.invoiceXmlKey(invoiceId);
-    const pdfKey = invoice.pdfUrl
-      ? this.extractKeyFromPublicUrl(invoice.pdfUrl)
-      : this.invoicePdfKey(invoiceId);
+    const xmlKey = invoice.xmlKey ?? this.invoiceXmlKey(invoiceId);
+    const pdfKey = invoice.pdfKey ?? this.invoicePdfKey(invoiceId);
 
-    return {
-      xmlUrl: await this.storage.getSignedUrl(xmlKey),
-      pdfUrl: await this.storage.getSignedUrl(pdfKey),
-    };
+    return this.keysToSignedUrls(xmlKey, pdfKey);
   }
 
   /**
    * Generate time-limited signed URLs for a credit note's XML and PDF.
-   * Falls back to deterministic keys when stored URLs are unavailable.
    */
   async getCreditNoteSignedUrls(
     creditNoteId: string,
@@ -140,26 +115,19 @@ export class SriDocumentStorageService {
       throw new NotFoundException(`Credit note ${creditNoteId} not found`);
     }
 
-    const xmlKey = creditNote.xmlUrl
-      ? this.extractKeyFromPublicUrl(creditNote.xmlUrl)
-      : this.creditNoteXmlKey(creditNoteId);
-    const pdfKey = creditNote.pdfUrl
-      ? this.extractKeyFromPublicUrl(creditNote.pdfUrl)
-      : this.creditNotePdfKey(creditNoteId);
+    const xmlKey = creditNote.xmlKey ?? this.creditNoteXmlKey(creditNoteId);
+    const pdfKey = creditNote.pdfKey ?? this.creditNotePdfKey(creditNoteId);
 
+    return this.keysToSignedUrls(xmlKey, pdfKey);
+  }
+
+  private async keysToSignedUrls(
+    xmlKey: string,
+    pdfKey: string,
+  ): Promise<SignedDocumentUrls> {
     return {
       xmlUrl: await this.storage.getSignedUrl(xmlKey),
       pdfUrl: await this.storage.getSignedUrl(pdfKey),
     };
-  }
-
-  private extractKeyFromPublicUrl(publicUrl: string): string {
-    try {
-      const url = new URL(publicUrl);
-      // Path includes leading slash; strip it to get the object key.
-      return url.pathname.replace(/^\//, '');
-    } catch {
-      return publicUrl;
-    }
   }
 }
