@@ -67,7 +67,7 @@ describe('PaymentWebhookService', () => {
 
   it('rejects unknown provider names', async () => {
     await expect(
-      service.handle('unknown', {}, 'sig'),
+      service.handle('unknown', Buffer.from('{}'), 'sig'),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
@@ -75,7 +75,7 @@ describe('PaymentWebhookService', () => {
     provider.validateWebhookSignature.mockReturnValueOnce(false);
 
     await expect(
-      service.handle('kushki', { foo: 'bar' }, 'bad-signature'),
+      service.handle('kushki', Buffer.from(JSON.stringify({ foo: 'bar' })), 'bad-signature'),
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
@@ -93,7 +93,7 @@ describe('PaymentWebhookService', () => {
 
     const result = await service.handle(
       'kushki',
-      { transactionReference: 'kushki_txn_1', status: 'approved' },
+      Buffer.from(JSON.stringify({ transactionReference: 'kushki_txn_1', status: 'approved' })),
       'kushki_secret',
     );
 
@@ -129,7 +129,7 @@ describe('PaymentWebhookService', () => {
 
     const result = await service.handle(
       'kushki',
-      { transactionReference: 'kushki_txn_1', status: 'approved' },
+      Buffer.from(JSON.stringify({ transactionReference: 'kushki_txn_1', status: 'approved' })),
       'kushki_secret',
     );
 
@@ -164,7 +164,7 @@ describe('PaymentWebhookService', () => {
 
     const result = await service.handle(
       'payphone',
-      { id: 'pp_txn_1', transactionStatus: -1 },
+      Buffer.from(JSON.stringify({ id: 'pp_txn_1', transactionStatus: -1 })),
       'pp_token',
     );
 
@@ -205,7 +205,7 @@ describe('PaymentWebhookService', () => {
 
     const result = await service.handle(
       'kushki',
-      { transactionReference: 'kushki_txn_1', status: 'approved' },
+      Buffer.from(JSON.stringify({ transactionReference: 'kushki_txn_1', status: 'approved' })),
       'kushki_secret',
     );
 
@@ -227,7 +227,7 @@ describe('PaymentWebhookService', () => {
 
     const result = await service.handle(
       'mercadopago',
-      { data_id: 'mp_1', type: 'payment.updated' },
+      Buffer.from(JSON.stringify({ data_id: 'mp_1', type: 'payment.updated' })),
       'mp_secret',
     );
 
@@ -243,7 +243,7 @@ describe('PaymentWebhookService', () => {
       metadata: {},
     });
 
-    await service.handle('placetopay', { requestId: 'ptp_1' }, 'ptp_secret');
+    await service.handle('placetopay', Buffer.from(JSON.stringify({ requestId: 'ptp_1' })), 'ptp_secret');
 
     expect(factory.getProvider).toHaveBeenCalledWith(PaymentProvider.PLACETOPAY);
     expect(provider.validateWebhookSignature).toHaveBeenCalled();

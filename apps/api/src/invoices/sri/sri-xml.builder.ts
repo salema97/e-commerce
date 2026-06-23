@@ -60,10 +60,15 @@ export class SriXmlBuilder {
           tipoIdentificacionComprador: this.identificationType(
             input.order.customerIdentification,
           ),
-          razonSocialComprador: input.order.customerName,
-          identificacionComprador: input.order.customerIdentification ?? '9999999999',
-          direccionComprador: input.order.customerAddress ?? 'Direccion comprador',
-          totalSinImpuestos: this.formatNumber(input.order.subtotal),
+          razonSocialComprador:
+            input.order.customerName ?? 'CONSUMIDOR FINAL',
+          identificacionComprador:
+            input.order.customerIdentification ?? '9999999999999',
+          direccionComprador:
+            input.order.customerAddress ?? 'Direccion comprador',
+          totalSinImpuestos: this.formatNumber(
+            input.order.subtotal - input.order.discountAmount,
+          ),
           totalDescuento: this.formatNumber(input.order.discountAmount),
           totalConImpuestos: {
             totalImpuesto: {
@@ -87,6 +92,8 @@ export class SriXmlBuilder {
 
   private buildDetail(item: InvoiceItem): unknown {
     const totalWithoutTax = (item.quantity * item.unitPrice) - item.discount;
+    const taxValue =
+      item.taxAmount ?? this.calculateTax(totalWithoutTax, item.taxRate);
     return {
       codigoPrincipal: item.code,
       descripcion: item.description,
@@ -100,7 +107,7 @@ export class SriXmlBuilder {
           codigoPorcentaje: '4',
           tarifa: this.formatNumber(item.taxRate),
           baseImponible: this.formatNumber(totalWithoutTax),
-          valor: this.formatNumber(this.calculateTax(totalWithoutTax, item.taxRate)),
+          valor: this.formatNumber(taxValue),
         },
       },
     };

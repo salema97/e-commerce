@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as soap from 'soap';
 
+const SOAP_TIMEOUT_MS = 30_000;
+
 export interface SriReceptionResponse {
   estado: string;
   comprobantes?: Array<{
@@ -29,7 +31,9 @@ export class SriSoapClient {
 
   async submit(xml: string): Promise<SriReceptionResponse> {
     const client = await this.createClient(this.getRecepcionUrl());
-    const [result] = await client.recepcionComprobantesOfflineAsync({ xml });
+    const [result] = await this.callWithTimeout(
+      client.recepcionComprobantesOfflineAsync({ xml }) as Promise<[unknown]>,
+    );
     return this.parseReceptionResponse(result);
   }
 
@@ -74,19 +78,35 @@ export class SriSoapClient {
 
   async queryStatus(accessKey: string): Promise<SriAuthorizationResponse> {
     const client = await this.createClient(this.getAutorizacionUrl());
-    const [result] = await client.autorizacionComprobantesOfflineAsync({
-      claveAccesoComprobante: accessKey,
-    });
+    const [result] = await this.callWithTimeout(
+      client.autorizacionComprobantesOfflineAsync({
+        claveAccesoComprobante: accessKey,
+      }) as Promise<[unknown]>,
+    );
     return this.parseAuthorizationResponse(result);
   }
 
   private async createClient(url: string): Promise<soap.Client> {
     return new Promise((resolve, reject) => {
-      soap.createClient(url, (err, client) => {
-        if (err) reject(err);
-        else resolve(client);
-      });
+      soap.createClient(
+        url,
+        { wsdl_options: { timeout: SOAP_TIMEOUT_MS } },
+        (err, client) => {
+          if (err) reject(err);
+          else resolve(client);
+        },
+      );
     });
+  }
+
+  private async callWithTimeout<T>(promise: Promise<T>): Promise<T> {
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`SRI SOAP call timed out after ${SOAP_TIMEOUT_MS}ms`)),
+        SOAP_TIMEOUT_MS,
+      ),
+    );
+    return Promise.race([promise, timeout]);
   }
 
   private getRecepcionUrl(): string {

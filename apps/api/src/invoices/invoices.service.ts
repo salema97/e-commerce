@@ -85,7 +85,7 @@ export class InvoicesService {
         accessKey: result.accessKey,
         authorizationNumber: result.authorizationNumber ?? null,
         status: result.status,
-        xmlContent: result.xmlContent ?? null,
+        signedXml: result.xmlContent ?? null,
         sriResponse: result.sriResponse
           ? (result.sriResponse as unknown as Prisma.InputJsonValue)
           : Prisma.JsonNull,
@@ -141,7 +141,7 @@ export class InvoicesService {
         accessKey: result.accessKey,
         authorizationNumber: result.authorizationNumber ?? null,
         status: result.status,
-        xmlContent: result.xmlContent ?? null,
+        signedXml: result.xmlContent ?? null,
         sriResponse: result.sriResponse
           ? (result.sriResponse as unknown as Prisma.InputJsonValue)
           : Prisma.JsonNull,
@@ -367,6 +367,13 @@ export class InvoicesService {
       throw new NotFoundException(`Invoice ${id} not found`);
     }
 
+    const allowed: InvoiceStatus[] = [InvoiceStatus.FAILED, InvoiceStatus.REJECTED, InvoiceStatus.DRAFT, InvoiceStatus.PENDING];
+    if (!allowed.includes(invoice.status)) {
+      throw new BadRequestException(
+        `Invoice ${id} cannot be retried from status ${invoice.status}`,
+      );
+    }
+
     await this.sriQueue.addIssueInvoiceJob(invoice.orderId);
 
     const updated = await this.prisma.invoice.update({
@@ -437,6 +444,13 @@ export class InvoicesService {
       throw new NotFoundException(`Credit note ${id} not found`);
     }
 
+    const allowed: CreditNoteStatus[] = [CreditNoteStatus.FAILED, CreditNoteStatus.REJECTED, CreditNoteStatus.DRAFT, CreditNoteStatus.PENDING];
+    if (!allowed.includes(creditNote.status)) {
+      throw new BadRequestException(
+        `Credit note ${id} cannot be retried from status ${creditNote.status}`,
+      );
+    }
+
     await this.sriQueue.addIssueCreditNoteJob(id);
 
     const updated = await this.prisma.creditNote.update({
@@ -497,6 +511,8 @@ export class InvoicesService {
           name: string;
           sku: string;
           price: Prisma.Decimal;
+          taxRate: Prisma.Decimal | null;
+          discountAmount: Prisma.Decimal | null;
         }>;
       };
     },
@@ -520,8 +536,8 @@ export class InvoicesService {
         description: orderItem?.name ?? item.productId,
         quantity: item.quantity,
         unitPrice,
-        discount: 0,
-        taxRate: 15,
+        discount: Number(orderItem?.discountAmount ?? 0),
+        taxRate: Number(orderItem?.taxRate ?? 15),
         reason: returnRequest.reason,
       };
     });
@@ -557,7 +573,6 @@ export class InvoicesService {
     parentInvoiceAccessKey: string | null;
     authorizationNumber: string | null;
     status: CreditNoteStatus;
-    xmlContent: string | null;
     totalAmount: Prisma.Decimal;
     createdAt: Date;
     updatedAt: Date;
@@ -568,7 +583,6 @@ export class InvoicesService {
       parentInvoiceAccessKey: creditNote.parentInvoiceAccessKey,
       authorizationNumber: creditNote.authorizationNumber,
       status: creditNote.status,
-      xmlContent: creditNote.xmlContent,
       totalAmount: Number(creditNote.totalAmount),
       createdAt: creditNote.createdAt,
       updatedAt: creditNote.updatedAt,
@@ -578,8 +592,11 @@ export class InvoicesService {
   private mapOrderToInvoiceOrder(order: {
     id: string;
     orderNumber: string;
+    customerName: string | null;
+    customerIdentification: string | null;
     customerEmail: string;
     customerPhone: string | null;
+    customerAddress: string | null;
     subtotal: Prisma.Decimal;
     taxAmount: Prisma.Decimal;
     discountAmount: Prisma.Decimal;
@@ -589,14 +606,19 @@ export class InvoicesService {
       sku: string;
       price: Prisma.Decimal;
       quantity: number;
+      taxRate: Prisma.Decimal | null;
+      taxAmount: Prisma.Decimal | null;
+      discountAmount: Prisma.Decimal | null;
     }>;
   }): InvoiceOrder {
     return {
       orderId: order.id,
       orderNumber: order.orderNumber,
-      customerName: order.customerEmail,
+      customerName: order.customerName ?? order.customerEmail,
+      customerIdentification: order.customerIdentification ?? undefined,
       customerEmail: order.customerEmail,
       customerPhone: order.customerPhone ?? undefined,
+      customerAddress: order.customerAddress ?? undefined,
       subtotal: Number(order.subtotal),
       taxAmount: Number(order.taxAmount),
       discountAmount: Number(order.discountAmount),
@@ -607,8 +629,9 @@ export class InvoicesService {
         description: item.name,
         quantity: item.quantity,
         unitPrice: Number(item.price),
-        discount: 0,
-        taxRate: 15,
+        discount: Number(item.discountAmount ?? 0),
+        taxRate: Number(item.taxRate ?? 15),
+        taxAmount: Number(item.taxAmount ?? 0),
       })),
     };
   }
@@ -620,8 +643,6 @@ export class InvoicesService {
     accessKey: string;
     authorizationNumber: string | null;
     status: InvoiceStatus;
-    xmlContent: string | null;
-    pdfUrl: string | null;
     createdAt: Date;
     updatedAt: Date;
   }): InvoiceResponseDto {
@@ -632,8 +653,6 @@ export class InvoicesService {
       accessKey: invoice.accessKey,
       authorizationNumber: invoice.authorizationNumber,
       status: invoice.status,
-      xmlContent: invoice.xmlContent,
-      pdfUrl: invoice.pdfUrl,
       createdAt: invoice.createdAt,
       updatedAt: invoice.updatedAt,
     };

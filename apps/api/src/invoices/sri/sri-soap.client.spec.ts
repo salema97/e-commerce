@@ -28,7 +28,7 @@ describe('SriSoapClient', () => {
         .fn()
         .mockResolvedValue([{ estado: 'RECIBIDA' }]),
     };
-    createClientMock.mockImplementation((_url, cb) =>
+    createClientMock.mockImplementation((_url, _options, cb) =>
       cb(null, clientMock as never),
     );
 
@@ -38,6 +38,7 @@ describe('SriSoapClient', () => {
     expect(result.estado).toBe('RECIBIDA');
     expect(createClientMock).toHaveBeenCalledWith(
       expect.stringContaining('RecepcionComprobantesOffline'),
+      expect.objectContaining({ wsdl_options: expect.objectContaining({ timeout: 30000 }) }),
       expect.any(Function),
     );
   });
@@ -62,7 +63,7 @@ describe('SriSoapClient', () => {
         },
       ]),
     };
-    createClientMock.mockImplementation((_url, cb) =>
+    createClientMock.mockImplementation((_url, _options, cb) =>
       cb(null, clientMock as never),
     );
 
@@ -94,7 +95,7 @@ describe('SriSoapClient', () => {
         },
       ]),
     };
-    createClientMock.mockImplementation((_url, cb) =>
+    createClientMock.mockImplementation((_url, _options, cb) =>
       cb(null, clientMock as never),
     );
 
@@ -110,7 +111,7 @@ describe('SriSoapClient', () => {
         .fn()
         .mockResolvedValue([{ autorizaciones: [{ estado: 'unrecognized' }] }]),
     };
-    createClientMock.mockImplementation((_url, cb) =>
+    createClientMock.mockImplementation((_url, _options, cb) =>
       cb(null, clientMock as never),
     );
 
@@ -142,7 +143,7 @@ describe('SriSoapClient', () => {
         },
       ]),
     };
-    createClientMock.mockImplementation((_url, cb) =>
+    createClientMock.mockImplementation((_url, _options, cb) =>
       cb(null, clientMock as never),
     );
 
@@ -163,7 +164,7 @@ describe('SriSoapClient', () => {
         .fn()
         .mockResolvedValue([{ autorizaciones: [] }]),
     };
-    createClientMock.mockImplementation((_url, cb) =>
+    createClientMock.mockImplementation((_url, _options, cb) =>
       cb(null, clientMock as never),
     );
 
@@ -186,7 +187,7 @@ describe('SriSoapClient', () => {
         .fn()
         .mockResolvedValue([{ estado: 'RECIBIDA' }]),
     };
-    createClientMock.mockImplementation((_url, cb) =>
+    createClientMock.mockImplementation((_url, _options, cb) =>
       cb(null, clientMock as never),
     );
 

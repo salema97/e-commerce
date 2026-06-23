@@ -9,20 +9,18 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 export interface UploadResult {
   key: string;
-  publicUrl: string;
 }
 
 /**
  * Cloudflare R2 / S3-compatible storage service.
  *
  * Stores arbitrary buffers in a private bucket and generates time-limited
- * signed URLs for secure downloads.
+ * signed URLs for secure downloads. Never exposes public URLs.
  */
 @Injectable()
 export class StorageService {
   private readonly client: S3Client;
   private readonly bucket: string;
-  private readonly publicUrlBase: string;
 
   constructor(private readonly config: ConfigService) {
     const accountId = this.config.getOrThrow<string>('R2_ACCOUNT_ID');
@@ -32,9 +30,6 @@ export class StorageService {
     );
 
     this.bucket = this.config.getOrThrow<string>('R2_BUCKET_NAME');
-    this.publicUrlBase = this.config
-      .getOrThrow<string>('R2_PUBLIC_URL')
-      .replace(/\/$/, '');
 
     this.client = new S3Client({
       region: 'auto',
@@ -52,7 +47,7 @@ export class StorageService {
    * @param key Object key (path inside the bucket).
    * @param buffer File content.
    * @param contentType MIME type.
-   * @returns The object key and the configured public URL.
+   * @returns The object key only; consumers must request a signed URL to download.
    */
   async uploadBuffer(
     key: string,
@@ -68,10 +63,7 @@ export class StorageService {
       }),
     );
 
-    return {
-      key,
-      publicUrl: `${this.publicUrlBase}/${key}`,
-    };
+    return { key };
   }
 
   /**

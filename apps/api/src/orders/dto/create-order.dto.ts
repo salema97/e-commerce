@@ -14,6 +14,7 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OrderChannel, OrderStatus } from '@prisma/client';
+import { IsEcuadorCustomerIdentification } from '../../common/validators/is-ecuador-customer-identification.validator.js';
 
 export class CreateOrderItemDto {
   @ApiProperty()
@@ -45,6 +46,16 @@ export class CreateOrderDto {
 
   @ApiPropertyOptional()
   @IsOptional() @IsString() customerPhone?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional() @IsString() customerName?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @IsEcuadorCustomerIdentification()
+  customerIdentification?: string;
+  @ApiPropertyOptional()
+  @IsOptional() @IsString() customerAddress?: string;
 
   @ApiPropertyOptional() @IsOptional() shippingAddress?: Record<string, unknown>;
   @ApiPropertyOptional() @IsOptional() billingAddress?: Record<string, unknown>;

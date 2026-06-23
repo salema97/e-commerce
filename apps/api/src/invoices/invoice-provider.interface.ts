@@ -7,6 +7,7 @@ export interface InvoiceItem {
   unitPrice: number;
   discount: number;
   taxRate: number;
+  taxAmount?: number;
 }
 
 export interface InvoiceOrder {

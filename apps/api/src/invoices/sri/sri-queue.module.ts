@@ -1,16 +1,36 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { Queue } from 'bullmq';
 import { PrismaModule } from '../../prisma/prisma.module.js';
 import { InvoicesModule } from '../invoices.module.js';
-import sriQueueConfig, { SRI_QUEUE_NAME } from './sri-queue.config.js';
+import sriQueueConfig, {
+  SRI_QUEUE_NAME,
+  getSriQueueBackoffDelay,
+  getSriQueueConcurrency,
+  getSriQueueMaxRetries,
+  isSriQueueEnabled,
+} from './sri-queue.config.js';
 import { SRI_QUEUE_TOKEN } from './sri-queue.tokens.js';
 import { SriQueueService } from './sri-queue.service.js';
 import { SriQueueWorker } from './sri-queue.worker.js';
 import { SriReconciliationService } from './sri-reconciliation.service.js';
 
+async function waitUntilReady(queue: Queue, timeoutMs: number): Promise<void> {
+  await Promise.race([
+    queue.waitUntilReady(),
+    new Promise<void>((_, reject) => {
+      setTimeout(
+        () => reject(new Error(`SRI queue failed to connect to Redis within ${timeoutMs}ms`)),
+        timeoutMs,
+      );
+    }),
+  ]);
+}
+
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forFeature(sriQueueConfig),
     PrismaModule,
     forwardRef(() => InvoicesModule),
@@ -21,14 +41,12 @@ import { SriReconciliationService } from './sri-reconciliation.service.js';
     SriReconciliationService,
     {
       provide: SRI_QUEUE_TOKEN,
-      useFactory: (config: ConfigService) => {
-        const maxRetries = config.get<number>('sriQueue.maxRetries', 5);
-        const backoffDelay = config.get<number>(
-          'sriQueue.backoffBaseDelayMs',
-          2_000,
-        );
+      useFactory: async (config: ConfigService) => {
+        const enabled = isSriQueueEnabled(config);
+        const maxRetries = getSriQueueMaxRetries(config);
+        const backoffDelay = getSriQueueBackoffDelay(config);
 
-        return new Queue(SRI_QUEUE_NAME, {
+        const queue = new Queue(SRI_QUEUE_NAME, {
           connection: {
             url: config.getOrThrow<string>('REDIS_URL'),
           },
@@ -42,6 +60,17 @@ import { SriReconciliationService } from './sri-reconciliation.service.js';
             removeOnFail: 50,
           },
         });
+
+        queue.on('error', (error: Error) => {
+          // eslint-disable-next-line no-console
+          console.error('SRI queue Redis error:', error.message);
+        });
+
+        if (enabled) {
+          await waitUntilReady(queue, 5_000);
+        }
+
+        return queue;
       },
       inject: [ConfigService],
     },

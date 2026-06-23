@@ -1,6 +1,13 @@
 import { Injectable, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 
+interface InvoiceSequenceRow {
+  lastNumber: number;
+  authorizedFrom: number;
+  authorizedTo: number;
+  nearExhaustionAlertSent: boolean;
+}
+
 @Injectable()
 export class InvoiceSequenceService {
   private readonly logger = new Logger(InvoiceSequenceService.name);
@@ -17,21 +24,14 @@ export class InvoiceSequenceService {
     const emissionPoint = emissionPointCode.padStart(3, '0');
 
     const sequenceNumber = await this.prisma.$transaction(async (tx) => {
-      const rows = await tx.$queryRawUnsafe<
-        Array<{
-          currentNumber: number;
-          authorizedFrom: number;
-          authorizedTo: number;
-          nearExhaustionAlertSent: boolean;
-        }>
-      >(
+      const rows = await tx.$queryRawUnsafe<InvoiceSequenceRow[]>(
         `UPDATE "InvoiceSequence"
-         SET "currentNumber" = GREATEST("currentNumber", "authorizedFrom" - 1) + 1
+         SET "lastNumber" = GREATEST("lastNumber", "authorizedFrom" - 1) + 1
          WHERE "documentType" = $1
            AND "establishmentCode" = $2
            AND "emissionPointCode" = $3
-           AND GREATEST("currentNumber", "authorizedFrom" - 1) + 1 <= "authorizedTo"
-         RETURNING "currentNumber", "authorizedFrom", "authorizedTo", "nearExhaustionAlertSent"`,
+           AND GREATEST("lastNumber", "authorizedFrom" - 1) + 1 <= "authorizedTo"
+         RETURNING "lastNumber", "authorizedFrom", "authorizedTo", "nearExhaustionAlertSent"`,
         type,
         establishment,
         emissionPoint,
@@ -44,7 +44,7 @@ export class InvoiceSequenceService {
       }
 
       const row = rows[0];
-      const remaining = row.authorizedTo - row.currentNumber;
+      const remaining = row.authorizedTo - row.lastNumber;
 
       if (remaining < 100 && !row.nearExhaustionAlertSent) {
         await tx.$queryRawUnsafe<
@@ -72,7 +72,7 @@ export class InvoiceSequenceService {
         );
       }
 
-      return String(row.currentNumber).padStart(9, '0');
+      return String(row.lastNumber).padStart(9, '0');
     });
 
     return sequenceNumber;

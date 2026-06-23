@@ -66,7 +66,6 @@ describe('StorageService', () => {
     );
     expect(result).toEqual({
       key: 'sri/invoices/1/ride.pdf',
-      publicUrl: 'https://public.example.com/sri/invoices/1/ride.pdf',
     });
   });
 

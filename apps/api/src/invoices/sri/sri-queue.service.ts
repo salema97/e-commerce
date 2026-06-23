@@ -1,10 +1,14 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { Queue } from 'bullmq';
+import type { Job, Queue } from 'bullmq';
 import { Prisma, SriDocumentJob, SriDocumentJobStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { SRI_QUEUE_TOKEN } from './sri-queue.tokens.js';
-import { SRI_QUEUE_NAME } from './sri-queue.config.js';
+import {
+  SRI_QUEUE_NAME,
+  getSriQueueMaxRetries,
+  isSriQueueEnabled,
+} from './sri-queue.config.js';
 import {
   IssueCreditNoteJobData,
   IssueInvoiceJobData,
@@ -23,7 +27,7 @@ export class SriQueueService {
   ) {}
 
   get isEnabled(): boolean {
-    return this.config.get<boolean>('sriQueue.enabled', true);
+    return isSriQueueEnabled(this.config);
   }
 
   async addIssueInvoiceJob(orderId: string): Promise<SriDocumentJob> {
@@ -70,17 +74,41 @@ export class SriQueueService {
       throw new Error('SRI queue is disabled');
     }
 
-    const maxAttempts = this.config.get<number>('sriQueue.maxRetries', 5);
+    const maxAttempts = getSriQueueMaxRetries(this.config);
+    const jobId = `${SRI_QUEUE_NAME}:${name}:${documentType}:${documentId}`;
+
+    const existingJob = await this.queue.getJob(jobId);
+
+    if (existingJob && (await existingJob.isFailed())) {
+      await existingJob.retry();
+
+      const record = await this.prisma.sriDocumentJob.update({
+        where: { jobId },
+        data: {
+          status: SriDocumentJobStatus.PENDING,
+          attempts: 0,
+          lastError: null,
+          payload,
+        },
+      });
+
+      this.logger.log(
+        { jobId: record.jobId, name, documentType, documentId },
+        'SRI document job retry enqueued from failed state',
+      );
+
+      return record;
+    }
 
     const job = await this.queue.add(name, payload, {
-      jobId: `${SRI_QUEUE_NAME}:${name}:${documentType}:${documentId}`,
+      jobId,
       attempts: maxAttempts,
     });
 
     const record = await this.prisma.sriDocumentJob.upsert({
-      where: { jobId: job.id ?? `${name}:${documentId}` },
+      where: { jobId: job.id ?? jobId },
       create: {
-        jobId: job.id ?? `${name}:${documentId}`,
+        jobId: job.id ?? jobId,
         documentType,
         documentId,
         status: SriDocumentJobStatus.PENDING,

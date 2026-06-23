@@ -22,6 +22,7 @@ describe('SriQueueService', () => {
   beforeEach(async () => {
     queue = {
       add: vi.fn().mockResolvedValue({ id: 'bullmq-job-id' }),
+      getJob: vi.fn().mockResolvedValue(null),
     };
 
     prisma = {

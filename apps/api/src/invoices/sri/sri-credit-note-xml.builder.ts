@@ -75,9 +75,12 @@ export class SriCreditNoteXmlBuilder {
           tipoIdentificacionComprador: this.identificationType(
             input.customerIdentification,
           ),
-          razonSocialComprador: input.customerName,
-          identificacionComprador: input.customerIdentification ?? '9999999999',
-          direccionComprador: input.customerAddress ?? 'Direccion comprador',
+          razonSocialComprador:
+            input.customerName ?? 'CONSUMIDOR FINAL',
+          identificacionComprador:
+            input.customerIdentification ?? '9999999999999',
+          direccionComprador:
+            input.customerAddress ?? 'Direccion comprador',
           codDocModificado: input.creditNote.codDocModificado,
           numDocModificado: input.creditNote.numDocModificado,
           fechaEmisionDocumentoModificado:
@@ -107,6 +110,8 @@ export class SriCreditNoteXmlBuilder {
 
   private buildDetail(item: CreditNoteItem, defaultReason: string): unknown {
     const totalWithoutTax = item.quantity * item.unitPrice - item.discount;
+    const taxValue =
+      item.taxAmount ?? this.calculateTax(totalWithoutTax, item.taxRate);
     return {
       codigoPrincipal: item.code,
       descripcion: item.description,
@@ -120,7 +125,7 @@ export class SriCreditNoteXmlBuilder {
           codigoPorcentaje: '4',
           tarifa: this.formatNumber(item.taxRate),
           baseImponible: this.formatNumber(totalWithoutTax),
-          valor: this.formatNumber(this.calculateTax(totalWithoutTax, item.taxRate)),
+          valor: this.formatNumber(taxValue),
         },
       },
       motivo: item.reason ?? defaultReason,

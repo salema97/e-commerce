@@ -8,9 +8,8 @@ import { createHmac } from 'crypto';
 import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { StripeProvider } from '../src/payments/stripe/stripe.provider.js';
-import { DirectSriInvoiceProvider } from '../src/invoices/sri/sri-invoice.provider.js';
+import { SriQueueService } from '../src/invoices/sri/sri-queue.service.js';
 import { PaymentStatus } from '../src/payments/entities/payment-status.enum.js';
-import { InvoiceStatus } from '../src/invoices/invoice-status.enum.js';
 
 const TEST_STRIPE_WEBHOOK_SECRET = 'whsec_testsecret';
 
@@ -43,6 +42,7 @@ const TEST_CONFIG = {
   SRI_ESTABLISHMENT_CODE: '001',
   SRI_EMISSION_POINT_CODE: '001',
   SRI_TEST_ENVIRONMENT: 'true',
+  SRI_QUEUE_ENABLED: 'false',
 };
 
 describe('Payment to Invoice (e2e)', () => {
@@ -51,16 +51,26 @@ describe('Payment to Invoice (e2e)', () => {
   let paymentUpdateMock: ReturnType<typeof vi.fn>;
   let orderFindUniqueMock: ReturnType<typeof vi.fn>;
   let invoiceFindUniqueMock: ReturnType<typeof vi.fn>;
-  let invoiceCreateMock: ReturnType<typeof vi.fn>;
-  let providerIssueInvoiceMock: ReturnType<typeof vi.fn>;
+  let addIssueInvoiceJobMock: ReturnType<typeof vi.fn>;
 
   beforeAll(async () => {
     paymentFindFirstMock = vi.fn();
     paymentUpdateMock = vi.fn();
     orderFindUniqueMock = vi.fn();
     invoiceFindUniqueMock = vi.fn();
-    invoiceCreateMock = vi.fn();
-    providerIssueInvoiceMock = vi.fn();
+    addIssueInvoiceJobMock = vi.fn().mockResolvedValue({
+      id: 'job_1',
+      jobId: 'sri-documents:issue-invoice:01:order_1',
+      documentType: '01',
+      documentId: 'order_1',
+      status: 'PENDING',
+      attempts: 0,
+      maxAttempts: 5,
+      payload: { orderId: 'order_1' },
+      lastError: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
     const prismaMock = {
       payment: {
@@ -79,7 +89,6 @@ describe('Payment to Invoice (e2e)', () => {
       },
       invoice: {
         findUnique: invoiceFindUniqueMock,
-        create: invoiceCreateMock,
       },
       inventory: {
         findFirst: vi.fn().mockResolvedValue({
@@ -116,10 +125,10 @@ describe('Payment to Invoice (e2e)', () => {
       validateWebhookSignature: vi.fn(() => true),
     };
 
-    const invoiceProviderMock = {
-      issueInvoice: providerIssueInvoiceMock,
-      getInvoiceStatus: vi.fn(),
-      issueCreditNote: vi.fn(),
+    const sriQueueMock = {
+      addIssueInvoiceJob: addIssueInvoiceJobMock,
+      addIssueCreditNoteJob: vi.fn(),
+      addReconcileDocumentJob: vi.fn(),
     };
 
     const module = await Test.createTestingModule({
@@ -131,8 +140,8 @@ describe('Payment to Invoice (e2e)', () => {
       .useValue(prismaMock)
       .overrideProvider(StripeProvider)
       .useValue(stripeProviderMock)
-      .overrideProvider(DirectSriInvoiceProvider)
-      .useValue(invoiceProviderMock)
+      .overrideProvider(SriQueueService)
+      .useValue(sriQueueMock)
       .compile();
 
     app = module.createNestApplication();
@@ -149,11 +158,10 @@ describe('Payment to Invoice (e2e)', () => {
     await app.close();
   });
 
-  it('creates an invoice after a successful Stripe payment webhook', async () => {
+  it('enqueues an SRI invoice job after a successful Stripe payment webhook', async () => {
     const orderId = 'order_1';
     const paymentId = 'pay_1';
     const providerTransactionId = 'pi_123';
-    const accessKey = '1'.repeat(49);
 
     paymentFindFirstMock.mockResolvedValue({
       id: paymentId,
@@ -186,27 +194,6 @@ describe('Payment to Invoice (e2e)', () => {
 
     invoiceFindUniqueMock.mockResolvedValue(null);
 
-    providerIssueInvoiceMock.mockResolvedValue({
-      accessKey,
-      status: InvoiceStatus.AUTHORIZED,
-      authorizationNumber: '1234567890',
-      xmlContent: '<xml></xml>',
-      sriResponse: { autorizaciones: [{ estado: 'AUTORIZADO' }] },
-    });
-
-    invoiceCreateMock.mockResolvedValue({
-      id: 'inv_1',
-      orderId,
-      documentType: '01',
-      accessKey,
-      authorizationNumber: '1234567890',
-      status: InvoiceStatus.AUTHORIZED,
-      xmlContent: '<xml></xml>',
-      pdfUrl: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-
     const webhook = signStripeWebhook({
       type: 'payment_intent.succeeded',
       data: { object: { id: providerTransactionId } },
@@ -234,14 +221,6 @@ describe('Payment to Invoice (e2e)', () => {
       }),
     );
 
-    expect(invoiceCreateMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          orderId,
-          status: InvoiceStatus.AUTHORIZED,
-          accessKey,
-        }),
-      }),
-    );
+    expect(addIssueInvoiceJobMock).toHaveBeenCalledWith(orderId);
   });
 });

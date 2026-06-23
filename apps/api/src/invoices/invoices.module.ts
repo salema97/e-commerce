@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { InvoicesService } from './invoices.service.js';
 import { InvoicesController } from './invoices.controller.js';
 import { CreditNotesController } from './credit-notes.controller.js';
+import { TestInvoicesController } from './test-invoices.controller.js';
 import { InvoiceProviderFactory } from './invoice-provider.factory.js';
 import { DirectSriInvoiceProvider } from './sri/sri-invoice.provider.js';
 import { SriAccessKeyBuilder } from './sri/sri-access-key.builder.js';
@@ -18,6 +19,7 @@ import { StorageModule } from '../storage/storage.module.js';
 import { EmailModule } from '../notifications/email.module.js';
 import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
 import { SriQueueModule } from './sri/sri-queue.module.js';
+import { isTestAuthEnabled } from '../auth/test-auth.js';
 
 @Module({
   imports: [
@@ -27,7 +29,11 @@ import { SriQueueModule } from './sri/sri-queue.module.js';
     WhatsAppNotificationModule,
     forwardRef(() => SriQueueModule),
   ],
-  controllers: [InvoicesController, CreditNotesController],
+  controllers: [
+    InvoicesController,
+    CreditNotesController,
+    ...(isTestAuthEnabled() ? [TestInvoicesController] : []),
+  ],
   providers: [
     InvoicesService,
     InvoiceProviderFactory,

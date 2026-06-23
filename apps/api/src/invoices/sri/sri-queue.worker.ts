@@ -18,7 +18,11 @@ import { SriSoapClient } from './sri-soap.client.js';
 import { SriRidePdfService } from './sri-ride-pdf.service.js';
 import { SriDocumentStorageService } from './sri-document-storage.service.js';
 import { SriDeliveryService } from './sri-delivery.service.js';
-import { SRI_QUEUE_NAME } from './sri-queue.config.js';
+import {
+  SRI_QUEUE_NAME,
+  getSriQueueConcurrency,
+  isSriQueueEnabled,
+} from './sri-queue.config.js';
 import {
   IssueCreditNoteJobData,
   IssueInvoiceJobData,
@@ -37,6 +41,13 @@ interface ProcessResult {
   sequenceNumber: string;
   signedXml: string;
   sriResponse: unknown;
+}
+
+interface ExistingDocument {
+  id: string;
+  accessKey: string | null;
+  sequenceNumber: string | null;
+  status: InvoiceStatus | string;
 }
 
 @Injectable()
@@ -59,7 +70,12 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   onModuleInit(): void {
-    const concurrency = this.config.get<number>('sriQueue.concurrency', 5);
+    if (!isSriQueueEnabled(this.config)) {
+      this.logger.log('SRI queue is disabled; worker will not start');
+      return;
+    }
+
+    const concurrency = getSriQueueConcurrency(this.config);
 
     this.worker = new Worker(
       SRI_QUEUE_NAME,
@@ -71,6 +87,17 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
         concurrency,
       },
     );
+
+    this.worker.on('error', (error) => {
+      this.logger.error(
+        { error: error.message },
+        'SRI queue worker Redis connection error',
+      );
+    });
+
+    this.worker.on('closed', () => {
+      this.logger.warn('SRI queue worker Redis connection closed');
+    });
 
     this.worker.on('failed', (job, error) => {
       this.logger.error(
@@ -166,12 +193,24 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
       throw new Error(`Order ${orderId} not found`);
     }
 
+    const existing = await this.prisma.invoice.findUnique({
+      where: { orderId },
+      select: {
+        id: true,
+        accessKey: true,
+        sequenceNumber: true,
+        status: true,
+      },
+    });
+
     const invoiceOrder: InvoiceOrder = {
       orderId: order.id,
       orderNumber: order.orderNumber,
-      customerName: order.customerEmail,
+      customerName: order.customerName ?? order.customerEmail,
+      customerIdentification: order.customerIdentification ?? undefined,
       customerEmail: order.customerEmail,
       customerPhone: order.customerPhone ?? undefined,
+      customerAddress: order.customerAddress ?? undefined,
       subtotal: Number(order.subtotal),
       taxAmount: Number(order.taxAmount),
       discountAmount: Number(order.discountAmount),
@@ -182,37 +221,41 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
         description: item.name,
         quantity: item.quantity,
         unitPrice: Number(item.price),
-        discount: 0,
-        taxRate: 15,
+        discount: Number(item.discountAmount ?? 0),
+        taxRate: Number(item.taxRate ?? 15),
+        taxAmount: Number(item.taxAmount ?? 0),
       })),
     };
 
-    const result = await this.issueDocument('01', (accessKey, sequenceNumber, signedXml) => {
-      const xml = this.xmlBuilder.buildFactura({
-        accessKey,
-        order: invoiceOrder,
-        establishmentCode: this.config.getOrThrow<string>(
-          'SRI_ESTABLISHMENT_CODE',
-        ),
-        emissionPointCode: this.config.getOrThrow<string>(
-          'SRI_EMISSION_POINT_CODE',
-        ),
-        sequenceNumber,
-        environment: this.getEnvironmentCode(),
-        companyRuc: this.config.getOrThrow<string>('SRI_RUC'),
-        companyName: this.config.getOrThrow<string>('SRI_COMPANY_NAME'),
-        companyTradeName:
-          this.config.get<string>('SRI_COMPANY_TRADE_NAME') ??
-          this.config.getOrThrow<string>('SRI_COMPANY_NAME'),
-        companyAddress:
-          this.config.get<string>('SRI_COMPANY_ADDRESS') ??
-          'Direccion matriz',
-      });
+    const result = await this.issueDocument(
+      '01',
+      orderId,
+      existing,
+      (accessKey, sequenceNumber) => {
+        return this.xmlBuilder.buildFactura({
+          accessKey,
+          order: invoiceOrder,
+          establishmentCode: this.config.getOrThrow<string>(
+            'SRI_ESTABLISHMENT_CODE',
+          ),
+          emissionPointCode: this.config.getOrThrow<string>(
+            'SRI_EMISSION_POINT_CODE',
+          ),
+          sequenceNumber,
+          environment: this.getEnvironmentCode(),
+          companyRuc: this.config.getOrThrow<string>('SRI_RUC'),
+          companyName: this.config.getOrThrow<string>('SRI_COMPANY_NAME'),
+          companyTradeName:
+            this.config.get<string>('SRI_COMPANY_TRADE_NAME') ??
+            this.config.getOrThrow<string>('SRI_COMPANY_NAME'),
+          companyAddress:
+            this.config.get<string>('SRI_COMPANY_ADDRESS') ??
+            'Direccion matriz',
+        });
+      },
+    );
 
-      return xml;
-    });
-
-    const invoice = await this.persistDocumentResult('01', order.id, result);
+    const invoice = await this.persistDocumentResult('01', orderId, result);
 
     if (result.status === InvoiceStatus.AUTHORIZED && invoice) {
       await this.handlePostAuthorization(invoice, order, result);
@@ -255,6 +298,13 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
       );
     }
 
+    const existing: ExistingDocument | null = {
+      id: creditNote.id,
+      accessKey: creditNote.accessKey,
+      sequenceNumber: creditNote.sequenceNumber,
+      status: creditNote.status as InvoiceStatus,
+    };
+
     const items: CreditNoteItem[] = returnRequest.items.map((item) => {
       const orderItem = returnRequest.order.items.find(
         (oi) =>
@@ -267,8 +317,9 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
         description: orderItem?.name ?? item.productId,
         quantity: item.quantity,
         unitPrice,
-        discount: 0,
-        taxRate: 15,
+        discount: Number(orderItem?.discountAmount ?? 0),
+        taxRate: Number(orderItem?.taxRate ?? 15),
+        taxAmount: Number(orderItem?.taxAmount ?? 0),
         reason: returnRequest.reason,
       };
     });
@@ -288,37 +339,42 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
       total,
     };
 
-    const result = await this.issueDocument('04', (accessKey, sequenceNumber, signedXml) => {
-      const xml = this.creditNoteXmlBuilder.buildNotaDeCredito({
-        accessKey,
-        customerName: returnRequest.order.customerEmail,
-        customerEmail: returnRequest.order.customerEmail,
-        customerPhone: returnRequest.order.customerPhone ?? undefined,
-        creditNote: creditNoteInput,
-        establishmentCode: this.config.getOrThrow<string>(
-          'SRI_ESTABLISHMENT_CODE',
-        ),
-        emissionPointCode: this.config.getOrThrow<string>(
-          'SRI_EMISSION_POINT_CODE',
-        ),
-        sequenceNumber,
-        environment: this.getEnvironmentCode(),
-        companyRuc: this.config.getOrThrow<string>('SRI_RUC'),
-        companyName: this.config.getOrThrow<string>('SRI_COMPANY_NAME'),
-        companyTradeName:
-          this.config.get<string>('SRI_COMPANY_TRADE_NAME') ??
-          this.config.getOrThrow<string>('SRI_COMPANY_NAME'),
-        companyAddress:
-          this.config.get<string>('SRI_COMPANY_ADDRESS') ??
-          'Direccion matriz',
-      });
-
-      return xml;
-    });
+    const result = await this.issueDocument(
+      '04',
+      creditNoteId,
+      existing,
+      (accessKey, sequenceNumber) => {
+        return this.creditNoteXmlBuilder.buildNotaDeCredito({
+          accessKey,
+          customerName: returnRequest.order.customerName ?? returnRequest.order.customerEmail,
+          customerIdentification: returnRequest.order.customerIdentification ?? undefined,
+          customerEmail: returnRequest.order.customerEmail,
+          customerPhone: returnRequest.order.customerPhone ?? undefined,
+          customerAddress: returnRequest.order.customerAddress ?? undefined,
+          creditNote: creditNoteInput,
+          establishmentCode: this.config.getOrThrow<string>(
+            'SRI_ESTABLISHMENT_CODE',
+          ),
+          emissionPointCode: this.config.getOrThrow<string>(
+            'SRI_EMISSION_POINT_CODE',
+          ),
+          sequenceNumber,
+          environment: this.getEnvironmentCode(),
+          companyRuc: this.config.getOrThrow<string>('SRI_RUC'),
+          companyName: this.config.getOrThrow<string>('SRI_COMPANY_NAME'),
+          companyTradeName:
+            this.config.get<string>('SRI_COMPANY_TRADE_NAME') ??
+            this.config.getOrThrow<string>('SRI_COMPANY_NAME'),
+          companyAddress:
+            this.config.get<string>('SRI_COMPANY_ADDRESS') ??
+            'Direccion matriz',
+        });
+      },
+    );
 
     const updatedCreditNote = await this.persistDocumentResult(
       '04',
-      creditNote.id,
+      creditNoteId,
       result,
     );
 
@@ -335,11 +391,9 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
 
   private async issueDocument(
     documentType: '01' | '04',
-    buildXml: (
-      accessKey: string,
-      sequenceNumber: string,
-      signedXml: string,
-    ) => string,
+    documentId: string,
+    existing: ExistingDocument | null,
+    buildXml: (accessKey: string, sequenceNumber: string) => string,
   ): Promise<ProcessResult> {
     const establishmentCode = this.config.getOrThrow<string>(
       'SRI_ESTABLISHMENT_CODE',
@@ -348,23 +402,34 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
       'SRI_EMISSION_POINT_CODE',
     );
 
-    const sequenceNumber = await this.sequenceService.allocateNext(
+    const sequenceNumber =
+      existing?.sequenceNumber ??
+      (await this.sequenceService.allocateNext(
+        documentType,
+        establishmentCode,
+        emissionPointCode,
+      ));
+
+    const accessKey =
+      existing?.accessKey ??
+      this.accessKeyBuilder.build({
+        date: new Date(),
+        documentType,
+        ruc: this.config.getOrThrow<string>('SRI_RUC'),
+        environment: this.getEnvironmentCode(),
+        establishmentCode,
+        emissionPointCode,
+        sequenceNumber,
+      });
+
+    await this.persistPreSubmissionDocument(
       documentType,
-      establishmentCode,
-      emissionPointCode,
+      documentId,
+      sequenceNumber,
+      accessKey,
     );
 
-    const accessKey = this.accessKeyBuilder.build({
-      date: new Date(),
-      documentType,
-      ruc: this.config.getOrThrow<string>('SRI_RUC'),
-      environment: this.getEnvironmentCode(),
-      establishmentCode,
-      emissionPointCode,
-      sequenceNumber,
-    });
-
-    const xml = buildXml(accessKey, sequenceNumber, '');
+    const xml = buildXml(accessKey, sequenceNumber);
 
     const certificatePath = this.config.getOrThrow<string>(
       'SRI_DIGITAL_CERTIFICATE_PATH',
@@ -457,6 +522,52 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
     return InvoiceStatus.SUBMITTED;
   }
 
+  private async persistPreSubmissionDocument(
+    documentType: '01' | '04',
+    documentId: string,
+    sequenceNumber: string,
+    accessKey: string,
+  ): Promise<void> {
+    const sriStatus = this.mapInvoiceStatusToSriStatus(InvoiceStatus.PENDING);
+
+    if (documentType === '01') {
+      await this.prisma.invoice.upsert({
+        where: { orderId: documentId },
+        create: {
+          orderId: documentId,
+          accessKey,
+          documentType: '01',
+          sequenceNumber,
+          status: InvoiceStatus.PENDING,
+          sriStatus,
+        },
+        update: {
+          sequenceNumber,
+          accessKey,
+          status: InvoiceStatus.PENDING,
+          sriStatus,
+          retryCount: { increment: 1 },
+          lastError: null,
+        },
+      });
+      return;
+    }
+
+    if (documentType === '04') {
+      await this.prisma.creditNote.update({
+        where: { id: documentId },
+        data: {
+          accessKey,
+          sequenceNumber,
+          status: this.mapInvoiceStatusToCreditNoteStatus(InvoiceStatus.PENDING),
+          sriStatus,
+          retryCount: { increment: 1 },
+          lastError: null,
+        },
+      });
+    }
+  }
+
   private async persistDocumentResult(
     documentType: string,
     documentId: string,
@@ -465,6 +576,18 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
     const sriStatus = this.mapInvoiceStatusToSriStatus(result.status);
 
     if (documentType === '01') {
+      const existing = await this.prisma.invoice.findUnique({
+        where: { orderId: documentId },
+      });
+
+      if (existing?.status === InvoiceStatus.AUTHORIZED) {
+        this.logger.warn(
+          { invoiceId: existing.id },
+          'Skipping persist for already authorized invoice',
+        );
+        return existing;
+      }
+
       return this.prisma.invoice.upsert({
         where: { orderId: documentId },
         create: {
@@ -476,7 +599,7 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
           authorizationDate: result.authorizationDate ?? null,
           status: result.status,
           sriStatus,
-          xmlContent: result.signedXml,
+          signedXml: result.signedXml,
           sriResponse: result.sriResponse
             ? (result.sriResponse as unknown as Prisma.InputJsonValue)
             : Prisma.JsonNull,
@@ -487,7 +610,7 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
           authorizationDate: result.authorizationDate ?? null,
           status: result.status,
           sriStatus,
-          xmlContent: result.signedXml,
+          signedXml: result.signedXml,
           sriResponse: result.sriResponse
             ? (result.sriResponse as unknown as Prisma.InputJsonValue)
             : Prisma.JsonNull,
@@ -496,6 +619,18 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
         },
       });
     } else if (documentType === '04') {
+      const existing = await this.prisma.creditNote.findUnique({
+        where: { id: documentId },
+      });
+
+      if (existing?.status === 'AUTHORIZED') {
+        this.logger.warn(
+          { creditNoteId: existing.id },
+          'Skipping persist for already authorized credit note',
+        );
+        return existing;
+      }
+
       return this.prisma.creditNote.update({
         where: { id: documentId },
         data: {
@@ -506,7 +641,6 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
           status: this.mapInvoiceStatusToCreditNoteStatus(result.status),
           sriStatus,
           signedXml: result.signedXml,
-          xmlContent: result.signedXml,
           sriResponse: result.sriResponse
             ? (result.sriResponse as unknown as Prisma.InputJsonValue)
             : Prisma.JsonNull,
@@ -616,6 +750,8 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
         return 'SUBMITTED' as const;
       case InvoiceStatus.FAILED:
         return 'FAILED' as const;
+      case InvoiceStatus.PENDING:
+        return 'PENDING' as const;
       default:
         return 'PENDING' as const;
     }
@@ -631,6 +767,8 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
         return 'SUBMITTED' as const;
       case InvoiceStatus.FAILED:
         return 'FAILED' as const;
+      case InvoiceStatus.PENDING:
+        return 'PENDING' as const;
       default:
         return 'DRAFT' as const;
     }

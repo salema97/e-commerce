@@ -12,6 +12,8 @@ export interface OrderItem {
   sku: string;
   price: number;
   quantity: number;
+  taxRate?: number;
+  discountAmount?: number;
   createdAt: string;
   product?: unknown;
   variant?: unknown;
@@ -31,6 +33,9 @@ export interface Order {
   userId?: string | null;
   customerEmail: string;
   customerPhone?: string | null;
+  customerName?: string | null;
+  customerIdentification?: string | null;
+  customerAddress?: string | null;
   status: OrderStatus;
   channel?: PaymentChannel | null;
   couponCode?: string | null;
@@ -67,6 +72,9 @@ export interface CreateOrderDto {
   couponCode?: string;
   customerEmail?: string;
   customerPhone?: string;
+  customerName?: string;
+  customerIdentification?: string;
+  customerAddress?: string;
   shippingAddress?: OrderAddress;
   billingAddress?: OrderAddress;
   notes?: string;
@@ -92,6 +100,8 @@ export interface CreatedOrderResult {
     sku: string;
     price: number;
     quantity: number;
+    taxRate?: number;
+    discountAmount?: number;
   }>;
 }
 
