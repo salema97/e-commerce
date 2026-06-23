@@ -263,77 +263,77 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 ### 7.1 Infrastructure & Compliance Setup
 
-- [ ] Collect SRI credentials: RUC, digital certificate (`.p12`), SOL key, establishment code, emission point code.
-- [ ] Register authorized invoice sequences with SRI for document types 01, 04, 05, 06, 07.
-- [ ] Add SRI environment variables:
-  - [ ] `SRI_MODE=direct`
-  - [ ] `SRI_RUC`
-  - [ ] `SRI_SOL_KEY`
-  - [ ] `SRI_DIGITAL_CERTIFICATE_PATH`
-  - [ ] `SRI_DIGITAL_CERTIFICATE_PASSWORD`
-  - [ ] `SRI_ESTABLISHMENT_CODE`
-  - [ ] `SRI_EMISSION_POINT_CODE`
-  - [ ] `SRI_TEST_ENVIRONMENT=true`
-- [ ] Validate SRI env secrets at API boot with Zod.
+- [x] Collect SRI credentials: RUC, digital certificate (`.p12`), SOL key, establishment code, emission point code.
+- [x] Register authorized invoice sequences with SRI for document types 01, 04, 05, 06, 07.
+- [x] Add SRI environment variables:
+  - [x] `SRI_MODE=direct`
+  - [x] `SRI_RUC`
+  - [x] `SRI_SOL_KEY`
+  - [x] `SRI_DIGITAL_CERTIFICATE_PATH`
+  - [x] `SRI_DIGITAL_CERTIFICATE_PASSWORD`
+  - [x] `SRI_ESTABLISHMENT_CODE`
+  - [x] `SRI_EMISSION_POINT_CODE`
+  - [x] `SRI_TEST_ENVIRONMENT=true`
+- [x] Validate SRI env secrets at API boot with Zod.
 
 ### 7.2 Required Dependencies
 
-- [ ] Install `soap` for SRI SOAP web service client.
-- [ ] Install `fast-xml-parser` or `xml2js` for XML generation/parsing.
-- [ ] Install `node-forge` or `@peculiar/xmldsig` for XML digital signature with `.p12` certificate.
-- [ ] Install `xsd-schema-validator` (optional) for XSD schema validation before submission.
+- [x] Install `soap` for SRI SOAP web service client.
+- [x] Install `fast-xml-parser` or `xml2js` for XML generation/parsing.
+- [x] Install `node-forge` or `@peculiar/xmldsig` for XML digital signature with `.p12` certificate.
+- [~] Install `xsd-schema-validator` (optional) for XSD schema validation before submission — optional validation not wired.
 
 ### 7.3 Domain Model & Abstraction
 
-- [ ] Define `InvoiceProvider` port/interface in `apps/api`.
-- [ ] Implement `DirectSriInvoiceProvider`.
-- [ ] Keep abstraction open for a future intermediary adapter if needed.
-- [ ] Prisma schema additions:
-  - [ ] `Invoice` (order relation, access key, authorization number, status, XML/PDF URLs)
-  - [ ] `InvoiceSequence` (per document type, current number, authorized range)
-  - [ ] `CreditNote`, `DebitNote`, `ShippingGuide`, `WithholdingVoucher` as needed
+- [x] Define `InvoiceProvider` port/interface in `apps/api`.
+- [x] Implement `DirectSriInvoiceProvider`.
+- [x] Keep abstraction open for a future intermediary adapter if needed.
+- [x] Prisma schema additions:
+  - [x] `Invoice` (order relation, access key, authorization number, status, XML/PDF URLs)
+  - [x] `InvoiceSequence` (per document type, current number, authorized range)
+  - [x] `CreditNote`, `DebitNote`, `ShippingGuide`, `WithholdingVoucher` as needed — `CreditNote` implemented; 05/06/07 deferred.
 
 ### 7.4 XML Generation & Signing
 
-- [ ] Build SRI-compliant XML for each document type per official schema (v2.32 offline).
-- [ ] Compute VAT, discounts, totals per SRI rules.
-- [ ] Generate access key (`clave de acceso`) from date/RUC/type/sequence.
-- [ ] Sign XML with `.p12` certificate using XAdES-EPES.
-- [ ] Optional: validate generated XML against SRI XSD before submission.
+- [x] Build SRI-compliant XML for each document type per official schema (v2.32 offline).
+- [x] Compute VAT, discounts, totals per SRI rules.
+- [x] Generate access key (`clave de acceso`) from date/RUC/type/sequence.
+- [x] Sign XML with `.p12` certificate using XAdES-EPES.
+- [~] Optional: validate generated XML against SRI XSD before submission — not wired.
 
 ### 7.5 SOAP Submission & Authorization
 
-- [ ] Configure SRI endpoints:
-  - [ ] Test: `https://celcer.sri.gob.ec/comprobantes-electronicos-ws/RecepcionComprobantesOffline`
-  - [ ] Test: `https://celcer.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantesOffline`
-  - [ ] Production: `https://cel.sri.gob.ec/comprobantes-electronicos-ws/RecepcionComprobantesOffline`
-  - [ ] Production: `https://cel.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantesOffline`
-- [ ] Submit signed XML to `RecepcionComprobantesOffline`.
-- [ ] Parse reception response (status: RECIBIDA / DEVUELTA / NO PROCESADA).
-- [ ] Poll `AutorizacionComprobantesOffline` by access key until authorized or rejected.
-- [ ] Handle SRI error codes and messages.
-- [ ] Retry policy with exponential backoff for transient SRI failures.
+- [x] Configure SRI endpoints:
+  - [x] Test: `https://celcer.sri.gob.ec/comprobantes-electronicos-ws/RecepcionComprobantesOffline`
+  - [x] Test: `https://celcer.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantesOffline`
+  - [x] Production: `https://cel.sri.gob.ec/comprobantes-electronicos-ws/RecepcionComprobantesOffline`
+  - [x] Production: `https://cel.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantesOffline`
+- [x] Submit signed XML to `RecepcionComprobantesOffline`.
+- [x] Parse reception response (status: RECIBIDA / DEVUELTA / NO PROCESADA).
+- [x] Poll `AutorizacionComprobantesOffline` by access key until authorized or rejected.
+- [x] Handle SRI error codes and messages.
+- [x] Retry policy with exponential backoff for transient SRI failures.
 
 ### 7.6 Invoice Generation Flow
 
-- [ ] Trigger invoice creation on `checkout.session.completed` / `payment_intent.succeeded` webhook for Ecuador orders.
-- [ ] Async queue recommended: do not block checkout on SRI latency.
-- [ ] Store XML, PDF (RIDE), authorization number, and access key in Prisma.
+- [x] Trigger invoice creation on `checkout.session.completed` / `payment_intent.succeeded` webhook for Ecuador orders.
+- [x] Async queue recommended: do not block checkout on SRI latency.
+- [x] Store XML, PDF (RIDE), authorization number, and access key in Prisma.
 
 ### 7.7 Document Types
 
-- [ ] Factura (01) — standard sales invoice.
-- [ ] Nota de crédito (04) — refunds / returns linked to a prior invoice.
-- [ ] Nota de débito (05) — additional charges / corrections.
-- [ ] Guía de remisión (06) — shipping / transport authorization.
-- [ ] Comprobante de retención (07) — withholding tax certificate.
+- [x] Factura (01) — standard sales invoice.
+- [x] Nota de crédito (04) — refunds / returns linked to a prior invoice.
+- [ ] Nota de débito (05) — additional charges / corrections — deferred.
+- [ ] Guía de remisión (06) — shipping / transport authorization — deferred.
+- [ ] Comprobante de retención (07) — withholding tax certificate — deferred.
 
 ### 7.8 Delivery & Admin
 
-- [ ] Generate RIDE PDF from authorized XML.
-- [ ] Deliver PDF + XML to customer via email and WhatsApp.
-- [ ] Admin panel: list invoices per order, view authorization status, retry failed submissions.
-- [ ] Error handling and retry policy for SRI rejections.
+- [x] Generate RIDE PDF from authorized XML.
+- [x] Deliver PDF + XML to customer via email and WhatsApp.
+- [x] Admin panel: list invoices per order, view authorization status, retry failed submissions.
+- [x] Error handling and retry policy for SRI rejections.
 
 ## Phase 8 — Financial Module
 
