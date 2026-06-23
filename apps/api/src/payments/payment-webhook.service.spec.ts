@@ -7,6 +7,7 @@ import { PaymentWebhookService } from './payment-webhook.service.js';
 import { PaymentProviderFactory } from './payment-provider.factory.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
+import { InvoicesService } from '../invoices/invoices.service.js';
 
 describe('PaymentWebhookService', () => {
   let service: PaymentWebhookService;
@@ -23,6 +24,7 @@ describe('PaymentWebhookService', () => {
     orderStatusHistory: { create: ReturnType<typeof vi.fn> };
   };
   let notificationService: { notify: ReturnType<typeof vi.fn> };
+  let invoicesService: { enqueueInvoiceForOrder: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     provider = {
@@ -36,6 +38,7 @@ describe('PaymentWebhookService', () => {
       orderStatusHistory: { create: vi.fn() },
     };
     notificationService = { notify: vi.fn().mockResolvedValue(undefined) };
+    invoicesService = { enqueueInvoiceForOrder: vi.fn().mockResolvedValue(undefined) };
 
     const module = await Test.createTestingModule({
       providers: [
@@ -55,6 +58,7 @@ describe('PaymentWebhookService', () => {
         { provide: PaymentProviderFactory, useValue: factory },
         { provide: PrismaService, useValue: prisma },
         { provide: WhatsAppNotificationService, useValue: notificationService },
+        { provide: InvoicesService, useValue: invoicesService },
       ],
     }).compile();
 
@@ -107,6 +111,36 @@ describe('PaymentWebhookService', () => {
       }),
     );
     expect(prisma.orderStatusHistory.create).toHaveBeenCalled();
+    expect(invoicesService.enqueueInvoiceForOrder).toHaveBeenCalledWith('order_1');
+  });
+
+  it('continues webhook handling when invoice enqueue fails', async () => {
+    provider.parseWebhookPayload.mockResolvedValueOnce({
+      status: PaymentStatus.COMPLETED,
+      providerTransactionId: 'kushki_txn_1',
+      metadata: { event: 'approved' },
+    });
+    prisma.payment.findFirst.mockResolvedValueOnce({
+      id: 'pay_1',
+      orderId: 'order_1',
+      status: PaymentStatus.PENDING,
+    });
+    invoicesService.enqueueInvoiceForOrder.mockRejectedValue(new Error('Queue down'));
+
+    const result = await service.handle(
+      'kushki',
+      { transactionReference: 'kushki_txn_1', status: 'approved' },
+      'kushki_secret',
+    );
+
+    expect(result.status).toBe(PaymentStatus.COMPLETED);
+    expect(prisma.order.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'order_1' },
+        data: { status: OrderStatus.PROCESSING },
+      }),
+    );
+    expect(invoicesService.enqueueInvoiceForOrder).toHaveBeenCalledWith('order_1');
   });
 
   it('transitions order to PAYMENT_FAILED on FAILED webhook', async () => {
@@ -146,6 +180,7 @@ describe('PaymentWebhookService', () => {
       '+593991234567',
       expect.objectContaining({ orderNumber: 'ORD-002' }),
     );
+    expect(invoicesService.enqueueInvoiceForOrder).not.toHaveBeenCalled();
   });
 
   it('completes webhook handling even if WhatsApp notification rejects', async () => {

@@ -18,10 +18,11 @@ import { InvoicesModule } from '../invoices/invoices.module.js';
 import { InventoryModule } from '../inventory/inventory.module.js';
 import { AuditModule } from '../audit/audit.module.js';
 import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
+import { SriQueueModule } from '../invoices/sri/sri-queue.module.js';
 import { isTestAuthEnabled } from '../auth/test-auth.js';
 
 @Module({
-  imports: [InvoicesModule, InventoryModule, AuditModule, WhatsAppNotificationModule],
+  imports: [InvoicesModule, SriQueueModule, InventoryModule, AuditModule, WhatsAppNotificationModule],
   controllers: [
     StripeWebhookController,
     PaymentWebhookController,

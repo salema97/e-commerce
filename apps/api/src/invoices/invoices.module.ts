@@ -1,6 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { InvoicesService } from './invoices.service.js';
 import { InvoicesController } from './invoices.controller.js';
+import { CreditNotesController } from './credit-notes.controller.js';
 import { InvoiceProviderFactory } from './invoice-provider.factory.js';
 import { DirectSriInvoiceProvider } from './sri/sri-invoice.provider.js';
 import { SriAccessKeyBuilder } from './sri/sri-access-key.builder.js';
@@ -16,6 +17,7 @@ import { PrismaModule } from '../prisma/prisma.module.js';
 import { StorageModule } from '../storage/storage.module.js';
 import { EmailModule } from '../notifications/email.module.js';
 import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
+import { SriQueueModule } from './sri/sri-queue.module.js';
 
 @Module({
   imports: [
@@ -23,8 +25,9 @@ import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.mo
     StorageModule,
     EmailModule,
     WhatsAppNotificationModule,
+    forwardRef(() => SriQueueModule),
   ],
-  controllers: [InvoicesController],
+  controllers: [InvoicesController, CreditNotesController],
   providers: [
     InvoicesService,
     InvoiceProviderFactory,

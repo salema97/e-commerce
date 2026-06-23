@@ -40,7 +40,7 @@ describe('ReturnsService', () => {
   let configService: { get: ReturnType<typeof vi.fn> };
   let refundService: { createRefund: ReturnType<typeof vi.fn> };
   let storeCreditService: { issue: ReturnType<typeof vi.fn> };
-  let invoicesService: { issueCreditNote: ReturnType<typeof vi.fn> };
+  let invoicesService: { enqueueCreditNoteForReturn: ReturnType<typeof vi.fn> };
   let notificationService: {
     onReturnRequested: ReturnType<typeof vi.fn>;
     onReturnStatusChanged: ReturnType<typeof vi.fn>;
@@ -53,7 +53,7 @@ describe('ReturnsService', () => {
     configService = { get: vi.fn(() => 30) };
     refundService = { createRefund: vi.fn().mockResolvedValue({ id: 'r1' }) };
     storeCreditService = { issue: vi.fn().mockResolvedValue({ balance: 100 }) };
-    invoicesService = { issueCreditNote: vi.fn().mockResolvedValue({ id: 'cn1' }) };
+    invoicesService = { enqueueCreditNoteForReturn: vi.fn().mockResolvedValue({ id: 'cn1' }) };
     notificationService = {
       onReturnRequested: vi.fn().mockResolvedValue(undefined),
       onReturnStatusChanged: vi.fn().mockResolvedValue(undefined),
@@ -271,7 +271,7 @@ describe('ReturnsService', () => {
         parentInvoiceAccessKey: '1'.repeat(49),
       }));
       expect(prisma.__txClient.inventory.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ quantity: { increment: 1 } }) }));
-      expect(invoicesService.issueCreditNote).not.toHaveBeenCalled();
+      expect(invoicesService.enqueueCreditNoteForReturn).not.toHaveBeenCalled();
       expect(whatsappNotificationService.notify).toHaveBeenCalledWith(
         'o1',
         'REFUND_CONFIRMED',
@@ -304,18 +304,18 @@ describe('ReturnsService', () => {
       expect(refundService.createRefund).not.toHaveBeenCalled();
     });
 
-    it('enters compensating state when credit note fails for store credit', async () => {
+    it('enters compensating state when credit note enqueue fails for store credit', async () => {
       prisma.returnRequest.findUnique.mockResolvedValue(buildReturnForResolve());
       prisma.returnRequest.update
         .mockResolvedValueOnce({ id: 'rr1', status: ReturnStatus.RESOLVED, refundMethod: RefundMethod.STORE_CREDIT, items: [] })
         .mockResolvedValueOnce({ id: 'rr1', status: ReturnStatus.RESOLUTION_PENDING_CREDIT_NOTE, items: [] });
       prisma.__txClient.inventory.findFirst.mockResolvedValue({ id: 'inv1', productId: 'p1', variantId: null, quantity: 10, reservedQuantity: 0 });
-      invoicesService.issueCreditNote.mockRejectedValue(new Error('SRI down'));
+      invoicesService.enqueueCreditNoteForReturn.mockRejectedValue(new Error('Queue down'));
 
       const result = await service.resolveReturn('rr1', { refundMethod: RefundMethod.STORE_CREDIT }, 'admin1');
 
       expect(result.status).toBe(ReturnStatus.RESOLUTION_PENDING_CREDIT_NOTE);
-      expect(invoicesService.issueCreditNote).toHaveBeenCalled();
+      expect(invoicesService.enqueueCreditNoteForReturn).toHaveBeenCalledWith('rr1', 50);
     });
 
     it('creates an exchange order when method is EXCHANGE with a selected replacement product', async () => {
