@@ -7,6 +7,7 @@ import request from 'supertest';
 import { createHmac } from 'crypto';
 import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
+import { RedisService } from '../src/common/redis/redis.service.js';
 import { StripeCustomerService } from '../src/payments/stripe/stripe-customer.service.js';
 
 const TEST_WEBHOOK_SECRET = 'whsec_dGVzdHNlY3JldA==';
@@ -51,6 +52,11 @@ describe('Clerk Webhook (e2e)', () => {
       PORT: 3001,
     });
 
+    const redisServiceMock = {
+      client: { status: 'end' },
+      onModuleDestroy: vi.fn(),
+    };
+
     const module = await Test.createTestingModule({
       imports: [AppModule],
     })
@@ -58,6 +64,8 @@ describe('Clerk Webhook (e2e)', () => {
       .useValue(configMock)
       .overrideProvider(PrismaService)
       .useValue(prismaMock)
+      .overrideProvider(RedisService)
+      .useValue(redisServiceMock)
       .overrideProvider(StripeCustomerService)
       .useValue(stripeCustomerServiceMock)
       .compile();

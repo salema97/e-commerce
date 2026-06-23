@@ -26,8 +26,17 @@ export class RedisService implements OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
-    if (this.client.status === 'ready' || this.client.status === 'connect' || this.client.status === 'connecting' || this.client.status === 'reconnecting') {
-      await this.client.quit();
+    try {
+      if (
+        this.client.status === 'ready' ||
+        this.client.status === 'connect' ||
+        this.client.status === 'connecting' ||
+        this.client.status === 'reconnecting'
+      ) {
+        await this.client.quit();
+      }
+    } catch {
+      // Ignore disconnect errors during shutdown; the client may already be closed.
     }
   }
 }
