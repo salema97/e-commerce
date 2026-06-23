@@ -61,10 +61,15 @@ export class EvolutionApiProvider extends WhatsAppProvider {
         number: normalizedPhone,
         template: template.toLowerCase(),
         language: 'es',
-        components: Object.entries(variables).map(([, text]) => ({
-          type: 'body',
-          parameters: [{ type: 'text', text }],
-        })),
+        components: [
+          {
+            type: 'body',
+            parameters: Object.entries(variables).map(([, text]) => ({
+              type: 'text',
+              text,
+            })),
+          },
+        ],
       }),
     });
 
