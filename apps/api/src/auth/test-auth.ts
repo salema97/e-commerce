@@ -11,7 +11,8 @@
 
 import type { Role } from '@repo/shared-types';
 
-const TEST_AUTH_ENABLED = process.env.ENABLE_TEST_AUTH === 'true';
+const TEST_AUTH_ENABLED =
+  process.env.ENABLE_TEST_AUTH === 'true' && process.env.NODE_ENV !== 'production';
 const HEADER_NAME = 'x-test-auth';
 
 export interface TestAuthSession {
