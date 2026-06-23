@@ -14,6 +14,8 @@ import { StoreCreditService } from './store-credit.service.js';
 import { InvoicesService } from '../invoices/invoices.service.js';
 import { ReturnNotificationService } from './notifications/return-notification.service.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
+import { EmailNotificationService } from '../notifications/email-notification.service.js';
+import { PushNotificationService } from '../notifications/push-notification.service.js';
 import { CreateReturnDto } from './dto/create-return.dto.js';
 import { CreateGuestReturnRequestDto } from './dto/create-guest-return-request.dto.js';
 import { UpdateReturnStatusDto } from './dto/update-return-status.dto.js';
@@ -62,6 +64,8 @@ export class ReturnsService {
     private readonly invoicesService: InvoicesService,
     private readonly notificationService: ReturnNotificationService,
     private readonly whatsappNotificationService: WhatsAppNotificationService,
+    private readonly emailNotificationService: EmailNotificationService,
+    private readonly pushNotificationService: PushNotificationService,
     configService: ConfigService,
   ) {
     const configured = configService.get<number>('RETURN_WINDOW_DAYS');
@@ -442,20 +446,41 @@ export class ReturnsService {
       id: string;
       orderNumber: string;
       customerPhone: string | null;
+      customerEmail: string;
+      userId: string | null;
     },
     amount: number,
   ): Promise<void> {
-    if (!order.customerPhone) {
-      return;
-    }
+    const context = {
+      customerName: 'Cliente',
+      orderNumber: order.orderNumber,
+      amount: `USD ${amount.toFixed(2)}`,
+      refundMethod: 'Metodo original de pago',
+    };
 
     try {
-      await this.whatsappNotificationService.notify(order.id, 'REFUND_CONFIRMED', order.customerPhone, {
-        customerName: 'Cliente',
-        orderNumber: order.orderNumber,
-        amount: `USD ${amount.toFixed(2)}`,
-        refundMethod: 'Metodo original de pago',
-      });
+      if (order.customerPhone) {
+        await this.whatsappNotificationService.notify(
+          order.id,
+          'REFUND_CONFIRMED',
+          order.customerPhone,
+          context,
+        );
+      }
+      if (order.customerEmail) {
+        await this.emailNotificationService.notify(
+          order.id,
+          'REFUND_CONFIRMED',
+          order.customerEmail,
+          context,
+        );
+      }
+      await this.pushNotificationService.notifyForOrder(
+        order.id,
+        order.userId,
+        'REFUND_CONFIRMED',
+        context,
+      );
     } catch {
       // Notifications are best-effort and must not fail return resolution.
     }

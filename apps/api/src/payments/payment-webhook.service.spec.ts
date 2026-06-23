@@ -7,6 +7,8 @@ import { PaymentWebhookService } from './payment-webhook.service.js';
 import { PaymentProviderFactory } from './payment-provider.factory.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
+import { EmailNotificationService } from '../notifications/email-notification.service.js';
+import { PushNotificationService } from '../notifications/push-notification.service.js';
 import { InvoicesService } from '../invoices/invoices.service.js';
 
 describe('PaymentWebhookService', () => {
@@ -24,6 +26,8 @@ describe('PaymentWebhookService', () => {
     orderStatusHistory: { create: ReturnType<typeof vi.fn> };
   };
   let notificationService: { notify: ReturnType<typeof vi.fn> };
+  let emailNotificationService: { notify: ReturnType<typeof vi.fn> };
+  let pushNotificationService: { notifyForOrder: ReturnType<typeof vi.fn> };
   let invoicesService: { enqueueInvoiceForOrder: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
@@ -38,6 +42,8 @@ describe('PaymentWebhookService', () => {
       orderStatusHistory: { create: vi.fn() },
     };
     notificationService = { notify: vi.fn().mockResolvedValue(undefined) };
+    emailNotificationService = { notify: vi.fn().mockResolvedValue(undefined) };
+    pushNotificationService = { notifyForOrder: vi.fn().mockResolvedValue(undefined) };
     invoicesService = { enqueueInvoiceForOrder: vi.fn().mockResolvedValue(undefined) };
 
     const module = await Test.createTestingModule({
@@ -58,6 +64,8 @@ describe('PaymentWebhookService', () => {
         { provide: PaymentProviderFactory, useValue: factory },
         { provide: PrismaService, useValue: prisma },
         { provide: WhatsAppNotificationService, useValue: notificationService },
+        { provide: EmailNotificationService, useValue: emailNotificationService },
+        { provide: PushNotificationService, useValue: pushNotificationService },
         { provide: InvoicesService, useValue: invoicesService },
       ],
     }).compile();

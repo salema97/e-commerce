@@ -153,14 +153,13 @@ export class SriDeliveryService {
 
     if (email) {
       try {
-        await this.email.sendTemplate(email, 'sri-invoice-delivery', {
+        await this.email.sendTemplate(email, 'SRI_DOCUMENT_DELIVERY', {
           customerName: options.order.customerEmail.split('@')[0],
-          documentType: options.documentTypeLabel,
+          documentTypeLabel: options.documentTypeLabel,
           orderNumber: options.order.orderNumber,
           accessKey: options.accessKey,
           pdfUrl: pdfUrl!,
           xmlUrl: xmlUrl!,
-          from: this.config.get<string>('SRI_EMAIL_FROM') ?? '',
         });
         delivered = true;
       } catch (error) {

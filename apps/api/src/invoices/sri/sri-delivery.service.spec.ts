@@ -85,7 +85,7 @@ describe('SriDeliveryService', () => {
     );
     expect(email.sendTemplate).toHaveBeenCalledWith(
       'cliente@example.com',
-      'sri-invoice-delivery',
+      'SRI_DOCUMENT_DELIVERY',
       expect.objectContaining({
         orderNumber: 'ORD-001',
         accessKey: invoice.accessKey,

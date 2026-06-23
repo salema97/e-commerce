@@ -1,5 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EmailProvider } from '../email-provider.interface.js';
+import type { EmailTemplate } from '@repo/shared-types';
+import { renderEmailTemplate } from '@repo/shared-utils';
+import {
+  EmailProvider,
+  type SendEmailTemplateOptions,
+} from '../email-provider.interface.js';
 
 /**
  * MVP console-only email provider.
@@ -16,9 +21,31 @@ export class ConsoleEmailProvider extends EmailProvider {
     to: string,
     template: string,
     vars: Record<string, string>,
+    options?: SendEmailTemplateOptions,
   ): Promise<void> {
+    const rendered = renderEmailTemplate(template as EmailTemplate, {
+      customerName: vars.customerName ?? 'Cliente',
+      orderNumber: vars.orderNumber ?? '',
+      total: vars.total ?? '',
+      carrier: vars.carrier ?? '',
+      trackingNumber: vars.trackingNumber ?? '',
+      trackingUrl: vars.trackingUrl,
+      retryUrl: vars.retryUrl,
+      amount: vars.amount ?? '',
+      refundMethod: vars.refundMethod ?? '',
+      documentTypeLabel: vars.documentType ?? vars.documentTypeLabel ?? 'documento',
+      accessKey: vars.accessKey ?? '',
+      pdfUrl: vars.pdfUrl ?? '',
+      xmlUrl: vars.xmlUrl ?? '',
+    });
+
     this.logger.log(
-      { to, template, vars },
+      {
+        to,
+        template,
+        subject: options?.subject ?? rendered.subject,
+        attachmentCount: options?.attachments?.length ?? 0,
+      },
       'Console email provider would send templated email',
     );
   }

@@ -11,6 +11,8 @@ import { StoreCreditService } from './store-credit.service.js';
 import { InvoicesService } from '../invoices/invoices.service.js';
 import { ReturnNotificationService } from './notifications/return-notification.service.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
+import { EmailNotificationService } from '../notifications/email-notification.service.js';
+import { PushNotificationService } from '../notifications/push-notification.service.js';
 
 function buildTxClient() {
   return {
@@ -46,6 +48,8 @@ describe('ReturnsService', () => {
     onReturnStatusChanged: ReturnType<typeof vi.fn>;
   };
   let whatsappNotificationService: { notify: ReturnType<typeof vi.fn> };
+  let emailNotificationService: { notify: ReturnType<typeof vi.fn> };
+  let pushNotificationService: { notifyForOrder: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     prisma = buildPrismaMock();
@@ -59,6 +63,8 @@ describe('ReturnsService', () => {
       onReturnStatusChanged: vi.fn().mockResolvedValue(undefined),
     };
     whatsappNotificationService = { notify: vi.fn().mockResolvedValue(undefined) };
+    emailNotificationService = { notify: vi.fn().mockResolvedValue(undefined) };
+    pushNotificationService = { notifyForOrder: vi.fn().mockResolvedValue(undefined) };
 
     const module = await Test.createTestingModule({
       providers: [
@@ -70,6 +76,8 @@ describe('ReturnsService', () => {
         { provide: InvoicesService, useValue: invoicesService },
         { provide: ReturnNotificationService, useValue: notificationService },
         { provide: WhatsAppNotificationService, useValue: whatsappNotificationService },
+        { provide: EmailNotificationService, useValue: emailNotificationService },
+        { provide: PushNotificationService, useValue: pushNotificationService },
         { provide: ConfigService, useValue: configService },
       ],
     }).compile();

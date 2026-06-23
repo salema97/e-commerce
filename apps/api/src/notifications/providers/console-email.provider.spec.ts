@@ -11,20 +11,18 @@ describe('ConsoleEmailProvider', () => {
     const provider = module.get(ConsoleEmailProvider);
     const logSpy = vi.spyOn(provider['logger'], 'log').mockImplementation(() => {});
 
-    await provider.sendTemplate('customer@example.com', 'sri-invoice-delivery', {
+    await provider.sendTemplate('customer@example.com', 'ORDER_CONFIRMED', {
+      customerName: 'Ana',
       orderNumber: 'ORD-001',
-      pdfUrl: 'https://example.com/ride.pdf',
+      total: 'USD 10.00',
     });
 
     expect(logSpy).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         to: 'customer@example.com',
-        template: 'sri-invoice-delivery',
-        vars: {
-          orderNumber: 'ORD-001',
-          pdfUrl: 'https://example.com/ride.pdf',
-        },
-      },
+        template: 'ORDER_CONFIRMED',
+        subject: expect.stringContaining('ORD-001'),
+      }),
       'Console email provider would send templated email',
     );
   });

@@ -8,6 +8,7 @@ import { PaymentsModule } from '../payments/payments.module.js';
 import { ReceiptsModule } from '../receipts/receipts.module.js';
 import { RefundsController } from './refunds.controller.js';
 import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
+import { NotificationsModule } from '../notifications/notifications.module.js';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.mo
     PaymentsModule,
     ReceiptsModule,
     WhatsAppNotificationModule,
+    NotificationsModule,
   ],
   controllers: [OrdersController, RefundsController],
   providers: [OrdersService],
