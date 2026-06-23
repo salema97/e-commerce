@@ -24,7 +24,7 @@ describe('InvoiceSequenceService', () => {
         counter += 1;
         return [
           {
-            currentNumber: counter,
+            lastNumber: counter,
             authorizedFrom,
             authorizedTo,
             nearExhaustionAlertSent,

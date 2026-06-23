@@ -7,8 +7,6 @@ export interface Invoice {
   accessKey: string;
   authorizationNumber?: string | null;
   status: InvoiceStatus;
-  xmlContent?: string | null;
-  pdfUrl?: string | null;
   sriResponse?: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
@@ -27,8 +25,6 @@ export interface InvoiceResponseDto {
   accessKey: string;
   authorizationNumber?: string | null;
   status: InvoiceStatus;
-  xmlContent?: string | null;
-  pdfUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -38,7 +34,7 @@ export interface InvoiceSequence {
   documentType: string;
   establishmentCode: string;
   emissionPointCode: string;
-  currentNumber: number;
+  lastNumber: number;
   startNumber: number;
   endNumber: number;
   createdAt: string;
