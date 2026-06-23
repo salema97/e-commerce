@@ -48,6 +48,13 @@ import type {
   ChatSession,
   AnalyticsOverviewReport,
   CohortRetentionReport,
+  ShippingQuote,
+  ShippingQuoteDto,
+  ShippingZone,
+  Shipment,
+  CreateShipmentDto,
+  OrderTracking,
+  UpdateReturnShippingDto,
 } from '@repo/shared-types';
 
 export interface ApiClientOptions {
@@ -197,6 +204,21 @@ export function createApiClient(options: ApiClientOptions) {
       createRefund: (id: string, data: CreateRefundDto) => request<Refund>('POST', `/orders/${id}/refunds`, data),
       generateReceipt: (id: string) => request<ReceiptResponse>('POST', `/orders/${id}/receipt`),
       getReceipt: (id: string) => request<ReceiptResponse>('GET', `/orders/${id}/receipt`),
+      getTracking: (id: string) => request<OrderTracking>('GET', `/orders/${id}/tracking`),
+    },
+    shipping: {
+      quote: (data: ShippingQuoteDto) => request<ShippingQuote>('POST', '/shipping/quote', data),
+      listZones: () => request<ShippingZone[]>('GET', '/shipping/zones'),
+    },
+    fulfillment: {
+      createShipment: (orderId: string, data: CreateShipmentDto) =>
+        request<Shipment>('POST', `/fulfillment/orders/${orderId}/shipments`, data),
+      listShipments: (orderId: string) =>
+        request<Shipment[]>('GET', `/fulfillment/orders/${orderId}/shipments`),
+      markDelivered: (shipmentId: string) =>
+        request<Shipment>('PATCH', `/fulfillment/shipments/${shipmentId}/delivered`),
+      getTracking: (orderId: string) =>
+        request<Shipment[]>('GET', `/fulfillment/orders/${orderId}/tracking`),
     },
     payments: {
       createIntent: (data: CreatePaymentIntentDto) => request<PaymentIntentResult>('POST', '/payments/intent', data),
@@ -247,6 +269,8 @@ export function createApiClient(options: ApiClientOptions) {
         request<ReturnRequest>('PATCH', `/returns/${id}/status`, data),
       resolve: (id: string, data: ResolveReturnDto) =>
         request<ReturnRequest>('POST', `/returns/${id}/resolve`, data),
+      updateShipping: (id: string, data: UpdateReturnShippingDto) =>
+        request<ReturnRequest>('PATCH', `/returns/${id}/shipping`, data),
       myStoreCredit: () => request<StoreCreditBalance>('GET', '/returns/store-credit/me'),
     },
     cart: {

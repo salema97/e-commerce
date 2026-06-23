@@ -22,6 +22,7 @@ import { CreateReturnDto } from './dto/create-return.dto.js';
 import { CreateGuestReturnRequestDto } from './dto/create-guest-return-request.dto.js';
 import { UpdateReturnStatusDto } from './dto/update-return-status.dto.js';
 import { ResolveReturnDto } from './dto/resolve-return.dto.js';
+import { UpdateReturnShippingDto } from './dto/update-return-shipping.dto.js';
 import { ReturnStatus } from '@prisma/client';
 
 /**
@@ -128,6 +129,19 @@ export class ReturnsController {
       }
     }
     return record;
+  }
+
+  @Patch(':id/shipping')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE, Role.INVENTORY)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update return reverse-logistics tracking (admin)' })
+  @ApiResponse({ status: 200, description: 'Return shipping updated' })
+  updateReturnShipping(
+    @Param('id') id: string,
+    @Body() dto: UpdateReturnShippingDto,
+    @CurrentUser('userId') userId?: string,
+  ) {
+    return this.returnsService.updateReturnShipping(id, dto, userId ?? 'system');
   }
 
   @Patch(':id/status')

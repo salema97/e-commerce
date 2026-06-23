@@ -25,10 +25,11 @@ import type {
   CreatePaymentIntentDto,
   CreatedOrderResult,
   PaymentIntentResult,
+  ShippingQuote,
 } from '@repo/shared-types';
 
-const SHIPPING_FLAT_RATE = 5;
-const FREE_SHIPPING_THRESHOLD = 50;
+const FALLBACK_SHIPPING_FLAT_RATE = 5;
+const FALLBACK_FREE_SHIPPING_THRESHOLD = 50;
 
 export function CheckoutContainer() {
   const router = useRouter();
@@ -39,6 +40,7 @@ export function CheckoutContainer() {
 
   const [address, setAddress] = React.useState<AddressFormValues>(EMPTY_ADDRESS);
   const [couponCode, setCouponCode] = React.useState('');
+  const [shippingQuote, setShippingQuote] = React.useState<ShippingQuote | null>(null);
 
   const [order, setOrder] = React.useState<CreatedOrderResult | null>(null);
   const [paymentIntent, setPaymentIntent] = React.useState<PaymentIntentResult | null>(null);
@@ -55,14 +57,40 @@ export function CheckoutContainer() {
   // Client-side estimate for the summary. The server recomputes totals
   // (subtotal, discount, IVA, shipping) authoritatively on order creation.
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT_RATE;
-  const taxRate = 0.15;
-  // Discount is unknown until the server validates the coupon at order
-  // creation; the estimate assumes no discount for the live preview.
   const discount = 0;
   const taxableBase = Math.max(0, subtotal - discount);
+  const taxRate = 0.15;
   const tax = taxableBase * taxRate;
+  const fallbackShipping =
+    subtotal >= FALLBACK_FREE_SHIPPING_THRESHOLD ? 0 : FALLBACK_SHIPPING_FLAT_RATE;
+  const shipping = shippingQuote?.amount ?? fallbackShipping;
   const total = taxableBase + tax + shipping;
+
+  React.useEffect(() => {
+    if (!isAddressValid(address) || items.length === 0) {
+      setShippingQuote(null);
+      return;
+    }
+
+    let cancelled = false;
+    void api.shipping
+      .quote({
+        country: address.country,
+        province: address.state,
+        subtotal: taxableBase,
+        freeShipping: false,
+      })
+      .then((quote) => {
+        if (!cancelled) setShippingQuote(quote);
+      })
+      .catch(() => {
+        if (!cancelled) setShippingQuote(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [address, api, items.length, taxableBase]);
 
   if (!mounted) {
     return <CheckoutSkeleton />;

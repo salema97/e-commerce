@@ -9,6 +9,8 @@ import { ReceiptsModule } from '../receipts/receipts.module.js';
 import { RefundsController } from './refunds.controller.js';
 import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
 import { NotificationsModule } from '../notifications/notifications.module.js';
+import { ShippingModule } from '../shipping/shipping.module.js';
+import { TaxModule } from '../tax/tax.module.js';
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { NotificationsModule } from '../notifications/notifications.module.js';
     ReceiptsModule,
     WhatsAppNotificationModule,
     NotificationsModule,
+    ShippingModule,
+    TaxModule,
   ],
   controllers: [OrdersController, RefundsController],
   providers: [OrdersService],

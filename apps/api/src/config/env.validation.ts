@@ -97,6 +97,8 @@ const envSchema = z.object({
   SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0.1),
   EVENT_BUS_ENABLED: z.enum(['true', 'false']).default('true'),
   EVENT_BUS_BACKEND: z.enum(['redis', 'kafka']).default('redis'),
+  SHIPPING_FREE_THRESHOLD: z.coerce.number().min(0).default(50),
+  SHIPPING_FLAT_RATE: z.coerce.number().min(0).default(5),
   KAFKA_URL: z.string().optional(),
   KAFKA_USERNAME: z.string().optional(),
   KAFKA_PASSWORD: z.string().optional(),

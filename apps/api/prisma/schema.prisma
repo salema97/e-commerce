@@ -40,6 +40,28 @@ enum OrderStatus {
   PARTIALLY_REFUNDED
 }
 
+enum TaxCategory {
+  STANDARD
+  REDUCED
+  ZERO
+  EXEMPT
+}
+
+enum ShippingZoneType {
+  DOMESTIC
+  INTERNATIONAL
+  EXCLUDED
+}
+
+enum ShipmentStatus {
+  PENDING
+  LABEL_CREATED
+  IN_TRANSIT
+  DELIVERED
+  RETURNED
+  CANCELLED
+}
+
 enum PaymentStatus {
   PENDING
   COMPLETED
@@ -249,6 +271,7 @@ model Product {
   price          Decimal       @db.Decimal(12, 2)
   compareAtPrice Decimal?      @db.Decimal(12, 2)
   cost           Decimal?      @db.Decimal(12, 2)
+  taxCategory    TaxCategory   @default(STANDARD)
   isFeatured     Boolean       @default(false)
   categoryId     String?
   supplierId     String?
@@ -403,6 +426,7 @@ model Order {
   receipt        Receipt?
   returns        ReturnRequest[]
   exchangeFor    ReturnRequest?       @relation("ExchangeOrder")
+  shipments      Shipment[]
 
   @@index([userId])
   @@index([status])
@@ -884,6 +908,9 @@ model ReturnRequest {
   rejectedById     String?
   creditNoteId     String?       @unique
   exchangeOrderId  String?       @unique
+  returnCarrier         String?
+  returnTrackingNumber  String?
+  returnTrackingUrl     String?
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
@@ -1008,4 +1035,37 @@ model AnalyticsEventRecord {
 
   @@index([event, createdAt])
   @@index([sessionId])
+}
+
+model ShippingZone {
+  id        String           @id @default(uuid())
+  name      String
+  code      String           @unique
+  zoneType  ShippingZoneType @default(DOMESTIC)
+  provinces String[]         @default([])
+  baseRate  Decimal          @db.Decimal(12, 2)
+  isActive  Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([zoneType, isActive])
+}
+
+model Shipment {
+  id             String         @id @default(uuid())
+  orderId        String
+  carrier        String
+  trackingNumber String?
+  trackingUrl    String?
+  status         ShipmentStatus @default(PENDING)
+  shippingCost   Decimal        @db.Decimal(12, 2) @default(0)
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([status])
 }

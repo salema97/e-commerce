@@ -13,6 +13,7 @@ import { useApiClient } from '@/lib/client-api';
 import { formatPrice, orderStatusLabel } from '@repo/shared-utils';
 import type { Order, OrderStatus } from '@repo/shared-types';
 import { RefundPanel } from './refund-panel';
+import { ShipmentPanel } from './shipment-panel';
 
 const ORDER_STATUSES: OrderStatus[] = [
   'PENDING',
@@ -113,6 +114,8 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
           </Card>
 
           <RefundPanel order={order} />
+
+          <ShipmentPanel orderId={order.id} />
 
           <Card>
             <CardHeader>

@@ -21,6 +21,7 @@ import { CreateReturnDto } from './dto/create-return.dto.js';
 import { CreateGuestReturnRequestDto } from './dto/create-guest-return-request.dto.js';
 import { UpdateReturnStatusDto } from './dto/update-return-status.dto.js';
 import { ResolveReturnDto } from './dto/resolve-return.dto.js';
+import { UpdateReturnShippingDto } from './dto/update-return-shipping.dto.js';
 
 /**
  * Allowed transitions for the ReturnRequest state machine.
@@ -249,6 +250,41 @@ export class ReturnsService {
       throw new NotFoundException(`Return request ${id} not found`);
     }
     return record;
+  }
+
+  async updateReturnShipping(
+    id: string,
+    dto: UpdateReturnShippingDto,
+    actorClerkUserId: string,
+  ) {
+    const current = await this.getReturn(id);
+    const updated = await this.prisma.returnRequest.update({
+      where: { id },
+      data: {
+        returnCarrier: dto.returnCarrier,
+        returnTrackingNumber: dto.returnTrackingNumber,
+        returnTrackingUrl: dto.returnTrackingUrl,
+      },
+    });
+
+    await this.auditLog.log({
+      actorClerkUserId,
+      action: 'UPDATE',
+      resource: 'ReturnRequest',
+      resourceId: id,
+      before: {
+        returnCarrier: current.returnCarrier,
+        returnTrackingNumber: current.returnTrackingNumber,
+        returnTrackingUrl: current.returnTrackingUrl,
+      },
+      after: {
+        returnCarrier: updated.returnCarrier,
+        returnTrackingNumber: updated.returnTrackingNumber,
+        returnTrackingUrl: updated.returnTrackingUrl,
+      },
+    });
+
+    return updated;
   }
 
   /**

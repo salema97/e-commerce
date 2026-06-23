@@ -491,30 +491,30 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 ### 12.1 Shipping
 
-- [ ] Shipping zones (domestic, international, exclusions).
-- [ ] Address validation at checkout.
-- [ ] Carrier rate calculation (Shippo / EasyPost / ShipEngine).
-- [ ] Fulfillment status tracking and tracking number.
-- [ ] Customer-facing tracking page.
-- [ ] Returns / RMA initiation flow.
-- [ ] Returns shipping / reverse logistics integration.
+- [x] Shipping zones (domestic, international, exclusions).
+- [x] Address validation at checkout.
+- [ ] Carrier rate calculation (Shippo / EasyPost / ShipEngine) — manual zones + flat rate MVP.
+- [x] Fulfillment status tracking and tracking number.
+- [x] Customer-facing tracking page.
+- [x] Returns / RMA initiation flow.
+- [x] Returns shipping / reverse logistics integration.
 - [ ] Backorder and split shipment handling.
 
 ### 12.2 Taxes
 
-- [ ] Tax calculation at checkout based on shipping address.
-- [ ] Tax categories (standard, reduced, zero, exempt).
+- [x] Tax calculation at checkout based on shipping address.
+- [x] Tax categories (standard, reduced, zero, exempt).
 - [ ] Integrate Stripe Tax, TaxJar, or Avalara before multi-jurisdiction scaling.
-- [ ] Build `TaxCalculator` abstraction to support multiple providers.
+- [x] Build `TaxCalculator` abstraction to support multiple providers.
 
 ### 12.3 Fulfillment & WMS/3PL
 
-- [ ] Define `FulfillmentProvider` port.
+- [x] Define `FulfillmentProvider` port.
 - [ ] Evaluate WMS/3PL providers by region and SKU velocity (ShipBob, Amazon FBA, Redpack, etc.).
-- [ ] Implement order allocation, pick/pack/ship workflows.
+- [x] Implement order allocation, pick/pack/ship workflows — manual provider MVP.
 - [ ] Sync inventory levels from WMS to Prisma.
-- [ ] Import tracking numbers and fulfillment events from 3PL.
-- [ ] Admin panel: fulfillments list, create shipment, print labels, RMA handling.
+- [x] Import tracking numbers and fulfillment events from 3PL — manual entry MVP.
+- [x] Admin panel: fulfillments list, create shipment, print labels, RMA handling — create shipment + RMA return shipping (labels deferred).
 
 ## Phase 13 — Search, Filters & Performance
 

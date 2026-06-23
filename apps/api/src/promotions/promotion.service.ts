@@ -172,6 +172,35 @@ export class PromotionService {
     items: CartItemInput[],
     couponCode?: string,
   ): Promise<OrderTotals> {
+    const discountTotals = await this.computeDiscountTotals(items, couponCode);
+    const taxableAmount = Math.max(0, discountTotals.subtotal - discountTotals.discount);
+    const taxAmount = round2(taxableAmount * ECUADOR_IVA_RATE);
+    const shipping = 0;
+    const total = round2(
+      discountTotals.subtotal - discountTotals.discount + taxAmount + shipping,
+    );
+
+    return {
+      subtotal: discountTotals.subtotal,
+      discount: discountTotals.discount,
+      taxAmount,
+      shipping,
+      total,
+      couponCode: discountTotals.couponCode,
+      promotionId: discountTotals.promotionId,
+    };
+  }
+
+  async computeDiscountTotals(
+    items: CartItemInput[],
+    couponCode?: string,
+  ): Promise<{
+    subtotal: number;
+    discount: number;
+    freeShipping: boolean;
+    couponCode?: string;
+    promotionId?: string;
+  }> {
     const subtotal = this.computeSubtotal(items);
 
     let discount = 0;
@@ -185,17 +214,10 @@ export class PromotionService {
       freeShipping = applied.freeShipping;
     }
 
-    const taxableAmount = Math.max(0, subtotal - discount);
-    const taxAmount = round2(taxableAmount * ECUADOR_IVA_RATE);
-    const shipping = freeShipping ? 0 : 0; // shipping is computed elsewhere; promos only zero it
-    const total = round2(subtotal - discount + taxAmount + shipping);
-
     return {
       subtotal: round2(subtotal),
       discount: round2(discount),
-      taxAmount,
-      shipping,
-      total,
+      freeShipping,
       couponCode,
       promotionId,
     };
