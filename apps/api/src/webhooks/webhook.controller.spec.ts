@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { WebhookController } from './webhook.controller.js';
 import { WebhookService } from './webhook.service.js';
 import { WhatsAppProvider } from '../whatsapp/whatsapp-provider.interface.js';
@@ -77,6 +77,12 @@ describe('WebhookController', () => {
     provider.verifyWebhookSignature.mockReturnValue(true);
     const req = makeRequest('not-valid-json');
     await expect(controller.handle('messages.upsert', 'sig', req)).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('rejects requests with an invalid webhook payload shape', async () => {
+    provider.verifyWebhookSignature.mockReturnValue(true);
+    const req = makeRequest({ event: 'unknown.event', data: {} });
+    await expect(controller.handle('messages.upsert', 'sig', req)).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('returns early on duplicate payloads', async () => {
