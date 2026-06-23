@@ -1,6 +1,27 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNumber, IsOptional, IsString, IsUrl, Min, MinLength } from 'class-validator';
+import {
+  IsArray,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Min,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
+
+export class ShipmentLineDto {
+  @ApiProperty()
+  @IsString()
+  orderItemId!: string;
+
+  @ApiProperty({ example: 1 })
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  quantity!: number;
+}
 
 export class CreateShipmentDto {
   @ApiProperty({ example: 'Servientrega' })
@@ -24,6 +45,13 @@ export class CreateShipmentDto {
   @IsNumber()
   @Min(0)
   shippingCost?: number;
+
+  @ApiPropertyOptional({ type: [ShipmentLineDto], description: 'Split-shipment line items' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ShipmentLineDto)
+  items?: ShipmentLineDto[];
 }
 
 export class UpdateReturnShippingDto {

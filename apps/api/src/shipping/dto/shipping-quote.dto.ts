@@ -13,6 +13,21 @@ export class ShippingQuoteDto {
   @IsString()
   province?: string;
 
+  @ApiPropertyOptional({ example: 'Quito' })
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  street?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  zipCode?: string;
+
   @ApiProperty({ example: 75.5 })
   @Type(() => Number)
   @IsNumber()
@@ -23,4 +38,11 @@ export class ShippingQuoteDto {
   @IsOptional()
   @IsBoolean()
   freeShipping?: boolean;
+
+  @ApiPropertyOptional({ example: 1.2, description: 'Parcel weight in kg' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  weightKg?: number;
 }

@@ -4,7 +4,9 @@ import { ConversationModule } from '../conversations/conversation.module.js';
 import { MessageModule } from '../messages/message.module.js';
 import { WhatsAppModule } from '../whatsapp/whatsapp.module.js';
 import { AiModule } from '../ai/ai.module.js';
+import { FulfillmentModule } from '../fulfillment/fulfillment.module.js';
 import { WebhookController } from './webhook.controller.js';
+import { WmsWebhookController } from './wms-webhook.controller.js';
 import { WebhookService } from './webhook.service.js';
 
 @Module({
@@ -13,9 +15,10 @@ import { WebhookService } from './webhook.service.js';
     ConversationModule,
     MessageModule,
     WhatsAppModule,
+    FulfillmentModule,
     forwardRef(() => AiModule),
   ],
-  controllers: [WebhookController],
+  controllers: [WebhookController, WmsWebhookController],
   providers: [WebhookService],
 })
 export class WebhooksModule {}

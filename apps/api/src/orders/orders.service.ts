@@ -11,6 +11,7 @@ import { EmailNotificationService } from '../notifications/email-notification.se
 import { PushNotificationService } from '../notifications/push-notification.service.js';
 import { CreateOrderDto, CreateOrderItemDto } from './dto/create-order.dto.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
+import { BackorderService, type ItemAllocation } from './backorder.service.js';
 import { EventBus } from '../event-bus/event-bus.interface.js';
 
 export interface CreatedOrderResult {
@@ -36,6 +37,7 @@ export class OrdersService {
     private readonly promotionService: PromotionService,
     private readonly shippingService: ShippingService,
     private readonly taxService: TaxService,
+    private readonly backorderService: BackorderService,
     private readonly notificationService: WhatsAppNotificationService,
     private readonly emailNotificationService: EmailNotificationService,
     private readonly pushNotificationService: PushNotificationService,
@@ -62,7 +64,12 @@ export class OrdersService {
     }
 
     const reservationItems = await this.validateItems(dto.items);
-    await this.reservationService.reserveItems(reservationItems);
+    let allocations;
+    if (this.backorderService.isEnabled()) {
+      allocations = await this.backorderService.allocateItems(reservationItems);
+    } else {
+      await this.reservationService.reserveItems(reservationItems);
+    }
 
     const cartItems = dto.items.map((item) => ({
       productId: item.productId,
@@ -76,14 +83,15 @@ export class OrdersService {
       dto.couponCode,
     );
 
+    const shippingAddress = dto.shippingAddress as Record<string, string> | undefined;
     const taxCategories = await this.loadTaxCategories(dto.items);
-    const taxResult = this.taxService.calculateForCart({
+    const taxResult = await this.taxService.calculateForCart({
       items: cartItems,
       taxCategories,
       orderDiscount: discountTotals.discount,
+      country: shippingAddress?.country,
+      province: shippingAddress?.state,
     });
-
-    const shippingAddress = dto.shippingAddress as Record<string, string> | undefined;
     const shippingQuote = await this.shippingService.quote({
       country: shippingAddress?.country,
       province: shippingAddress?.state,
@@ -108,7 +116,7 @@ export class OrdersService {
       promotionId: discountTotals.promotionId,
     };
 
-    const orderItems = await this.buildOrderItems(dto.items, totals, taxResult.lines);
+    const orderItems = await this.buildOrderItems(dto.items, totals, taxResult.lines, allocations);
 
     const subtotal = new Prisma.Decimal(totals.subtotal);
     const taxAmount = new Prisma.Decimal(totals.taxAmount);
@@ -265,12 +273,21 @@ export class OrdersService {
     items: CreateOrderItemDto[],
     totals: { subtotal: number; discount: number; taxAmount: number },
     taxLines: Array<{ productId: string; taxRate: number; taxAmount: number }>,
+    allocations?: ItemAllocation[],
   ) {
+    const allocationMap = new Map(
+      allocations?.map((item) => [
+        `${item.productId}:${item.variantId ?? ''}`,
+        item,
+      ]),
+    );
+
     const productItems = await Promise.all(
       items.map(async (item) => {
         const product = await this.prisma.product.findUnique({ where: { id: item.productId }, include: { variants: true } });
         if (!product) throw new BadRequestException(`Product ${item.productId} not found`);
         const variant = product.variants.find((v) => v.id === item.variantId);
+        const allocation = allocationMap.get(`${item.productId}:${item.variantId ?? ''}`);
         return {
           productId: item.productId,
           variantId: item.variantId ?? null,
@@ -278,6 +295,8 @@ export class OrdersService {
           sku: variant?.sku ?? product.sku ?? 'N/A',
           price: new Prisma.Decimal(item.price),
           quantity: item.quantity,
+          quantityBackordered: allocation?.quantityBackordered ?? 0,
+          fulfillmentStatus: allocation?.fulfillmentStatus,
         };
       }),
     );
@@ -286,7 +305,16 @@ export class OrdersService {
   }
 
   private allocateItemTotals(
-    items: Array<{ productId: string; variantId: string | null; name: string; sku: string; price: Prisma.Decimal; quantity: number }>,
+    items: Array<{
+      productId: string;
+      variantId: string | null;
+      name: string;
+      sku: string;
+      price: Prisma.Decimal;
+      quantity: number;
+      quantityBackordered?: number;
+      fulfillmentStatus?: ItemAllocation['fulfillmentStatus'];
+    }>,
     totals: { subtotal: number; discount: number; taxAmount: number },
     taxLines: Array<{ productId: string; taxRate: number; taxAmount: number }>,
   ) {
@@ -320,6 +348,8 @@ export class OrdersService {
         sku: item.sku,
         price: item.price,
         quantity: item.quantity,
+        quantityBackordered: item.quantityBackordered ?? 0,
+        fulfillmentStatus: item.fulfillmentStatus,
         taxRate: new Prisma.Decimal(taxLine?.taxRate ?? 15),
         taxAmount: new Prisma.Decimal(taxLine?.taxAmount ?? 0),
         discountAmount: new Prisma.Decimal(discount),

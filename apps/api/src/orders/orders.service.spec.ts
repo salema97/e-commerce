@@ -12,6 +12,7 @@ import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.s
 import { EmailNotificationService } from '../notifications/email-notification.service.js';
 import { PushNotificationService } from '../notifications/push-notification.service.js';
 import { EventBus } from '../event-bus/event-bus.interface.js';
+import { BackorderService } from './backorder.service.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
 
 describe('OrdersService', () => {
@@ -28,6 +29,7 @@ describe('OrdersService', () => {
   let notificationService: { notify: ReturnType<typeof vi.fn> };
   let emailNotificationService: { notify: ReturnType<typeof vi.fn> };
   let pushNotificationService: { notifyForOrder: ReturnType<typeof vi.fn> };
+  let backorder: { isEnabled: ReturnType<typeof vi.fn>; allocateItems: ReturnType<typeof vi.fn> };
   let eventBus: { publish: ReturnType<typeof vi.fn>; registerHandler: ReturnType<typeof vi.fn> };
 
   function mockPrisma() {
@@ -61,11 +63,13 @@ describe('OrdersService', () => {
       }),
     };
     tax = {
-      calculateForCart: vi.fn().mockReturnValue({
+      calculateForCart: vi.fn().mockResolvedValue({
         taxAmount: 6,
+        provider: 'ecuador',
         lines: [{ productId: 'p1', lineSubtotal: 39.98, taxRate: 0.15, taxAmount: 6 }],
       }),
     };
+    backorder = { isEnabled: vi.fn(() => false), allocateItems: vi.fn() };
     notificationService = { notify: vi.fn().mockResolvedValue(undefined) };
     emailNotificationService = { notify: vi.fn().mockResolvedValue(undefined) };
     pushNotificationService = { notifyForOrder: vi.fn().mockResolvedValue(undefined) };
@@ -78,6 +82,7 @@ describe('OrdersService', () => {
         { provide: PromotionService, useValue: promotion },
         { provide: ShippingService, useValue: shipping },
         { provide: TaxService, useValue: tax },
+        { provide: BackorderService, useValue: backorder },
         { provide: WhatsAppNotificationService, useValue: notificationService },
         { provide: EmailNotificationService, useValue: emailNotificationService },
         { provide: PushNotificationService, useValue: pushNotificationService },
@@ -108,8 +113,9 @@ describe('OrdersService', () => {
   it('validates coupon before reserving inventory', async () => {
     promotion.validateCoupon.mockResolvedValue({ coupon: { code: 'SAVE10' }, subtotal: 100 });
     promotion.computeDiscountTotals.mockResolvedValue({ subtotal: 100, discount: 10, freeShipping: false, couponCode: 'SAVE10' });
-    tax.calculateForCart.mockReturnValue({
+    tax.calculateForCart.mockResolvedValue({
       taxAmount: 13.5,
+      provider: 'ecuador',
       lines: [{ productId: 'p1', lineSubtotal: 90, taxRate: 0.15, taxAmount: 13.5 }],
     });
     prisma.order.create.mockResolvedValue(mockCreatedOrder());

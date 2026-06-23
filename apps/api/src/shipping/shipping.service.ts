@@ -1,38 +1,27 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { ShippingZoneType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { CarrierRateProviderFactory } from './carrier-rate-provider.factory.js';
+import type { CarrierRateQuoteInput, CarrierRateQuoteResult } from './carrier-rate-provider.interface.js';
 
 export interface ShippingQuoteInput {
   country?: string;
   province?: string;
+  city?: string;
+  street?: string;
+  zipCode?: string;
   subtotal: number;
   freeShipping?: boolean;
+  weightKg?: number;
 }
 
-export interface ShippingQuote {
-  amount: number;
-  zoneCode: string;
-  zoneName: string;
-  freeShippingApplied: boolean;
-  estimatedDaysMin: number;
-  estimatedDaysMax: number;
-}
-
-const ECUADOR_COUNTRY_CODES = new Set(['EC', 'ECU', 'ECUADOR']);
+export type ShippingQuote = CarrierRateQuoteResult;
 
 @Injectable()
 export class ShippingService {
-  private readonly freeShippingThreshold: number;
-  private readonly defaultFlatRate: number;
-
   constructor(
     private readonly prisma: PrismaService,
-    private readonly config: ConfigService,
-  ) {
-    this.freeShippingThreshold = Number(this.config.get('SHIPPING_FREE_THRESHOLD') ?? 50);
-    this.defaultFlatRate = Number(this.config.get('SHIPPING_FLAT_RATE') ?? 5);
-  }
+    private readonly carrierRateFactory: CarrierRateProviderFactory,
+  ) {}
 
   async listZones() {
     return this.prisma.shippingZone.findMany({
@@ -42,51 +31,20 @@ export class ShippingService {
   }
 
   async quote(input: ShippingQuoteInput): Promise<ShippingQuote> {
-    const zones = await this.prisma.shippingZone.findMany({
-      where: { isActive: true },
-    });
-
-    const country = input.country?.trim().toUpperCase();
-    const province = input.province?.trim();
-
-    let zone = zones.find((z) => z.zoneType === ShippingZoneType.DOMESTIC);
-
-    if (country && !ECUADOR_COUNTRY_CODES.has(country)) {
-      zone =
-        zones.find((z) => z.zoneType === ShippingZoneType.INTERNATIONAL) ?? zone;
-    } else if (province) {
-      const excluded = zones.find(
-        (z) =>
-          z.zoneType === ShippingZoneType.EXCLUDED &&
-          z.provinces.some((p) => p.toLowerCase() === province.toLowerCase()),
-      );
-      if (excluded) {
-        zone = excluded;
-      } else {
-        const regional = zones.find(
-          (z) =>
-            z.zoneType === ShippingZoneType.DOMESTIC &&
-            z.provinces.length > 0 &&
-            z.provinces.some((p) => p.toLowerCase() === province.toLowerCase()),
-        );
-        if (regional) {
-          zone = regional;
-        }
-      }
-    }
-
-    const baseAmount = zone ? Number(zone.baseRate) : this.defaultFlatRate;
-    const qualifiesForFree =
-      Boolean(input.freeShipping) || input.subtotal >= this.freeShippingThreshold;
-    const amount = qualifiesForFree ? 0 : baseAmount;
-
-    return {
-      amount: Number(amount.toFixed(2)),
-      zoneCode: zone?.code ?? 'EC-DOMESTIC',
-      zoneName: zone?.name ?? 'Ecuador continental',
-      freeShippingApplied: qualifiesForFree,
-      estimatedDaysMin: zone?.zoneType === ShippingZoneType.INTERNATIONAL ? 7 : 2,
-      estimatedDaysMax: zone?.zoneType === ShippingZoneType.INTERNATIONAL ? 14 : 5,
+    const carrierInput: CarrierRateQuoteInput = {
+      destination: {
+        country: input.country,
+        province: input.province,
+        city: input.city,
+        street: input.street,
+        zipCode: input.zipCode,
+      },
+      subtotal: input.subtotal,
+      freeShipping: input.freeShipping,
+      parcel: { weightKg: input.weightKg ?? 1 },
     };
+
+    const provider = this.carrierRateFactory.resolve();
+    return provider.quote(carrierInput);
   }
 }

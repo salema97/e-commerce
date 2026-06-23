@@ -19,6 +19,7 @@ export type OrderStatus =
   | 'PAYMENT_PENDING'
   | 'PAYMENT_FAILED'
   | 'PROCESSING'
+  | 'PARTIALLY_SHIPPED'
   | 'SHIPPED'
   | 'DELIVERED'
   | 'CANCELLED'

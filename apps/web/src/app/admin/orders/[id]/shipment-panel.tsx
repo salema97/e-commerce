@@ -62,6 +62,31 @@ export function ShipmentPanel({ orderId }: ShipmentPanelProps) {
                 <p className="text-muted-foreground">
                   {shipment.trackingNumber ?? 'Sin guía'} · {shipment.status}
                 </p>
+                {shipment.items?.length ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {shipment.items.length} línea(s) en este envío
+                  </p>
+                ) : null}
+                <div className="mt-2 flex gap-2">
+                  {shipment.labelUrl ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(shipment.labelUrl!, '_blank')}
+                    >
+                      Imprimir etiqueta
+                    </Button>
+                  ) : null}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void api.fulfillment.markDelivered(shipment.id).then(() => router.refresh())}
+                  >
+                    Marcar entregado
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

@@ -54,6 +54,10 @@ import type {
   Shipment,
   CreateShipmentDto,
   OrderTracking,
+  WmsTrackingEvent,
+  WmsSyncResult,
+  WmsProviderProfile,
+  WmsInventoryRecord,
   UpdateReturnShippingDto,
 } from '@repo/shared-types';
 
@@ -217,8 +221,16 @@ export function createApiClient(options: ApiClientOptions) {
         request<Shipment[]>('GET', `/fulfillment/orders/${orderId}/shipments`),
       markDelivered: (shipmentId: string) =>
         request<Shipment>('PATCH', `/fulfillment/shipments/${shipmentId}/delivered`),
+      getLabelUrl: (shipmentId: string) =>
+        `/fulfillment/shipments/${shipmentId}/label`,
       getTracking: (orderId: string) =>
         request<Shipment[]>('GET', `/fulfillment/orders/${orderId}/tracking`),
+      listWmsProviders: () => request<WmsProviderProfile[]>('GET', '/fulfillment/wms/providers'),
+      syncWmsInventory: (records: WmsInventoryRecord[]) =>
+        request<WmsSyncResult>('POST', '/fulfillment/wms/sync-inventory', { records }),
+      importWmsTracking: (events: WmsTrackingEvent[]) =>
+        request<{ imported: number }>('POST', '/fulfillment/wms/import-tracking', { events }),
+      listBackorders: () => request<unknown[]>('GET', '/fulfillment/backorders'),
     },
     payments: {
       createIntent: (data: CreatePaymentIntentDto) => request<PaymentIntentResult>('POST', '/payments/intent', data),

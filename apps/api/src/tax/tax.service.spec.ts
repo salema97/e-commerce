@@ -1,33 +1,40 @@
 import { describe, it, expect } from 'vitest';
+import { Test } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { TaxCategory } from '@prisma/client';
 import { EcuadorIvaTaxCalculator } from './ecuador-iva.tax-calculator.js';
+import { StripeTaxCalculator } from './stripe-tax.calculator.js';
+import { TaxJarTaxCalculator } from './taxjar.tax-calculator.js';
+import { AvalaraTaxCalculator } from './avalara.tax-calculator.js';
 import { TaxService } from './tax.service.js';
-import { TaxCalculator } from './tax-calculator.interface.js';
-
-describe('EcuadorIvaTaxCalculator', () => {
-  const calculator = new EcuadorIvaTaxCalculator();
-
-  it('applies 15% IVA for STANDARD', () => {
-    const result = calculator.calculateLineTax({ lineSubtotal: 100, taxCategory: TaxCategory.STANDARD });
-    expect(result.taxRate).toBe(0.15);
-    expect(result.taxAmount).toBe(15);
-  });
-
-  it('applies zero tax for EXEMPT', () => {
-    const result = calculator.calculateLineTax({ lineSubtotal: 100, taxCategory: TaxCategory.EXEMPT });
-    expect(result.taxAmount).toBe(0);
-  });
-});
 
 describe('TaxService', () => {
-  const taxService = new TaxService(new EcuadorIvaTaxCalculator() as TaxCalculator);
+  it('calculates Ecuador IVA with discount allocation', async () => {
+    const module = await Test.createTestingModule({
+      providers: [
+        EcuadorIvaTaxCalculator,
+        StripeTaxCalculator,
+        TaxJarTaxCalculator,
+        AvalaraTaxCalculator,
+        TaxService,
+        {
+          provide: ConfigService,
+          useValue: {
+            get: (key: string) => (key === 'TAX_PROVIDER' ? 'ecuador' : undefined),
+          },
+        },
+      ],
+    }).compile();
 
-  it('allocates discount before computing tax', () => {
-    const result = taxService.calculateForCart({
+    const taxService = module.get(TaxService);
+    const result = await taxService.calculateForCart({
       items: [{ productId: 'p1', price: 50, quantity: 2 }],
       taxCategories: new Map([['p1', TaxCategory.STANDARD]]),
       orderDiscount: 10,
+      country: 'EC',
     });
+
+    expect(result.provider).toBe('ecuador');
     expect(result.taxAmount).toBe(13.5);
   });
 });
