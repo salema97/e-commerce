@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { Queue } from 'bullmq';
 import { PrismaModule } from '../../prisma/prisma.module.js';
 import { InvoicesModule } from '../invoices.module.js';
@@ -11,6 +12,7 @@ import { SriReconciliationService } from './sri-reconciliation.service.js';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forFeature(sriQueueConfig),
     PrismaModule,
     forwardRef(() => InvoicesModule),

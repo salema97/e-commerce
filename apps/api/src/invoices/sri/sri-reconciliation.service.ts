@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { SriDocumentStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { SriQueueService } from './sri-queue.service.js';
@@ -14,6 +15,7 @@ export class SriReconciliationService {
     private readonly queueService: SriQueueService,
   ) {}
 
+  @Cron(process.env.SRI_RECONCILIATION_CRON ?? CronExpression.EVERY_HOUR)
   async reconcileStuckDocuments(olderThanHours?: number): Promise<{
     invoices: number;
     creditNotes: number;
