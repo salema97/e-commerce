@@ -34,6 +34,7 @@ import { AnalyticsModule } from './analytics/analytics.module.js';
 import { ShippingModule } from './shipping/shipping.module.js';
 import { TaxModule } from './tax/tax.module.js';
 import { FulfillmentModule } from './fulfillment/fulfillment.module.js';
+import { CatalogModule } from './catalog/catalog.module.js';
 
 @Module({
   imports: [
@@ -84,6 +85,7 @@ import { FulfillmentModule } from './fulfillment/fulfillment.module.js';
     ShippingModule,
     TaxModule,
     FulfillmentModule,
+    CatalogModule,
   ],
   providers: [
     {
