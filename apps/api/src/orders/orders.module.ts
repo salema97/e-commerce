@@ -7,6 +7,7 @@ import { PromotionsModule } from '../promotions/promotions.module.js';
 import { PaymentsModule } from '../payments/payments.module.js';
 import { ReceiptsModule } from '../receipts/receipts.module.js';
 import { RefundsController } from './refunds.controller.js';
+import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { RefundsController } from './refunds.controller.js';
     PromotionsModule,
     PaymentsModule,
     ReceiptsModule,
+    WhatsAppNotificationModule,
   ],
   controllers: [OrdersController, RefundsController],
   providers: [OrdersService],

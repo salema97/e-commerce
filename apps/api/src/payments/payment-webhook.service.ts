@@ -5,6 +5,7 @@ import { OrderStatus, PaymentProvider as PaymentProviderEnum, PaymentStatus } fr
 import { PrismaService } from '../prisma/prisma.service.js';
 import { PaymentProviderFactory } from './payment-provider.factory.js';
 import { ProviderPaymentResult } from './payment-provider.interface.js';
+import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
 
 @Injectable()
 export class PaymentWebhookService {
@@ -12,6 +13,7 @@ export class PaymentWebhookService {
     private readonly providerFactory: PaymentProviderFactory,
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly notificationService: WhatsAppNotificationService,
   ) {}
 
   async handle(
@@ -95,6 +97,43 @@ export class PaymentWebhookService {
           notes: `Payment notification from ${provider}`,
         },
       });
+      await this.sendStatusNotification(payment.orderId, orderStatus);
+    }
+  }
+
+  private async sendStatusNotification(
+    orderId: string,
+    orderStatus: OrderStatus,
+  ): Promise<void> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { user: { select: { whatsappOptOut: true } } },
+    });
+
+    if (!order || !order.customerPhone) {
+      return;
+    }
+
+    const phone = order.customerPhone;
+    const customerName = 'Cliente';
+    const total = `USD ${Number(order.total).toFixed(2)}`;
+
+    try {
+      if (orderStatus === OrderStatus.PROCESSING) {
+        await this.notificationService.notify(orderId, 'ORDER_CONFIRMED', phone, {
+          customerName,
+          orderNumber: order.orderNumber,
+          total,
+        });
+      } else if (orderStatus === OrderStatus.PAYMENT_FAILED) {
+        await this.notificationService.notify(orderId, 'PAYMENT_FAILED', phone, {
+          customerName,
+          orderNumber: order.orderNumber,
+          total,
+        });
+      }
+    } catch {
+      // Notifications are best-effort and must not fail webhook handling.
     }
   }
 }

@@ -7,9 +7,10 @@ import { PrismaModule } from '../prisma/prisma.module.js';
 import { AuditModule } from '../audit/audit.module.js';
 import { PaymentsModule } from '../payments/payments.module.js';
 import { InvoicesModule } from '../invoices/invoices.module.js';
+import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
 
 @Module({
-  imports: [PrismaModule, AuditModule, PaymentsModule, InvoicesModule],
+  imports: [PrismaModule, AuditModule, PaymentsModule, InvoicesModule, WhatsAppNotificationModule],
   controllers: [OrderReturnsController, ReturnsController],
   providers: [ReturnsService, StoreCreditService, ReturnNotificationService],
   exports: [ReturnsService, StoreCreditService, ReturnNotificationService],

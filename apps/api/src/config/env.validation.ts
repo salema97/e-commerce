@@ -34,6 +34,7 @@ const envSchema = z.object({
   EVOLUTION_API_KEY: z.string().min(1),
   EVOLUTION_WEBHOOK_SECRET: z.string().min(1),
   EVOLUTION_INSTANCE_NAME: z.string().min(1),
+  WHATSAPP_NOTIFICATIONS_ENABLED: z.enum(['true', 'false']).default('true'),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -13,6 +13,7 @@ import { RefundService } from '../payments/refund.service.js';
 import { StoreCreditService } from './store-credit.service.js';
 import { InvoicesService } from '../invoices/invoices.service.js';
 import { ReturnNotificationService } from './notifications/return-notification.service.js';
+import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
 import { CreateReturnDto } from './dto/create-return.dto.js';
 import { CreateGuestReturnRequestDto } from './dto/create-guest-return-request.dto.js';
 import { UpdateReturnStatusDto } from './dto/update-return-status.dto.js';
@@ -60,6 +61,7 @@ export class ReturnsService {
     private readonly storeCreditService: StoreCreditService,
     private readonly invoicesService: InvoicesService,
     private readonly notificationService: ReturnNotificationService,
+    private readonly whatsappNotificationService: WhatsAppNotificationService,
     configService: ConfigService,
   ) {
     const configured = configService.get<number>('RETURN_WINDOW_DAYS');
@@ -426,7 +428,38 @@ export class ReturnsService {
       updated.status,
     );
 
+    if (
+      updated.status === ReturnStatus.RESOLVED &&
+      dto.refundMethod === RefundMethod.ORIGINAL_PAYMENT
+    ) {
+      await this.sendRefundConfirmed(current.order, totalAmount);
+    }
+
     return updated;
+  }
+
+  private async sendRefundConfirmed(
+    order: {
+      id: string;
+      orderNumber: string;
+      customerPhone: string | null;
+    },
+    amount: number,
+  ): Promise<void> {
+    if (!order.customerPhone) {
+      return;
+    }
+
+    try {
+      await this.whatsappNotificationService.notify(order.id, 'REFUND_CONFIRMED', order.customerPhone, {
+        customerName: 'Cliente',
+        orderNumber: order.orderNumber,
+        amount: `USD ${amount.toFixed(2)}`,
+        refundMethod: 'Metodo original de pago',
+      });
+    } catch {
+      // Notifications are best-effort and must not fail return resolution.
+    }
   }
 
   private computeRefundTotal(
