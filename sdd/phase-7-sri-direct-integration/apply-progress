@@ -1,0 +1,41 @@
+# Apply Progress — phase-7-sri-direct-integration
+
+## Status
+- All sdd-verify CRITICAL failures remediated.
+- API unit tests: 332 passed.
+- API E2E/integration tests: 44 passed (includes new `sri-queue.integration-spec.ts`).
+- Monorepo typecheck: 13 packages successful.
+
+## Changes
+
+### 1. Test environment defaults (`apps/api/test/env.ts`)
+Added missing SRI company variables required by `ConfigModule` validation during E2E bootstrap:
+- `SRI_COMPANY_NAME`
+- `SRI_COMPANY_TRADE_NAME`
+- `SRI_COMPANY_ADDRESS`
+- `SRI_RECONCILIATION_CRON`
+
+### 2. Async enqueue assertions in E2E tests
+Updated tests to match the new async SRI queue behavior (services now enqueue jobs instead of issuing documents synchronously):
+- `apps/api/test/payment-to-invoice.e2e-spec.ts`
+- `apps/api/test/stripe-webhook.e2e-spec.ts`
+- `apps/api/test/returns.e2e-spec.ts`
+
+### 3. Reconciliation cron wiring
+- Installed `@nestjs/schedule` in `apps/api/package.json`.
+- Imported `ScheduleModule.forRoot()` in `SriQueueModule`.
+- Added `@Cron()` decorator to `SriReconciliationService.reconcileStuckDocuments` using `SRI_RECONCILIATION_CRON` env var with hourly fallback.
+
+### 4. New integration test
+- Created `apps/api/test/sri-queue.integration-spec.ts` to verify `SriQueueService` wires correctly inside `SriQueueModule`, calls `Queue.add` with the right job name/id/options, and persists a `PENDING` `SriDocumentJob` record.
+- Updated `apps/api/vitest.config.e2e.ts` to include `**/*.integration-spec.ts` files.
+
+## Verification
+```bash
+pnpm --filter @repo/api test
+pnpm --filter @repo/api test:e2e
+pnpm typecheck
+```
+
+## Remaining Work
+None for this remediation. Ready for commit as work units.
