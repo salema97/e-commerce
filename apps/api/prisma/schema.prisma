@@ -496,6 +496,9 @@ model Invoice {
   retryCount          Int               @default(0)
   lastError           String?
   sriResponse         Json?
+  deliveryStatus      String?
+  deliveredAt         DateTime?
+  deliveryError       String?
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 
@@ -824,6 +827,9 @@ model CreditNote {
   retryCount             Int               @default(0)
   lastError              String?
   sriResponse            Json?
+  deliveryStatus         String?
+  deliveredAt            DateTime?
+  deliveryError          String?
   totalAmount            Decimal           @db.Decimal(12, 2)
   createdAt              DateTime          @default(now())
   updatedAt              DateTime          @updatedAt
