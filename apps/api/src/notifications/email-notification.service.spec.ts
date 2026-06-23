@@ -44,6 +44,7 @@ describe('EmailNotificationService', () => {
       'buyer@example.com',
       'ORDER_CONFIRMED',
       expect.objectContaining({ orderNumber: 'ORD-1' }),
+      { attachments: undefined },
     );
   });
 

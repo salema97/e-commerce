@@ -76,6 +76,7 @@ export const queryKeys = {
   invoice: (id: string) => ['invoices', id] as const,
   creditNotes: (filters?: Record<string, string | number | undefined>) => ['credit-notes', filters ?? {}] as const,
   creditNote: (id: string) => ['credit-notes', id] as const,
+  notificationPreferences: ['notifications', 'preferences'] as const,
 };
 
 export function createQueryHooks(client: ApiClient) {
@@ -641,6 +642,55 @@ export function createQueryHooks(client: ApiClient) {
       useQuery({
         queryKey: queryKeys.quickReplies,
         queryFn: () => client.whatsapp.getQuickReplies(),
+        ...options,
+      }),
+
+    useNotificationPreferences: (
+      options?: Omit<
+        UseQueryOptions<
+          { emailOptOut: boolean; marketingEmailOptOut: boolean; whatsappOptOut: boolean },
+          Error
+        >,
+        'queryKey' | 'queryFn'
+      >,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.notificationPreferences,
+        queryFn: () => client.notifications.preferences.get(),
+        ...options,
+      }),
+
+    useUpdateNotificationPreferences: (
+      options?: UseMutationOptions<
+        { emailOptOut: boolean; marketingEmailOptOut: boolean; whatsappOptOut: boolean },
+        Error,
+        {
+          emailOptOut?: boolean;
+          marketingEmailOptOut?: boolean;
+          whatsappOptOut?: boolean;
+        }
+      >,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.notifications.preferences.update(data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.notificationPreferences });
+        },
+        ...options,
+      });
+    },
+
+    useSubscribeBackInStock: (
+      options?: UseMutationOptions<
+        { id: string; productId: string; email: string },
+        Error,
+        { productId: string; email: string }
+      >,
+    ) =>
+      useMutation({
+        mutationFn: ({ productId, email }) =>
+          client.products.subscribeBackInStock(productId, { email }),
         ...options,
       }),
   };

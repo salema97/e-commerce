@@ -8,6 +8,8 @@ import { InventoryReservationService } from '../inventory/inventory-reservation.
 import { PromotionService } from '../promotions/promotion.service.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
 import { EmailNotificationService } from '../notifications/email-notification.service.js';
+import { MarketingAutomationService } from '../notifications/marketing-automation.service.js';
+import { OrderSummaryPdfService } from '../receipts/order-summary-pdf.service.js';
 import { PushNotificationService } from '../notifications/push-notification.service.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
 
@@ -23,6 +25,8 @@ describe('OrdersService', () => {
   let notificationService: { notify: ReturnType<typeof vi.fn> };
   let emailNotificationService: { notify: ReturnType<typeof vi.fn> };
   let pushNotificationService: { notifyForOrder: ReturnType<typeof vi.fn> };
+  let marketingAutomation: { trackPurchaseEvent: ReturnType<typeof vi.fn> };
+  let orderSummaryPdf: { buildEmailAttachment: ReturnType<typeof vi.fn> };
 
   function mockPrisma() {
     return {
@@ -43,6 +47,8 @@ describe('OrdersService', () => {
     notificationService = { notify: vi.fn().mockResolvedValue(undefined) };
     emailNotificationService = { notify: vi.fn().mockResolvedValue(undefined) };
     pushNotificationService = { notifyForOrder: vi.fn().mockResolvedValue(undefined) };
+    marketingAutomation = { trackPurchaseEvent: vi.fn().mockResolvedValue(undefined) };
+    orderSummaryPdf = { buildEmailAttachment: vi.fn().mockResolvedValue(undefined) };
     const module = await Test.createTestingModule({
       providers: [
         OrdersService,
@@ -52,6 +58,8 @@ describe('OrdersService', () => {
         { provide: WhatsAppNotificationService, useValue: notificationService },
         { provide: EmailNotificationService, useValue: emailNotificationService },
         { provide: PushNotificationService, useValue: pushNotificationService },
+        { provide: MarketingAutomationService, useValue: marketingAutomation },
+        { provide: OrderSummaryPdfService, useValue: orderSummaryPdf },
       ],
     }).compile();
     service = module.get(OrdersService);

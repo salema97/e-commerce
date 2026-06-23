@@ -66,6 +66,12 @@ export default function AccountScreen(): React.ReactElement {
         <Text style={styles.value}>{user?.primaryEmailAddress?.emailAddress ?? 'No disponible'}</Text>
       </Card>
 
+      <View style={styles.actions}>
+        <Button variant="outline" onPress={() => router.push('/account/notifications')}>
+          Preferencias de notificaciones
+        </Button>
+      </View>
+
       <Text style={styles.sectionTitle}>Pedidos recientes</Text>
 
       {isLoading ? (
@@ -120,6 +126,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   profileCard: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  actions: {
     marginHorizontal: 16,
     marginBottom: 20,
   },

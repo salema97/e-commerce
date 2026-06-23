@@ -44,6 +44,7 @@ export class ExpoPushNotificationProvider extends PushNotificationProvider {
           title: payload.title,
           body: payload.body,
           data: payload.data ?? {},
+          richContent: payload.imageUrl ? { image: payload.imageUrl } : undefined,
         })),
       ),
     });

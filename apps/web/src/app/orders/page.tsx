@@ -28,6 +28,11 @@ export default async function OrdersPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold">Order History</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        <Link href="/account/notifications" className="underline">
+          Gestionar preferencias de notificaciones
+        </Link>
+      </p>
 
       {orders.length === 0 ? (
         <div className="mt-8 text-center">

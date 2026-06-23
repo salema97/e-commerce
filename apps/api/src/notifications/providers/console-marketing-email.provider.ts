@@ -1,5 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MarketingEmailProvider } from '../marketing-email-provider.interface.js';
+import {
+  MarketingEmailProvider,
+  type MarketingContactProfile,
+} from '../marketing-email-provider.interface.js';
 
 @Injectable()
 export class ConsoleMarketingEmailProvider extends MarketingEmailProvider {
@@ -8,8 +11,12 @@ export class ConsoleMarketingEmailProvider extends MarketingEmailProvider {
   async trackEvent(
     email: string,
     event: string,
-    properties?: Record<string, string | number | boolean>,
+    properties?: Record<string, string | number | boolean | undefined>,
   ): Promise<void> {
-    this.logger.log({ email, event, properties }, 'Console marketing provider would track event');
+    this.logger.log({ email, event, properties }, 'Marketing event tracked (console)');
+  }
+
+  async syncContact(email: string, profile: MarketingContactProfile): Promise<void> {
+    this.logger.log({ email, profile }, 'Marketing contact synced (console)');
   }
 }

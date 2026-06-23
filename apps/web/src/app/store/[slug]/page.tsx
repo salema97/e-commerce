@@ -7,7 +7,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { AddToCartButton } from '@/components/cart/add-to-cart-button';
 import { WishlistButton } from '@/components/wishlist/wishlist-button';
+import { BackInStockForm } from '@/components/product/back-in-stock-form';
 import { formatPrice } from '@repo/shared-utils';
+import { getProductAvailableQuantity } from '@/lib/product-stock';
 import type { Product } from '@repo/shared-types';
 
 interface ProductPageProps {
@@ -41,6 +43,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const image = product.images?.[0];
   const variants = product.variants ?? [];
+  const availableQuantity = getProductAvailableQuantity(product.inventory);
+  const isOutOfStock = availableQuantity <= 0;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -83,7 +87,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {product.description ?? 'No description available.'}
           </p>
 
-          <AddToCartButton product={product} />
+          <AddToCartButton product={product} disabled={isOutOfStock} />
+          {isOutOfStock ? <BackInStockForm productId={product.id} /> : null}
           <WishlistButton productId={product.id} name={product.name} slug={product.slug} />
         </div>
       </div>

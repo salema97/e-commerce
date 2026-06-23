@@ -42,13 +42,43 @@ export interface SriDocumentDeliveryEmailContext {
   orderNumber?: string;
 }
 
+export interface AbandonedCartEmailContext {
+  customerName: string;
+  itemCount: string;
+  cartUrl: string;
+}
+
+export interface BackInStockEmailContext {
+  customerName: string;
+  productName: string;
+  productUrl: string;
+}
+
+export interface WinBackEmailContext {
+  customerName: string;
+  storefrontUrl: string;
+  unsubscribeUrl: string;
+}
+
+export interface PromoCodeEmailContext {
+  customerName: string;
+  promoCode: string;
+  promotionName: string;
+  storefrontUrl: string;
+  unsubscribeUrl: string;
+}
+
 export type EmailTemplateContext =
   | OrderConfirmedEmailContext
   | OrderShippedEmailContext
   | OrderDeliveredEmailContext
   | PaymentFailedEmailContext
   | RefundConfirmedEmailContext
-  | SriDocumentDeliveryEmailContext;
+  | SriDocumentDeliveryEmailContext
+  | AbandonedCartEmailContext
+  | BackInStockEmailContext
+  | WinBackEmailContext
+  | PromoCodeEmailContext;
 
 export function renderEmailTemplate(
   template: EmailTemplate,
@@ -67,6 +97,14 @@ export function renderEmailTemplate(
       return refundConfirmed(context as RefundConfirmedEmailContext);
     case 'SRI_DOCUMENT_DELIVERY':
       return sriDocumentDelivery(context as SriDocumentDeliveryEmailContext);
+    case 'ABANDONED_CART':
+      return abandonedCart(context as AbandonedCartEmailContext);
+    case 'BACK_IN_STOCK':
+      return backInStock(context as BackInStockEmailContext);
+    case 'WIN_BACK':
+      return winBack(context as WinBackEmailContext);
+    case 'PROMO_CODE':
+      return promoCode(context as PromoCodeEmailContext);
     default:
       throw new Error(`Unsupported email template: ${template satisfies never}`);
   }
@@ -123,6 +161,44 @@ function refundConfirmed(ctx: RefundConfirmedEmailContext) {
     `Tu reembolso del pedido ${ctx.orderNumber} fue procesado.\n` +
     `Monto: ${ctx.amount}\n` +
     `Método: ${ctx.refundMethod}`;
+  return { subject, text, html: paragraph(text) };
+}
+
+function abandonedCart(ctx: AbandonedCartEmailContext) {
+  const subject = 'Tienes artículos esperando en tu carrito';
+  const text =
+    `Hola ${ctx.customerName},\n\n` +
+    `Dejaste ${ctx.itemCount} artículo(s) en tu carrito.\n` +
+    `Completa tu compra: ${ctx.cartUrl}`;
+  return { subject, text, html: paragraph(text) };
+}
+
+function backInStock(ctx: BackInStockEmailContext) {
+  const subject = `${ctx.productName} ya está disponible`;
+  const text =
+    `Hola ${ctx.customerName},\n\n` +
+    `El producto ${ctx.productName} volvió a estar en stock.\n` +
+    `Ver producto: ${ctx.productUrl}`;
+  return { subject, text, html: paragraph(text) };
+}
+
+function winBack(ctx: WinBackEmailContext) {
+  const subject = 'Te extrañamos — vuelve a visitarnos';
+  const text =
+    `Hola ${ctx.customerName},\n\n` +
+    `Hace tiempo que no compras con nosotros.\n` +
+    `Descubre novedades: ${ctx.storefrontUrl}\n\n` +
+    `Cancelar suscripción: ${ctx.unsubscribeUrl}`;
+  return { subject, text, html: paragraph(text) };
+}
+
+function promoCode(ctx: PromoCodeEmailContext) {
+  const subject = `Tu código promocional: ${ctx.promoCode}`;
+  const text =
+    `Hola ${ctx.customerName},\n\n` +
+    `Tienes un código para ${ctx.promotionName}: ${ctx.promoCode}\n` +
+    `Úsalo en: ${ctx.storefrontUrl}\n\n` +
+    `Cancelar suscripción: ${ctx.unsubscribeUrl}`;
   return { subject, text, html: paragraph(text) };
 }
 

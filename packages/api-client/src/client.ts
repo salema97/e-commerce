@@ -158,6 +158,12 @@ export function createApiClient(options: ApiClientOptions) {
       create: (data: CreateProductDto) => request<Product>('POST', '/products', data),
       update: (id: string, data: UpdateProductDto) => request<Product>('PATCH', `/products/${id}`, data),
       remove: (id: string) => request<Product>('DELETE', `/products/${id}`),
+      subscribeBackInStock: (productId: string, data: { email: string }) =>
+        request<{ id: string; productId: string; email: string }>(
+          'POST',
+          `/products/${productId}/back-in-stock-alerts`,
+          data,
+        ),
     },
     inventory: {
       findAll: () => request<Inventory[]>('GET', '/inventory'),
@@ -254,6 +260,40 @@ export function createApiClient(options: ApiClientOptions) {
     },
     whatsapp: {
       getQuickReplies: () => request<QuickReply[]>('GET', '/whatsapp/quick-replies'),
+    },
+    notifications: {
+      pushTokens: {
+        register: (data: { token: string; platform: 'ios' | 'android' | 'web' }) =>
+          request<{ id: string; token: string; platform: string }>(
+            'POST',
+            '/notifications/push-tokens',
+            data,
+          ),
+        remove: (token: string) =>
+          request<void>('DELETE', `/notifications/push-tokens/${encodeURIComponent(token)}`),
+      },
+      preferences: {
+        get: () =>
+          request<{
+            emailOptOut: boolean;
+            marketingEmailOptOut: boolean;
+            whatsappOptOut: boolean;
+          }>('GET', '/notifications/preferences'),
+        update: (data: {
+          emailOptOut?: boolean;
+          marketingEmailOptOut?: boolean;
+          whatsappOptOut?: boolean;
+        }) =>
+          request<{
+            emailOptOut: boolean;
+            marketingEmailOptOut: boolean;
+            whatsappOptOut: boolean;
+          }>('PATCH', '/notifications/preferences', data),
+      },
+    },
+    marketing: {
+      distributePromo: (data: { segment: string; promotionId: string }) =>
+        request<{ sent: number }>('POST', '/marketing/campaigns/promo', data),
     },
   };
 }

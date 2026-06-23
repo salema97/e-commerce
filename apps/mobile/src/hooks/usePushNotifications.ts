@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import { Platform } from 'react-native';
+import { useAuth } from '@clerk/clerk-expo';
 import * as Notifications from 'expo-notifications';
 import {
   registerForPushNotificationsAsync,
@@ -6,6 +8,7 @@ import {
   addNotificationResponseReceivedListener,
   removeNotificationSubscription,
 } from '../lib/notifications.js';
+import { api } from '../lib/api.js';
 
 export interface UsePushNotificationsResult {
   pushToken: string | null;
@@ -13,11 +16,15 @@ export interface UsePushNotificationsResult {
   error: string | null;
 }
 
-export function usePushNotifications(): UsePushNotificationsResult {
+export function usePushNotifications(
+  onNotificationResponse?: (url: string) => void,
+): UsePushNotificationsResult {
   const [pushToken, setPushToken] = useState<string | null>(null);
   const [notification, setNotification] = useState<Notifications.Notification | null>(null);
   const [error, setError] = useState<string | null>(null);
   const isRegisteredRef = useRef(false);
+  const syncedTokenRef = useRef<string | null>(null);
+  const { isSignedIn } = useAuth();
 
   useEffect(() => {
     if (isRegisteredRef.current) {
@@ -39,13 +46,37 @@ export function usePushNotifications(): UsePushNotificationsResult {
 
     const responseSubscription = addNotificationResponseReceivedListener((response) => {
       setNotification(response.notification);
+      const url = response.notification.request.content.data?.url;
+      if (typeof url === 'string' && onNotificationResponse) {
+        onNotificationResponse(url);
+      }
     });
 
     return () => {
       removeNotificationSubscription(receivedSubscription);
       removeNotificationSubscription(responseSubscription);
     };
-  }, []);
+  }, [onNotificationResponse]);
+
+  useEffect(() => {
+    if (!isSignedIn || !pushToken || syncedTokenRef.current === pushToken) {
+      return;
+    }
+
+    const platform =
+      Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web';
+
+    void api.client.notifications.pushTokens
+      .register({ token: pushToken, platform })
+      .then(() => {
+        syncedTokenRef.current = pushToken;
+      })
+      .catch((syncError: unknown) => {
+        const message =
+          syncError instanceof Error ? syncError.message : 'Failed to sync push token';
+        setError(message);
+      });
+  }, [isSignedIn, pushToken]);
 
   return { pushToken, notification, error };
 }

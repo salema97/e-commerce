@@ -6,6 +6,8 @@ import { PromotionService } from '../promotions/promotion.service.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
 import { EmailNotificationService } from '../notifications/email-notification.service.js';
 import { PushNotificationService } from '../notifications/push-notification.service.js';
+import { MarketingAutomationService } from '../notifications/marketing-automation.service.js';
+import { OrderSummaryPdfService } from '../receipts/order-summary-pdf.service.js';
 import { CreateOrderDto, CreateOrderItemDto } from './dto/create-order.dto.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
 
@@ -33,6 +35,8 @@ export class OrdersService {
     private readonly notificationService: WhatsAppNotificationService,
     private readonly emailNotificationService: EmailNotificationService,
     private readonly pushNotificationService: PushNotificationService,
+    private readonly marketingAutomation: MarketingAutomationService,
+    private readonly orderSummaryPdf: OrderSummaryPdfService,
   ) {}
 
   async createOrder(userId: string | undefined, dto: CreateOrderDto): Promise<CreatedOrderResult> {
@@ -286,11 +290,16 @@ export class OrdersService {
           await this.notificationService.notify(id, 'ORDER_CONFIRMED', phone, context);
         }
         if (order.customerEmail) {
+          const attachment = await this.orderSummaryPdf.buildEmailAttachment(
+            id,
+            order.orderNumber,
+          );
           await this.emailNotificationService.notify(
             id,
             'ORDER_CONFIRMED',
             order.customerEmail,
             context,
+            { attachments: attachment ? [attachment] : undefined },
           );
         }
         await this.pushNotificationService.notifyForOrder(
@@ -299,6 +308,7 @@ export class OrdersService {
           'ORDER_CONFIRMED',
           context,
         );
+        await this.marketingAutomation.trackPurchaseEvent(id);
       } else if (status === OrderStatus.SHIPPED) {
         const context = {
           customerName,

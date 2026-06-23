@@ -8,7 +8,9 @@ import { ProviderPaymentResult } from './payment-provider.interface.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
 import { EmailNotificationService } from '../notifications/email-notification.service.js';
 import { PushNotificationService } from '../notifications/push-notification.service.js';
+import { MarketingAutomationService } from '../notifications/marketing-automation.service.js';
 import { InvoicesService } from '../invoices/invoices.service.js';
+import { OrderSummaryPdfService } from '../receipts/order-summary-pdf.service.js';
 
 @Injectable()
 export class PaymentWebhookService {
@@ -22,6 +24,8 @@ export class PaymentWebhookService {
     private readonly emailNotificationService: EmailNotificationService,
     private readonly pushNotificationService: PushNotificationService,
     private readonly invoicesService: InvoicesService,
+    private readonly marketingAutomation: MarketingAutomationService,
+    private readonly orderSummaryPdf: OrderSummaryPdfService,
   ) {}
 
   async handle(
@@ -161,11 +165,16 @@ export class PaymentWebhookService {
           await this.notificationService.notify(orderId, 'ORDER_CONFIRMED', phone, context);
         }
         if (order.customerEmail) {
+          const attachment = await this.orderSummaryPdf.buildEmailAttachment(
+            orderId,
+            order.orderNumber,
+          );
           await this.emailNotificationService.notify(
             orderId,
             'ORDER_CONFIRMED',
             order.customerEmail,
             context,
+            { attachments: attachment ? [attachment] : undefined },
           );
         }
         await this.pushNotificationService.notifyForOrder(
@@ -174,6 +183,7 @@ export class PaymentWebhookService {
           'ORDER_CONFIRMED',
           context,
         );
+        await this.marketingAutomation.trackPurchaseEvent(orderId);
       } else if (orderStatus === OrderStatus.PAYMENT_FAILED) {
         const context = {
           customerName,

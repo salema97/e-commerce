@@ -1,15 +1,22 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { EmailTemplate } from '@repo/shared-types';
+import type { EmailTemplateContext } from '@repo/shared-utils';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { RedisIdempotencyService } from '../common/redis/idempotency.service.js';
-import { EmailProvider } from './email-provider.interface.js';
-import type { EmailTemplateContext } from '@repo/shared-utils';
+import {
+  EmailProvider,
+  type EmailAttachment,
+} from './email-provider.interface.js';
 
 /**
  * Sends transactional emails for order, payment, and refund lifecycle events.
  * Idempotent and respects customer email opt-out.
  */
+export interface NotifyOrderEmailOptions {
+  attachments?: EmailAttachment[];
+}
+
 @Injectable()
 export class EmailNotificationService {
   private readonly logger = new Logger(EmailNotificationService.name);
@@ -26,6 +33,7 @@ export class EmailNotificationService {
     template: EmailTemplate,
     email: string,
     context: EmailTemplateContext,
+    options?: NotifyOrderEmailOptions,
   ): Promise<void> {
     if (!this.isEnabled()) {
       this.logger.debug({ orderId, template }, 'Email notifications are disabled');
@@ -68,7 +76,9 @@ export class EmailNotificationService {
     const vars = this.contextToVars(context);
 
     try {
-      await this.emailProvider.sendTemplate(recipient, template, vars);
+      await this.emailProvider.sendTemplate(recipient, template, vars, {
+        attachments: options?.attachments,
+      });
     } catch (error) {
       this.logger.error(
         { error, orderId, template, email: maskEmail(recipient) },

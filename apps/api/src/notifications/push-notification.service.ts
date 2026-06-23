@@ -53,11 +53,62 @@ export class PushNotificationService {
         {
           title: rendered.subject,
           body: rendered.text.split('\n')[0] ?? rendered.subject,
-          data: { orderId, template },
+          data: {
+            orderId,
+            template,
+            url: `ecommerce://order/${orderId}`,
+          },
         },
       );
     } catch (error) {
       this.logger.error({ error, orderId, template }, 'Failed to send push notification');
+    }
+  }
+
+  async notifyUser(
+    userId: string,
+    idempotencyKey: string,
+    template: EmailTemplate,
+    context: EmailTemplateContext,
+    deepLinkUrl: string,
+    options?: { imageUrl?: string },
+  ): Promise<void> {
+    if (!this.isEnabled()) {
+      return;
+    }
+
+    const claimed = await this.idempotency.claim(
+      `push:campaign:${idempotencyKey}:${template}`,
+      60 * 60 * 24 * 30,
+    );
+
+    if (!claimed) {
+      return;
+    }
+
+    const tokens = await this.prisma.pushDeviceToken.findMany({
+      where: { userId },
+      select: { token: true },
+    });
+
+    if (tokens.length === 0) {
+      return;
+    }
+
+    const rendered = renderEmailTemplate(template, context);
+
+    try {
+      await this.pushProvider.sendToTokens(
+        tokens.map((row) => row.token),
+        {
+          title: rendered.subject,
+          body: rendered.text.split('\n')[0] ?? rendered.subject,
+          data: { template, url: deepLinkUrl },
+          imageUrl: options?.imageUrl,
+        },
+      );
+    } catch (error) {
+      this.logger.error({ error, userId, template }, 'Failed to send campaign push notification');
     }
   }
 

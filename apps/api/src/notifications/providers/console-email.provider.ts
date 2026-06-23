@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { EmailTemplate } from '@repo/shared-types';
-import { renderEmailTemplate } from '@repo/shared-utils';
+import { renderEmailTemplate, type EmailTemplateContext } from '@repo/shared-utils';
 import {
   EmailProvider,
   type SendEmailTemplateOptions,
@@ -23,21 +23,7 @@ export class ConsoleEmailProvider extends EmailProvider {
     vars: Record<string, string>,
     options?: SendEmailTemplateOptions,
   ): Promise<void> {
-    const rendered = renderEmailTemplate(template as EmailTemplate, {
-      customerName: vars.customerName ?? 'Cliente',
-      orderNumber: vars.orderNumber ?? '',
-      total: vars.total ?? '',
-      carrier: vars.carrier ?? '',
-      trackingNumber: vars.trackingNumber ?? '',
-      trackingUrl: vars.trackingUrl,
-      retryUrl: vars.retryUrl,
-      amount: vars.amount ?? '',
-      refundMethod: vars.refundMethod ?? '',
-      documentTypeLabel: vars.documentType ?? vars.documentTypeLabel ?? 'documento',
-      accessKey: vars.accessKey ?? '',
-      pdfUrl: vars.pdfUrl ?? '',
-      xmlUrl: vars.xmlUrl ?? '',
-    });
+    const rendered = renderEmailTemplate(template as EmailTemplate, vars as EmailTemplateContext);
 
     this.logger.log(
       {

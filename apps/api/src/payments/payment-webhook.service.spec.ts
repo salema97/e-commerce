@@ -9,6 +9,8 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
 import { EmailNotificationService } from '../notifications/email-notification.service.js';
 import { PushNotificationService } from '../notifications/push-notification.service.js';
+import { MarketingAutomationService } from '../notifications/marketing-automation.service.js';
+import { OrderSummaryPdfService } from '../receipts/order-summary-pdf.service.js';
 import { InvoicesService } from '../invoices/invoices.service.js';
 
 describe('PaymentWebhookService', () => {
@@ -29,6 +31,8 @@ describe('PaymentWebhookService', () => {
   let emailNotificationService: { notify: ReturnType<typeof vi.fn> };
   let pushNotificationService: { notifyForOrder: ReturnType<typeof vi.fn> };
   let invoicesService: { enqueueInvoiceForOrder: ReturnType<typeof vi.fn> };
+  let marketingAutomation: { trackPurchaseEvent: ReturnType<typeof vi.fn> };
+  let orderSummaryPdf: { buildEmailAttachment: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     provider = {
@@ -45,6 +49,14 @@ describe('PaymentWebhookService', () => {
     emailNotificationService = { notify: vi.fn().mockResolvedValue(undefined) };
     pushNotificationService = { notifyForOrder: vi.fn().mockResolvedValue(undefined) };
     invoicesService = { enqueueInvoiceForOrder: vi.fn().mockResolvedValue(undefined) };
+    marketingAutomation = { trackPurchaseEvent: vi.fn().mockResolvedValue(undefined) };
+    orderSummaryPdf = {
+      buildEmailAttachment: vi.fn().mockResolvedValue({
+        filename: 'pedido-ORD-1.pdf',
+        content: Buffer.from('pdf'),
+        contentType: 'application/pdf',
+      }),
+    };
 
     const module = await Test.createTestingModule({
       providers: [
@@ -67,6 +79,8 @@ describe('PaymentWebhookService', () => {
         { provide: EmailNotificationService, useValue: emailNotificationService },
         { provide: PushNotificationService, useValue: pushNotificationService },
         { provide: InvoicesService, useValue: invoicesService },
+        { provide: MarketingAutomationService, useValue: marketingAutomation },
+        { provide: OrderSummaryPdfService, useValue: orderSummaryPdf },
       ],
     }).compile();
 

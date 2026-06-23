@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 import type { EmailTemplate } from '@repo/shared-types';
-import { renderEmailTemplate } from '@repo/shared-utils';
+import { renderEmailTemplate, type EmailTemplateContext } from '@repo/shared-utils';
 import {
   EmailProvider,
   type SendEmailTemplateOptions,
@@ -33,21 +33,7 @@ export class ResendEmailProvider extends EmailProvider {
     }
 
     const client = new Resend(apiKey);
-    const rendered = renderEmailTemplate(template as EmailTemplate, {
-      customerName: vars.customerName ?? 'Cliente',
-      orderNumber: vars.orderNumber ?? '',
-      total: vars.total ?? '',
-      carrier: vars.carrier ?? '',
-      trackingNumber: vars.trackingNumber ?? '',
-      trackingUrl: vars.trackingUrl,
-      retryUrl: vars.retryUrl,
-      amount: vars.amount ?? '',
-      refundMethod: vars.refundMethod ?? '',
-      documentTypeLabel: vars.documentType ?? vars.documentTypeLabel ?? 'documento',
-      accessKey: vars.accessKey ?? '',
-      pdfUrl: vars.pdfUrl ?? '',
-      xmlUrl: vars.xmlUrl ?? '',
-    });
+    const rendered = renderEmailTemplate(template as EmailTemplate, vars as EmailTemplateContext);
 
     const { error } = await client.emails.send({
       from: this.fromEmail,

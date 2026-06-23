@@ -9,7 +9,13 @@ import { Select } from '@/components/ui/select';
 import { useCartStore } from '@/lib/cart-store';
 import type { Product } from '@repo/shared-types';
 
-export function AddToCartButton({ product }: { product: Product }) {
+export function AddToCartButton({
+  product,
+  disabled = false,
+}: {
+  product: Product;
+  disabled?: boolean;
+}) {
   const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
   const [quantity, setQuantity] = React.useState(1);
@@ -58,8 +64,8 @@ export function AddToCartButton({ product }: { product: Product }) {
         />
       </div>
 
-      <Button onClick={handleAdd} className="w-full sm:w-auto">
-        Add to cart
+      <Button onClick={handleAdd} className="w-full sm:w-auto" disabled={disabled}>
+        {disabled ? 'Sin stock' : 'Add to cart'}
       </Button>
     </div>
   );

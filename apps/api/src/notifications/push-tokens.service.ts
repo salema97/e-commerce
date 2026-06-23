@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { RegisterPushTokenDto } from './dto/register-push-token.dto.js';
 
@@ -6,24 +6,42 @@ import { RegisterPushTokenDto } from './dto/register-push-token.dto.js';
 export class PushTokensService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async register(userId: string, dto: RegisterPushTokenDto) {
+  async register(clerkUserId: string, dto: RegisterPushTokenDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { clerkUserId },
+      select: { id: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
     return this.prisma.pushDeviceToken.upsert({
       where: { token: dto.token },
       create: {
-        userId,
+        userId: user.id,
         token: dto.token,
         platform: dto.platform,
       },
       update: {
-        userId,
+        userId: user.id,
         platform: dto.platform,
       },
     });
   }
 
-  async remove(userId: string, token: string): Promise<void> {
+  async remove(clerkUserId: string, token: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { clerkUserId },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return;
+    }
+
     await this.prisma.pushDeviceToken.deleteMany({
-      where: { userId, token },
+      where: { userId: user.id, token },
     });
   }
 }

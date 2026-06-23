@@ -11,6 +11,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Badge } from '@repo/shared-ui';
 import { api } from '../../../lib/api.js';
 import { useCart } from '../../../lib/cart.js';
+import { getProductAvailableQuantity } from '../../../lib/product-stock.js';
+import { BackInStockForm } from '../../../components/product/BackInStockForm.js';
 import { formatPrice } from '@repo/shared-utils';
 import type { ProductVariant } from '@repo/shared-types';
 
@@ -57,6 +59,8 @@ export default function ProductDetailScreen(): React.ReactElement {
   }
 
   const effectivePrice = selectedVariant?.price ?? product.price;
+  const availableQuantity = getProductAvailableQuantity(product.inventory);
+  const isOutOfStock = availableQuantity <= 0;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -115,6 +119,8 @@ export default function ProductDetailScreen(): React.ReactElement {
             </Button>
           </View>
         </View>
+
+        {isOutOfStock ? <BackInStockForm productId={product.id} /> : null}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -123,8 +129,8 @@ export default function ProductDetailScreen(): React.ReactElement {
             {itemCount} en el carrito
           </Badge>
         ) : null}
-        <Button onPress={handleAddToCart} size="lg">
-          Agregar al carrito
+        <Button onPress={handleAddToCart} size="lg" disabled={isOutOfStock}>
+          {isOutOfStock ? 'Sin stock' : 'Agregar al carrito'}
         </Button>
       </View>
     </SafeAreaView>
