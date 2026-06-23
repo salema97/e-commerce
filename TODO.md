@@ -207,54 +207,54 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 ### 6.1 Infrastructure & Setup
 
-- [ ] Add Evolution API service to `docker-compose.yml`.
-- [ ] Configure Evolution API instance, API key, and webhook URL.
-- [ ] Add `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_WEBHOOK_SECRET`, `EVOLUTION_INSTANCE_NAME` to env files.
-- [ ] Document provider strategy: Baileys for MVP, Cloud API for scale.
+- [x] Add Evolution API service to `docker-compose.yml`.
+- [x] Configure Evolution API instance, API key, and webhook URL.
+- [x] Add `EVOLUTION_API_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_WEBHOOK_SECRET`, `EVOLUTION_INSTANCE_NAME` to env files.
+- [x] Document provider strategy: Baileys for MVP, Cloud API for scale.
 
 ### 6.2 Backend Integration (NestJS)
 
-- [ ] Build `WhatsAppProvider` abstraction in `apps/api`.
-- [ ] Implement `EvolutionApiProvider` for send/receive operations.
-- [ ] Add `ConversationModule` and `MessageModule`.
-- [ ] Prisma schema for `Conversation` and `Message` entities.
-- [ ] Webhook endpoint `POST /webhooks/evolution/messages` to receive inbound messages.
-- [ ] Webhook handlers for:
-  - [ ] Inbound text messages
-  - [ ] Media messages (images, audio, documents)
-  - [ ] Delivery/read receipts
-  - [ ] Connection status events
-- [ ] Endpoint to send messages via Evolution API.
-- [ ] Endpoint to list conversations and messages.
-- [ ] Endpoint to update conversation status and assign agent.
-- [ ] Rate limiting and signature verification on Evolution webhooks.
+- [x] Build `WhatsAppProvider` abstraction in `apps/api`.
+- [x] Implement `EvolutionApiProvider` for send/receive operations.
+- [x] Add `ConversationModule` and `MessageModule`.
+- [x] Prisma schema for `Conversation` and `Message` entities.
+- [x] Webhook endpoint `POST /webhooks/evolution/messages` to receive inbound messages.
+- [x] Webhook handlers for:
+  - [x] Inbound text messages
+  - [~] Media messages (images, audio, documents) — schema ready; full download/render deferred.
+  - [x] Delivery/read receipts
+  - [x] Connection status events
+- [x] Endpoint to send messages via Evolution API.
+- [x] Endpoint to list conversations and messages.
+- [x] Endpoint to update conversation status and assign agent.
+- [x] Rate limiting and signature verification on Evolution webhooks.
 
 ### 6.3 Transactional Notifications
 
-- [ ] Order confirmation message.
-- [ ] Order shipped message with tracking.
-- [ ] Order delivered message.
-- [ ] Payment failure/retry message.
-- [ ] Refund confirmation message.
-- [ ] Message templates configurable from admin panel.
+- [x] Order confirmation message.
+- [x] Order shipped message with tracking.
+- [x] Order delivered message.
+- [x] Payment failure/retry message.
+- [x] Refund confirmation message.
+- [ ] Message templates configurable from admin panel — deferred to Phase 10/11.
 
 ### 6.4 Admin Support Inbox (`/admin/support`)
 
-- [ ] Chat list screen with filters (new, open, resolved, closed).
-- [ ] Chat detail view with message history.
-- [ ] Real-time or polling updates for new messages.
-- [ ] Input to send text responses.
-- [ ] Quick reply templates.
-- [ ] Conversation status management (open, in progress, resolved, closed).
-- [ ] Agent assignment.
-- [ ] Internal notes visible only to agents.
-- [ ] Display delivery/read status.
+- [x] Chat list screen with filters (new, open, resolved, closed).
+- [x] Chat detail view with message history.
+- [x] Real-time or polling updates for new messages.
+- [x] Input to send text responses.
+- [x] Quick reply templates.
+- [x] Conversation status management (open, in progress, resolved, closed).
+- [x] Agent assignment.
+- [ ] Internal notes visible only to agents — deferred to Phase 10/11.
+- [x] Display delivery/read status.
 
 ### 6.5 Migration Path
 
-- [ ] Design `WhatsAppProvider` interface to support multiple backends.
-- [ ] Document steps to switch Evolution API provider from Baileys to WhatsApp Cloud API.
-- [ ] Plan approved message templates for Cloud API.
+- [x] Design `WhatsAppProvider` interface to support multiple backends.
+- [x] Document steps to switch Evolution API provider from Baileys to WhatsApp Cloud API.
+- [ ] Plan approved message templates for Cloud API — pending Cloud API migration decision.
 
 ## Phase 7 — SRI Ecuador Electronic Invoicing (Direct Integration)
 
