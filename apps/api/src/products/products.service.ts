@@ -4,6 +4,7 @@ import { ProductSearchSyncService } from '../ai/search/product-search-sync.servi
 import { EventBus } from '../event-bus/event-bus.interface.js';
 import { CreateProductDto } from './dto/create-product.dto.js';
 import { UpdateProductDto } from './dto/update-product.dto.js';
+import type { ProductPublicQueryDto } from './dto/product-public-query.dto.js';
 
 const productInclude = {
   category: true,
@@ -48,6 +49,63 @@ export class ProductsService {
     });
   }
 
+  async findStoreProducts(query: ProductPublicQueryDto) {
+    const page = Math.max(1, query.page ?? 1);
+    const limit = Math.min(100, Math.max(1, query.limit ?? 24));
+    const where = {
+      status: 'ACTIVE' as const,
+      ...(query.category ? { category: { slug: query.category } } : {}),
+    };
+
+    const orderBy = (() => {
+      switch (query.sort) {
+        case 'price_asc':
+          return { price: 'asc' as const };
+        case 'price_desc':
+          return { price: 'desc' as const };
+        case 'name_asc':
+          return { name: 'asc' as const };
+        case 'newest':
+        default:
+          return { createdAt: 'desc' as const };
+      }
+    })();
+
+    const [items, total] = await Promise.all([
+      this.prisma.product.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          price: true,
+          compareAtPrice: true,
+          isFeatured: true,
+          createdAt: true,
+          categoryId: true,
+          images: { take: 1, orderBy: { sortOrder: 'asc' }, select: { url: true, alt: true } },
+        },
+      }),
+      this.prisma.product.count({ where }),
+    ]);
+
+    return {
+      items: items.map((item) => ({
+        ...item,
+        price: Number(item.price),
+        compareAtPrice: item.compareAtPrice ? Number(item.compareAtPrice) : null,
+        images: item.images,
+      })),
+      total,
+      page,
+      limit,
+    };
+  }
+
   async findOne(id: string) {
     const product = await this.prisma.product.findUnique({
       where: { id },
@@ -82,6 +140,7 @@ export class ProductsService {
   async remove(id: string) {
     await this.findOne(id);
     void this.searchSync.removeProduct(id);
+    void this.eventBus.publish({ name: 'product.deleted', payload: { productId: id } });
     return this.prisma.product.delete({
       where: { id },
       include: productInclude,
