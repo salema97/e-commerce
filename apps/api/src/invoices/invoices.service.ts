@@ -3,15 +3,43 @@ import {
   Logger,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Prisma, InvoiceStatus, ReturnStatus, CreditNoteStatus } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { InvoiceProviderFactory } from './invoice-provider.factory.js';
+import { SriQueueService } from './sri/sri-queue.service.js';
+import { SriDocumentStorageService } from './sri/sri-document-storage.service.js';
 import { IssueInvoiceDto } from './dto/issue-invoice.dto.js';
 import { IssueCreditNoteDto } from './dto/issue-credit-note.dto.js';
 import { InvoiceResponseDto } from './dto/invoice-response.dto.js';
 import { CreditNoteResponseDto } from './dto/credit-note-response.dto.js';
 import { InvoiceOrder, CreditNoteInput, CreditNoteItem } from './invoice-provider.interface.js';
+import { Role } from '../auth/role.enum.js';
+
+export interface ListInvoicesFilter {
+  orderId?: string;
+  status?: InvoiceStatus;
+  from?: Date;
+  to?: Date;
+  limit?: number;
+  offset?: number;
+}
+
+export interface ListCreditNotesFilter {
+  returnRequestId?: string;
+  status?: CreditNoteStatus;
+  from?: Date;
+  to?: Date;
+  limit?: number;
+  offset?: number;
+}
+
+export interface InvoiceAccessContext {
+  clerkUserId: string;
+  role: Role;
+}
 
 @Injectable()
 export class InvoicesService {
@@ -20,6 +48,8 @@ export class InvoicesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly providerFactory: InvoiceProviderFactory,
+    private readonly sriQueue: SriQueueService,
+    private readonly documentStorage: SriDocumentStorageService,
   ) {}
 
   async issueInvoice(
@@ -188,6 +218,266 @@ export class InvoicesService {
     );
 
     return this.mapCreditNoteToResponse(creditNote);
+  }
+
+  /**
+   * Enqueue an SRI invoice job for a paid order. Used by webhooks so the
+   * HTTP response is not blocked on SRI latency.
+   */
+  async enqueueInvoiceForOrder(orderId: string): Promise<void> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+    });
+
+    if (!order) {
+      throw new NotFoundException(`Order ${orderId} not found`);
+    }
+
+    const existing = await this.prisma.invoice.findUnique({
+      where: { orderId: order.id },
+    });
+
+    if (existing) {
+      this.logger.log(
+        { orderId, invoiceId: existing.id },
+        'Invoice already exists for order; skipping enqueue',
+      );
+      return;
+    }
+
+    await this.sriQueue.addIssueInvoiceJob(orderId);
+    this.logger.log({ orderId }, 'SRI invoice job enqueued for paid order');
+  }
+
+  /**
+   * Create a PENDING credit note for a return request and enqueue an SRI
+   * credit-note job. Used by refund/return flows so resolution is not blocked
+   * on SRI latency.
+   */
+  async enqueueCreditNoteForReturn(
+    returnRequestId: string,
+    total: number,
+  ): Promise<CreditNoteResponseDto> {
+    const returnRequest = await this.prisma.returnRequest.findUnique({
+      where: { id: returnRequestId },
+      include: { order: { include: { invoice: true } }, items: true },
+    });
+
+    if (!returnRequest) {
+      throw new NotFoundException(
+        `Return request ${returnRequestId} not found`,
+      );
+    }
+
+    const originalInvoice = returnRequest.order.invoice;
+    if (!originalInvoice) {
+      throw new BadRequestException(
+        `No invoice found for order ${returnRequest.order.id}`,
+      );
+    }
+
+    const existing = await this.prisma.creditNote.findFirst({
+      where: { returnRequest: { id: returnRequest.id } },
+    });
+    if (existing) {
+      throw new BadRequestException(
+        `Credit note already exists for return request ${returnRequest.id}`,
+      );
+    }
+
+    const creditNote = await this.prisma.creditNote.create({
+      data: {
+        accessKey: `PENDING-${randomUUID()}`,
+        returnRequest: { connect: { id: returnRequest.id } },
+        parentInvoiceAccessKey: originalInvoice.accessKey,
+        totalAmount: new Prisma.Decimal(total),
+        status: CreditNoteStatus.DRAFT,
+      },
+    });
+
+    await this.sriQueue.addIssueCreditNoteJob(creditNote.id);
+
+    this.logger.log(
+      { creditNoteId: creditNote.id, returnRequestId },
+      'SRI credit note job enqueued for return request',
+    );
+
+    return this.mapCreditNoteToResponse(creditNote);
+  }
+
+  async list(filter: ListInvoicesFilter = {}): Promise<InvoiceResponseDto[]> {
+    const where: Prisma.InvoiceWhereInput = {};
+
+    if (filter.orderId) where.orderId = filter.orderId;
+    if (filter.status) where.status = filter.status;
+    if (filter.from || filter.to) {
+      where.createdAt = {};
+      if (filter.from) where.createdAt.gte = filter.from;
+      if (filter.to) where.createdAt.lte = filter.to;
+    }
+
+    const invoices = await this.prisma.invoice.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: filter.limit ?? 50,
+      skip: filter.offset ?? 0,
+    });
+
+    return invoices.map((invoice) => this.mapToResponse(invoice));
+  }
+
+  async findById(id: string): Promise<
+    InvoiceResponseDto & {
+      order: {
+        id: string;
+        orderNumber: string;
+        user: { clerkUserId: string } | null;
+      };
+    }
+  > {
+    const invoice = await this.prisma.invoice.findUnique({
+      where: { id },
+      include: {
+        order: {
+          select: {
+            id: true,
+            orderNumber: true,
+            user: { select: { clerkUserId: true } },
+          },
+        },
+      },
+    });
+
+    if (!invoice) {
+      throw new NotFoundException(`Invoice ${id} not found`);
+    }
+
+    return {
+      ...this.mapToResponse(invoice),
+      order: invoice.order,
+    };
+  }
+
+  async retryIssue(id: string): Promise<InvoiceResponseDto> {
+    const invoice = await this.prisma.invoice.findUnique({
+      where: { id },
+    });
+
+    if (!invoice) {
+      throw new NotFoundException(`Invoice ${id} not found`);
+    }
+
+    await this.sriQueue.addIssueInvoiceJob(invoice.orderId);
+
+    const updated = await this.prisma.invoice.update({
+      where: { id },
+      data: {
+        status: InvoiceStatus.DRAFT,
+        retryCount: 0,
+        lastError: null,
+      },
+    });
+
+    return this.mapToResponse(updated);
+  }
+
+  async getSignedXmlUrl(id: string): Promise<string> {
+    const urls = await this.documentStorage.getInvoiceSignedUrls(id);
+    return urls.xmlUrl;
+  }
+
+  async getSignedPdfUrl(id: string): Promise<string> {
+    const urls = await this.documentStorage.getInvoiceSignedUrls(id);
+    return urls.pdfUrl;
+  }
+
+  async listCreditNotes(
+    filter: ListCreditNotesFilter = {},
+  ): Promise<CreditNoteResponseDto[]> {
+    const where: Prisma.CreditNoteWhereInput = {};
+
+    if (filter.returnRequestId) {
+      where.returnRequest = { id: filter.returnRequestId };
+    }
+    if (filter.status) where.status = filter.status;
+    if (filter.from || filter.to) {
+      where.createdAt = {};
+      if (filter.from) where.createdAt.gte = filter.from;
+      if (filter.to) where.createdAt.lte = filter.to;
+    }
+
+    const creditNotes = await this.prisma.creditNote.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: filter.limit ?? 50,
+      skip: filter.offset ?? 0,
+    });
+
+    return creditNotes.map((cn) => this.mapCreditNoteToResponse(cn));
+  }
+
+  async findCreditNoteById(id: string): Promise<CreditNoteResponseDto> {
+    const creditNote = await this.prisma.creditNote.findUnique({
+      where: { id },
+    });
+
+    if (!creditNote) {
+      throw new NotFoundException(`Credit note ${id} not found`);
+    }
+
+    return this.mapCreditNoteToResponse(creditNote);
+  }
+
+  async retryCreditNote(id: string): Promise<CreditNoteResponseDto> {
+    const creditNote = await this.prisma.creditNote.findUnique({
+      where: { id },
+    });
+
+    if (!creditNote) {
+      throw new NotFoundException(`Credit note ${id} not found`);
+    }
+
+    await this.sriQueue.addIssueCreditNoteJob(id);
+
+    const updated = await this.prisma.creditNote.update({
+      where: { id },
+      data: {
+        status: CreditNoteStatus.DRAFT,
+        retryCount: 0,
+        lastError: null,
+      },
+    });
+
+    return this.mapCreditNoteToResponse(updated);
+  }
+
+  async getCreditNoteSignedXmlUrl(id: string): Promise<string> {
+    const urls = await this.documentStorage.getCreditNoteSignedUrls(id);
+    return urls.xmlUrl;
+  }
+
+  async getCreditNoteSignedPdfUrl(id: string): Promise<string> {
+    const urls = await this.documentStorage.getCreditNoteSignedUrls(id);
+    return urls.pdfUrl;
+  }
+
+  assertInvoiceAccess(
+    invoice: {
+      order: { user: { clerkUserId: string } | null };
+    },
+    context: InvoiceAccessContext,
+  ): void {
+    const adminRoles = [Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE];
+    if (adminRoles.includes(context.role)) {
+      return;
+    }
+
+    const ownerId = invoice.order.user?.clerkUserId;
+    if (context.role === Role.CUSTOMER && ownerId === context.clerkUserId) {
+      return;
+    }
+
+    throw new ForbiddenException('You do not have access to this invoice');
   }
 
   private buildCreditNoteInput(
