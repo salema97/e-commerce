@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, SriDocumentJobStatus } from '@prisma/client';
+import type { Invoice, CreditNote, Order } from '@prisma/client';
 import { Job, Worker } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { InvoiceSequenceService } from '../invoice-sequence.service.js';
@@ -14,6 +15,9 @@ import { SriXmlBuilder } from './sri-xml.builder.js';
 import { SriCreditNoteXmlBuilder } from './sri-credit-note-xml.builder.js';
 import { SriSignerService } from './sri-signer.service.js';
 import { SriSoapClient } from './sri-soap.client.js';
+import { SriRidePdfService } from './sri-ride-pdf.service.js';
+import { SriDocumentStorageService } from './sri-document-storage.service.js';
+import { SriDeliveryService } from './sri-delivery.service.js';
 import { SRI_QUEUE_NAME } from './sri-queue.config.js';
 import {
   IssueCreditNoteJobData,
@@ -49,6 +53,9 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
     private readonly creditNoteXmlBuilder: SriCreditNoteXmlBuilder,
     private readonly signerService: SriSignerService,
     private readonly soapClient: SriSoapClient,
+    private readonly ridePdfService: SriRidePdfService,
+    private readonly documentStorageService: SriDocumentStorageService,
+    private readonly deliveryService: SriDeliveryService,
   ) {}
 
   onModuleInit(): void {
@@ -96,14 +103,12 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
     await this.updateJobStatus(jobRecord.id, SriDocumentJobStatus.RUNNING);
 
     try {
-      let result: ProcessResult;
-
       switch (job.name as SriJobName) {
         case SriJobName.ISSUE_INVOICE:
-          result = await this.processInvoiceJob(job as Job<IssueInvoiceJobData>);
+          await this.processInvoiceJob(job as Job<IssueInvoiceJobData>);
           break;
         case SriJobName.ISSUE_CREDIT_NOTE:
-          result = await this.processCreditNoteJob(
+          await this.processCreditNoteJob(
             job as Job<IssueCreditNoteJobData>,
           );
           break;
@@ -115,7 +120,6 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
           throw new Error(`Unknown SRI job name: ${job.name}`);
       }
 
-      await this.persistDocumentResult(jobRecord.documentType, jobRecord.documentId, result);
       await this.updateJobStatus(jobRecord.id, SriDocumentJobStatus.COMPLETED);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -183,7 +187,7 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
       })),
     };
 
-    return this.issueDocument('01', (accessKey, sequenceNumber, signedXml) => {
+    const result = await this.issueDocument('01', (accessKey, sequenceNumber, signedXml) => {
       const xml = this.xmlBuilder.buildFactura({
         accessKey,
         order: invoiceOrder,
@@ -207,6 +211,14 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
 
       return xml;
     });
+
+    const invoice = await this.persistDocumentResult('01', order.id, result);
+
+    if (result.status === InvoiceStatus.AUTHORIZED && invoice) {
+      await this.handlePostAuthorization(invoice, order, result);
+    }
+
+    return result;
   }
 
   private async processCreditNoteJob(
@@ -276,7 +288,7 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
       total,
     };
 
-    return this.issueDocument('04', (accessKey, sequenceNumber, signedXml) => {
+    const result = await this.issueDocument('04', (accessKey, sequenceNumber, signedXml) => {
       const xml = this.creditNoteXmlBuilder.buildNotaDeCredito({
         accessKey,
         customerName: returnRequest.order.customerEmail,
@@ -303,6 +315,22 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
 
       return xml;
     });
+
+    const updatedCreditNote = await this.persistDocumentResult(
+      '04',
+      creditNote.id,
+      result,
+    );
+
+    if (result.status === InvoiceStatus.AUTHORIZED && updatedCreditNote) {
+      await this.handlePostAuthorization(
+        updatedCreditNote,
+        returnRequest.order,
+        result,
+      );
+    }
+
+    return result;
   }
 
   private async issueDocument(
@@ -433,11 +461,11 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
     documentType: string,
     documentId: string,
     result: ProcessResult,
-  ): Promise<void> {
+  ): Promise<Invoice | CreditNote | undefined> {
     const sriStatus = this.mapInvoiceStatusToSriStatus(result.status);
 
     if (documentType === '01') {
-      await this.prisma.invoice.upsert({
+      return this.prisma.invoice.upsert({
         where: { orderId: documentId },
         create: {
           orderId: documentId,
@@ -468,7 +496,7 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
         },
       });
     } else if (documentType === '04') {
-      await this.prisma.creditNote.update({
+      return this.prisma.creditNote.update({
         where: { id: documentId },
         data: {
           accessKey: result.accessKey,
@@ -486,6 +514,46 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
           lastError: null,
         },
       });
+    }
+
+    return undefined;
+  }
+
+  private async handlePostAuthorization(
+    document: Invoice | CreditNote,
+    order: Order,
+    result: ProcessResult,
+  ): Promise<void> {
+    try {
+      const pdfBuffer = await this.ridePdfService.generateFromAuthorizedXml(
+        result.signedXml,
+        result.authorizationNumber,
+        result.authorizationDate,
+      );
+
+      if ('orderId' in document) {
+        await this.documentStorageService.uploadInvoiceDocuments(
+          document.id,
+          result.signedXml,
+          pdfBuffer,
+        );
+        await this.deliveryService.deliverInvoice(document, order);
+      } else {
+        await this.documentStorageService.uploadCreditNoteDocuments(
+          document.id,
+          result.signedXml,
+          pdfBuffer,
+        );
+        await this.deliveryService.deliverCreditNote(document, order);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        { documentId: document.id, error: message },
+        'SRI document post-authorization failed',
+      );
+      // Do not rethrow: the SRI document is already authorized; delivery
+      // failures are tracked separately and can be retried from the admin UI.
     }
   }
 

@@ -14,6 +14,9 @@ import { SriXmlBuilder } from './sri-xml.builder.js';
 import { SriCreditNoteXmlBuilder } from './sri-credit-note-xml.builder.js';
 import { SriSignerService } from './sri-signer.service.js';
 import { SriSoapClient } from './sri-soap.client.js';
+import { SriRidePdfService } from './sri-ride-pdf.service.js';
+import { SriDocumentStorageService } from './sri-document-storage.service.js';
+import { SriDeliveryService } from './sri-delivery.service.js';
 import { SriQueueWorker } from './sri-queue.worker.js';
 
 vi.mock('bullmq', () => ({
@@ -64,6 +67,17 @@ describe('SriQueueWorker', () => {
     poll: ReturnType<typeof vi.fn>;
     queryStatus: ReturnType<typeof vi.fn>;
   };
+  let ridePdfService: {
+    generateFromAuthorizedXml: ReturnType<typeof vi.fn>;
+  };
+  let documentStorageService: {
+    uploadInvoiceDocuments: ReturnType<typeof vi.fn>;
+    uploadCreditNoteDocuments: ReturnType<typeof vi.fn>;
+  };
+  let deliveryService: {
+    deliverInvoice: ReturnType<typeof vi.fn>;
+    deliverCreditNote: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
     prisma = {
@@ -97,12 +111,12 @@ describe('SriQueueWorker', () => {
         }),
       },
     invoice: {
-      upsert: vi.fn().mockResolvedValue({}),
+      upsert: vi.fn().mockResolvedValue({ id: 'inv-1', orderId: 'order_1' }),
       update: vi.fn().mockResolvedValue({}),
     },
       creditNote: {
         findUnique: vi.fn().mockResolvedValue(null),
-        update: vi.fn().mockResolvedValue({}),
+        update: vi.fn().mockResolvedValue({ id: 'cn_1' }),
       },
     };
 
@@ -143,6 +157,30 @@ describe('SriQueueWorker', () => {
       }),
     };
 
+    ridePdfService = {
+      generateFromAuthorizedXml: vi.fn().mockResolvedValue(Buffer.from('pdf')),
+    };
+
+    documentStorageService = {
+      uploadInvoiceDocuments: vi.fn().mockResolvedValue({
+        xmlUrl: 'https://public.example.com/xml',
+        pdfUrl: 'https://public.example.com/pdf',
+        xmlKey: 'xml-key',
+        pdfKey: 'pdf-key',
+      }),
+      uploadCreditNoteDocuments: vi.fn().mockResolvedValue({
+        xmlUrl: 'https://public.example.com/cn-xml',
+        pdfUrl: 'https://public.example.com/cn-pdf',
+        xmlKey: 'cn-xml-key',
+        pdfKey: 'cn-pdf-key',
+      }),
+    };
+
+    deliveryService = {
+      deliverInvoice: vi.fn().mockResolvedValue(undefined),
+      deliverCreditNote: vi.fn().mockResolvedValue(undefined),
+    };
+
     const module = await Test.createTestingModule({
       providers: [
         SriQueueWorker,
@@ -177,6 +215,9 @@ describe('SriQueueWorker', () => {
         { provide: SriCreditNoteXmlBuilder, useValue: creditNoteXmlBuilder },
         { provide: SriSignerService, useValue: signerService },
         { provide: SriSoapClient, useValue: soapClient },
+        { provide: SriRidePdfService, useValue: ridePdfService },
+        { provide: SriDocumentStorageService, useValue: documentStorageService },
+        { provide: SriDeliveryService, useValue: deliveryService },
       ],
     }).compile();
 
@@ -211,6 +252,20 @@ describe('SriQueueWorker', () => {
           authorizationNumber: '1234567890',
         }),
       }),
+    );
+    expect(ridePdfService.generateFromAuthorizedXml).toHaveBeenCalledWith(
+      'signed_xml',
+      '1234567890',
+      expect.any(Date),
+    );
+    expect(documentStorageService.uploadInvoiceDocuments).toHaveBeenCalledWith(
+      'inv-1',
+      'signed_xml',
+      Buffer.from('pdf'),
+    );
+    expect(deliveryService.deliverInvoice).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'inv-1', orderId: 'order_1' }),
+      expect.objectContaining({ id: 'order_1' }),
     );
     expect(prisma.sriDocumentJob.update).toHaveBeenLastCalledWith(
       expect.objectContaining({
@@ -312,6 +367,15 @@ describe('SriQueueWorker', () => {
           authorizationNumber: '1234567890',
         }),
       }),
+    );
+    expect(documentStorageService.uploadCreditNoteDocuments).toHaveBeenCalledWith(
+      'cn_1',
+      'signed_xml',
+      Buffer.from('pdf'),
+    );
+    expect(deliveryService.deliverCreditNote).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'cn_1' }),
+      expect.objectContaining({ id: 'order_1' }),
     );
   });
 

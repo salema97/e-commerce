@@ -33,12 +33,21 @@ export interface RefundConfirmedContext {
   refundMethod: string;
 }
 
+export interface SriDocumentDeliveryContext {
+  customerName: string;
+  documentTypeLabel: string;
+  accessKey: string;
+  pdfUrl: string;
+  xmlUrl: string;
+}
+
 export type NotificationContext =
   | OrderConfirmedContext
   | OrderShippedContext
   | OrderDeliveredContext
   | PaymentFailedContext
-  | RefundConfirmedContext;
+  | RefundConfirmedContext
+  | SriDocumentDeliveryContext;
 
 /**
  * Render a transactional WhatsApp template into plain Spanish text.
@@ -60,6 +69,8 @@ export function renderWhatsAppTemplate(
       return paymentFailed(context as PaymentFailedContext);
     case 'REFUND_CONFIRMED':
       return refundConfirmed(context as RefundConfirmedContext);
+    case 'SRI_DOCUMENT_DELIVERY':
+      return sriDocumentDelivery(context as SriDocumentDeliveryContext);
     default:
       throw new Error(`Unsupported WhatsApp template: ${template}`);
   }
@@ -112,5 +123,15 @@ function refundConfirmed(ctx: RefundConfirmedContext): string {
     `Monto: ${ctx.amount}\n` +
     `Metodo: ${ctx.refundMethod}\n\n` +
     `El reembolso se reflejara en los proximos dias habiles segun tu banco o metodo de pago.`
+  );
+}
+
+function sriDocumentDelivery(ctx: SriDocumentDeliveryContext): string {
+  return (
+    `Hola ${ctx.customerName}, tu ${ctx.documentTypeLabel} ha sido autorizada por el SRI.\n\n` +
+    `Clave de acceso: ${ctx.accessKey}\n` +
+    `PDF: ${ctx.pdfUrl}\n` +
+    `XML: ${ctx.xmlUrl}\n\n` +
+    `Guarda estos documentos para tus registros.`
   );
 }

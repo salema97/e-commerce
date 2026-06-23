@@ -9,10 +9,21 @@ import { SriSignerService } from './sri/sri-signer.service.js';
 import { SriSoapClient } from './sri/sri-soap.client.js';
 import { InvoiceSequenceService } from './invoice-sequence.service.js';
 import { SriCreditNoteXmlBuilder } from './sri/sri-credit-note-xml.builder.js';
+import { SriRidePdfService } from './sri/sri-ride-pdf.service.js';
+import { SriDocumentStorageService } from './sri/sri-document-storage.service.js';
+import { SriDeliveryService } from './sri/sri-delivery.service.js';
 import { PrismaModule } from '../prisma/prisma.module.js';
+import { StorageModule } from '../storage/storage.module.js';
+import { EmailModule } from '../notifications/email.module.js';
+import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [
+    PrismaModule,
+    StorageModule,
+    EmailModule,
+    WhatsAppNotificationModule,
+  ],
   controllers: [InvoicesController],
   providers: [
     InvoicesService,
@@ -24,6 +35,9 @@ import { PrismaModule } from '../prisma/prisma.module.js';
     SriSignerService,
     SriSoapClient,
     InvoiceSequenceService,
+    SriRidePdfService,
+    SriDocumentStorageService,
+    SriDeliveryService,
   ],
   exports: [
     InvoicesService,
@@ -35,6 +49,9 @@ import { PrismaModule } from '../prisma/prisma.module.js';
     SriCreditNoteXmlBuilder,
     SriSignerService,
     SriSoapClient,
+    SriRidePdfService,
+    SriDocumentStorageService,
+    SriDeliveryService,
   ],
 })
 export class InvoicesModule {}
