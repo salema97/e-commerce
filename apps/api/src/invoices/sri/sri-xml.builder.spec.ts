@@ -67,6 +67,45 @@ describe('SriXmlBuilder', () => {
     expect(xml).toContain('<importeTotal>115.00</importeTotal>');
     expect(xml).toContain('<descripcion>Test product</descripcion>');
     expect(xml).toContain('<cantidad>1</cantidad>');
+    expect(xml).toContain('<totalSinImpuestos>100.00</totalSinImpuestos>');
+    expect(xml).toContain('<totalDescuento>0.00</totalDescuento>');
+  });
+
+  it('matches totalSinImpuestos with the sum of detail lines after discount', () => {
+    const discountedOrder: InvoiceOrder = {
+      ...order,
+      subtotal: 200,
+      discountAmount: 20,
+      taxAmount: 27,
+      total: 207,
+      items: [
+        {
+          code: 'SKU-001',
+          description: 'Test product',
+          quantity: 2,
+          unitPrice: 100,
+          discount: 20,
+          taxRate: 15,
+        },
+      ],
+    };
+
+    const xml = builder.buildFactura({
+      accessKey: '1501202401017921467390011001001001000000001000000001',
+      order: discountedOrder,
+      establishmentCode: '001',
+      emissionPointCode: '001',
+      sequenceNumber: '000000001',
+      environment: '1',
+      companyRuc: '1792146739001',
+      companyName: 'Test Company',
+    });
+
+    expect(xml).toContain('<totalSinImpuestos>180.00</totalSinImpuestos>');
+    expect(xml).toContain('<totalDescuento>20.00</totalDescuento>');
+    expect(xml).toContain('<precioTotalSinImpuesto>180.00</precioTotalSinImpuesto>');
+    expect(xml).toContain('<baseImponible>180.00</baseImponible>');
+    expect(xml).toContain('<importeTotal>207.00</importeTotal>');
   });
 
   it('detects RUC buyer identification type', () => {

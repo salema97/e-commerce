@@ -66,7 +66,9 @@ export class SriXmlBuilder {
             input.order.customerIdentification ?? '9999999999999',
           direccionComprador:
             input.order.customerAddress ?? 'Direccion comprador',
-          totalSinImpuestos: this.formatNumber(input.order.subtotal),
+          totalSinImpuestos: this.formatNumber(
+            input.order.subtotal - input.order.discountAmount,
+          ),
           totalDescuento: this.formatNumber(input.order.discountAmount),
           totalConImpuestos: {
             totalImpuesto: {
