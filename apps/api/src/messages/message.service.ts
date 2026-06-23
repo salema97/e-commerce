@@ -145,6 +145,18 @@ export class MessageService {
     status: MessageStatus,
     externalStatus?: string,
   ) {
+    const current = await this.prisma.message.findUnique({
+      where: { externalMessageId },
+    });
+
+    if (!current) {
+      return { count: 0 };
+    }
+
+    if (!isStatusUpgrade(current.status, status)) {
+      return { count: 0 };
+    }
+
     const data: Prisma.MessageUpdateInput = {
       status,
       ...(externalStatus && { externalStatus }),
@@ -157,4 +169,23 @@ export class MessageService {
       data,
     });
   }
+}
+
+function statusRank(status: MessageStatus): number {
+  switch (status) {
+    case 'FAILED':
+      return 0;
+    case 'SENT':
+      return 1;
+    case 'DELIVERED':
+      return 2;
+    case 'READ':
+      return 3;
+    default:
+      return 1;
+  }
+}
+
+function isStatusUpgrade(current: MessageStatus, next: MessageStatus): boolean {
+  return statusRank(next) > statusRank(current);
 }
