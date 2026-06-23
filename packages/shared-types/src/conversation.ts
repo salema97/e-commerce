@@ -1,25 +1,41 @@
-import type { ConversationStatus, MessageDirection, MessageStatus } from './enums.js';
+import type {
+  ConversationStatus,
+  MessageContentType,
+  MessageDirection,
+  MessageStatus,
+} from './enums.js';
 
 export interface Message {
   id: string;
   conversationId: string;
+  remoteJid: string;
+  instance: string;
   direction: MessageDirection;
+  contentType: MessageContentType;
   content: string;
   mediaUrl?: string | null;
-  status?: MessageStatus | null;
-  senderType?: string | null;
+  status: MessageStatus;
+  externalMessageId?: string | null;
+  externalStatus?: string | null;
+  errorMessage?: string | null;
+  sentAt?: string | null;
+  deliveredAt?: string | null;
+  readAt?: string | null;
   createdAt: string;
+  updatedAt: string;
   conversation?: unknown;
 }
 
 export interface Conversation {
   id: string;
   userId?: string | null;
-  customerPhone: string;
-  customerName?: string | null;
+  remoteJid: string;
+  instance: string;
+  contactName?: string | null;
   status: ConversationStatus;
   assignedAgentId?: string | null;
-  source: string;
+  lastMessageAt?: string | null;
+  unreadCount: number;
   createdAt: string;
   updatedAt: string;
   user?: unknown;
@@ -29,13 +45,11 @@ export interface Conversation {
 export interface SendMessageDto {
   conversationId: string;
   content: string;
-  mediaUrl?: string;
 }
 
 export interface UpdateConversationDto {
   status?: ConversationStatus;
   assignedAgentId?: string;
-  customerName?: string;
 }
 
 export interface ConversationTemplate {

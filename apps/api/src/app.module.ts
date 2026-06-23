@@ -22,6 +22,11 @@ import { ReturnsModule } from './returns/returns.module.js';
 import { ClerkJwtGuard } from './auth/clerk-jwt.guard.js';
 import { RolesGuard } from './auth/roles.guard.js';
 import { AuditInterceptor } from './audit/audit.interceptor.js';
+import { WhatsAppModule } from './whatsapp/whatsapp.module.js';
+import { ConversationModule } from './conversations/conversation.module.js';
+import { MessageModule } from './messages/message.module.js';
+import { WebhooksModule } from './webhooks/webhooks.module.js';
+import { RedisModule } from './common/redis/redis.module.js';
 
 @Module({
   imports: [
@@ -60,6 +65,11 @@ import { AuditInterceptor } from './audit/audit.interceptor.js';
     PaymentsModule,
     InvoicesModule,
     ReturnsModule,
+    WhatsAppModule,
+    ConversationModule,
+    MessageModule,
+    WebhooksModule,
+    RedisModule,
   ],
   providers: [
     {
