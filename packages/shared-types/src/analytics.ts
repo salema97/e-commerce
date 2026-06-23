@@ -14,6 +14,7 @@ export const DOMAIN_EVENT_NAMES = [
   'order.paid',
   'order.shipped',
   'product.updated',
+  'product.deleted',
   'inventory.changed',
 ] as const;
 
