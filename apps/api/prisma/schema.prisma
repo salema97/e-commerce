@@ -159,7 +159,7 @@ enum SriDocumentStatus {
 
 enum SriDocumentJobStatus {
   PENDING
-  PROCESSING
+  RUNNING
   COMPLETED
   FAILED
   DLQ

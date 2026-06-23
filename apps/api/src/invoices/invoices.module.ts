@@ -25,6 +25,16 @@ import { PrismaModule } from '../prisma/prisma.module.js';
     SriSoapClient,
     InvoiceSequenceService,
   ],
-  exports: [InvoicesService, InvoiceProviderFactory, InvoiceSequenceService],
+  exports: [
+    InvoicesService,
+    InvoiceProviderFactory,
+    InvoiceSequenceService,
+    DirectSriInvoiceProvider,
+    SriAccessKeyBuilder,
+    SriXmlBuilder,
+    SriCreditNoteXmlBuilder,
+    SriSignerService,
+    SriSoapClient,
+  ],
 })
 export class InvoicesModule {}
