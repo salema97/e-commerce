@@ -22,21 +22,29 @@ export class PaymentWebhookService {
 
   async handle(
     providerName: string,
-    payload: unknown,
+    rawBody: Buffer,
     signature: string | undefined,
   ): Promise<ProviderPaymentResult> {
     const providerEnum = this.parseProviderName(providerName);
     const provider = this.providerFactory.getProvider(providerEnum);
     const secret = this.getProviderSecret(providerEnum);
 
-    const rawBody = Buffer.from(JSON.stringify(payload));
     if (!provider.validateWebhookSignature(rawBody, signature ?? '', secret)) {
       throw new UnauthorizedException('Invalid webhook signature');
     }
 
+    const payload = this.parseRawBody(rawBody);
     const result = await provider.parseWebhookPayload(payload);
     await this.applyPaymentResult(providerEnum, result);
     return result;
+  }
+
+  private parseRawBody(rawBody: Buffer): unknown {
+    try {
+      return JSON.parse(rawBody.toString('utf8'));
+    } catch {
+      throw new BadRequestException('Webhook body is not valid JSON');
+    }
   }
 
   private parseProviderName(name: string): PaymentProviderEnum {
