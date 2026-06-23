@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Queue } from 'bullmq';
 import { PrismaModule } from '../../prisma/prisma.module.js';
@@ -13,7 +13,7 @@ import { SriReconciliationService } from './sri-reconciliation.service.js';
   imports: [
     ConfigModule.forFeature(sriQueueConfig),
     PrismaModule,
-    InvoicesModule,
+    forwardRef(() => InvoicesModule),
   ],
   providers: [
     SriQueueService,
