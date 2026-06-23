@@ -9,9 +9,8 @@ import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { RedisService } from '../src/common/redis/redis.service.js';
 import { StripeProvider } from '../src/payments/stripe/stripe.provider.js';
-import { DirectSriInvoiceProvider } from '../src/invoices/sri/sri-invoice.provider.js';
+import { SriQueueService } from '../src/invoices/sri/sri-queue.service.js';
 import { PaymentStatus } from '../src/payments/entities/payment-status.enum.js';
-import { InvoiceStatus } from '../src/invoices/invoice-status.enum.js';
 
 const TEST_STRIPE_WEBHOOK_SECRET = 'whsec_testsecret';
 
@@ -34,8 +33,7 @@ describe('Stripe Webhook (e2e)', () => {
   let paymentFindFirstMock: ReturnType<typeof vi.fn>;
   let orderFindUniqueMock: ReturnType<typeof vi.fn>;
   let invoiceFindUniqueMock: ReturnType<typeof vi.fn>;
-  let invoiceCreateMock: ReturnType<typeof vi.fn>;
-  let providerIssueInvoiceMock: ReturnType<typeof vi.fn>;
+  let addIssueInvoiceJobMock: ReturnType<typeof vi.fn>;
 
   beforeAll(async () => {
     paymentFindFirstMock = vi.fn();
@@ -43,8 +41,19 @@ describe('Stripe Webhook (e2e)', () => {
     orderStatusHistoryCreateMock = vi.fn();
     orderFindUniqueMock = vi.fn();
     invoiceFindUniqueMock = vi.fn();
-    invoiceCreateMock = vi.fn();
-    providerIssueInvoiceMock = vi.fn();
+    addIssueInvoiceJobMock = vi.fn().mockResolvedValue({
+      id: 'job_1',
+      jobId: 'sri-documents:issue-invoice:01:order_1',
+      documentType: '01',
+      documentId: 'order_1',
+      status: 'PENDING',
+      attempts: 0,
+      maxAttempts: 5,
+      payload: { orderId: 'order_1' },
+      lastError: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
     const prismaMock = {
       payment: {
@@ -63,7 +72,6 @@ describe('Stripe Webhook (e2e)', () => {
       },
       invoice: {
         findUnique: invoiceFindUniqueMock,
-        create: invoiceCreateMock,
       },
       inventory: {
         findFirst: vi.fn().mockResolvedValue({
@@ -119,10 +127,10 @@ describe('Stripe Webhook (e2e)', () => {
       ),
     };
 
-    const invoiceProviderMock = {
-      issueInvoice: providerIssueInvoiceMock,
-      getInvoiceStatus: vi.fn(),
-      issueCreditNote: vi.fn(),
+    const sriQueueMock = {
+      addIssueInvoiceJob: addIssueInvoiceJobMock,
+      addIssueCreditNoteJob: vi.fn(),
+      addReconcileDocumentJob: vi.fn(),
     };
 
     const redisServiceMock = {
@@ -141,8 +149,8 @@ describe('Stripe Webhook (e2e)', () => {
       .useValue(redisServiceMock)
       .overrideProvider(StripeProvider)
       .useValue(stripeProviderMock)
-      .overrideProvider(DirectSriInvoiceProvider)
-      .useValue(invoiceProviderMock)
+      .overrideProvider(SriQueueService)
+      .useValue(sriQueueMock)
       .compile();
 
     app = module.createNestApplication();
@@ -168,7 +176,7 @@ describe('Stripe Webhook (e2e)', () => {
       .expect(401);
   });
 
-  it('updates payment status and records order history for payment_intent.succeeded', async () => {
+  it('updates payment status and enqueues an SRI invoice job for payment_intent.succeeded', async () => {
     paymentFindFirstMock.mockResolvedValue({
       id: 'pay_1',
       orderId: 'order_1',
@@ -194,25 +202,6 @@ describe('Stripe Webhook (e2e)', () => {
       payments: [{ id: 'pay_1' }],
     });
     invoiceFindUniqueMock.mockResolvedValue(null);
-    providerIssueInvoiceMock.mockResolvedValue({
-      accessKey: '1'.repeat(49),
-      status: InvoiceStatus.AUTHORIZED,
-      authorizationNumber: '1234567890',
-      xmlContent: '<xml></xml>',
-      sriResponse: { autorizaciones: [{ estado: 'AUTORIZADO' }] },
-    });
-    invoiceCreateMock.mockResolvedValue({
-      id: 'inv_1',
-      orderId: 'order_1',
-      documentType: '01',
-      accessKey: '1'.repeat(49),
-      authorizationNumber: '1234567890',
-      status: InvoiceStatus.AUTHORIZED,
-      xmlContent: '<xml></xml>',
-      pdfUrl: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
 
     const webhook = signStripeWebhook({
       type: 'payment_intent.succeeded',
@@ -240,6 +229,6 @@ describe('Stripe Webhook (e2e)', () => {
         data: expect.objectContaining({ orderId: 'order_1' }),
       }),
     );
-    expect(invoiceCreateMock).toHaveBeenCalled();
+    expect(addIssueInvoiceJobMock).toHaveBeenCalledWith('order_1');
   });
 });

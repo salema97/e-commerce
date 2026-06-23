@@ -6,8 +6,8 @@ import { ConfigService } from '@nestjs/config';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
-import { DirectSriInvoiceProvider } from '../src/invoices/sri/sri-invoice.provider.js';
 import { StripeProvider } from '../src/payments/stripe/stripe.provider.js';
+import { SriQueueService } from '../src/invoices/sri/sri-queue.service.js';
 import {
   OrderStatus,
   PaymentStatus,
@@ -55,10 +55,11 @@ describe('Returns (e2e)', () => {
   let app: INestApplication;
   let prismaMock: ReturnType<typeof buildPrismaMock>;
   let stripeRefundMock: ReturnType<typeof vi.fn>;
-  let creditNoteMock: ReturnType<typeof vi.fn>;
+  let creditNoteCreateMock: ReturnType<typeof vi.fn>;
   let inventoryUpdateMock: ReturnType<typeof vi.fn>;
   let storeCreditUpdateMock: ReturnType<typeof vi.fn>;
   let refundCreateMock: ReturnType<typeof vi.fn>;
+  let addIssueCreditNoteJobMock: ReturnType<typeof vi.fn>;
 
   function buildPrismaMock() {
     const txClient = {
@@ -107,7 +108,7 @@ describe('Returns (e2e)', () => {
         findFirst: vi.fn(),
         findUnique: vi.fn(),
         findUniqueOrThrow: vi.fn(),
-        create: vi.fn(),
+        create: creditNoteCreateMock,
       },
       auditLog: { create: vi.fn().mockResolvedValue({ id: 'log_1' }) },
     };
@@ -117,18 +118,25 @@ describe('Returns (e2e)', () => {
     inventoryUpdateMock = vi.fn();
     storeCreditUpdateMock = vi.fn();
     refundCreateMock = vi.fn();
+    creditNoteCreateMock = vi.fn();
+    addIssueCreditNoteJobMock = vi.fn().mockResolvedValue({
+      id: 'job_1',
+      jobId: 'sri-documents:issue-credit-note:04:cn1',
+      documentType: '04',
+      documentId: 'cn1',
+      status: 'PENDING',
+      attempts: 0,
+      maxAttempts: 5,
+      payload: { creditNoteId: 'cn1' },
+      lastError: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
     prismaMock = buildPrismaMock();
 
     stripeRefundMock = vi.fn().mockResolvedValue({
       providerRefundId: 're_return_1',
       status: RefundStatus.COMPLETED,
-    });
-
-    creditNoteMock = vi.fn().mockResolvedValue({
-      accessKey: '3'.repeat(49),
-      status: 'AUTHORIZED',
-      authorizationNumber: '1234567890',
-      xmlContent: '<xml></xml>',
     });
 
     const stripeProviderMock = {
@@ -141,10 +149,10 @@ describe('Returns (e2e)', () => {
       parseWebhookPayload: vi.fn(),
     };
 
-    const invoiceProviderMock = {
-      issueInvoice: vi.fn(),
-      getInvoiceStatus: vi.fn(),
-      issueCreditNote: creditNoteMock,
+    const sriQueueMock = {
+      addIssueInvoiceJob: vi.fn(),
+      addIssueCreditNoteJob: addIssueCreditNoteJobMock,
+      addReconcileDocumentJob: vi.fn(),
     };
 
     const module = await Test.createTestingModule({ imports: [AppModule] })
@@ -154,8 +162,8 @@ describe('Returns (e2e)', () => {
       .useValue(prismaMock as never)
       .overrideProvider(StripeProvider)
       .useValue(stripeProviderMock)
-      .overrideProvider(DirectSriInvoiceProvider)
-      .useValue(invoiceProviderMock)
+      .overrideProvider(SriQueueService)
+      .useValue(sriQueueMock)
       .compile();
 
     app = module.createNestApplication();
@@ -349,19 +357,19 @@ describe('Returns (e2e)', () => {
     });
     prismaMock.__txClient.inventory.findFirst.mockResolvedValue({ id: 'inv1', productId: 'p1', variantId: null, quantity: 10, reservedQuantity: 0 });
     prismaMock.creditNote.findFirst.mockResolvedValue(null);
-    prismaMock.creditNote.create.mockResolvedValue({
+    creditNoteCreateMock.mockResolvedValue({
       id: 'cn1',
-      accessKey: '3'.repeat(49),
-      status: CreditNoteStatus.AUTHORIZED,
+      accessKey: 'PENDING-cn1',
+      status: CreditNoteStatus.DRAFT,
       totalAmount: 100,
-      xmlContent: '<xml></xml>',
+      xmlContent: null,
     });
     prismaMock.creditNote.findUniqueOrThrow.mockResolvedValue({
       id: 'cn1',
-      accessKey: '3'.repeat(49),
-      status: CreditNoteStatus.AUTHORIZED,
+      accessKey: 'PENDING-cn1',
+      status: CreditNoteStatus.DRAFT,
       totalAmount: 100,
-      xmlContent: '<xml></xml>',
+      xmlContent: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -377,7 +385,15 @@ describe('Returns (e2e)', () => {
     expect(inventoryUpdateMock).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ quantity: { increment: 1 } }) }),
     );
-    expect(creditNoteMock).toHaveBeenCalled();
+    expect(creditNoteCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          accessKey: expect.stringMatching(/^PENDING-/),
+          status: CreditNoteStatus.DRAFT,
+        }),
+      }),
+    );
+    expect(addIssueCreditNoteJobMock).toHaveBeenCalledWith('cn1');
   });
 
   it('resolving a return without invoice skips credit note but still restocks', async () => {
@@ -422,7 +438,7 @@ describe('Returns (e2e)', () => {
       .expect(200);
 
     expect(res.body.status).toBe(ReturnStatus.RESOLVED);
-    expect(creditNoteMock).not.toHaveBeenCalled();
+    expect(addIssueCreditNoteJobMock).not.toHaveBeenCalled();
     expect(inventoryUpdateMock).toHaveBeenCalled();
   });
 
