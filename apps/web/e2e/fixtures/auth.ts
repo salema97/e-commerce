@@ -5,6 +5,11 @@ export interface TestUser {
   role: 'SUPER_ADMIN' | 'ADMIN' | 'FINANCE' | 'INVENTORY' | 'SUPPORT' | 'CUSTOMER';
 }
 
+export const TEST_SUPPORT: TestUser = {
+  userId: 'test_support_user',
+  role: 'SUPPORT',
+};
+
 export const TEST_CUSTOMER: TestUser = {
   userId: 'test_customer_user',
   role: 'CUSTOMER',

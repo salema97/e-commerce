@@ -37,3 +37,4 @@ export const adminRoles: Role[] = ['SUPER_ADMIN', 'ADMIN'];
 export const financeRoles: Role[] = ['SUPER_ADMIN', 'ADMIN', 'FINANCE'];
 export const inventoryRoles: Role[] = ['SUPER_ADMIN', 'ADMIN', 'INVENTORY'];
 export const supportRoles: Role[] = ['SUPER_ADMIN', 'ADMIN', 'SUPPORT'];
+export const adminOrSupportRoles: Role[] = ['SUPER_ADMIN', 'ADMIN', 'SUPPORT'];

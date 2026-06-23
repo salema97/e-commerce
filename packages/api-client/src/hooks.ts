@@ -40,6 +40,11 @@ import type {
   UpdateReturnStatusDto,
   ResolveReturnDto,
   StoreCreditBalance,
+  Conversation,
+  Message,
+  PaginatedConversations,
+  PaginatedMessages,
+  QuickReply,
 } from '@repo/shared-types';
 import type { ApiClient } from './client.js';
 
@@ -62,6 +67,10 @@ export const queryKeys = {
   returns: (filters?: Record<string, string | number | undefined>) => ['returns', filters ?? {}] as const,
   return: (id: string) => ['returns', id] as const,
   storeCredit: ['returns', 'store-credit'] as const,
+  conversations: (filters?: Record<string, string | undefined>) => ['conversations', filters ?? {}] as const,
+  conversation: (id: string) => ['conversations', id] as const,
+  messages: (conversationId: string) => ['conversations', conversationId, 'messages'] as const,
+  quickReplies: ['whatsapp', 'quick-replies'] as const,
 };
 
 export function createQueryHooks(client: ApiClient) {
@@ -484,6 +493,79 @@ export function createQueryHooks(client: ApiClient) {
       useQuery({
         queryKey: queryKeys.storeCredit,
         queryFn: () => client.returns.myStoreCredit(),
+        ...options,
+      }),
+
+    useConversations: (
+      filters?: Record<string, string | undefined>,
+      options?: Omit<UseQueryOptions<PaginatedConversations, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.conversations(filters),
+        queryFn: () => client.conversations.findAll(filters),
+        refetchInterval: 10_000,
+        ...options,
+      }),
+
+    useConversation: (
+      id: string,
+      options?: Omit<UseQueryOptions<Conversation, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.conversation(id),
+        queryFn: () => client.conversations.findOne(id),
+        enabled: Boolean(id),
+        refetchInterval: 10_000,
+        ...options,
+      }),
+
+    useUpdateConversation: (
+      options?: UseMutationOptions<Conversation, Error, { id: string; data: { status?: string; assignedAgentId?: string } }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, data }) => client.conversations.update(id, data),
+        onSuccess: (_, { id }) => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.conversations() });
+          queryClient.invalidateQueries({ queryKey: queryKeys.conversation(id) });
+        },
+        ...options,
+      });
+    },
+
+    useMessages: (
+      conversationId: string,
+      options?: Omit<UseQueryOptions<PaginatedMessages, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.messages(conversationId),
+        queryFn: () => client.messages.findAll(conversationId),
+        enabled: Boolean(conversationId),
+        refetchInterval: 10_000,
+        ...options,
+      }),
+
+    useCreateMessage: (
+      options?: UseMutationOptions<Message, Error, { conversationId: string; content: string }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ conversationId, content }) => client.messages.create(conversationId, { content }),
+        onSuccess: (_, { conversationId }) => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.messages(conversationId) });
+          queryClient.invalidateQueries({ queryKey: queryKeys.conversations() });
+          queryClient.invalidateQueries({ queryKey: queryKeys.conversation(conversationId) });
+        },
+        ...options,
+      });
+    },
+
+    useQuickReplies: (
+      options?: Omit<UseQueryOptions<QuickReply[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.quickReplies,
+        queryFn: () => client.whatsapp.getQuickReplies(),
         ...options,
       }),
   };

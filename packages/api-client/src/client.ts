@@ -36,6 +36,11 @@ import type {
   UpdateReturnStatusDto,
   ResolveReturnDto,
   StoreCreditBalance,
+  Conversation,
+  Message,
+  PaginatedConversations,
+  PaginatedMessages,
+  QuickReply,
 } from '@repo/shared-types';
 
 export interface ApiClientOptions {
@@ -210,6 +215,18 @@ export function createApiClient(options: ApiClientOptions) {
       addItem: (data: AddCartItemDto) => request<Cart>('POST', '/cart/items', data),
       updateItem: (id: string, data: UpdateCartItemDto) => request<Cart>('PATCH', `/cart/items/${id}`, data),
       removeItem: (id: string) => request<Cart>('DELETE', `/cart/items/${id}`),
+    },
+    conversations: {
+      findAll: (query?: { status?: string; assignedToMe?: string; search?: string; page?: number; limit?: number }) => request<PaginatedConversations>('GET', '/conversations', undefined, query),
+      findOne: (id: string) => request<Conversation>('GET', `/conversations/${id}`),
+      update: (id: string, data: { status?: string; assignedAgentId?: string }) => request<Conversation>('PATCH', `/conversations/${id}`, data),
+    },
+    messages: {
+      findAll: (conversationId: string, query?: { page?: number; limit?: number }) => request<PaginatedMessages>('GET', `/conversations/${conversationId}/messages`, undefined, query),
+      create: (conversationId: string, data: { content: string }) => request<Message>('POST', `/conversations/${conversationId}/messages`, data),
+    },
+    whatsapp: {
+      getQuickReplies: () => request<QuickReply[]>('GET', '/whatsapp/quick-replies'),
     },
   };
 }
