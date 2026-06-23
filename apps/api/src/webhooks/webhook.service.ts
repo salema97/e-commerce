@@ -4,6 +4,7 @@ import { ecuadorPhoneSchema } from '@repo/shared-utils';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ConversationService } from '../conversations/conversation.service.js';
 import { MessageService } from '../messages/message.service.js';
+import { SupportBotService } from '../ai/support-bot/support-bot.service.js';
 
 export interface EvolutionWebhookPayload {
   event?: string;
@@ -37,6 +38,7 @@ export class WebhookService {
     private readonly conversationService: ConversationService,
     private readonly messageService: MessageService,
     private readonly prisma: PrismaService,
+    private readonly supportBot: SupportBotService,
   ) {}
 
   async handleEvent(event: string, payload: EvolutionWebhookPayload): Promise<void> {
@@ -93,6 +95,12 @@ export class WebhookService {
     });
 
     await this.handleOptOut(phone, content);
+
+    if (contentType === 'TEXT' && content.trim()) {
+      void this.supportBot.handleInboundWhatsApp(conversation.id, content, phone).catch((error: unknown) => {
+        this.logger.error({ error, conversationId: conversation.id }, 'Support bot processing failed');
+      });
+    }
   }
 
   private async handleStatusUpdate(payload: EvolutionWebhookPayload) {

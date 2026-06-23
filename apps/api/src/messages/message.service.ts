@@ -24,6 +24,7 @@ export class MessageService {
     externalMessageId?: string;
     externalStatus?: string;
     sentAt?: Date;
+    senderType?: 'CUSTOMER' | 'AGENT' | 'BOT' | 'SYSTEM';
   }) {
     const message = await this.prisma.message.create({
       data: {
@@ -31,6 +32,7 @@ export class MessageService {
         remoteJid: data.remoteJid,
         instance: data.instance ?? 'ecommerce',
         direction: 'INBOUND',
+        senderType: data.senderType ?? 'CUSTOMER',
         contentType: data.contentType ?? 'TEXT',
         content: data.content,
         mediaUrl: data.mediaUrl,
@@ -42,6 +44,62 @@ export class MessageService {
 
     await this.conversationService.touch(data.conversationId, 'INBOUND');
 
+    return message;
+  }
+
+  async createBotOutbound(conversationId: string, content: string) {
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+    });
+
+    if (!conversation) {
+      throw new NotFoundException(`Conversation with id ${conversationId} not found`);
+    }
+
+    if (conversation.channel === 'WHATSAPP') {
+      let result:
+        | { providerMessageId: string; status: import('@repo/shared-types').MessageStatus }
+        | undefined;
+      let status: MessageStatus = 'SENT';
+      let errorMessage: string | undefined;
+
+      try {
+        result = await this.whatsappProvider.sendText(conversation.remoteJid, content);
+      } catch (error) {
+        status = 'FAILED';
+        errorMessage = error instanceof Error ? error.message : 'Unknown send error';
+      }
+
+      return this.prisma.message.create({
+        data: {
+          conversationId,
+          remoteJid: conversation.remoteJid,
+          instance: conversation.instance,
+          direction: 'OUTBOUND',
+          senderType: 'BOT',
+          contentType: 'TEXT',
+          content,
+          status,
+          externalMessageId: result?.providerMessageId,
+          errorMessage,
+        },
+      });
+    }
+
+    const message = await this.prisma.message.create({
+      data: {
+        conversationId,
+        remoteJid: conversation.remoteJid,
+        instance: conversation.instance,
+        direction: 'OUTBOUND',
+        senderType: 'BOT',
+        contentType: 'TEXT',
+        content,
+        status: 'SENT',
+      },
+    });
+
+    await this.conversationService.touch(conversationId, 'OUTBOUND');
     return message;
   }
 
@@ -73,6 +131,7 @@ export class MessageService {
         remoteJid: conversation.remoteJid,
         instance: conversation.instance,
         direction: 'OUTBOUND',
+        senderType: 'AGENT',
         contentType: 'TEXT',
         content: dto.content,
         status,
@@ -94,6 +153,7 @@ export class MessageService {
     status?: MessageStatus;
     externalMessageId?: string | null;
     errorMessage?: string | null;
+    senderType?: 'CUSTOMER' | 'AGENT' | 'BOT' | 'SYSTEM';
   }) {
     const message = await this.prisma.message.create({
       data: {
@@ -101,6 +161,7 @@ export class MessageService {
         remoteJid: data.remoteJid,
         instance: data.instance ?? 'ecommerce',
         direction: 'OUTBOUND',
+        senderType: data.senderType ?? 'AGENT',
         contentType: 'TEXT',
         content: data.content,
         status: data.status ?? 'SENT',
