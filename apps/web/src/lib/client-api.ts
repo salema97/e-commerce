@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { createApiClient } from '@repo/api-client';
+import { createApiClient, createQueryHooks } from '@repo/api-client';
 
 function getBaseURL(): string {
   return (
@@ -36,4 +36,9 @@ export function useApiClient() {
       }),
     [getToken],
   );
+}
+
+export function useApiQueryHooks() {
+  const client = useApiClient();
+  return useMemo(() => createQueryHooks(client), [client]);
 }

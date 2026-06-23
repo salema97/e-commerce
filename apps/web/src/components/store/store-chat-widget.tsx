@@ -3,66 +3,39 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
-interface ChatMessage {
-  id: string;
-  content: string;
-  direction: 'INBOUND' | 'OUTBOUND';
-  senderType?: string;
-}
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/v1';
+import { useApiQueryHooks } from '@/lib/client-api';
+import type { Message } from '@repo/shared-types';
 
 export function StoreChatWidget() {
+  const hooks = useApiQueryHooks();
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    if (!open || sessionId) {
-      return;
-    }
+  const createSession = hooks.useCreateChatSession({
+    onSuccess: (session) => setSessionId(session.webSessionId),
+  });
 
-    void fetch(`${API_BASE}/chat/sessions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contactName: 'Visitante' }),
-    })
-      .then((response) => response.json())
-      .then((data: { webSessionId: string }) => setSessionId(data.webSessionId));
-  }, [open, sessionId]);
+  const { data: messages = [] } = hooks.useChatMessages(sessionId ?? '', {
+    enabled: Boolean(sessionId && open),
+  });
+
+  const sendMessage = hooks.useSendChatMessage();
 
   useEffect(() => {
-    if (!sessionId || !open) {
+    if (!open || sessionId || createSession.isPending) {
       return;
     }
+    createSession.mutate({ contactName: 'Visitante' });
+  }, [open, sessionId, createSession]);
 
-    const interval = setInterval(() => {
-      void fetch(`${API_BASE}/chat/sessions/${sessionId}/messages`)
-        .then((response) => response.json())
-        .then((data: ChatMessage[]) => setMessages(data));
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [sessionId, open]);
-
-  async function sendMessage() {
+  async function handleSendMessage() {
     if (!sessionId || !input.trim()) {
       return;
     }
-
     const content = input.trim();
     setInput('');
-
-    const response = await fetch(`${API_BASE}/chat/sessions/${sessionId}/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content }),
-    });
-
-    const data = (await response.json()) as ChatMessage[];
-    setMessages(data);
+    await sendMessage.mutateAsync({ sessionId, content });
   }
 
   if (!open) {
@@ -86,7 +59,7 @@ export function StoreChatWidget() {
         </button>
       </div>
       <div className="flex-1 space-y-2 overflow-y-auto p-3">
-        {messages.map((message) => (
+        {messages.map((message: Message) => (
           <div
             key={message.id}
             className={`text-sm ${message.direction === 'OUTBOUND' ? 'text-right' : 'text-left'}`}
@@ -103,7 +76,7 @@ export function StoreChatWidget() {
       </div>
       <div className="flex gap-2 border-t p-3">
         <Input value={input} onChange={(event) => setInput(event.target.value)} placeholder="Escribe tu mensaje..." />
-        <Button type="button" onClick={() => void sendMessage()}>
+        <Button type="button" onClick={() => void handleSendMessage()} disabled={sendMessage.isPending}>
           Enviar
         </Button>
       </div>

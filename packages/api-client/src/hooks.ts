@@ -46,6 +46,10 @@ import type {
   PaginatedConversations,
   PaginatedMessages,
   QuickReply,
+  SearchResultItem,
+  Faq,
+  ProductContentDraft,
+  ChatSession,
 } from '@repo/shared-types';
 import type { ApiClient } from './client.js';
 
@@ -77,6 +81,10 @@ export const queryKeys = {
   creditNotes: (filters?: Record<string, string | number | undefined>) => ['credit-notes', filters ?? {}] as const,
   creditNote: (id: string) => ['credit-notes', id] as const,
   notificationPreferences: ['notifications', 'preferences'] as const,
+  search: (query: string) => ['search', query] as const,
+  chatMessages: (sessionId: string) => ['chat', sessionId, 'messages'] as const,
+  productContentDraft: (productId: string) => ['ai', 'products', productId, 'draft'] as const,
+  faqs: ['ai', 'faqs'] as const,
 };
 
 export function createQueryHooks(client: ApiClient) {
@@ -691,6 +699,110 @@ export function createQueryHooks(client: ApiClient) {
       useMutation({
         mutationFn: ({ productId, email }) =>
           client.products.subscribeBackInStock(productId, { email }),
+        ...options,
+      }),
+
+    useProductSearch: (
+      query: string,
+      options?: Omit<UseQueryOptions<SearchResultItem[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.search(query),
+        queryFn: () => client.search.products(query),
+        enabled: Boolean(query.trim()),
+        ...options,
+      }),
+
+    useCreateChatSession: (
+      options?: UseMutationOptions<ChatSession, Error, { contactName?: string } | void>,
+    ) =>
+      useMutation({
+        mutationFn: (data) => client.chat.createSession(data ?? undefined),
+        ...options,
+      }),
+
+    useChatMessages: (
+      sessionId: string,
+      options?: Omit<UseQueryOptions<Message[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.chatMessages(sessionId),
+        queryFn: () => client.chat.listMessages(sessionId),
+        enabled: Boolean(sessionId),
+        refetchInterval: 3_000,
+        ...options,
+      }),
+
+    useSendChatMessage: (
+      options?: UseMutationOptions<Message[], Error, { sessionId: string; content: string }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ sessionId, content }) => client.chat.sendMessage(sessionId, content),
+        onSuccess: (_, { sessionId }) => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.chatMessages(sessionId) });
+        },
+        ...options,
+      });
+    },
+
+    useProductContentDraft: (
+      productId: string,
+      options?: Omit<UseQueryOptions<ProductContentDraft | null, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.productContentDraft(productId),
+        queryFn: () => client.ai.products.getDraft(productId),
+        enabled: Boolean(productId),
+        ...options,
+      }),
+
+    useGenerateProductContent: (
+      options?: UseMutationOptions<ProductContentDraft, Error, string>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (productId) => client.ai.products.generateContent(productId),
+        onSuccess: (_, productId) => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.productContentDraft(productId) });
+        },
+        ...options,
+      });
+    },
+
+    useApproveProductContent: (
+      options?: UseMutationOptions<Product, Error, string>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (productId) => client.ai.products.approveDraft(productId),
+        onSuccess: (_, productId) => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.productContentDraft(productId) });
+          queryClient.invalidateQueries({ queryKey: queryKeys.product(productId) });
+        },
+        ...options,
+      });
+    },
+
+    useRejectProductContent: (
+      options?: UseMutationOptions<{ success: boolean }, Error, string>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (productId) => client.ai.products.rejectDraft(productId),
+        onSuccess: (_, productId) => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.productContentDraft(productId) });
+        },
+        ...options,
+      });
+    },
+
+    usePublishedFaqs: (
+      options?: Omit<UseQueryOptions<Faq[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.faqs,
+        queryFn: () => client.ai.faqs.findPublished(),
         ...options,
       }),
   };

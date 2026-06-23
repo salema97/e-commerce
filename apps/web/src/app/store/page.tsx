@@ -45,10 +45,19 @@ export default async function StorePage({ searchParams }: StorePageProps) {
     }
   }
 
-  if (search) {
-    const q = search.toLowerCase();
-    products = products.filter((p) => p.name.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q),
-    );
+  if (search?.trim()) {
+    try {
+      const hits = await api.search.products(search.trim(), 100);
+      const scoreById = new Map(hits.map((hit) => [hit.id, hit.score]));
+      products = products
+        .filter((product) => scoreById.has(product.id))
+        .sort((left, right) => (scoreById.get(right.id) ?? 0) - (scoreById.get(left.id) ?? 0));
+    } catch {
+      const q = search.toLowerCase();
+      products = products.filter(
+        (p) => p.name.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q),
+      );
+    }
   }
 
   products = sortProducts(products, sort);
