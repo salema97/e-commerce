@@ -8,6 +8,7 @@ import { Select } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { StoreAnalyticsTracker } from '@/components/analytics/store-analytics-tracker';
 import { formatPrice } from '@repo/shared-utils';
 import type { Product, Category } from '@repo/shared-types';
 
@@ -69,6 +70,9 @@ export default async function StorePage({ searchParams }: StorePageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <React.Suspense fallback={null}>
+        <StoreAnalyticsTracker />
+      </React.Suspense>
       <h1 className="text-3xl font-bold">Shop</h1>
 
       <div className="mt-6 flex flex-col gap-4 lg:flex-row">

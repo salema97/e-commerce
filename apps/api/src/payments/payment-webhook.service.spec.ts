@@ -9,9 +9,8 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
 import { EmailNotificationService } from '../notifications/email-notification.service.js';
 import { PushNotificationService } from '../notifications/push-notification.service.js';
-import { MarketingAutomationService } from '../notifications/marketing-automation.service.js';
-import { OrderSummaryPdfService } from '../receipts/order-summary-pdf.service.js';
 import { InvoicesService } from '../invoices/invoices.service.js';
+import { EventBus } from '../event-bus/event-bus.interface.js';
 
 describe('PaymentWebhookService', () => {
   let service: PaymentWebhookService;
@@ -31,8 +30,7 @@ describe('PaymentWebhookService', () => {
   let emailNotificationService: { notify: ReturnType<typeof vi.fn> };
   let pushNotificationService: { notifyForOrder: ReturnType<typeof vi.fn> };
   let invoicesService: { enqueueInvoiceForOrder: ReturnType<typeof vi.fn> };
-  let marketingAutomation: { trackPurchaseEvent: ReturnType<typeof vi.fn> };
-  let orderSummaryPdf: { buildEmailAttachment: ReturnType<typeof vi.fn> };
+  let eventBus: { publish: ReturnType<typeof vi.fn>; registerHandler: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     provider = {
@@ -49,14 +47,7 @@ describe('PaymentWebhookService', () => {
     emailNotificationService = { notify: vi.fn().mockResolvedValue(undefined) };
     pushNotificationService = { notifyForOrder: vi.fn().mockResolvedValue(undefined) };
     invoicesService = { enqueueInvoiceForOrder: vi.fn().mockResolvedValue(undefined) };
-    marketingAutomation = { trackPurchaseEvent: vi.fn().mockResolvedValue(undefined) };
-    orderSummaryPdf = {
-      buildEmailAttachment: vi.fn().mockResolvedValue({
-        filename: 'pedido-ORD-1.pdf',
-        content: Buffer.from('pdf'),
-        contentType: 'application/pdf',
-      }),
-    };
+    eventBus = { publish: vi.fn(), registerHandler: vi.fn() };
 
     const module = await Test.createTestingModule({
       providers: [
@@ -79,8 +70,7 @@ describe('PaymentWebhookService', () => {
         { provide: EmailNotificationService, useValue: emailNotificationService },
         { provide: PushNotificationService, useValue: pushNotificationService },
         { provide: InvoicesService, useValue: invoicesService },
-        { provide: MarketingAutomationService, useValue: marketingAutomation },
-        { provide: OrderSummaryPdfService, useValue: orderSummaryPdf },
+        { provide: EventBus, useValue: eventBus },
       ],
     }).compile();
 
@@ -112,6 +102,15 @@ describe('PaymentWebhookService', () => {
       orderId: 'order_1',
       status: PaymentStatus.PENDING,
     });
+    prisma.order.findUnique.mockResolvedValueOnce({
+      id: 'order_1',
+      orderNumber: 'ORD-1',
+      total: 45.98,
+      customerPhone: '+593991234567',
+      customerEmail: 'buyer@example.com',
+      userId: 'u1',
+      user: { whatsappOptOut: false, emailOptOut: false },
+    });
 
     const result = await service.handle(
       'kushki',
@@ -134,6 +133,10 @@ describe('PaymentWebhookService', () => {
     );
     expect(prisma.orderStatusHistory.create).toHaveBeenCalled();
     expect(invoicesService.enqueueInvoiceForOrder).toHaveBeenCalledWith('order_1');
+    expect(eventBus.publish).toHaveBeenCalledWith({
+      name: 'order.paid',
+      payload: { orderId: 'order_1' },
+    });
   });
 
   it('continues webhook handling when invoice enqueue fails', async () => {

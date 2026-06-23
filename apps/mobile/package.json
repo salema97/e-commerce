@@ -22,6 +22,7 @@
     "@repo/shared-types": "workspace:^",
     "@repo/shared-ui": "workspace:^",
     "@repo/shared-utils": "workspace:^",
+    "@sentry/react-native": "8.15.1",
     "@stripe/stripe-react-native": "^0.42.0",
     "@tanstack/react-query": "catalog:",
     "expo": "56.0.12",

@@ -46,6 +46,8 @@ import type {
   Faq,
   ProductContentDraft,
   ChatSession,
+  AnalyticsOverviewReport,
+  CohortRetentionReport,
 } from '@repo/shared-types';
 
 export interface ApiClientOptions {
@@ -325,6 +327,21 @@ export function createApiClient(options: ApiClientOptions) {
         rejectDraft: (productId: string) =>
           request<{ success: boolean }>('POST', `/ai/products/${productId}/content-draft/reject`),
       },
+    },
+    analytics: {
+      trackEvent: (data: {
+        event: string;
+        properties?: Record<string, unknown>;
+        sessionId?: string;
+        userId?: string;
+        source?: 'web' | 'mobile' | 'api';
+      }) => request<void>('POST', '/analytics/events', data),
+      getOverview: (days?: number) =>
+        request<AnalyticsOverviewReport>('GET', '/analytics/overview', undefined, { days }),
+      getFunnel: (days?: number) =>
+        request<Record<string, number>>('GET', '/analytics/funnel', undefined, { days }),
+      getCohorts: (weeks?: number) =>
+        request<CohortRetentionReport>('GET', '/analytics/cohorts', undefined, { weeks }),
     },
   };
 }

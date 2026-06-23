@@ -6,6 +6,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
+import { ErrorTracker } from '../../analytics/error-tracker.interface.js';
 
 export interface ErrorResponse {
   statusCode: number;
@@ -17,7 +18,10 @@ export interface ErrorResponse {
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
+  constructor(
+    private readonly httpAdapterHost: HttpAdapterHost,
+    private readonly errorTracker?: ErrorTracker,
+  ) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const { httpAdapter } = this.httpAdapterHost;
@@ -42,6 +46,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       path: httpAdapter.getRequestUrl(request) as string,
     };
+
+    if (statusCode >= 500 && this.errorTracker) {
+      this.errorTracker.captureException(exception, {
+        tags: { path: errorResponse.path },
+        extra: { statusCode },
+      });
+    }
 
     httpAdapter.reply(response, errorResponse, statusCode);
   }

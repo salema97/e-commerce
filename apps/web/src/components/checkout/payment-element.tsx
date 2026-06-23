@@ -11,6 +11,7 @@ import {
 import { loadStripe, type Stripe } from '@stripe/stripe-js';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@repo/shared-utils';
+import { trackEvent } from '@/lib/analytics/track';
 
 const STRIPE_PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
@@ -62,6 +63,7 @@ function CheckoutForm({ clientSecret, orderId, total }: PaymentElementWrapperPro
 
     // Payment succeeded (or requires no further action). The webhook is the
     // source of truth for order status; redirect to the order detail page.
+    void trackEvent('purchase', { orderId, total });
     router.push(`/orders/${orderId}`);
   }
 

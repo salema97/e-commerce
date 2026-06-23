@@ -11,6 +11,9 @@ import { CartProvider } from '../lib/cart.js';
 import { AuthTokenBridge } from '../providers/AuthTokenBridge.js';
 import { PushNotificationManager } from '../providers/PushNotificationManager.js';
 import { DeepLinkManager } from '../providers/DeepLinkManager.js';
+import { initMobileSentry } from '../lib/sentry.js';
+
+initMobileSentry();
 
 const tokenCache = {
   async getToken(key: string): Promise<string | null> {

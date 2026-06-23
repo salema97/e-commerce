@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { AddToCartButton } from '@/components/cart/add-to-cart-button';
 import { WishlistButton } from '@/components/wishlist/wishlist-button';
 import { BackInStockForm } from '@/components/product/back-in-stock-form';
+import { ProductViewTracker } from '@/components/analytics/product-view-tracker';
 import { formatPrice } from '@repo/shared-utils';
 import { getProductAvailableQuantity } from '@/lib/product-stock';
 import type { Product } from '@repo/shared-types';
@@ -48,6 +49,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <ProductViewTracker productId={product.id} productName={product.name} />
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="relative aspect-square overflow-hidden rounded-xl border bg-muted">
           {image ? (

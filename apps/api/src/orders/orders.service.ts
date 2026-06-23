@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Inject } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { InventoryReservationService } from '../inventory/inventory-reservation.service.js';
@@ -6,10 +6,9 @@ import { PromotionService } from '../promotions/promotion.service.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
 import { EmailNotificationService } from '../notifications/email-notification.service.js';
 import { PushNotificationService } from '../notifications/push-notification.service.js';
-import { MarketingAutomationService } from '../notifications/marketing-automation.service.js';
-import { OrderSummaryPdfService } from '../receipts/order-summary-pdf.service.js';
 import { CreateOrderDto, CreateOrderItemDto } from './dto/create-order.dto.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
+import { EventBus } from '../event-bus/event-bus.interface.js';
 
 export interface CreatedOrderResult {
   id: string;
@@ -35,8 +34,7 @@ export class OrdersService {
     private readonly notificationService: WhatsAppNotificationService,
     private readonly emailNotificationService: EmailNotificationService,
     private readonly pushNotificationService: PushNotificationService,
-    private readonly marketingAutomation: MarketingAutomationService,
-    private readonly orderSummaryPdf: OrderSummaryPdfService,
+    @Inject(EventBus) private readonly eventBus: EventBus,
   ) {}
 
   async createOrder(userId: string | undefined, dto: CreateOrderDto): Promise<CreatedOrderResult> {
@@ -281,34 +279,7 @@ export class OrdersService {
 
     try {
       if (status === OrderStatus.PROCESSING) {
-        const context = {
-          customerName,
-          orderNumber: order.orderNumber,
-          total,
-        };
-        if (phone) {
-          await this.notificationService.notify(id, 'ORDER_CONFIRMED', phone, context);
-        }
-        if (order.customerEmail) {
-          const attachment = await this.orderSummaryPdf.buildEmailAttachment(
-            id,
-            order.orderNumber,
-          );
-          await this.emailNotificationService.notify(
-            id,
-            'ORDER_CONFIRMED',
-            order.customerEmail,
-            context,
-            { attachments: attachment ? [attachment] : undefined },
-          );
-        }
-        await this.pushNotificationService.notifyForOrder(
-          id,
-          order.userId,
-          'ORDER_CONFIRMED',
-          context,
-        );
-        await this.marketingAutomation.trackPurchaseEvent(id);
+        void this.eventBus.publish({ name: 'order.paid', payload: { orderId: id } });
       } else if (status === OrderStatus.SHIPPED) {
         const context = {
           customerName,
@@ -333,6 +304,7 @@ export class OrdersService {
           'ORDER_SHIPPED',
           context,
         );
+        void this.eventBus.publish({ name: 'order.shipped', payload: { orderId: id } });
       } else if (status === OrderStatus.DELIVERED) {
         const context = {
           customerName,

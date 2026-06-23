@@ -13,6 +13,7 @@ import {
   MessageSquare,
   BarChart3,
   FileText,
+  TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Role } from '@repo/shared-types';
@@ -26,6 +27,7 @@ interface NavItem {
 
 const adminNav: NavItem[] = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { href: '/admin/analytics', label: 'Analítica', icon: TrendingUp, roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] },
   { href: '/admin/products', label: 'Products', icon: Package, roles: ['SUPER_ADMIN', 'ADMIN'] },
   { href: '/admin/categories', label: 'Categories', icon: Tags, roles: ['SUPER_ADMIN', 'ADMIN'] },
   { href: '/admin/inventory', label: 'Inventory', icon: Warehouse, roles: ['SUPER_ADMIN', 'ADMIN', 'INVENTORY'] },

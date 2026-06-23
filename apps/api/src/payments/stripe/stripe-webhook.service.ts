@@ -2,6 +2,7 @@ import {
   Injectable,
   Logger,
   UnauthorizedException,
+  Inject,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service.js';
@@ -11,6 +12,7 @@ import { OrderStatus, PaymentProvider } from '@prisma/client';
 import { SriQueueService } from '../../invoices/sri/sri-queue.service.js';
 import { InventoryReservationService } from '../../inventory/inventory-reservation.service.js';
 import { AuditLogService } from '../../audit/audit-log.service.js';
+import { EventBus } from '../../event-bus/event-bus.interface.js';
 
 interface StripeEvent {
   id: string;
@@ -34,6 +36,7 @@ export class StripeWebhookService {
     private readonly sriQueue: SriQueueService,
     private readonly reservationService: InventoryReservationService,
     private readonly auditLogService: AuditLogService,
+    @Inject(EventBus) private readonly eventBus: EventBus,
   ) {}
 
   async handleWebhook(rawBody: Buffer, signature: string): Promise<void> {
@@ -272,6 +275,7 @@ export class StripeWebhookService {
 
     this.logger.log(`Payment ${paymentId} marked as COMPLETED`);
 
+    void this.eventBus.publish({ name: 'order.paid', payload: { orderId } });
     this.enqueueInvoice(orderId);
   }
 

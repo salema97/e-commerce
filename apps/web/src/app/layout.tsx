@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { Providers } from './providers';
+import { AnalyticsProvider } from '@/components/analytics/analytics-provider';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import ServiceWorkerRegistration from '@/components/pwa/service-worker-registration';
@@ -28,10 +29,12 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen flex flex-col font-sans antialiased">
         <Providers>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <ServiceWorkerRegistration />
+          <AnalyticsProvider>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <ServiceWorkerRegistration />
+          </AnalyticsProvider>
         </Providers>
       </body>
     </html>

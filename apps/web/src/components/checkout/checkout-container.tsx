@@ -19,6 +19,7 @@ import {
 import { CouponInput } from './coupon-input';
 import { OrderSummary } from './order-summary';
 import { PaymentForm } from './payment-element';
+import { trackEvent } from '@/lib/analytics/track';
 import type {
   CreateOrderDto,
   CreatePaymentIntentDto,
@@ -46,7 +47,10 @@ export function CheckoutContainer() {
 
   React.useEffect(() => {
     setMounted(true);
-  }, []);
+    if (items.length > 0) {
+      void trackEvent('begin_checkout', { itemCount: items.length });
+    }
+  }, [items.length]);
 
   // Client-side estimate for the summary. The server recomputes totals
   // (subtotal, discount, IVA, shipping) authoritatively on order creation.

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { useCartStore } from '@/lib/cart-store';
+import { trackEvent } from '@/lib/analytics/track';
 import type { Product } from '@repo/shared-types';
 
 export function AddToCartButton({
@@ -29,6 +30,12 @@ export function AddToCartButton({
       price: Number(product.price),
       imageUrl: product.images?.[0]?.url,
       quantity,
+    });
+    void trackEvent('add_to_cart', {
+      productId: product.id,
+      productName: product.name,
+      quantity,
+      variantId: variantId || undefined,
     });
     router.push('/cart');
   };

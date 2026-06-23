@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useCartStore } from '@/lib/cart-store';
+import { trackEvent } from '@/lib/analytics/track';
 import { formatPrice } from '@repo/shared-utils';
 
 export default function CartPage() {
@@ -74,7 +75,13 @@ export default function CartPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => removeItem(item.productId, item.variantId)}
+                    onClick={() => {
+                      void trackEvent('remove_from_cart', {
+                        productId: item.productId,
+                        variantId: item.variantId,
+                      });
+                      removeItem(item.productId, item.variantId);
+                    }}
                   >
                     Remove
                   </Button>
@@ -103,7 +110,13 @@ export default function CartPage() {
                 <span>Total</span>
                 <span>{formatPrice(total)}</span>
               </div>
-              <Button className="w-full" onClick={() => router.push('/checkout')}>
+              <Button
+                className="w-full"
+                onClick={() => {
+                  void trackEvent('begin_checkout', { itemCount: items.length });
+                  router.push('/checkout');
+                }}
+              >
                 Proceed to checkout
               </Button>
             </CardContent>

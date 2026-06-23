@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,8 @@ import { useCart } from '../../../lib/cart.js';
 import { getProductAvailableQuantity } from '../../../lib/product-stock.js';
 import { BackInStockForm } from '../../../components/product/BackInStockForm.js';
 import { formatPrice } from '@repo/shared-utils';
+import { trackMobileEvent } from '../../../lib/analytics.js';
+import { captureMobileException } from '../../../lib/sentry.js';
 import type { ProductVariant } from '@repo/shared-types';
 
 export default function ProductDetailScreen(): React.ReactElement {
@@ -23,6 +25,15 @@ export default function ProductDetailScreen(): React.ReactElement {
   const { addItem, itemCount } = useCart();
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>();
   const [quantity, setQuantity] = useState(1);
+
+  useEffect(() => {
+    if (product) {
+      void trackMobileEvent('product_view', {
+        productId: product.id,
+        productName: product.name,
+      });
+    }
+  }, [product?.id, product?.name]);
 
   const handleAddToCart = (): void => {
     if (!product) return;
@@ -39,6 +50,12 @@ export default function ProductDetailScreen(): React.ReactElement {
       quantity,
     );
 
+    void trackMobileEvent('add_to_cart', {
+      productId: product.id,
+      quantity,
+      variantId: selectedVariant?.id,
+    });
+
     router.push('/(tabs)/cart');
   };
 
@@ -51,6 +68,9 @@ export default function ProductDetailScreen(): React.ReactElement {
   }
 
   if (error || !product) {
+    if (error) {
+      captureMobileException(error, { screen: 'product-detail', productId: id });
+    }
     return (
       <SafeAreaView style={styles.center}>
         <Text style={styles.error}>No se pudo cargar el producto.</Text>

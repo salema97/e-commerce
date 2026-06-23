@@ -29,6 +29,8 @@ import { WebhooksModule } from './webhooks/webhooks.module.js';
 import { RedisModule } from './common/redis/redis.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { AiModule } from './ai/ai.module.js';
+import { EventBusModule } from './event-bus/event-bus.module.js';
+import { AnalyticsModule } from './analytics/analytics.module.js';
 
 @Module({
   imports: [
@@ -72,8 +74,10 @@ import { AiModule } from './ai/ai.module.js';
     MessageModule,
     WebhooksModule,
     RedisModule,
+    EventBusModule,
     NotificationsModule,
     AiModule,
+    AnalyticsModule,
   ],
   providers: [
     {
