@@ -2,10 +2,19 @@
 
 ## Status
 - All fresh-context CRITICAL/BLOCKER review issues remediated.
+- Phase 6.7 end-to-end SRI flow E2E added (`test/sri-invoice-flow.e2e-spec.ts`).
 - API unit tests: pass.
-- API E2E/integration tests: 44 passed.
+- API E2E/integration tests: 47 passed (includes 6.7).
 - Monorepo typecheck: pass.
 - Web tests: 37 passed.
+
+## Remaining Work
+- Push branch and open PR to `main`.
+- Run `sdd-archive` for `phase-7-sri-direct-integration`.
+- Address inherited upstream audit advisories outside SRI deps (tracked separately).
+
+## Next Step
+Push `feat/phase-7-sri-admin-ui` and open PR for review/merge.
 
 ## Changes (Fresh-context remediation)
 
@@ -47,6 +56,12 @@
 - Updated unit/E2E tests for schema, DTO, signature, and queue behavior.
 - Disabled SRI queue in E2E `TEST_CONFIG` by default to avoid Redis teardown errors.
 
+### 9. Task 6.7 — end-to-end SRI flow E2E
+- Added `apps/api/test/sri-invoice-flow.e2e-spec.ts` covering:
+  - Stripe webhook → `SriQueueService.addIssueInvoiceJob` + PENDING job metadata
+  - Admin `POST /v1/invoices/:id/retry` for FAILED invoices
+  - Admin `GET /v1/invoices/:id/xml|pdf` redirects to signed URLs (no public R2 exposure)
+
 ## Verification
 ```bash
 pnpm typecheck
@@ -55,10 +70,3 @@ pnpm --filter @repo/api test:e2e
 pnpm --filter @repo/web test
 pnpm audit --prod
 ```
-
-## Remaining Work
-- Phase 6.7: E2E Stripe webhook → queue → Prisma with admin retry + real signed-URL download.
-- Address inherited upstream audit advisories outside SRI deps (tracked separately).
-
-## Next Step
-Create work-unit commits and push to `feat/phase-7-sri-admin-ui`.
