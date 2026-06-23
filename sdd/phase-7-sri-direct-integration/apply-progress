@@ -1,41 +1,64 @@
 # Apply Progress — phase-7-sri-direct-integration
 
 ## Status
-- All sdd-verify CRITICAL failures remediated.
-- API unit tests: 332 passed.
-- API E2E/integration tests: 44 passed (includes new `sri-queue.integration-spec.ts`).
-- Monorepo typecheck: 13 packages successful.
+- All fresh-context CRITICAL/BLOCKER review issues remediated.
+- API unit tests: pass.
+- API E2E/integration tests: 44 passed.
+- Monorepo typecheck: pass.
+- Web tests: 37 passed.
 
-## Changes
+## Changes (Fresh-context remediation)
 
-### 1. Test environment defaults (`apps/api/test/env.ts`)
-Added missing SRI company variables required by `ConfigModule` validation during E2E bootstrap:
-- `SRI_COMPANY_NAME`
-- `SRI_COMPANY_TRADE_NAME`
-- `SRI_COMPANY_ADDRESS`
-- `SRI_RECONCILIATION_CRON`
+### 1. Schema and migration security
+- Added buyer fields to `User` and `Order`; per-item tax/discount to `OrderItem`.
+- Renamed `InvoiceSequence.currentNumber` → `lastNumber`.
+- Replaced `Invoice.xmlContent/xmlUrl/pdfUrl` and `CreditNote.xmlContent/xmlUrl/pdfUrl` with `signedXml`, `xmlKey`, `pdfKey`.
+- Migration: `apps/api/prisma/migrations/20260628000000_sri_security_remediation/migration.sql` (idempotent).
 
-### 2. Async enqueue assertions in E2E tests
-Updated tests to match the new async SRI queue behavior (services now enqueue jobs instead of issuing documents synchronously):
-- `apps/api/test/payment-to-invoice.e2e-spec.ts`
-- `apps/api/test/stripe-webhook.e2e-spec.ts`
-- `apps/api/test/returns.e2e-spec.ts`
+### 2. Storage layer returns R2 keys only
+- `StorageService.uploadBuffer` returns `{ key }`.
+- `SriDocumentStorageService` persists keys and generates signed URLs on demand.
+- DTOs and shared types no longer expose `xmlContent` or `pdfUrl`.
 
-### 3. Reconciliation cron wiring
-- Installed `@nestjs/schedule` in `apps/api/package.json`.
-- Imported `ScheduleModule.forRoot()` in `SriQueueModule`.
-- Added `@Cron()` decorator to `SriReconciliationService.reconcileStuckDocuments` using `SRI_RECONCILIATION_CRON` env var with hourly fallback.
+### 3. Order creation buyer/tax population
+- `OrdersService.createOrder` populates `customerName`, `customerIdentification`, `customerAddress` from Clerk profile/DTO.
+- Per-item `taxRate`, `taxAmount`, `discountAmount` allocated on `OrderItem`.
+- `ClerkWebhookService` syncs `name` and `public_metadata.identification` into `User`.
 
-### 4. New integration test
-- Created `apps/api/test/sri-queue.integration-spec.ts` to verify `SriQueueService` wires correctly inside `SriQueueModule`, calls `Queue.add` with the right job name/id/options, and persists a `PENDING` `SriDocumentJob` record.
-- Updated `apps/api/vitest.config.e2e.ts` to include `**/*.integration-spec.ts` files.
+### 4. Payment webhook raw-body verification
+- `PaymentWebhookController` and `PaymentWebhookService` use raw request body for signature verification.
+
+### 5. SRI queue idempotency and resilience
+- `SriQueueService` retries existing failed jobs instead of duplicating.
+- `InvoicesService.retryIssue`/`retryCreditNote` guard against non-allowed statuses.
+- `SriQueueWorker` reuses sequence/accessKey on retry and skips authorized overwrites.
+- `SriQueueModule` gates queue/worker behind `SRI_QUEUE_ENABLED` and fails fast when Redis is unreachable.
+- `sri-queue.config.ts` helpers expose queue env vars for E2E overrides.
+
+### 6. SOAP/XML builder robustness
+- `SriSoapClient` WSDL and per-call timeouts.
+- XML builders fall back to consumidor-final only when buyer data is missing; use per-item `taxAmount`.
+
+### 7. Dependency and tooling pins
+- Pinned `node-forge@1.4.0` and `fast-xml-parser@5.9.3`.
+- Added SRI queue/delivery env vars to `turbo.json`.
+
+### 8. Test updates
+- Updated unit/E2E tests for schema, DTO, signature, and queue behavior.
+- Disabled SRI queue in E2E `TEST_CONFIG` by default to avoid Redis teardown errors.
 
 ## Verification
 ```bash
+pnpm typecheck
 pnpm --filter @repo/api test
 pnpm --filter @repo/api test:e2e
-pnpm typecheck
+pnpm --filter @repo/web test
+pnpm audit --prod
 ```
 
 ## Remaining Work
-None for this remediation. Ready for commit as work units.
+- Phase 6.7: E2E Stripe webhook → queue → Prisma with admin retry + real signed-URL download.
+- Address inherited upstream audit advisories outside SRI deps (tracked separately).
+
+## Next Step
+Create work-unit commits and push to `feat/phase-7-sri-admin-ui`.
