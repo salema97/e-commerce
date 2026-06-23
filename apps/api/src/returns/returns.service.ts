@@ -389,15 +389,14 @@ export class ReturnsService {
       current.order.invoice
     ) {
       try {
-        await this.invoicesService.issueCreditNote(
-          { returnRequestId: current.id, total: String(totalAmount) },
-          actorClerkUserId,
-          true,
+        await this.invoicesService.enqueueCreditNoteForReturn(
+          current.id,
+          totalAmount,
         );
       } catch (error) {
         this.logger.error(
           { error, returnId: id },
-          'SRI credit note failed during return resolution',
+          'SRI credit note enqueue failed during return resolution',
         );
         updated = await this.prisma.returnRequest.update({
           where: { id },

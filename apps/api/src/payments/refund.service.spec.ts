@@ -5,7 +5,7 @@ import { Prisma, OrderStatus, PaymentStatus, RefundStatus, PaymentProvider, Prom
 import { RefundService } from './refund.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { PaymentProviderFactory } from './payment-provider.factory.js';
-import { InvoiceProviderFactory } from '../invoices/invoice-provider.factory.js';
+import { InvoicesService } from '../invoices/invoices.service.js';
 import { AuditLogService } from '../audit/audit-log.service.js';
 
 describe('RefundService', () => {
@@ -13,8 +13,7 @@ describe('RefundService', () => {
   let prisma: ReturnType<typeof buildPrismaMock>;
   let providerFactory: { getProvider: ReturnType<typeof vi.fn> };
   let provider: { refund: ReturnType<typeof vi.fn> };
-  let invoiceProviderFactory: { getProvider: ReturnType<typeof vi.fn> };
-  let invoiceProvider: { issueCreditNote: ReturnType<typeof vi.fn> };
+  let invoicesService: { enqueueCreditNoteForReturn: ReturnType<typeof vi.fn> };
   let auditLog: { log: ReturnType<typeof vi.fn> };
 
   function buildPrismaMock() {
@@ -29,8 +28,7 @@ describe('RefundService', () => {
     prisma = buildPrismaMock();
     provider = { refund: vi.fn() };
     providerFactory = { getProvider: vi.fn(() => provider) };
-    invoiceProvider = { issueCreditNote: vi.fn().mockResolvedValue({}) };
-    invoiceProviderFactory = { getProvider: vi.fn(() => invoiceProvider) };
+    invoicesService = { enqueueCreditNoteForReturn: vi.fn().mockResolvedValue({ id: 'cn1' }) };
     auditLog = { log: vi.fn().mockResolvedValue(undefined) };
 
     const module = await Test.createTestingModule({
@@ -38,7 +36,7 @@ describe('RefundService', () => {
         RefundService,
         { provide: PrismaService, useValue: prisma },
         { provide: PaymentProviderFactory, useValue: providerFactory },
-        { provide: InvoiceProviderFactory, useValue: invoiceProviderFactory },
+        { provide: InvoicesService, useValue: invoicesService },
         { provide: AuditLogService, useValue: auditLog },
       ],
     }).compile();
@@ -86,7 +84,7 @@ describe('RefundService', () => {
         data: expect.objectContaining({ status: OrderStatus.REFUNDED }),
       }));
       expect(prisma.payment.update).toHaveBeenCalled();
-      expect(invoiceProvider.issueCreditNote).not.toHaveBeenCalled();
+      expect(invoicesService.enqueueCreditNoteForReturn).not.toHaveBeenCalled();
       expect(auditLog.log).toHaveBeenCalled();
       expect(result.type).toBe('full');
       expect(result.status).toBe(RefundStatus.COMPLETED);
@@ -122,10 +120,10 @@ describe('RefundService', () => {
       });
 
       await service.createRefund({ orderId: 'o1', amount: 100, type: 'full' });
-      expect(invoiceProvider.issueCreditNote).not.toHaveBeenCalled();
+      expect(invoicesService.enqueueCreditNoteForReturn).not.toHaveBeenCalled();
     });
 
-    it('issues credit note when parentInvoiceAccessKey is provided', async () => {
+    it('enqueues credit note job when parentInvoiceAccessKey is provided with return request', async () => {
       prisma.order.findUnique.mockResolvedValue(buildOrder());
       provider.refund.mockResolvedValue({ providerRefundId: 're_4', status: RefundStatus.COMPLETED });
       prisma.refund.create.mockResolvedValue({
@@ -144,13 +142,7 @@ describe('RefundService', () => {
         parentInvoiceAccessKey: 'accesskey'.padEnd(49, '0'),
       });
 
-      expect(invoiceProvider.issueCreditNote).toHaveBeenCalledWith(
-        expect.objectContaining({
-          returnRequestId: 'rr1',
-          invoiceAccessKey: 'accesskey'.padEnd(49, '0'),
-          parentInvoiceAccessKey: 'accesskey'.padEnd(49, '0'),
-        }),
-      );
+      expect(invoicesService.enqueueCreditNoteForReturn).toHaveBeenCalledWith('rr1', 100);
     });
 
     it('throws NotFound for unknown order', async () => {

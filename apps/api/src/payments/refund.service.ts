@@ -7,7 +7,7 @@ import {
 import { Prisma, OrderStatus, RefundStatus, PaymentStatus, PaymentProvider } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { PaymentProviderFactory } from './payment-provider.factory.js';
-import { InvoiceProviderFactory } from '../invoices/invoice-provider.factory.js';
+import { InvoicesService } from '../invoices/invoices.service.js';
 import { AuditLogService } from '../audit/audit-log.service.js';
 import { RefundResult } from './payment-provider.interface.js';
 
@@ -45,7 +45,7 @@ export class RefundService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly providerFactory: PaymentProviderFactory,
-    private readonly invoiceProviderFactory: InvoiceProviderFactory,
+    private readonly invoicesService: InvoicesService,
     private readonly auditLog: AuditLogService,
   ) {}
 
@@ -229,19 +229,31 @@ export class RefundService {
     refundId: string,
     input: CreateRefundInput,
   ): Promise<void> {
-    const provider = this.invoiceProviderFactory.getProvider();
-    await provider.issueCreditNote({
-      returnRequestId: input.returnRequestId ?? '',
-      invoiceAccessKey,
-      parentInvoiceAccessKey: invoiceAccessKey,
-      authorizationNumber: undefined,
-      codDocModificado: '01',
-      numDocModificado: invoiceAccessKey,
-      fechaEmisionDocumentoModificado: this.formatDate(new Date()),
-      reason: input.reason ?? `${input.type} refund`,
-      items: [],
-      total: input.amount,
-    });
+    if (!input.returnRequestId) {
+      this.logger.log(
+        { orderId: input.orderId, refundId },
+        'Standalone refund: skipping SRI credit note enqueue',
+      );
+      return;
+    }
+
+    try {
+      await this.invoicesService.enqueueCreditNoteForReturn(
+        input.returnRequestId,
+        input.amount,
+      );
+      this.logger.log(
+        { refundId, returnRequestId: input.returnRequestId },
+        'SRI credit note job enqueued for refund',
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        { error: message, refundId, returnRequestId: input.returnRequestId },
+        'Failed to enqueue SRI credit note job for refund',
+      );
+      // Do not fail the refund because the credit note is async.
+    }
   }
 
   private formatDate(date: Date): string {
