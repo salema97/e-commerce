@@ -23,7 +23,10 @@ export class ConsoleEmailProvider extends EmailProvider {
     vars: Record<string, string>,
     options?: SendEmailTemplateOptions,
   ): Promise<void> {
-    const rendered = renderEmailTemplate(template as EmailTemplate, vars as EmailTemplateContext);
+    const rendered = renderEmailTemplate(
+      template as EmailTemplate,
+      vars as unknown as EmailTemplateContext,
+    );
 
     this.logger.log(
       {

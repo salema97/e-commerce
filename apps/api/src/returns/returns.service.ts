@@ -16,6 +16,7 @@ import { ReturnNotificationService } from './notifications/return-notification.s
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
 import { EmailNotificationService } from '../notifications/email-notification.service.js';
 import { PushNotificationService } from '../notifications/push-notification.service.js';
+import { BackInStockAlertsService } from '../notifications/back-in-stock-alerts.service.js';
 import { CreateReturnDto } from './dto/create-return.dto.js';
 import { CreateGuestReturnRequestDto } from './dto/create-guest-return-request.dto.js';
 import { UpdateReturnStatusDto } from './dto/update-return-status.dto.js';
@@ -66,6 +67,7 @@ export class ReturnsService {
     private readonly whatsappNotificationService: WhatsAppNotificationService,
     private readonly emailNotificationService: EmailNotificationService,
     private readonly pushNotificationService: PushNotificationService,
+    private readonly backInStockAlerts: BackInStockAlertsService,
     configService: ConfigService,
   ) {
     const configured = configService.get<number>('RETURN_WINDOW_DAYS');
@@ -435,7 +437,7 @@ export class ReturnsService {
       updated.status === ReturnStatus.RESOLVED &&
       dto.refundMethod === RefundMethod.ORIGINAL_PAYMENT
     ) {
-      await this.sendRefundConfirmed(current.order, totalAmount);
+      await this.sendRefundConfirmed(current.order, totalAmount, id);
     }
 
     return updated;
@@ -450,6 +452,7 @@ export class ReturnsService {
       userId: string | null;
     },
     amount: number,
+    returnId: string,
   ): Promise<void> {
     const context = {
       customerName: 'Cliente',
@@ -457,6 +460,7 @@ export class ReturnsService {
       amount: `USD ${amount.toFixed(2)}`,
       refundMethod: 'Metodo original de pago',
     };
+    const idempotencySuffix = `${order.id}:REFUND_CONFIRMED:${returnId}`;
 
     try {
       if (order.customerPhone) {
@@ -465,6 +469,7 @@ export class ReturnsService {
           'REFUND_CONFIRMED',
           order.customerPhone,
           context,
+          { idempotencyKey: `wa:notification:${idempotencySuffix}` },
         );
       }
       if (order.customerEmail) {
@@ -473,6 +478,7 @@ export class ReturnsService {
           'REFUND_CONFIRMED',
           order.customerEmail,
           context,
+          { idempotencyKey: `email:notification:${idempotencySuffix}` },
         );
       }
       await this.pushNotificationService.notifyForOrder(
@@ -480,6 +486,7 @@ export class ReturnsService {
         order.userId,
         'REFUND_CONFIRMED',
         context,
+        { idempotencyKey: `push:notification:${idempotencySuffix}` },
       );
     } catch {
       // Notifications are best-effort and must not fail return resolution.
@@ -507,6 +514,8 @@ export class ReturnsService {
   private async restockItems(
     items: Array<{ productId: string; productVariantId: string | null; quantity: number }>,
   ): Promise<void> {
+    const restockedProductIds = new Set<string>();
+
     await this.prisma.$transaction(async (tx) => {
       for (const item of items) {
         const inv = await tx.inventory.findFirst({
@@ -516,13 +525,28 @@ export class ReturnsService {
           },
         });
         if (inv) {
+          const wasOutOfStock = inv.quantity <= 0;
           await tx.inventory.update({
             where: { id: inv.id },
             data: { quantity: { increment: item.quantity } },
           });
+          if (wasOutOfStock) {
+            restockedProductIds.add(item.productId);
+          }
         }
       }
     });
+
+    for (const productId of restockedProductIds) {
+      try {
+        await this.backInStockAlerts.notifyRestocked(productId);
+      } catch (error) {
+        this.logger.error(
+          { error, productId },
+          'Back-in-stock notification after return restock failed',
+        );
+      }
+    }
   }
 
   private async createExchangeOrder(

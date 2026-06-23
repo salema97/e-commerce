@@ -1,7 +1,9 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { UserProvisioningService } from '../users/user-provisioning.service.js';
 
 export interface NotificationPreferences {
   emailOptOut: boolean;
@@ -14,10 +16,11 @@ export class NotificationPreferencesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly userProvisioning: UserProvisioningService,
   ) {}
 
   async getByClerkUserId(clerkUserId: string): Promise<NotificationPreferences> {
-    const user = await this.findUser(clerkUserId);
+    const user = await this.userProvisioning.ensureByClerkUserId(clerkUserId);
     return {
       emailOptOut: user.emailOptOut,
       marketingEmailOptOut: user.marketingEmailOptOut,
@@ -29,7 +32,7 @@ export class NotificationPreferencesService {
     clerkUserId: string,
     data: Partial<NotificationPreferences>,
   ): Promise<NotificationPreferences> {
-    const user = await this.findUser(clerkUserId);
+    const user = await this.userProvisioning.ensureByClerkUserId(clerkUserId);
     const updated = await this.prisma.user.update({
       where: { id: user.id },
       data: {
@@ -90,14 +93,6 @@ export class NotificationPreferencesService {
     }
 
     return userId;
-  }
-
-  private async findUser(clerkUserId: string) {
-    const user = await this.prisma.user.findUnique({ where: { clerkUserId } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    return user;
   }
 
   private unsubscribeSecret(): string {

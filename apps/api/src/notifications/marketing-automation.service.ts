@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { RedisService } from '../common/redis/redis.service.js';
+import { RedisIdempotencyService } from '../common/redis/idempotency.service.js';
 import { CampaignEmailService } from './campaign-email.service.js';
 import { PushNotificationService } from './push-notification.service.js';
 import {
@@ -14,12 +16,17 @@ import {
 } from './notification-segment.service.js';
 import { NotificationPreferencesService } from './notification-preferences.service.js';
 
+const WIN_BACK_BATCH_SIZE = 100;
+const WIN_BACK_CURSOR_KEY = 'marketing:win-back:cursor';
+
 @Injectable()
 export class MarketingAutomationService {
   private readonly logger = new Logger(MarketingAutomationService.name);
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
+    private readonly idempotency: RedisIdempotencyService,
     private readonly campaignEmail: CampaignEmailService,
     private readonly pushNotifications: PushNotificationService,
     private readonly marketingProvider: MarketingEmailProvider,
@@ -29,33 +36,48 @@ export class MarketingAutomationService {
   ) {}
 
   async trackPurchaseEvent(orderId: string): Promise<void> {
+    const claimed = await this.idempotency.claim(
+      `marketing:purchase:${orderId}`,
+      60 * 60 * 24 * 30,
+    );
+
+    if (!claimed) {
+      return;
+    }
+
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: { user: { select: { id: true, email: true, marketingEmailOptOut: true } } },
     });
 
     if (!order?.customerEmail) {
+      await this.idempotency.release(`marketing:purchase:${orderId}`);
       return;
     }
 
-    await this.marketingProvider.trackEvent(
-      order.customerEmail,
-      'purchase_completed',
-      {
-        orderId,
-        orderNumber: order.orderNumber,
-        total: Number(order.total),
-        userId: order.userId ?? undefined,
-      },
-    );
+    try {
+      await this.marketingProvider.trackEvent(
+        order.customerEmail,
+        'purchase_completed',
+        {
+          orderId,
+          orderNumber: order.orderNumber,
+          total: Number(order.total),
+          userId: order.userId ?? undefined,
+        },
+      );
 
-    if (order.userId && order.user) {
-      await this.marketingProvider.syncContact(order.customerEmail, {
-        userId: order.userId,
-        lastOrderAt: order.createdAt.toISOString(),
-        totalSpent: Number(order.total),
-        marketingOptOut: order.user.marketingEmailOptOut,
-      });
+      if (order.userId && order.user) {
+        await this.marketingProvider.syncContact(order.customerEmail, {
+          userId: order.userId,
+          lastOrderAt: order.createdAt.toISOString(),
+          totalSpent: Number(order.total),
+          marketingOptOut: order.user.marketingEmailOptOut,
+        });
+      }
+    } catch (error) {
+      await this.idempotency.release(`marketing:purchase:${orderId}`);
+      this.logger.error({ error, orderId }, 'Failed to track purchase marketing event');
     }
   }
 
@@ -66,16 +88,21 @@ export class MarketingAutomationService {
     }
 
     const recipients = await this.segmentService.resolveEmails('INACTIVE_BUYERS');
+    if (recipients.length === 0) {
+      return;
+    }
+
+    const offset = Number((await this.redis.client.get(WIN_BACK_CURSOR_KEY)) ?? '0');
+    const batch = recipients.slice(offset, offset + WIN_BACK_BATCH_SIZE);
+    const nextOffset =
+      offset + WIN_BACK_BATCH_SIZE >= recipients.length ? 0 : offset + WIN_BACK_BATCH_SIZE;
+    await this.redis.client.set(WIN_BACK_CURSOR_KEY, String(nextOffset));
+
     const storefront = this.storefrontUrl();
 
-    for (const recipient of recipients.slice(0, 100)) {
-      const user = await this.prisma.user.findUnique({
-        where: { id: recipient.userId },
-        select: { name: true, email: true },
-      });
-      if (!user) continue;
-
-      const customerName = user.name?.trim() || user.email.split('@')[0] || 'Cliente';
+    for (const recipient of batch) {
+      const customerName =
+        recipient.name?.trim() || recipient.email.split('@')[0] || 'Cliente';
       const unsubscribeToken = this.preferencesService.createUnsubscribeToken(
         recipient.userId,
         'marketing',
@@ -84,7 +111,7 @@ export class MarketingAutomationService {
 
       try {
         const sent = await this.campaignEmail.send(
-          user.email,
+          recipient.email,
           'WIN_BACK',
           {
             customerName,
@@ -96,7 +123,7 @@ export class MarketingAutomationService {
         );
 
         if (sent) {
-          await this.marketingProvider.trackEvent(user.email, 'win_back_sent', {
+          await this.marketingProvider.trackEvent(recipient.email, 'win_back_sent', {
             userId: recipient.userId,
           });
           await this.pushNotifications.notifyUser(
@@ -136,6 +163,7 @@ export class MarketingAutomationService {
     const recipients = await this.segmentService.resolveEmails(segment);
     let sent = 0;
     let couponIndex = 0;
+    const storefront = this.storefrontUrl();
 
     for (const recipient of recipients) {
       const coupon = promotion.coupons[couponIndex];
@@ -145,14 +173,8 @@ export class MarketingAutomationService {
         continue;
       }
 
-      const user = await this.prisma.user.findUnique({
-        where: { id: recipient.userId },
-        select: { name: true, email: true },
-      });
-      if (!user) continue;
-
-      const customerName = user.name?.trim() || user.email.split('@')[0] || 'Cliente';
-      const storefront = this.storefrontUrl();
+      const customerName =
+        recipient.name?.trim() || recipient.email.split('@')[0] || 'Cliente';
       const unsubscribeToken = this.preferencesService.createUnsubscribeToken(
         recipient.userId,
         'marketing',
@@ -161,7 +183,7 @@ export class MarketingAutomationService {
 
       try {
         const emailSent = await this.campaignEmail.send(
-          user.email,
+          recipient.email,
           'PROMO_CODE',
           {
             customerName,
@@ -177,11 +199,15 @@ export class MarketingAutomationService {
         if (emailSent) {
           sent += 1;
           couponIndex += 1;
-          await this.marketingProvider.trackEvent(user.email, 'promo_distributed' as MarketingEventName, {
-            promotionId,
-            couponCode: coupon.code,
-            segment,
-          });
+          await this.marketingProvider.trackEvent(
+            recipient.email,
+            'promo_distributed' as MarketingEventName,
+            {
+              promotionId,
+              couponCode: coupon.code,
+              segment,
+            },
+          );
         }
       } catch (error) {
         this.logger.error({ error, userId: recipient.userId }, 'Promo distribution failed');

@@ -49,7 +49,7 @@ export class NotificationSegmentService {
         const orders = await this.prisma.order.findMany({
           where: {
             userId: { not: null },
-            status: { in: [OrderStatus.COMPLETED, OrderStatus.DELIVERED, OrderStatus.SHIPPED] },
+            status: { in: [OrderStatus.PROCESSING, OrderStatus.DELIVERED, OrderStatus.SHIPPED] },
             createdAt: { gte: since },
           },
           select: { userId: true },
@@ -68,7 +68,7 @@ export class NotificationSegmentService {
             orders: {
               some: {
                 status: {
-                  in: [OrderStatus.COMPLETED, OrderStatus.DELIVERED, OrderStatus.SHIPPED],
+                  in: [OrderStatus.PROCESSING, OrderStatus.DELIVERED, OrderStatus.SHIPPED],
                 },
               },
             },
@@ -83,7 +83,9 @@ export class NotificationSegmentService {
     }
   }
 
-  async resolveEmails(segment: MarketingSegment): Promise<Array<{ userId: string; email: string }>> {
+  async resolveEmails(
+    segment: MarketingSegment,
+  ): Promise<Array<{ userId: string; email: string; name: string | null }>> {
     const userIds = await this.resolveUserIds(segment);
     if (userIds.length === 0) {
       return [];
@@ -91,9 +93,13 @@ export class NotificationSegmentService {
 
     const users = await this.prisma.user.findMany({
       where: { id: { in: userIds }, marketingEmailOptOut: false },
-      select: { id: true, email: true },
+      select: { id: true, email: true, name: true },
     });
 
-    return users.map((user) => ({ userId: user.id, email: user.email }));
+    return users.map((user) => ({
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+    }));
   }
 }

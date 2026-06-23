@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from '../prisma/prisma.module.js';
+import { UsersModule } from '../users/users.module.js';
 import { RedisModule } from '../common/redis/redis.module.js';
 import { EmailModule } from './email.module.js';
 import { EmailNotificationService } from './email-notification.service.js';
@@ -24,7 +25,7 @@ import { ConsoleMarketingEmailProvider } from './providers/console-marketing-ema
 import { LoopsMarketingEmailProvider } from './providers/loops-marketing-email.provider.js';
 
 @Module({
-  imports: [ConfigModule, EmailModule, PrismaModule, RedisModule],
+  imports: [ConfigModule, EmailModule, PrismaModule, RedisModule, UsersModule],
   controllers: [
     PushTokensController,
     NotificationPreferencesController,

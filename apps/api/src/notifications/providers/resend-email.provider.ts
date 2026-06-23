@@ -33,7 +33,10 @@ export class ResendEmailProvider extends EmailProvider {
     }
 
     const client = new Resend(apiKey);
-    const rendered = renderEmailTemplate(template as EmailTemplate, vars as EmailTemplateContext);
+    const rendered = renderEmailTemplate(
+      template as EmailTemplate,
+      vars as unknown as EmailTemplateContext,
+    );
 
     const { error } = await client.emails.send({
       from: this.fromEmail,

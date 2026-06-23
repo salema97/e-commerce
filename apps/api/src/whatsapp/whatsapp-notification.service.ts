@@ -9,6 +9,10 @@ import { RedisIdempotencyService } from '../common/redis/idempotency.service.js'
 import { WhatsAppProvider } from './whatsapp-provider.interface.js';
 import { renderWhatsAppTemplate, type NotificationContext } from './whatsapp-templates.js';
 
+export interface NotifyWhatsAppOptions {
+  idempotencyKey?: string;
+}
+
 /**
  * Sends transactional WhatsApp notifications triggered by order, payment, and
  * refund lifecycle events. Notifications are idempotent, respect the customer's
@@ -33,6 +37,7 @@ export class WhatsAppNotificationService {
     template: WhatsAppTemplate,
     phone: string,
     context: NotificationContext,
+    options?: NotifyWhatsAppOptions,
   ): Promise<void> {
     if (!this.isEnabled()) {
       this.logger.debug({ orderId, template }, 'WhatsApp notifications are disabled');
@@ -44,16 +49,6 @@ export class WhatsAppNotificationService {
 
     if (!phoneDigits) {
       this.logger.warn({ orderId, template }, 'No valid phone number for WhatsApp notification');
-      return;
-    }
-
-    const claimed = await this.idempotency.claim(
-      `wa:notification:${orderId}:${template}`,
-      60 * 60 * 24 * 7,
-    );
-
-    if (!claimed) {
-      this.logger.debug({ orderId, template }, 'Duplicate WhatsApp notification skipped');
       return;
     }
 
@@ -83,6 +78,15 @@ export class WhatsAppNotificationService {
       return;
     }
 
+    const idempotencyKey =
+      options?.idempotencyKey ?? `wa:notification:${orderId}:${template}`;
+    const claimed = await this.idempotency.claim(idempotencyKey, 60 * 60 * 24 * 7);
+
+    if (!claimed) {
+      this.logger.debug({ orderId, template }, 'Duplicate WhatsApp notification skipped');
+      return;
+    }
+
     const text = renderWhatsAppTemplate(template, context);
 
     let result: SendWhatsAppResult | undefined;
@@ -92,6 +96,7 @@ export class WhatsAppNotificationService {
     try {
       result = await this.whatsappProvider.sendText(effectiveRawPhone, text);
     } catch (error) {
+      await this.idempotency.release(idempotencyKey);
       status = 'FAILED';
       errorMessage = error instanceof Error ? error.message : 'Unknown send error';
       this.logger.error(

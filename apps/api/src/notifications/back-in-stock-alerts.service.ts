@@ -27,16 +27,12 @@ export class BackInStockAlertsService {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    const existing = await this.prisma.backInStockAlert.findFirst({
-      where: { productId, email: normalizedEmail, isNotified: false },
-    });
-
-    if (existing) {
-      return existing;
-    }
-
-    return this.prisma.backInStockAlert.create({
-      data: { productId, email: normalizedEmail },
+    return this.prisma.backInStockAlert.upsert({
+      where: {
+        productId_email: { productId, email: normalizedEmail },
+      },
+      create: { productId, email: normalizedEmail },
+      update: { isNotified: false },
     });
   }
 
@@ -58,7 +54,7 @@ export class BackInStockAlertsService {
       return;
     }
 
-    const productUrl = `${this.storefrontBaseUrl()}/product/${product.slug}`;
+    const productUrl = `${this.storefrontBaseUrl()}/store/${product.slug}`;
     const notifiedIds: string[] = [];
 
     for (const alert of alerts) {
@@ -78,6 +74,25 @@ export class BackInStockAlertsService {
 
         if (sent) {
           notifiedIds.push(alert.id);
+
+          const user = await this.prisma.user.findFirst({
+            where: { email: alert.email },
+            select: { id: true },
+          });
+
+          if (user) {
+            await this.pushNotifications.notifyUser(
+              user.id,
+              `back-in-stock:${alert.id}`,
+              'BACK_IN_STOCK',
+              {
+                customerName,
+                productName: product.name,
+                productUrl,
+              },
+              `ecommerce://product/${product.slug}`,
+            );
+          }
         }
       } catch (error) {
         this.logger.error(
@@ -93,29 +108,6 @@ export class BackInStockAlertsService {
         data: { isNotified: true },
       });
     }
-
-    const userIds = await this.prisma.user.findMany({
-      where: {
-        email: { in: alerts.map((alert) => alert.email) },
-      },
-      select: { id: true },
-    });
-
-    await Promise.all(
-      userIds.map((user) =>
-        this.pushNotifications.notifyUser(
-          user.id,
-          `back-in-stock:${productId}`,
-          'BACK_IN_STOCK',
-          {
-            customerName: 'Cliente',
-            productName: product.name,
-            productUrl,
-          },
-          `ecommerce://product/${product.id}`,
-        ),
-      ),
-    );
   }
 
   private storefrontBaseUrl(): string {

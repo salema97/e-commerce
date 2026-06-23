@@ -43,15 +43,6 @@ export class CampaignEmailService {
       return false;
     }
 
-    const claimed = await this.idempotency.claim(
-      `email:campaign:${idempotencyKey}:${template}`,
-      60 * 60 * 24 * 30,
-    );
-
-    if (!claimed) {
-      return false;
-    }
-
     if (options.respectMarketingOptOut && options.userId) {
       const user = await this.prisma.user.findUnique({
         where: { id: options.userId },
@@ -64,12 +55,20 @@ export class CampaignEmailService {
       }
     }
 
+    const redisKey = `email:campaign:${idempotencyKey}:${template}`;
+    const claimed = await this.idempotency.claim(redisKey, 60 * 60 * 24 * 30);
+
+    if (!claimed) {
+      return false;
+    }
+
     const vars = this.contextToVars(context);
 
     try {
       await this.emailProvider.sendTemplate(normalizedEmail, template, vars);
       return true;
     } catch (error) {
+      await this.idempotency.release(redisKey);
       this.logger.error(
         { error, template, idempotencyKey, email: maskEmail(normalizedEmail) },
         'Failed to send campaign email',

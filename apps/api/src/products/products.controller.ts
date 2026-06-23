@@ -8,6 +8,7 @@ import {
   Param,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { ProductsService } from './products.service.js';
 import { CreateProductDto } from './dto/create-product.dto.js';
 import { UpdateProductDto } from './dto/update-product.dto.js';
@@ -53,6 +54,7 @@ export class ProductsController {
 
   @Post(':id/back-in-stock-alerts')
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @ApiOperation({ summary: 'Subscribe to back-in-stock email alerts for a product' })
   @ApiResponse({ status: 201, description: 'Alert subscription created' })
   subscribeBackInStock(

@@ -1,20 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { UserProvisioningService } from '../users/user-provisioning.service.js';
 import { RegisterPushTokenDto } from './dto/register-push-token.dto.js';
 
 @Injectable()
 export class PushTokensService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly userProvisioning: UserProvisioningService,
+  ) {}
 
   async register(clerkUserId: string, dto: RegisterPushTokenDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { clerkUserId },
-      select: { id: true },
-    });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+    const user = await this.userProvisioning.ensureByClerkUserId(clerkUserId);
 
     return this.prisma.pushDeviceToken.upsert({
       where: { token: dto.token },

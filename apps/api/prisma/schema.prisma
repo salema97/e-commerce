@@ -613,6 +613,7 @@ model BackInStockAlert {
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
+  @@unique([productId, email])
   @@index([productId])
   @@index([email])
   @@index([createdAt])

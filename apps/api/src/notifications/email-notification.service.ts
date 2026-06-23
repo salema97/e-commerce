@@ -15,6 +15,7 @@ import {
  */
 export interface NotifyOrderEmailOptions {
   attachments?: EmailAttachment[];
+  idempotencyKey?: string;
 }
 
 @Injectable()
@@ -46,16 +47,6 @@ export class EmailNotificationService {
       return;
     }
 
-    const claimed = await this.idempotency.claim(
-      `email:notification:${orderId}:${template}`,
-      60 * 60 * 24 * 7,
-    );
-
-    if (!claimed) {
-      this.logger.debug({ orderId, template }, 'Duplicate email notification skipped');
-      return;
-    }
-
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: { user: { select: { emailOptOut: true } } },
@@ -66,10 +57,18 @@ export class EmailNotificationService {
       return;
     }
 
-    const recipient = order.customerEmail.trim().toLowerCase() || normalizedEmail;
-
     if (order.user?.emailOptOut) {
       this.logger.debug({ orderId, template }, 'Customer opted out of email notifications');
+      return;
+    }
+
+    const recipient = order.customerEmail.trim().toLowerCase() || normalizedEmail;
+    const idempotencyKey =
+      options?.idempotencyKey ?? `email:notification:${orderId}:${template}`;
+    const claimed = await this.idempotency.claim(idempotencyKey, 60 * 60 * 24 * 7);
+
+    if (!claimed) {
+      this.logger.debug({ orderId, template }, 'Duplicate email notification skipped');
       return;
     }
 
@@ -80,6 +79,7 @@ export class EmailNotificationService {
         attachments: options?.attachments,
       });
     } catch (error) {
+      await this.idempotency.release(idempotencyKey);
       this.logger.error(
         { error, orderId, template, email: maskEmail(recipient) },
         'Failed to send email notification',

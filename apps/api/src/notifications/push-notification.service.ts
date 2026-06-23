@@ -6,6 +6,10 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { RedisIdempotencyService } from '../common/redis/idempotency.service.js';
 import { PushNotificationProvider } from './push-notification-provider.interface.js';
 
+export interface NotifyOrderPushOptions {
+  idempotencyKey?: string;
+}
+
 @Injectable()
 export class PushNotificationService {
   private readonly logger = new Logger(PushNotificationService.name);
@@ -22,17 +26,9 @@ export class PushNotificationService {
     userId: string | null | undefined,
     template: EmailTemplate,
     context: EmailTemplateContext,
+    options?: NotifyOrderPushOptions,
   ): Promise<void> {
     if (!this.isEnabled() || !userId) {
-      return;
-    }
-
-    const claimed = await this.idempotency.claim(
-      `push:notification:${orderId}:${template}`,
-      60 * 60 * 24 * 7,
-    );
-
-    if (!claimed) {
       return;
     }
 
@@ -42,6 +38,14 @@ export class PushNotificationService {
     });
 
     if (tokens.length === 0) {
+      return;
+    }
+
+    const idempotencyKey =
+      options?.idempotencyKey ?? `push:notification:${orderId}:${template}`;
+    const claimed = await this.idempotency.claim(idempotencyKey, 60 * 60 * 24 * 7);
+
+    if (!claimed) {
       return;
     }
 
@@ -61,6 +65,7 @@ export class PushNotificationService {
         },
       );
     } catch (error) {
+      await this.idempotency.release(idempotencyKey);
       this.logger.error({ error, orderId, template }, 'Failed to send push notification');
     }
   }
@@ -77,21 +82,19 @@ export class PushNotificationService {
       return;
     }
 
-    const claimed = await this.idempotency.claim(
-      `push:campaign:${idempotencyKey}:${template}`,
-      60 * 60 * 24 * 30,
-    );
-
-    if (!claimed) {
-      return;
-    }
-
     const tokens = await this.prisma.pushDeviceToken.findMany({
       where: { userId },
       select: { token: true },
     });
 
     if (tokens.length === 0) {
+      return;
+    }
+
+    const redisKey = `push:campaign:${idempotencyKey}:${template}`;
+    const claimed = await this.idempotency.claim(redisKey, 60 * 60 * 24 * 30);
+
+    if (!claimed) {
       return;
     }
 
@@ -108,6 +111,7 @@ export class PushNotificationService {
         },
       );
     } catch (error) {
+      await this.idempotency.release(redisKey);
       this.logger.error({ error, userId, template }, 'Failed to send campaign push notification');
     }
   }

@@ -33,6 +33,9 @@ export class AbandonedCartService {
         abandonedReminderSentAt: null,
         updatedAt: { lt: cutoff },
         items: { some: {} },
+        user: {
+          marketingEmailOptOut: false,
+        },
       },
       include: {
         items: true,
