@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MessageStatus, Prisma } from '@prisma/client';
+import { ecuadorPhoneSchema } from '@repo/shared-utils';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ConversationService } from '../conversations/conversation.service.js';
 import { MessageService } from '../messages/message.service.js';
@@ -61,8 +62,16 @@ export class WebhookService {
 
     if (!remoteJid || !externalMessageId) {
       this.logger.warn(
-        { payload },
+        { event: payload.event },
         'Inbound message webhook missing remoteJid or message id',
+      );
+      return;
+    }
+
+    if (data.key?.fromMe === true) {
+      this.logger.debug(
+        { event: payload.event, externalMessageId },
+        'Ignoring outbound message echo',
       );
       return;
     }
@@ -92,7 +101,7 @@ export class WebhookService {
 
     if (!externalMessageId) {
       this.logger.warn(
-        { payload },
+        { event: payload.event },
         'Status update webhook missing message id',
       );
       return;
@@ -123,18 +132,27 @@ export class WebhookService {
 
   private async handleOptOut(phoneDigits: string, content: string): Promise<void> {
     const optOutKeywords = ['baja', 'stop', 'no mas'];
-    const normalized = content.trim().toLowerCase().replace(/\s+/g, ' ');
+    const normalizedContent = content.trim().toLowerCase().replace(/\s+/g, ' ');
 
-    if (!optOutKeywords.includes(normalized)) {
+    if (!optOutKeywords.includes(normalizedContent)) {
       return;
     }
+
+    const parsed = ecuadorPhoneSchema.safeParse(phoneDigits);
+    if (!parsed.success) {
+      this.logger.debug(
+        { phone: maskPhone(phoneDigits) },
+        'Skipping opt-out for invalid phone number',
+      );
+      return;
+    }
+
+    const e164Phone = parsed.data;
 
     try {
       const { count } = await this.prisma.user.updateMany({
         where: {
-          phone: {
-            contains: phoneDigits,
-          },
+          phone: e164Phone,
         },
         data: {
           whatsappOptOut: true,
@@ -169,12 +187,25 @@ export class WebhookService {
       return existing;
     }
 
-    return this.conversationService.create({
-      remoteJid,
-      instance,
-      contactName,
-      status: 'OPEN',
-    });
+    try {
+      return await this.conversationService.create({
+        remoteJid,
+        instance,
+        contactName,
+        status: 'OPEN',
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const retry = await this.conversationService.findByRemoteJid(remoteJid, instance);
+        if (retry) {
+          return retry;
+        }
+      }
+      throw error;
+    }
   }
 }
 
