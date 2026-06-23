@@ -135,6 +135,26 @@ describe('OrdersService', () => {
     );
   });
 
+  it('completes status update even if WhatsApp notification rejects', async () => {
+    prisma.order.findUnique.mockResolvedValue({
+      id: 'o1',
+      status: OrderStatus.PAYMENT_PENDING,
+      customerPhone: '+593991234567',
+      orderNumber: 'ORD-1',
+      total: new Prisma.Decimal(45.98),
+      user: { whatsappOptOut: false },
+    });
+    prisma.order.update.mockResolvedValue({ id: 'o1', status: OrderStatus.PROCESSING });
+    notificationService.notify.mockRejectedValue(new Error('WhatsApp down'));
+
+    const result = await service.updateOrderStatus('o1', OrderStatus.PROCESSING);
+
+    expect(result.status).toBe(OrderStatus.PROCESSING);
+    expect(prisma.order.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ status: OrderStatus.PROCESSING }) }),
+    );
+  });
+
   it('cancels an order and releases reservation', async () => {
     prisma.order.findUnique.mockResolvedValue({ id: 'o1', userId: 'u1', status: OrderStatus.PAYMENT_PENDING });
     await service.cancelOrder('o1', 'u1');

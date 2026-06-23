@@ -1,6 +1,8 @@
 import {
+  BadRequestException,
   Controller,
   Headers,
+  HttpCode,
   Param,
   Post,
   Req,
@@ -10,6 +12,8 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { createHash } from 'crypto';
+import { ZodError } from 'zod';
+import { webhookPayloadSchema } from '@repo/shared-utils';
 import { Public } from '../auth/public.decorator.js';
 import { WhatsAppProvider } from '../whatsapp/whatsapp-provider.interface.js';
 import { RedisIdempotencyService } from '../common/redis/idempotency.service.js';
@@ -30,6 +34,7 @@ export class WebhookController {
   ) {}
 
   @Post(':event')
+  @HttpCode(204)
   @Throttle({ default: { limit: 60, ttl: 60_000 } })
   @ApiOperation({ summary: 'Receive Evolution API webhook events' })
   @ApiResponse({ status: 204, description: 'Event accepted' })
@@ -54,8 +59,13 @@ export class WebhookController {
     let payload: EvolutionWebhookPayload;
 
     try {
-      payload = JSON.parse(rawBody.toString('utf8')) as EvolutionWebhookPayload;
-    } catch {
+      payload = webhookPayloadSchema.parse(
+        JSON.parse(rawBody.toString('utf8')),
+      ) as EvolutionWebhookPayload;
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw new BadRequestException(error.flatten());
+      }
       throw new UnauthorizedException('Invalid JSON payload');
     }
 

@@ -633,6 +633,7 @@ model Conversation {
   user     User?     @relation(fields: [userId], references: [id])
   messages Message[]
 
+  @@unique([remoteJid, instance])
   @@index([remoteJid])
   @@index([status])
   @@index([createdAt])

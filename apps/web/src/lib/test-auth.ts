@@ -12,7 +12,8 @@
 import { cookies } from 'next/headers';
 import type { Role } from '@repo/shared-types';
 
-const TEST_AUTH_ENABLED = process.env.ENABLE_TEST_AUTH === 'true';
+const TEST_AUTH_ENABLED =
+  process.env.ENABLE_TEST_AUTH === 'true' && process.env.NODE_ENV !== 'production';
 const COOKIE_NAME = '__test_auth';
 
 export interface TestAuthSession {

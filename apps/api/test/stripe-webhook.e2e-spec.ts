@@ -7,6 +7,7 @@ import request from 'supertest';
 import { createHmac } from 'crypto';
 import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
+import { RedisService } from '../src/common/redis/redis.service.js';
 import { StripeProvider } from '../src/payments/stripe/stripe.provider.js';
 import { DirectSriInvoiceProvider } from '../src/invoices/sri/sri-invoice.provider.js';
 import { PaymentStatus } from '../src/payments/entities/payment-status.enum.js';
@@ -124,6 +125,11 @@ describe('Stripe Webhook (e2e)', () => {
       issueCreditNote: vi.fn(),
     };
 
+    const redisServiceMock = {
+      client: { status: 'end' },
+      onModuleDestroy: vi.fn(),
+    };
+
     const module = await Test.createTestingModule({
       imports: [AppModule],
     })
@@ -131,6 +137,8 @@ describe('Stripe Webhook (e2e)', () => {
       .useValue(configMock)
       .overrideProvider(PrismaService)
       .useValue(prismaMock)
+      .overrideProvider(RedisService)
+      .useValue(redisServiceMock)
       .overrideProvider(StripeProvider)
       .useValue(stripeProviderMock)
       .overrideProvider(DirectSriInvoiceProvider)

@@ -148,6 +148,40 @@ describe('PaymentWebhookService', () => {
     );
   });
 
+  it('completes webhook handling even if WhatsApp notification rejects', async () => {
+    provider.parseWebhookPayload.mockResolvedValueOnce({
+      status: PaymentStatus.COMPLETED,
+      providerTransactionId: 'kushki_txn_1',
+      metadata: { event: 'approved' },
+    });
+    prisma.payment.findFirst.mockResolvedValueOnce({
+      id: 'pay_1',
+      orderId: 'order_1',
+      status: PaymentStatus.PENDING,
+    });
+    prisma.order.findUnique.mockResolvedValueOnce({
+      id: 'order_1',
+      customerPhone: '+593991234567',
+      orderNumber: 'ORD-001',
+      total: 100,
+      user: { whatsappOptOut: false },
+    });
+    notificationService.notify.mockRejectedValue(new Error('WhatsApp down'));
+
+    const result = await service.handle(
+      'kushki',
+      { transactionReference: 'kushki_txn_1', status: 'approved' },
+      'kushki_secret',
+    );
+
+    expect(result.status).toBe(PaymentStatus.COMPLETED);
+    expect(prisma.order.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { status: OrderStatus.PROCESSING },
+      }),
+    );
+  });
+
   it('skips persistence when payment record is not found', async () => {
     provider.parseWebhookPayload.mockResolvedValueOnce({
       status: PaymentStatus.COMPLETED,

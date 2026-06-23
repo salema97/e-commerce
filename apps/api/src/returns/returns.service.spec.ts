@@ -280,6 +280,18 @@ describe('ReturnsService', () => {
       );
     });
 
+    it('completes return resolution even if WhatsApp notification rejects', async () => {
+      prisma.returnRequest.findUnique.mockResolvedValue(buildReturnForResolve(ReturnStatus.INSPECTION, { order: { ...buildReturnForResolve().order, customerPhone: '+593991234567' } }));
+      prisma.returnRequest.update.mockResolvedValue({ id: 'rr1', status: ReturnStatus.RESOLVED, refundMethod: RefundMethod.ORIGINAL_PAYMENT, items: [] });
+      prisma.__txClient.inventory.findFirst.mockResolvedValue({ id: 'inv1', productId: 'p1', variantId: null, quantity: 10, reservedQuantity: 0 });
+      whatsappNotificationService.notify.mockRejectedValue(new Error('WhatsApp down'));
+
+      const result = await service.resolveReturn('rr1', { refundMethod: RefundMethod.ORIGINAL_PAYMENT }, 'admin1');
+
+      expect(result.status).toBe(ReturnStatus.RESOLVED);
+      expect(refundService.createRefund).toHaveBeenCalled();
+    });
+
     it('issues store credit when method is STORE_CREDIT', async () => {
       prisma.returnRequest.findUnique.mockResolvedValue(buildReturnForResolve());
       prisma.returnRequest.update.mockResolvedValue({ id: 'rr1', status: ReturnStatus.RESOLVED, refundMethod: RefundMethod.STORE_CREDIT, items: [] });

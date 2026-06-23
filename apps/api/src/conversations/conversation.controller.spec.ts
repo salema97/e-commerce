@@ -20,7 +20,10 @@ describe('ConversationController', () => {
   });
 
   it('lists conversations for the current user', async () => {
-    service.findAll.mockResolvedValue({ data: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } });
+    service.findAll.mockResolvedValue({
+      data: [],
+      meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
+    });
     const query = { status: 'OPEN' } as never;
     const result = await controller.findAll(query, 'u1');
     expect(service.findAll).toHaveBeenCalledWith(query, 'u1');
@@ -34,11 +37,28 @@ describe('ConversationController', () => {
     expect(result.id).toBe('c1');
   });
 
-  it('updates a conversation', async () => {
+  it('updates conversation status', async () => {
     service.update.mockResolvedValue({ id: 'c1', status: 'PENDING' });
+    const dto = { status: 'PENDING' as const };
+    const result = await controller.update('c1', dto);
+    expect(service.update).toHaveBeenCalledWith('c1', dto);
+    expect(result.status).toBe('PENDING');
+  });
+
+  it('assigns conversation to an agent', async () => {
+    service.update.mockResolvedValue({ id: 'c1', assignedAgentId: 'u1' });
+    const dto = { assignedAgentId: 'u1' };
+    const result = await controller.update('c1', dto);
+    expect(service.update).toHaveBeenCalledWith('c1', dto);
+    expect(result.assignedAgentId).toBe('u1');
+  });
+
+  it('updates status and assignment in one request', async () => {
+    service.update.mockResolvedValue({ id: 'c1', status: 'PENDING', assignedAgentId: 'u1' });
     const dto = { status: 'PENDING' as const, assignedAgentId: 'u1' };
     const result = await controller.update('c1', dto);
     expect(service.update).toHaveBeenCalledWith('c1', dto);
     expect(result.status).toBe('PENDING');
+    expect(result.assignedAgentId).toBe('u1');
   });
 });

@@ -42,7 +42,7 @@ export class ClerkJwtGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
-    if (isTestAuthEnabled()) {
+    if (isTestAuthEnabled() && process.env.NODE_ENV !== 'production') {
       const headers = new Headers(
         Object.entries(request.headers).reduce(
           (acc, [key, value]) => {

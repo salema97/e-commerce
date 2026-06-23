@@ -35,6 +35,7 @@ const envSchema = z.object({
   EVOLUTION_WEBHOOK_SECRET: z.string().min(1),
   EVOLUTION_INSTANCE_NAME: z.string().min(1),
   WHATSAPP_NOTIFICATIONS_ENABLED: z.enum(['true', 'false']).default('true'),
+  ENABLE_TEST_AUTH: z.enum(['true', 'false']).default('false'),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -45,6 +46,12 @@ export function validate(config: Record<string, unknown>): Env {
   if (!result.success) {
     const issues = result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join('; ');
     throw new Error(`Environment validation failed: ${issues}`);
+  }
+
+  if (config.NODE_ENV === 'production' && config.ENABLE_TEST_AUTH === 'true') {
+    throw new Error(
+      'Environment validation failed: ENABLE_TEST_AUTH cannot be true in production',
+    );
   }
 
   return result.data;

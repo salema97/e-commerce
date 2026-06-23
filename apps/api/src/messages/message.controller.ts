@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -7,6 +8,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ZodError } from 'zod';
+import { messageContentSchema } from '@repo/shared-utils';
 import { MessageService } from './message.service.js';
 import { ListMessagesQueryDto } from './dto/list-messages.query.dto.js';
 import { CreateMessageDto } from './dto/create-message.dto.js';
@@ -35,10 +38,19 @@ export class MessageController {
   @ApiOperation({ summary: 'Send an outbound message in a conversation' })
   @ApiResponse({ status: 201, description: 'Message sent and persisted' })
   @ApiResponse({ status: 404, description: 'Conversation not found' })
-  create(
+  async create(
     @Param('conversationId') conversationId: string,
     @Body() createMessageDto: CreateMessageDto,
   ) {
+    try {
+      messageContentSchema.parse(createMessageDto.content);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw new BadRequestException(error.flatten());
+      }
+      throw error;
+    }
+
     return this.messageService.createOutbound(conversationId, createMessageDto);
   }
 }

@@ -19,6 +19,7 @@ describe('MessageService', () => {
       },
       message: {
         create: vi.fn(),
+        findUnique: vi.fn(),
         findMany: vi.fn(),
         count: vi.fn(),
         updateMany: vi.fn(),
@@ -155,6 +156,7 @@ describe('MessageService', () => {
   });
 
   it('updates status by external message id', async () => {
+    prisma.message.findUnique.mockResolvedValue({ id: 'm1', status: 'SENT' });
     prisma.message.updateMany.mockResolvedValue({ count: 1 });
 
     await service.updateStatusByExternalId('ext1', 'READ', 'READ');
@@ -165,5 +167,21 @@ describe('MessageService', () => {
         data: expect.objectContaining({ status: 'READ', readAt: expect.any(Date) }),
       }),
     );
+  });
+
+  it('does not downgrade an already-read message to delivered', async () => {
+    prisma.message.findUnique.mockResolvedValue({ id: 'm1', status: 'READ' });
+
+    await service.updateStatusByExternalId('ext1', 'DELIVERED', 'DELIVERED');
+
+    expect(prisma.message.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('does not update status when current and new status are equal', async () => {
+    prisma.message.findUnique.mockResolvedValue({ id: 'm1', status: 'DELIVERED' });
+
+    await service.updateStatusByExternalId('ext1', 'DELIVERED', 'DELIVERED');
+
+    expect(prisma.message.updateMany).not.toHaveBeenCalled();
   });
 });

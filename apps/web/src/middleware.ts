@@ -17,7 +17,7 @@ export default clerkMiddleware(async (auth, req) => {
     const allowedRoles = isSupportRoute(req) ? SUPPORT_ROLES : ADMIN_ROLES;
     let isAuthenticatedAdmin = Boolean(userId && typeof role === 'string' && allowedRoles.has(role));
 
-    if (!isAuthenticatedAdmin && isTestAuthEnabled()) {
+    if (!isAuthenticatedAdmin && isTestAuthEnabled() && process.env.NODE_ENV !== 'production') {
       const testSession = await getTestAuthSession();
       if (testSession && allowedRoles.has(testSession.role)) {
         isAuthenticatedAdmin = true;

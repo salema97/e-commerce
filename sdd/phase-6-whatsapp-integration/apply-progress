@@ -1,0 +1,98 @@
+## SDD Apply Progress — Phase 6 WhatsApp Integration
+
+**Branch:** feat/phase-6-whatsapp-tests  
+**Status:** CRITICAL/WARNING remediation complete; all required tests passing  
+**Mode:** Standard (non-TDD)
+
+### CRITICAL Issues Fixed
+
+- [x] **R1-CRITICAL: ENABLE_TEST_AUTH bypass hardening**
+  - Added `ENABLE_TEST_AUTH` to `apps/api/src/config/env.validation.ts` with default `'false'`.
+  - Throws at bootstrap when `NODE_ENV === 'production' && ENABLE_TEST_AUTH === 'true'`.
+  - Hardened `isTestAuthEnabled()` in `apps/api/src/auth/test-auth.ts` and `apps/web/src/lib/test-auth.ts` to require `NODE_ENV !== 'production'`.
+  - Added explicit `process.env.NODE_ENV !== 'production'` checks in `ClerkJwtGuard`, web `middleware.ts`, and test-auth route handlers.
+
+- [x] **R3-CRITICAL-1: Existing E2E suite fails after RedisModule**
+  - Made `RedisService.onModuleDestroy()` skip `quit()` when the ioredis client is not connected (`status` not ready/connect/connecting/reconnecting).
+  - Added `RedisService` mock override in `apps/api/test/stripe-webhook.e2e-spec.ts` for belt-and-suspenders E2E safety.
+
+- [x] **R3-CRITICAL-2: sendTemplate body invalid for multiple variables**
+  - Rewrote `EvolutionApiProvider.sendTemplate` to emit a single `body` component whose `parameters` array contains all variable entries.
+  - Updated `evolution-api.provider.spec.ts` to assert the exact multi-variable request body.
+
+- [x] **R3-CRITICAL-3: Conversation unique constraint on (remoteJid, instance)**
+  - Added `@@unique([remoteJid, instance])` to `Conversation` in `apps/api/prisma/schema.prisma`.
+  - Added migration SQL `20260625000000_add_conversation_remote_jid_instance_unique/migration.sql`.
+  - Updated `WebhookService.findOrCreateConversation` to catch `Prisma.P2002` and retry the lookup.
+
+### HIGH-PRIORITY WARNINGs Fixed
+
+- [x] **R1-WARNING-2: Webhook service logs full payloads**
+  - Removed `{ payload }` from `handleInboundMessage` and `handleStatusUpdate` logs; now logs only event, remoteJid, and external message id.
+
+- [x] **R1-WARNING-3: Opt-out matching uses substring**
+  - Replaced `User.phone: { contains: phoneDigits }` with exact E.164 match using `ecuadorPhoneSchema` normalization.
+
+- [x] **R1-WARNING-4: Inbound webhook ignores fromMe**
+  - Added early return in `handleInboundMessage` when `data.key.fromMe === true`.
+
+- [x] **R1-WARNING-6: Hardcoded fallback webhook secret in E2E fixture**
+  - Removed `'whsec_xxx'` fallback in `apps/web/e2e/fixtures/support.ts`; now throws if `EVOLUTION_WEBHOOK_SECRET` is unset.
+
+- [x] **R3-WARNING-10: Opt-out case-sensitive**
+  - Confirmed opt-out keyword matching normalizes inbound text to lowercase and compares against lowercase keywords.
+
+- [x] **R3-WARNING-11: Message status updates can move backward**
+  - Updated `MessageService.updateStatusByExternalId` to fetch current status and only update when the new status rank is greater than the current (`FAILED < SENT < DELIVERED < READ`).
+
+### Tests Added/Updated
+
+- [x] Created `apps/api/src/webhooks/webhook.service.spec.ts` covering:
+  - Opt-out keyword handling (case-insensitive)
+  - Missing remoteJid early return
+  - Media message extraction
+  - Status update mapping
+  - `fromMe` ignored
+  - Unique-constraint retry path
+- [x] Updated `apps/api/src/whatsapp/providers/evolution-api.provider.spec.ts` for multi-variable `sendTemplate`.
+- [x] Updated `apps/api/src/messages/message.service.spec.ts` for status downgrade prevention.
+- [x] Added regression tests in `orders.service.spec.ts`, `payment-webhook.service.spec.ts`, and `returns.service.spec.ts` proving order/payment/return flows still complete when `WhatsAppNotificationService.notify` rejects.
+
+### Verification Results
+
+| Command | Result |
+|---------|--------|
+| `pnpm --filter @repo/shared-utils test` | PASS (40 tests) |
+| `pnpm --filter @repo/api test` | PASS (280 tests) |
+| `pnpm --filter @repo/api test:e2e` | PASS (43 tests) |
+| `pnpm --filter @repo/web test` | PASS (16 tests) |
+| `pnpm typecheck` | PASS |
+
+### Remaining Non-Blocking Items
+
+None identified. Phase 6 CRITICAL/WARNING remediation is complete and verified.
+
+### Files Changed
+
+| File | Action |
+|------|--------|
+| `apps/api/src/config/env.validation.ts` | Modified |
+| `apps/api/src/auth/clerk-jwt.guard.ts` | Modified |
+| `apps/api/src/auth/test-auth.ts` | Modified |
+| `apps/api/src/common/redis/redis.service.ts` | Modified |
+| `apps/api/src/messages/message.service.ts` | Modified |
+| `apps/api/src/messages/message.service.spec.ts` | Modified |
+| `apps/api/src/webhooks/webhook.service.ts` | Modified |
+| `apps/api/src/webhooks/webhook.service.spec.ts` | Created |
+| `apps/api/src/whatsapp/providers/evolution-api.provider.ts` | Modified |
+| `apps/api/src/whatsapp/providers/evolution-api.provider.spec.ts` | Modified |
+| `apps/api/src/orders/orders.service.spec.ts` | Modified |
+| `apps/api/src/payments/payment-webhook.service.spec.ts` | Modified |
+| `apps/api/src/returns/returns.service.spec.ts` | Modified |
+| `apps/api/test/stripe-webhook.e2e-spec.ts` | Modified |
+| `apps/api/prisma/schema.prisma` | Modified |
+| `apps/api/prisma/migrations/20260625000000_add_conversation_remote_jid_instance_unique/migration.sql` | Created |
+| `apps/web/src/lib/test-auth.ts` | Modified |
+| `apps/web/src/middleware.ts` | Modified |
+| `apps/web/src/app/api/test/auth/route.ts` | Modified |
+| `apps/web/e2e/fixtures/support.ts` | Modified |

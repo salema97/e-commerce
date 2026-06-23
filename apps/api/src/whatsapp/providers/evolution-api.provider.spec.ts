@@ -157,7 +157,7 @@ describe('EvolutionApiProvider', () => {
   });
 
   describe('sendTemplate', () => {
-    it('sends a template message with variables', async () => {
+    it('sends a template message with a single body component containing all variables', async () => {
       const result = await provider.sendTemplate('+593991234567', 'ORDER_CONFIRMED', {
         orderNumber: 'ORD-001',
         total: '$25.00',
@@ -167,7 +167,20 @@ describe('EvolutionApiProvider', () => {
         `${EVOLUTION_API_URL}/message/sendTemplate/${EVOLUTION_INSTANCE_NAME}`,
         expect.objectContaining({
           method: 'POST',
-          body: expect.stringContaining('order_confirmed'),
+          body: JSON.stringify({
+            number: '+593991234567',
+            template: 'order_confirmed',
+            language: 'es',
+            components: [
+              {
+                type: 'body',
+                parameters: [
+                  { type: 'text', text: 'ORD-001' },
+                  { type: 'text', text: '$25.00' },
+                ],
+              },
+            ],
+          }),
         }),
       );
 
