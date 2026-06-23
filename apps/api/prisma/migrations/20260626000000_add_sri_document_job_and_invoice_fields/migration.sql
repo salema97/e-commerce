@@ -9,7 +9,7 @@ END $$;
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'SriDocumentJobStatus') THEN
-    CREATE TYPE "SriDocumentJobStatus" AS ENUM ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED', 'DLQ');
+    CREATE TYPE "SriDocumentJobStatus" AS ENUM ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'DLQ');
   END IF;
 END $$;
 
