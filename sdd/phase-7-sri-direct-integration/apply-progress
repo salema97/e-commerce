@@ -62,6 +62,32 @@ Push `feat/phase-7-sri-admin-ui` and open PR for review/merge.
   - Admin `POST /v1/invoices/:id/retry` for FAILED invoices
   - Admin `GET /v1/invoices/:id/xml|pdf` redirects to signed URLs (no public R2 exposure)
 
+## Changes (Focused re-review — 3 remaining BLOCKERS fixed)
+
+### 10. R3-CRITICAL-2 — Consumidor final identification must be 13 digits
+- Changed default `identificacionComprador` from `'9999999999'` (10 digits) to `'9999999999999'` (13 digits) in:
+  - `apps/api/src/invoices/sri/sri-xml.builder.ts`
+  - `apps/api/src/invoices/sri/sri-credit-note-xml.builder.ts`
+- Added `isValidCedula` and `isValidEcuadorCustomerIdentification` helpers to `@repo/shared-utils`.
+- Added custom `IsEcuadorCustomerIdentification` class-validator decorator at `apps/api/src/common/validators/is-ecuador-customer-identification.validator.ts`.
+- Applied decorator to `CreateOrderDto.customerIdentification` so only valid Ecuadorian IDs are accepted (10-digit cédula, 13-digit RUC, or 13-digit consumidor final).
+
+### 11. R3-CRITICAL-3 — `totalSinImpuestos` mismatch in invoice XML
+- Updated `SriXmlBuilder` so document-level `totalSinImpuestos` is `subtotal - discountAmount` (post-discount), matching the sum of detail lines.
+- `totalDescuento` remains `discountAmount` and `totalConImpuestos.baseImponible` already matched.
+- Added unit-test assertions for matching totals after discount in `sri-xml.builder.spec.ts`.
+
+### 12. R4-CRITICAL-4 — Persist invoice/credit-note record before SRI call
+- Added `PENDING` to `InvoiceStatus` and `CreditNoteStatus` enums so pre-submission records can express "allocated, awaiting SRI submission".
+- Migration: `apps/api/prisma/migrations/20260629000000_add_pending_document_status/migration.sql`.
+- Refactored `SriQueueWorker.issueDocument` to call new `persistPreSubmissionDocument` immediately after allocating sequence/accessKey and before SRI submission.
+  - Invoice: `upsert` by `orderId` with `status: PENDING`, `sriStatus: PENDING`, `sequenceNumber`, `accessKey`.
+  - Credit note: `update` by `id` with the same pending fields.
+- On retry, existing records already carry `sequenceNumber`/`accessKey`, so `issueDocument` reuses them instead of allocating new ones.
+- `persistDocumentResult` now updates the same record rather than creating a new one.
+- Updated `InvoicesService.retryIssue`/`retryCreditNote` to allow retries from `PENDING` status.
+- Added/updated worker tests asserting pre-persist `PENDING` and sequence reuse on retry.
+
 ## Verification
 ```bash
 pnpm typecheck
@@ -70,3 +96,9 @@ pnpm --filter @repo/api test:e2e
 pnpm --filter @repo/web test
 pnpm audit --prod
 ```
+
+## Verification Results (post-blocker-fix)
+- `pnpm typecheck`: pass
+- `pnpm --filter @repo/api test`: 336 passed
+- `pnpm --filter @repo/api test:e2e`: 47 passed
+- `pnpm --filter @repo/web test`: not re-run (no web changes)

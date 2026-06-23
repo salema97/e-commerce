@@ -367,7 +367,7 @@ export class InvoicesService {
       throw new NotFoundException(`Invoice ${id} not found`);
     }
 
-    const allowed: InvoiceStatus[] = [InvoiceStatus.FAILED, InvoiceStatus.REJECTED, InvoiceStatus.DRAFT];
+    const allowed: InvoiceStatus[] = [InvoiceStatus.FAILED, InvoiceStatus.REJECTED, InvoiceStatus.DRAFT, InvoiceStatus.PENDING];
     if (!allowed.includes(invoice.status)) {
       throw new BadRequestException(
         `Invoice ${id} cannot be retried from status ${invoice.status}`,
@@ -444,7 +444,7 @@ export class InvoicesService {
       throw new NotFoundException(`Credit note ${id} not found`);
     }
 
-    const allowed: CreditNoteStatus[] = [CreditNoteStatus.FAILED, CreditNoteStatus.REJECTED, CreditNoteStatus.DRAFT];
+    const allowed: CreditNoteStatus[] = [CreditNoteStatus.FAILED, CreditNoteStatus.REJECTED, CreditNoteStatus.DRAFT, CreditNoteStatus.PENDING];
     if (!allowed.includes(creditNote.status)) {
       throw new BadRequestException(
         `Credit note ${id} cannot be retried from status ${creditNote.status}`,

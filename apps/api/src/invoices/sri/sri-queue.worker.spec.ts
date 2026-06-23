@@ -250,6 +250,16 @@ describe('SriQueueWorker', () => {
       expect.objectContaining({
         create: expect.objectContaining({
           orderId: 'order_1',
+          status: InvoiceStatus.PENDING,
+          sriStatus: 'PENDING',
+          sequenceNumber: '000000001',
+        }),
+      }),
+    );
+    expect(prisma.invoice.upsert).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          orderId: 'order_1',
           status: InvoiceStatus.AUTHORIZED,
           authorizationNumber: '1234567890',
         }),
@@ -290,6 +300,38 @@ describe('SriQueueWorker', () => {
           status: SriDocumentJobStatus.FAILED,
           attempts: 1,
           lastError: 'SRI timeout',
+        }),
+      }),
+    );
+  });
+
+  it('reuses existing sequence and access key on retry', async () => {
+    prisma.invoice.findUnique = vi.fn().mockResolvedValue({
+      id: 'inv-1',
+      orderId: 'order_1',
+      accessKey: 'existing-access-key',
+      sequenceNumber: '000000042',
+      status: InvoiceStatus.PENDING,
+    });
+
+    const job = createJob({ orderId: 'order_1' });
+    await (worker as unknown as { process: (job: Job) => Promise<void> }).process(job);
+
+    expect(sequenceService.allocateNext).not.toHaveBeenCalled();
+    expect(accessKeyBuilder.build).not.toHaveBeenCalled();
+    expect(prisma.invoice.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: expect.objectContaining({
+          accessKey: 'existing-access-key',
+          sequenceNumber: '000000042',
+          status: InvoiceStatus.PENDING,
+        }),
+      }),
+    );
+    expect(prisma.invoice.upsert).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        update: expect.objectContaining({
+          status: InvoiceStatus.AUTHORIZED,
         }),
       }),
     );
@@ -362,6 +404,16 @@ describe('SriQueueWorker', () => {
     await (worker as unknown as { process: (job: Job) => Promise<void> }).process(job);
 
     expect(prisma.creditNote.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'cn_1' },
+        data: expect.objectContaining({
+          status: CreditNoteStatus.PENDING,
+          sriStatus: 'PENDING',
+          sequenceNumber: '000000001',
+        }),
+      }),
+    );
+    expect(prisma.creditNote.update).toHaveBeenLastCalledWith(
       expect.objectContaining({
         where: { id: 'cn_1' },
         data: expect.objectContaining({

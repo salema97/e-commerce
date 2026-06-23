@@ -422,6 +422,13 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
         sequenceNumber,
       });
 
+    await this.persistPreSubmissionDocument(
+      documentType,
+      documentId,
+      sequenceNumber,
+      accessKey,
+    );
+
     const xml = buildXml(accessKey, sequenceNumber);
 
     const certificatePath = this.config.getOrThrow<string>(
@@ -513,6 +520,52 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
     if (auth?.estado === 'AUTORIZADO') return InvoiceStatus.AUTHORIZED;
     if (auth?.estado === 'RECHAZADO') return InvoiceStatus.REJECTED;
     return InvoiceStatus.SUBMITTED;
+  }
+
+  private async persistPreSubmissionDocument(
+    documentType: '01' | '04',
+    documentId: string,
+    sequenceNumber: string,
+    accessKey: string,
+  ): Promise<void> {
+    const sriStatus = this.mapInvoiceStatusToSriStatus(InvoiceStatus.PENDING);
+
+    if (documentType === '01') {
+      await this.prisma.invoice.upsert({
+        where: { orderId: documentId },
+        create: {
+          orderId: documentId,
+          accessKey,
+          documentType: '01',
+          sequenceNumber,
+          status: InvoiceStatus.PENDING,
+          sriStatus,
+        },
+        update: {
+          sequenceNumber,
+          accessKey,
+          status: InvoiceStatus.PENDING,
+          sriStatus,
+          retryCount: { increment: 1 },
+          lastError: null,
+        },
+      });
+      return;
+    }
+
+    if (documentType === '04') {
+      await this.prisma.creditNote.update({
+        where: { id: documentId },
+        data: {
+          accessKey,
+          sequenceNumber,
+          status: this.mapInvoiceStatusToCreditNoteStatus(InvoiceStatus.PENDING),
+          sriStatus,
+          retryCount: { increment: 1 },
+          lastError: null,
+        },
+      });
+    }
   }
 
   private async persistDocumentResult(
@@ -697,6 +750,8 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
         return 'SUBMITTED' as const;
       case InvoiceStatus.FAILED:
         return 'FAILED' as const;
+      case InvoiceStatus.PENDING:
+        return 'PENDING' as const;
       default:
         return 'PENDING' as const;
     }
@@ -712,6 +767,8 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
         return 'SUBMITTED' as const;
       case InvoiceStatus.FAILED:
         return 'FAILED' as const;
+      case InvoiceStatus.PENDING:
+        return 'PENDING' as const;
       default:
         return 'DRAFT' as const;
     }
