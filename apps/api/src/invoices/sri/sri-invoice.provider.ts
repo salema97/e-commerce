@@ -56,6 +56,10 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
       sequenceNumber,
     });
 
+    const companyName = this.configService.getOrThrow<string>('SRI_COMPANY_NAME');
+    const companyTradeName = this.configService.get<string>('SRI_COMPANY_TRADE_NAME') ?? companyName;
+    const companyAddress = this.configService.get<string>('SRI_COMPANY_ADDRESS') ?? 'Direccion matriz';
+
     const xml = this.xmlBuilder.buildFactura({
       accessKey,
       order,
@@ -64,9 +68,9 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
       sequenceNumber,
       environment: this.getEnvironmentCode(),
       companyRuc: this.configService.getOrThrow<string>('SRI_RUC'),
-      companyName: 'Empresa E-commerce',
-      companyTradeName: 'E-commerce',
-      companyAddress: 'Direccion matriz',
+      companyName,
+      companyTradeName,
+      companyAddress,
     });
 
     const certificatePath = this.configService.getOrThrow<string>(
@@ -169,6 +173,10 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
       );
     }
 
+    const companyName = this.configService.getOrThrow<string>('SRI_COMPANY_NAME');
+    const companyTradeName = this.configService.get<string>('SRI_COMPANY_TRADE_NAME') ?? companyName;
+    const companyAddress = this.configService.get<string>('SRI_COMPANY_ADDRESS') ?? 'Direccion matriz';
+
     const xml = this.creditNoteXmlBuilder.buildNotaDeCredito({
       accessKey,
       customerName: returnRecord.order.customerEmail,
@@ -180,9 +188,9 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
       sequenceNumber,
       environment: this.getEnvironmentCode(),
       companyRuc: this.configService.getOrThrow<string>('SRI_RUC'),
-      companyName: 'Empresa E-commerce',
-      companyTradeName: 'E-commerce',
-      companyAddress: 'Direccion matriz',
+      companyName,
+      companyTradeName,
+      companyAddress,
     });
 
     const certificatePath = this.configService.getOrThrow<string>(

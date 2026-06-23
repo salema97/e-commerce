@@ -118,6 +118,9 @@ describe('DirectSriInvoiceProvider', () => {
                 SRI_EMISSION_POINT_CODE: '001',
                 SRI_DIGITAL_CERTIFICATE_PATH: 'data:test',
                 SRI_DIGITAL_CERTIFICATE_PASSWORD: 'test',
+                SRI_COMPANY_NAME: 'Empresa E-commerce',
+                SRI_COMPANY_TRADE_NAME: 'E-commerce',
+                SRI_COMPANY_ADDRESS: 'Direccion matriz',
               };
               return values[key] ?? '';
             },

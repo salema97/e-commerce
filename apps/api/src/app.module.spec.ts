@@ -31,6 +31,11 @@ const TEST_CONFIG = {
   SRI_ESTABLISHMENT_CODE: '001',
   SRI_EMISSION_POINT_CODE: '001',
   SRI_TEST_ENVIRONMENT: 'true',
+  SRI_COMPANY_NAME: 'Empresa E-commerce',
+  SRI_COMPANY_TRADE_NAME: 'E-commerce',
+  SRI_COMPANY_ADDRESS: 'Direccion matriz',
+  SRI_COMPANY_CONTRIBUYENTE_ESPECIAL: '536',
+  SRI_COMPANY_OBLIGADO_CONTABILIDAD: 'SI',
 };
 
 describe('AppModule', () => {
@@ -49,6 +54,9 @@ describe('AppModule', () => {
     vi.stubEnv('PLACETOPAY_LOGIN', TEST_CONFIG.PLACETOPAY_LOGIN);
     vi.stubEnv('PLACETOPAY_SECRET_KEY', TEST_CONFIG.PLACETOPAY_SECRET_KEY);
     vi.stubEnv('PLACETOPAY_BASE_URL', TEST_CONFIG.PLACETOPAY_BASE_URL);
+    vi.stubEnv('SRI_COMPANY_NAME', TEST_CONFIG.SRI_COMPANY_NAME);
+    vi.stubEnv('SRI_COMPANY_TRADE_NAME', TEST_CONFIG.SRI_COMPANY_TRADE_NAME);
+    vi.stubEnv('SRI_COMPANY_ADDRESS', TEST_CONFIG.SRI_COMPANY_ADDRESS);
 
     const imported = await import('./app.module.js');
     AppModule = imported.AppModule;
