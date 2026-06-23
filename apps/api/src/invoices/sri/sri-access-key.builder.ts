@@ -1,3 +1,5 @@
+import { randomInt } from 'node:crypto';
+
 export interface AccessKeyInput {
   date: Date;
   documentType: string;
@@ -11,6 +13,8 @@ export interface AccessKeyInput {
 
 export class SriAccessKeyBuilder {
   build(input: AccessKeyInput): string {
+    this.validate(input);
+
     const datePart = this.formatDate(input.date);
     const documentType = input.documentType.padStart(2, '0');
     const ruc = input.ruc.padStart(13, '0');
@@ -36,6 +40,40 @@ export class SriAccessKeyBuilder {
     return base + checkDigit;
   }
 
+  private validate(input: AccessKeyInput): void {
+    if (!(input.date instanceof Date) || Number.isNaN(input.date.getTime())) {
+      throw new Error('Invalid date provided for access key');
+    }
+
+    if (!/^\d{1,2}$/.test(input.documentType)) {
+      throw new Error('documentType must be a 1-2 digit numeric code');
+    }
+
+    if (!/^\d{13}$/.test(input.ruc)) {
+      throw new Error('ruc must be a 13-digit numeric string');
+    }
+
+    if (input.environment !== '1' && input.environment !== '2') {
+      throw new Error('environment must be "1" (test) or "2" (production)');
+    }
+
+    if (!/^\d{1,3}$/.test(input.establishmentCode)) {
+      throw new Error('establishmentCode must be a 1-3 digit numeric code');
+    }
+
+    if (!/^\d{1,3}$/.test(input.emissionPointCode)) {
+      throw new Error('emissionPointCode must be a 1-3 digit numeric code');
+    }
+
+    if (!/^\d{1,9}$/.test(input.sequenceNumber)) {
+      throw new Error('sequenceNumber must be a 1-9 digit numeric code');
+    }
+
+    if (input.emissionType && input.emissionType !== '1' && input.emissionType !== '2') {
+      throw new Error('emissionType must be "1" or "2"');
+    }
+  }
+
   private formatDate(date: Date): string {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -44,7 +82,7 @@ export class SriAccessKeyBuilder {
   }
 
   private generateNumericCode(): string {
-    return String(Math.floor(Math.random() * 100_000_000)).padStart(8, '0');
+    return String(randomInt(0, 100_000_000)).padStart(8, '0');
   }
 
   computeModulo11(base: string): string {

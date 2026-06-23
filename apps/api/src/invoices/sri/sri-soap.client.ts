@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as soap from 'soap';
-import { XMLParser } from 'fast-xml-parser';
 
 export interface SriReceptionResponse {
   estado: string;
@@ -42,7 +41,10 @@ export class SriSoapClient {
       const parsed = await this.queryStatus(accessKey);
 
       const authorization = parsed.autorizaciones?.[0];
-      if (authorization?.estado === 'AUTORIZADO' || authorization?.estado === 'RECHAZADO') {
+      if (
+        authorization?.estado === 'AUTORIZADO' ||
+        authorization?.estado === 'RECHAZADO'
+      ) {
         return parsed;
       }
 
@@ -59,7 +61,11 @@ export class SriSoapClient {
           fechaAutorizacion: '',
           ambiente: this.getEnvironmentCode(),
           mensajes: [
-            { identificador: '0', mensaje: 'Max polling retries exceeded', tipo: 'ERROR' },
+            {
+              identificador: '0',
+              mensaje: 'Max polling retries exceeded',
+              tipo: 'ERROR',
+            },
           ],
         },
       ],
@@ -71,46 +77,7 @@ export class SriSoapClient {
     const [result] = await client.autorizacionComprobantesOfflineAsync({
       claveAccesoComprobante: accessKey,
     });
-    const parsed = this.parseAuthorizationResponse(result);
-
-    // TODO: The SRI web consultation URL and payload are not officially documented
-    // and may change. This is a best-effort fallback when the direct SOAP service
-    // returns no authorization payload.
-    if (!parsed.autorizaciones?.length) {
-      return this.consultarAutorizacionPorClaveAcceso(accessKey);
-    }
-
-    return parsed;
-  }
-
-  /**
-   * Fallback web-scrape/SOAP hybrid consultation using the SRI SOL key.
-   *
-   * TODO: Validate the exact SRI web endpoint and request shape. The current
-   * implementation performs an unauthenticated GET to the public verification
-   * portal including the SOL key as a query parameter; this should be replaced
-   * with the official flow once confirmed.
-   */
-  async consultarAutorizacionPorClaveAcceso(
-    accessKey: string,
-  ): Promise<SriAuthorizationResponse> {
-    const solKey = this.configService.getOrThrow<string>('SRI_SOL_KEY');
-    const baseUrl = this.getConsultaWebUrl();
-    const url = `${baseUrl}?accion=validarComprobante&claveAcceso=${encodeURIComponent(
-      accessKey,
-    )}&solKey=${encodeURIComponent(solKey)}`;
-
-    try {
-      const response = await fetch(url, { method: 'GET' });
-      const text = await response.text();
-      return this.parseWebAuthorizationResponse(text);
-    } catch (error) {
-      this.logger.warn(
-        { error, accessKey },
-        'SRI web consultation fallback failed',
-      );
-      return {};
-    }
+    return this.parseAuthorizationResponse(result);
   }
 
   private async createClient(url: string): Promise<soap.Client> {
@@ -134,12 +101,6 @@ export class SriSoapClient {
       : 'https://cel.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantesOffline?wsdl';
   }
 
-  private getConsultaWebUrl(): string {
-    return this.isTestEnvironment()
-      ? 'https://celcer.sri.gob.ec/comprobantes-electronicos-www/serviciosAdmin/verificacionComprobantes/validarComprobante.jsp'
-      : 'https://cel.sri.gob.ec/comprobantes-electronicos-www/serviciosAdmin/verificacionComprobantes/validarComprobante.jsp';
-  }
-
   private getEnvironmentCode(): string {
     return this.isTestEnvironment() ? '1' : '2';
   }
@@ -152,81 +113,105 @@ export class SriSoapClient {
     if (typeof result !== 'object' || result === null) {
       return { estado: 'NO_PROCESADA' };
     }
+
     const response = result as SriReceptionResponse;
     return {
-      estado: response.estado ?? 'NO_PROCESADA',
-      comprobantes: response.comprobantes,
+      estado: this.normalizeEstado(response.estado),
+      comprobantes: Array.isArray(response.comprobantes)
+        ? response.comprobantes.map((comprobante) => ({
+            claveAcceso: String(comprobante.claveAcceso ?? ''),
+            mensajes: this.normalizeMessages(comprobante.mensajes),
+          }))
+        : undefined,
     };
   }
 
-  private parseAuthorizationResponse(result: unknown): SriAuthorizationResponse {
+  private parseAuthorizationResponse(
+    result: unknown,
+  ): SriAuthorizationResponse {
     if (typeof result !== 'object' || result === null) {
       return {};
     }
-    return result as SriAuthorizationResponse;
+
+    const response = result as SriAuthorizationResponse;
+    return {
+      autorizaciones: Array.isArray(response.autorizaciones)
+        ? response.autorizaciones.map((auth) => ({
+            estado: this.normalizeEstado(auth.estado),
+            numeroAutorizacion: String(auth.numeroAutorizacion ?? ''),
+            fechaAutorizacion: String(auth.fechaAutorizacion ?? ''),
+            ambiente: String(auth.ambiente ?? this.getEnvironmentCode()),
+            comprobante:
+              auth.comprobante != null ? String(auth.comprobante) : undefined,
+            mensajes: this.normalizeMessages(auth.mensajes),
+          }))
+        : undefined,
+    };
   }
 
-  private parseWebAuthorizationResponse(text: string): SriAuthorizationResponse {
-    try {
-      const parser = new XMLParser({
-        ignoreAttributes: false,
-        textNodeName: 'text',
-      });
-      const parsed = parser.parse(text);
+  private normalizeEstado(value: unknown): string {
+    if (typeof value !== 'string') return 'NO_PROCESADA';
+    const normalized = value.trim().toUpperCase();
 
-      const rawAutorizaciones =
-        parsed?.autorizacion ??
-        parsed?.autorizaciones?.autorizacion ??
-        parsed?.respuesta?.autorizaciones?.autorizacion;
+    const knownStates = new Set([
+      'RECIBIDA',
+      'DEVUELTA',
+      'NO_PROCESADA',
+      'AUTORIZADO',
+      'RECHAZADO',
+      'NO_AUTORIZADO',
+    ]);
 
-      if (!rawAutorizaciones) {
-        return {};
-      }
-
-      const list = Array.isArray(rawAutorizaciones)
-        ? rawAutorizaciones
-        : [rawAutorizaciones];
-
-      return {
-        autorizaciones: list.map((item: Record<string, unknown>) => ({
-          estado: String(item.estado ?? 'NO_AUTORIZADO'),
-          numeroAutorizacion: String(item.numeroAutorizacion ?? ''),
-          fechaAutorizacion: String(item.fechaAutorizacion ?? ''),
-          ambiente: String(item.ambiente ?? this.getEnvironmentCode()),
-          comprobante:
-            item.comprobante != null ? String(item.comprobante) : undefined,
-          mensajes: this.parseWebMensajes(item.mensajes),
-        })),
-      };
-    } catch (error) {
-      this.logger.warn(
-        { error },
-        'Failed to parse SRI web consultation response',
-      );
-      return {};
-    }
+    return knownStates.has(normalized) ? normalized : 'NO_PROCESADA';
   }
 
-  private parseWebMensajes(
+  private normalizeMessages(
     mensajes: unknown,
   ): Array<{ identificador: string; mensaje: string; tipo: string }> | undefined {
     if (!mensajes) return undefined;
 
-    const list = Array.isArray(mensajes) ? mensajes : [mensajes];
-    return list
+    const rawList = Array.isArray(mensajes) ? mensajes : [mensajes];
+
+    const messages = rawList
       .flatMap((item: Record<string, unknown>) => {
-        const wrapped = item.mensaje;
-        if (wrapped) {
-          return Array.isArray(wrapped) ? wrapped : [wrapped];
+        const nested = item.mensaje;
+        if (
+          nested &&
+          typeof nested === 'object' &&
+          !Array.isArray(nested) &&
+          (nested as Record<string, unknown>).identificador !== undefined
+        ) {
+          return [this.buildMessage(nested as Record<string, unknown>)];
         }
-        return [item];
+        if (Array.isArray(nested)) {
+          return nested.map((sub: Record<string, unknown>) =>
+            this.buildMessage(sub),
+          );
+        }
+        return [this.buildMessage(item)];
       })
-      .map((item: Record<string, unknown>) => ({
-        identificador: String(item.identificador ?? item.id ?? '0'),
-        mensaje: String(item.mensaje ?? item.text ?? ''),
-        tipo: String(item.tipo ?? 'ERROR'),
-      }))
       .filter((m) => m.mensaje.length > 0);
+
+    return messages.length > 0 ? messages : undefined;
+  }
+
+  private buildMessage(
+    item: Record<string, unknown> | string,
+  ): { identificador: string; mensaje: string; tipo: string } {
+    if (typeof item === 'string') {
+      return { identificador: '0', mensaje: item, tipo: 'ERROR' };
+    }
+
+    const mensajeText =
+      typeof item.mensaje === 'string'
+        ? item.mensaje
+        : String(item.text ?? '');
+
+    return {
+      identificador: String(item.identificador ?? item.id ?? '0'),
+      mensaje: mensajeText,
+      tipo: String(item.tipo ?? 'ERROR').toUpperCase(),
+    };
   }
 
   private sleep(ms: number): Promise<void> {

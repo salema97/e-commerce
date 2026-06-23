@@ -7,16 +7,8 @@ vi.mock('soap', () => ({
   createClient: vi.fn(),
 }));
 
-function mockFetch(responseText: string, ok = true) {
-  return vi.fn().mockResolvedValue({
-    ok,
-    text: () => Promise.resolve(responseText),
-  });
-}
-
 function createClient(config?: Partial<Record<string, string>>) {
   const configService = new ConfigService({
-    SRI_SOL_KEY: config?.SRI_SOL_KEY ?? 'sol-key',
     SRI_TEST_ENVIRONMENT: config?.SRI_TEST_ENVIRONMENT ?? 'true',
   });
   return new SriSoapClient(configService);
@@ -27,7 +19,6 @@ describe('SriSoapClient', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubGlobal('fetch', vi.fn());
     createClientMock = vi.mocked(soap.createClient);
   });
 
@@ -49,6 +40,43 @@ describe('SriSoapClient', () => {
       expect.stringContaining('RecepcionComprobantesOffline'),
       expect.any(Function),
     );
+  });
+
+  it('normalizes reception error messages', async () => {
+    const clientMock = {
+      recepcionComprobantesOfflineAsync: vi.fn().mockResolvedValue([
+        {
+          estado: 'DEVUELTA',
+          comprobantes: [
+            {
+              claveAcceso: '1234567890123456789012345678901234567890123456789',
+              mensajes: [
+                {
+                  identificador: '43',
+                  mensaje: 'RUC del receptor inválido',
+                  tipo: 'ERROR',
+                },
+              ],
+            },
+          ],
+        },
+      ]),
+    };
+    createClientMock.mockImplementation((_url, cb) =>
+      cb(null, clientMock as never),
+    );
+
+    const sriClient = createClient();
+    const result = await sriClient.submit('<xml/>');
+
+    expect(result.estado).toBe('DEVUELTA');
+    expect(result.comprobantes?.[0].mensajes).toEqual([
+      {
+        identificador: '43',
+        mensaje: 'RUC del receptor inválido',
+        tipo: 'ERROR',
+      },
+    ]);
   });
 
   it('returns SOAP authorization when available', async () => {
@@ -74,75 +102,101 @@ describe('SriSoapClient', () => {
     const result = await sriClient.queryStatus('access-key');
 
     expect(result.autorizaciones?.[0].estado).toBe('AUTORIZADO');
-    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 
-  it('falls back to web consultation when SOAP returns no authorization', async () => {
+  it('normalizes unknown statuses to NO_PROCESADA', async () => {
     const clientMock = {
       autorizacionComprobantesOfflineAsync: vi
         .fn()
-        .mockResolvedValue([{}]),
+        .mockResolvedValue([{ autorizaciones: [{ estado: 'unrecognized' }] }]),
     };
     createClientMock.mockImplementation((_url, cb) =>
       cb(null, clientMock as never),
     );
 
-    globalThis.fetch = mockFetch(`
-      <autorizacion>
-        <estado>AUTORIZADO</estado>
-        <numeroAutorizacion>456</numeroAutorizacion>
-        <fechaAutorizacion>2024-02-02</fechaAutorizacion>
-        <ambiente>1</ambiente>
-      </autorizacion>
-    `);
-
     const sriClient = createClient();
     const result = await sriClient.queryStatus('access-key');
 
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('sol-key'),
-      { method: 'GET' },
-    );
-    expect(result.autorizaciones?.[0]).toMatchObject({
-      estado: 'AUTORIZADO',
-      numeroAutorizacion: '456',
-    });
+    expect(result.autorizaciones?.[0].estado).toBe('NO_PROCESADA');
   });
 
-  it('consultarAutorizacionPorClaveAcceso parses a web XML response', async () => {
-    globalThis.fetch = mockFetch(`
-      <autorizaciones>
-        <autorizacion>
-          <estado>RECHAZADO</estado>
-          <numeroAutorizacion></numeroAutorizacion>
-          <fechaAutorizacion>2024-03-03</fechaAutorizacion>
-          <ambiente>1</ambiente>
-          <mensajes>
-            <mensaje>
-              <identificador>1</identificador>
-              <mensaje>Error message</mensaje>
-              <tipo>ERROR</tipo>
-            </mensaje>
-          </mensajes>
-        </autorizacion>
-      </autorizaciones>
-    `);
+  it('polls authorization until RECHAZADO', async () => {
+    const clientMock = {
+      autorizacionComprobantesOfflineAsync: vi.fn().mockResolvedValue([
+        {
+          autorizaciones: [
+            {
+              estado: 'RECHAZADO',
+              numeroAutorizacion: '',
+              fechaAutorizacion: '2024-01-01',
+              ambiente: '1',
+              mensajes: [
+                {
+                  identificador: '1',
+                  mensaje: 'Invalid document',
+                  tipo: 'ERROR',
+                },
+              ],
+            },
+          ],
+        },
+      ]),
+    };
+    createClientMock.mockImplementation((_url, cb) =>
+      cb(null, clientMock as never),
+    );
 
     const sriClient = createClient();
-    const result = await sriClient.consultarAutorizacionPorClaveAcceso('key');
+    const result = await sriClient.poll('access-key');
 
     expect(result.autorizaciones?.[0]).toMatchObject({
       estado: 'RECHAZADO',
-      mensajes: [{ identificador: '1', mensaje: 'Error message', tipo: 'ERROR' }],
+      mensajes: [
+        { identificador: '1', mensaje: 'Invalid document', tipo: 'ERROR' },
+      ],
     });
   });
 
-  it('returns an empty response when web consultation fails', async () => {
-    globalThis.fetch = vi.fn().mockRejectedValue(new Error('network error'));
+  it('returns NO_AUTORIZADO when polling times out', async () => {
+    const clientMock = {
+      autorizacionComprobantesOfflineAsync: vi
+        .fn()
+        .mockResolvedValue([{ autorizaciones: [] }]),
+    };
+    createClientMock.mockImplementation((_url, cb) =>
+      cb(null, clientMock as never),
+    );
 
     const sriClient = createClient();
-    const result = await sriClient.consultarAutorizacionPorClaveAcceso('key');
+    (sriClient as unknown as { sleep: () => Promise<void> }).sleep = vi
+      .fn()
+      .mockResolvedValue(undefined);
 
-    expect(result).toEqual({});
+    const result = await sriClient.poll('access-key');
+
+    expect(result.autorizaciones?.[0].estado).toBe('NO_AUTORIZADO');
+    expect(result.autorizaciones?.[0].mensajes?.[0].mensaje).toBe(
+      'Max polling retries exceeded',
+    );
+  });
+
+  it('does not expose the SOL key in any URL', async () => {
+    const clientMock = {
+      recepcionComprobantesOfflineAsync: vi
+        .fn()
+        .mockResolvedValue([{ estado: 'RECIBIDA' }]),
+    };
+    createClientMock.mockImplementation((_url, cb) =>
+      cb(null, clientMock as never),
+    );
+
+    const sriClient = createClient();
+    await sriClient.submit('<xml/>');
+
+    const calls = createClientMock.mock.calls as Array<[string]>;
+    for (const [url] of calls) {
+      expect(url).not.toContain('solKey');
+      expect(url).not.toContain('SOL');
+    }
   });
 });
