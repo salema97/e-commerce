@@ -9,7 +9,8 @@ export type WhatsAppTemplate =
   | 'ORDER_SHIPPED'
   | 'ORDER_DELIVERED'
   | 'PAYMENT_FAILED'
-  | 'REFUND_CONFIRMED';
+  | 'REFUND_CONFIRMED'
+  | 'SRI_DOCUMENT_DELIVERY';
 
 /**
  * Result returned by a WhatsApp provider after sending a message.
