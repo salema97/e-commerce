@@ -518,15 +518,15 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 ## Phase 13 — Search, Filters & Performance
 
-- [ ] Index products in Meilisearch.
-- [ ] Configure `searchableAttributes`, `filterableAttributes`, `sortableAttributes`, `rankingRules`.
-- [ ] Build faceted filters (category, price range, brand, rating, attributes).
-- [ ] Typo tolerance and synonyms.
-- [ ] Optimize images with Next.js Image and CDN transforms.
-- [ ] Add Redis caching for hot queries.
-- [ ] Add database query optimization and N+1 prevention.
-- [ ] Add bundle analysis for web/mobile.
-- [ ] Core Web Vitals optimization.
+- [x] Index products in Meilisearch.
+- [x] Configure `searchableAttributes`, `filterableAttributes`, `sortableAttributes`, `rankingRules`.
+- [x] Build faceted filters (category, price range, brand, rating, attributes).
+- [x] Typo tolerance and synonyms.
+- [x] Optimize images with Next.js Image and CDN transforms.
+- [x] Add Redis caching for hot queries.
+- [x] Add database query optimization and N+1 prevention.
+- [x] Add bundle analysis for web/mobile.
+- [x] Core Web Vitals optimization.
 
 ## Phase 14 — Reviews, Referrals & Loyalty
 
