@@ -103,7 +103,7 @@ describe('SupportInbox polling', () => {
     );
 
     expect(pollConfigs.length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByText('Bandeja de soporte')).toBeInTheDocument();
+    expect(screen.getByText('Soporte')).toBeInTheDocument();
   });
 
   it('passes filters to the conversations query function', () => {

@@ -6,6 +6,7 @@ import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { ConversationList } from '@/components/admin/support/conversation-list';
 import { ConversationDetail } from '@/components/admin/support/conversation-detail';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import type { Conversation, ConversationStatus, PaginatedConversations } from '@repo/shared-types';
 
 interface SupportInboxProps {
@@ -112,15 +113,21 @@ export function SupportInbox({ currentUserId, initialConversations }: SupportInb
 
   return (
     <AnimatedPageShell
-      className="flex h-[calc(100vh-7rem)] flex-col gap-4"
-      header={<h1 className="neo-page-title">Bandeja de soporte</h1>}
+      className="flex min-h-0 flex-1 flex-col gap-4"
+      header={
+        <AdminPageHeader
+          title="Soporte"
+          subtitle="Bandeja de conversaciones WhatsApp"
+          showNetworkStatus={false}
+        />
+      }
     >
       {conversationsQuery.isError ? (
         <p className="text-sm text-destructive">
           No se pudieron cargar las conversaciones. Recarga la página o vuelve a iniciar sesión.
         </p>
       ) : null}
-      <div className="neo-panel grid flex-1 overflow-hidden lg:grid-cols-[360px_1fr]">
+      <div className="neo-panel grid min-h-[min(70vh,720px)] flex-1 overflow-hidden lg:grid-cols-[360px_1fr]">
         <ConversationList
           conversations={conversationsQuery.data?.data ?? []}
           selectedId={selectedId}

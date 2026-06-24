@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import { Anton, Space_Grotesk } from 'next/font/google';
 import { Providers } from './providers';
-import { Navbar } from '@/components/layout/navbar';
-import { Footer } from '@/components/layout/footer';
+import { StoreChrome } from '@/components/layout/store-chrome';
 import ServiceWorkerRegistration from '@/components/pwa/service-worker-registration';
 import './globals.css';
 
@@ -35,9 +34,9 @@ export default function RootLayout({
     <html lang="es" className={`${spaceGrotesk.variable} ${anton.variable}`}>
       <body className="min-h-screen flex flex-col font-sans antialiased overflow-x-clip">
         <Providers>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <StoreChrome>
+            <main className="flex min-h-screen flex-1 flex-col">{children}</main>
+          </StoreChrome>
           <ServiceWorkerRegistration />
         </Providers>
       </body>

@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { formatDate, returnStatusLabel, refundMethodLabel } from '@repo/shared-utils';
 
 export default async function AdminReturnsPage({
@@ -28,8 +29,14 @@ export default async function AdminReturnsPage({
 
   return (
     <AnimatedPageShell
-      className="flex flex-col gap-6"
-      header={<h1 className="neo-page-title">Devoluciones</h1>}
+      className="flex min-h-0 flex-1 flex-col gap-6"
+      header={
+        <AdminPageHeader
+          title="Devoluciones"
+          subtitle="Solicitudes y reembolsos"
+          showNetworkStatus={false}
+        />
+      }
     >
       <Table>
           <TableHeader>

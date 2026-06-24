@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import type { User } from '@repo/shared-types';
 
 export default async function AdminCustomersPage() {
@@ -19,8 +20,14 @@ export default async function AdminCustomersPage() {
 
   return (
     <AnimatedPageShell
-      className="flex flex-col gap-6"
-      header={<h1 className="neo-page-title">Clientes</h1>}
+      className="flex min-h-0 flex-1 flex-col gap-6"
+      header={
+        <AdminPageHeader
+          title="Clientes"
+          subtitle="Cuentas y roles de usuario"
+          showNetworkStatus={false}
+        />
+      }
     >
       <Table>
           <TableHeader>

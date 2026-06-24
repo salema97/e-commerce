@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { formatPrice, orderStatusLabel } from '@repo/shared-utils';
 import type { Order, OrderStatus } from '@repo/shared-types';
 import { Badge } from '@/components/ui/badge';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import {
   fadeUpVariants,
   kanbanCardVariants,
@@ -70,45 +71,22 @@ export function OrdersKanban({ orders, totalRevenue }: OrdersKanbanProps) {
   ).length;
 
   return (
-    <div className="flex flex-col gap-10">
-      <motion.header
-        className="flex flex-col justify-between gap-8 border-b-[8px] border-neo-onyx pb-10 xl:flex-row xl:items-end"
+    <div className="flex min-h-0 flex-1 flex-col gap-10">
+      <motion.div
         variants={fadeUpVariants}
         initial={prefersReducedMotion ? false : 'hidden'}
         animate={prefersReducedMotion ? undefined : 'visible'}
         transition={prefersReducedMotion ? reducedMotionTransition : undefined}
       >
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-4">
-            <span className="bg-neo-onyx px-3 py-1 font-mono text-xs font-black uppercase tracking-[0.2em] text-neo-gold">
-              Panel central
-            </span>
-            <span className="flex items-center gap-2 text-xs font-black uppercase">
-              <span className="h-3 w-3 animate-pulse rounded-full border border-neo-onyx bg-neo-scarlet" />
-              Red activa
-            </span>
-          </div>
-          <h1 className="font-anton text-6xl uppercase leading-[0.8] tracking-tighter md:text-8xl">
-            Pedidos
-          </h1>
-          <p className="border-l-8 border-neo-gold pl-6 text-xl font-bold">
-            Operaciones / cumplimiento
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-6">
-          <div className="brutalist-card flex min-w-[180px] flex-col justify-between p-5">
-            <span className="mb-2 text-xs font-black uppercase text-muted-foreground">
-              Ingresos (muestra)
-            </span>
-            <span className="font-anton text-4xl">{formatPrice(totalRevenue)}</span>
-          </div>
-          <div className="brutalist-card flex min-w-[180px] flex-col justify-between bg-neo-gold p-5">
-            <span className="mb-2 text-xs font-black uppercase">Pedidos activos</span>
-            <span className="font-anton text-4xl">{activeCount}</span>
-          </div>
-        </div>
-      </motion.header>
+        <AdminPageHeader
+          title="Pedidos"
+          subtitle="Operaciones / cumplimiento"
+          metrics={[
+            { label: 'Ingresos (muestra)', value: formatPrice(totalRevenue) },
+            { label: 'Pedidos activos', value: String(activeCount), accent: true },
+          ]}
+        />
+      </motion.div>
 
       <div className="kanban-scroll">
         {columns.map((column, columnIndex) => {

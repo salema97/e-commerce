@@ -1,11 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 
 export default function AdminFinancePage() {
   return (
     <AnimatedPageShell
-      className="flex flex-col gap-6"
-      header={<h1 className="text-2xl font-bold">Finanzas</h1>}
+      className="flex min-h-0 flex-1 flex-col gap-6"
+      header={
+        <AdminPageHeader
+          title="Finanzas"
+          subtitle="Ingresos, gastos e informes"
+          showNetworkStatus={false}
+        />
+      }
     >
       <NeoReveal>
         <Card>

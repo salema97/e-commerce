@@ -15,7 +15,7 @@ export function NeoPageTransition({ children }: NeoPageTransitionProps) {
   const pathname = usePathname();
   const prefersReducedMotion = useReducedMotion();
 
-  if (prefersReducedMotion || pathname === '/') {
+  if (prefersReducedMotion || pathname === '/' || pathname?.startsWith('/admin')) {
     return <>{children}</>;
   }
 

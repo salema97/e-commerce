@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { formatPrice } from '@repo/shared-utils';
 
 const PRODUCT_STATUS_LABELS: Record<string, string> = {
@@ -25,14 +26,18 @@ export default async function AdminProductsPage() {
 
   return (
     <AnimatedPageShell
-      className="flex flex-col gap-6"
+      className="flex min-h-0 flex-1 flex-col gap-6"
       header={
-        <div className="flex items-center justify-between">
-          <h1 className="neo-page-title">Productos</h1>
-          <Link href="/admin/products/new">
-            <Button>Agregar producto</Button>
-          </Link>
-        </div>
+        <AdminPageHeader
+          title="Productos"
+          subtitle="Catálogo y publicación"
+          showNetworkStatus={false}
+          actions={
+            <Link href="/admin/products/new">
+              <Button className="font-anton text-lg uppercase">Agregar producto</Button>
+            </Link>
+          }
+        />
       }
     >
       <Table>

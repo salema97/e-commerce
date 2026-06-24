@@ -10,6 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 
 export default async function AdminInventoryPage() {
   const api = await getServerApiClient();
@@ -17,14 +18,18 @@ export default async function AdminInventoryPage() {
 
   return (
     <AnimatedPageShell
-      className="flex flex-col gap-6"
+      className="flex min-h-0 flex-1 flex-col gap-6"
       header={
-        <div className="flex items-center justify-between">
-          <h1 className="neo-page-title">Inventario</h1>
-          <Link href="/admin/inventory/new">
-            <Button>Agregar stock</Button>
-          </Link>
-        </div>
+        <AdminPageHeader
+          title="Inventario"
+          subtitle="Stock y reservas"
+          showNetworkStatus={false}
+          actions={
+            <Link href="/admin/inventory/new">
+              <Button className="font-anton text-lg uppercase">Agregar stock</Button>
+            </Link>
+          }
+        />
       }
     >
       <Table>

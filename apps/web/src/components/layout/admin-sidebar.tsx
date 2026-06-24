@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, useReducedMotion } from 'motion/react';
@@ -14,30 +15,25 @@ import {
   MessageSquare,
   BarChart3,
   FileText,
+  Store,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { sidebarIconHover, sidebarIconRest } from '@/lib/neo-motion';
+import { filterAdminNav } from '@/lib/admin-nav';
 import type { Role } from '@repo/shared-types';
 
-interface NavItem {
-  href: string;
-  label: string;
-  icon: React.ElementType;
-  roles: Role[];
-}
-
-const adminNav: NavItem[] = [
-  { href: '/admin/dashboard', label: 'Panel', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'ADMIN'] },
-  { href: '/admin/products', label: 'Productos', icon: Package, roles: ['SUPER_ADMIN', 'ADMIN'] },
-  { href: '/admin/categories', label: 'Categorías', icon: Tags, roles: ['SUPER_ADMIN', 'ADMIN'] },
-  { href: '/admin/inventory', label: 'Inventario', icon: Warehouse, roles: ['SUPER_ADMIN', 'ADMIN', 'INVENTORY'] },
-  { href: '/admin/orders', label: 'Pedidos', icon: ShoppingBag, roles: ['SUPER_ADMIN', 'ADMIN'] },
-  { href: '/admin/returns', label: 'Devoluciones', icon: RotateCcw, roles: ['SUPER_ADMIN', 'ADMIN'] },
-  { href: '/admin/customers', label: 'Clientes', icon: Users, roles: ['SUPER_ADMIN', 'ADMIN'] },
-  { href: '/admin/support', label: 'Soporte', icon: MessageSquare, roles: ['SUPER_ADMIN', 'ADMIN', 'SUPPORT'] },
-  { href: '/admin/invoices', label: 'Facturación', icon: FileText, roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] },
-  { href: '/admin/finance', label: 'Finanzas', icon: BarChart3, roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] },
-];
+const navIcons: Record<string, React.ElementType> = {
+  '/admin/dashboard': LayoutDashboard,
+  '/admin/products': Package,
+  '/admin/categories': Tags,
+  '/admin/inventory': Warehouse,
+  '/admin/orders': ShoppingBag,
+  '/admin/returns': RotateCcw,
+  '/admin/customers': Users,
+  '/admin/support': MessageSquare,
+  '/admin/invoices': FileText,
+  '/admin/finance': BarChart3,
+};
 
 interface AdminSidebarProps {
   role: Role;
@@ -46,45 +42,71 @@ interface AdminSidebarProps {
 export function AdminSidebar({ role }: AdminSidebarProps) {
   const pathname = usePathname();
   const prefersReducedMotion = useReducedMotion();
-  const visibleNav = adminNav.filter((item) => item.roles.includes(role));
+  const visibleNav = filterAdminNav(role);
 
   return (
-    <aside className="fixed left-0 top-20 z-40 hidden h-[calc(100vh-5rem)] w-24 flex-col items-center border-r-[4px] border-neo-onyx bg-neo-onyx py-8 lg:flex">
-      <Link
-        href="/admin/dashboard"
-        className="mb-12 flex h-14 w-14 rotate-3 items-center justify-center border-[3px] border-white bg-neo-gold shadow-[4px_4px_0_white]"
-        title="Administración"
-      >
-        <span className="font-anton text-3xl text-neo-onyx">NB</span>
-      </Link>
+    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-24 flex-col border-r-[4px] border-neo-onyx bg-neo-onyx lg:flex">
+      <div className="flex flex-col items-center border-b-[3px] border-white/10 py-6">
+        <Link
+          href="/admin/dashboard"
+          className="flex h-14 w-14 rotate-3 items-center justify-center border-[3px] border-white bg-neo-gold shadow-[4px_4px_0_white]"
+          title="Panel de administración"
+        >
+          <span className="font-anton text-3xl text-neo-onyx">NB</span>
+        </Link>
+      </div>
 
-      <nav className="flex flex-1 flex-col gap-8">
-        {visibleNav.map((item) => {
-          const Icon = item.icon;
-          const active = pathname.startsWith(item.href);
+      <nav className="flex flex-1 flex-col items-center gap-6 overflow-y-auto px-3 py-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {visibleNav.map((item, index) => {
+          const Icon = navIcons[item.href];
+          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const prevGroup = index > 0 ? visibleNav[index - 1]?.group : null;
+          const showDivider = prevGroup && prevGroup !== item.group;
+
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              title={item.label}
-              className="group relative"
-            >
-              <motion.div
-                whileHover={prefersReducedMotion ? undefined : sidebarIconHover}
-                animate={prefersReducedMotion ? undefined : sidebarIconRest}
-                className={cn(
-                  'flex h-14 w-14 items-center justify-center border-[3px] shadow-[4px_4px_0_white] transition-colors',
-                  active
-                    ? 'border-white bg-neo-gold text-neo-onyx'
-                    : 'border-white/20 bg-white/10 text-white hover:border-white hover:bg-white/20',
-                )}
-              >
-                <Icon className="size-6" strokeWidth={2.5} />
-              </motion.div>
-            </Link>
+            <React.Fragment key={item.href}>
+              {showDivider ? (
+                <div className="h-[3px] w-10 bg-white/15" aria-hidden />
+              ) : null}
+              <Link href={item.href} title={item.label} className="group relative">
+                <motion.div
+                  whileHover={prefersReducedMotion ? undefined : sidebarIconHover}
+                  animate={prefersReducedMotion ? undefined : sidebarIconRest}
+                  className={cn(
+                    'flex h-14 w-14 items-center justify-center border-[3px] shadow-[4px_4px_0_white] transition-colors',
+                    active
+                      ? 'border-white bg-neo-gold text-neo-onyx'
+                      : 'border-white/20 bg-white/10 text-white hover:border-white hover:bg-white/20',
+                  )}
+                >
+                  <Icon className="size-6" strokeWidth={2.5} />
+                </motion.div>
+                <span
+                  className="pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-50 -translate-y-1/2 whitespace-nowrap border-[3px] border-neo-onyx bg-neo-gold px-3 py-1.5 text-xs font-bold uppercase text-neo-onyx opacity-0 shadow-[4px_4px_0_#111] transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                  role="tooltip"
+                >
+                  {item.label}
+                </span>
+              </Link>
+            </React.Fragment>
           );
         })}
       </nav>
+
+      <div className="flex flex-col items-center gap-4 border-t-[3px] border-white/10 py-6">
+        <Link
+          href="/store"
+          title="Volver a la tienda"
+          className="group relative"
+        >
+          <div className="flex h-12 w-12 items-center justify-center border-[3px] border-neo-gold text-neo-gold shadow-[3px_3px_0_var(--color-neo-gold)] transition-colors hover:bg-neo-gold hover:text-neo-onyx">
+            <Store className="size-5" strokeWidth={2.5} />
+          </div>
+          <span className="pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-50 -translate-y-1/2 whitespace-nowrap border-[3px] border-neo-onyx bg-white px-3 py-1.5 text-xs font-bold uppercase opacity-0 shadow-[4px_4px_0_#111] transition-opacity group-hover:opacity-100">
+            Tienda
+          </span>
+        </Link>
+      </div>
     </aside>
   );
 }

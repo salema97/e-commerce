@@ -17,6 +17,7 @@ import { InvoiceFilters, InvoiceFiltersState } from '@/components/admin/invoices
 import { InvoiceStatusBadge } from '@/components/admin/invoices/invoice-status-badge';
 import { InvoiceActions } from '@/components/admin/invoices/invoice-actions';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { formatDateTime } from '@repo/shared-utils';
 import type { InvoiceResponseDto, InvoiceStatus } from '@repo/shared-types';
 
@@ -96,8 +97,14 @@ export function InvoiceListView({ initialInvoices }: { initialInvoices: InvoiceR
 
   return (
     <AnimatedPageShell
-      className="flex flex-col gap-6"
-      header={<h1 className="neo-page-title">Facturación</h1>}
+      className="flex min-h-0 flex-1 flex-col gap-6"
+      header={
+        <AdminPageHeader
+          title="Facturación"
+          subtitle="Comprobantes electrónicos SRI"
+          showNetworkStatus={false}
+        />
+      }
     >
       <InvoiceFilters
         filters={filters}
