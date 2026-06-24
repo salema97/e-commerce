@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface LegalPageProps {
   params: Promise<{ slug: string }>;
@@ -27,15 +27,13 @@ export default async function LegalPage({ params }: LegalPageProps) {
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">{title}</CardTitle>
-        </CardHeader>
-        <CardContent className="prose dark:prose-invert">
+      <h1 className="text-3xl font-bold">{title}</h1>
+      <Card className="mt-6">
+        <CardContent className="prose dark:prose-invert pt-6">
           <p className="text-muted-foreground">
-            CMS-driven legal content placeholder. The full {title.toLowerCase()}{' '}
-            will be managed from the admin CMS once Phase 3 CMS integration is
-            completed.
+            Contenido legal gestionado por CMS (placeholder). La versión completa de{' '}
+            {title.toLowerCase()} se editará desde el panel de administración cuando la
+            integración CMS esté disponible.
           </p>
         </CardContent>
       </Card>

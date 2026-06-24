@@ -1,29 +1,45 @@
 import { notFound } from 'next/navigation';
-import { getServerApiClient } from '@/lib/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface BlogPageProps {
   params: Promise<{ slug: string }>;
 }
 
+const BLOG_TITLES: Record<string, string> = {
+  'guia-compras-online': 'Guía de compras online',
+  'cuidado-productos': 'Cómo cuidar tus productos',
+};
+
+function formatSlugTitle(slug: string): string {
+  return slug
+    .split('-')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 export async function generateMetadata({ params }: BlogPageProps) {
   const { slug } = await params;
-  return { title: `Blog: ${slug}` };
+  const title = BLOG_TITLES[slug] ?? formatSlugTitle(slug);
+  return { title: `Blog: ${title}` };
 }
 
 export default async function BlogPostPage({ params }: BlogPageProps) {
   const { slug } = await params;
+  const title = BLOG_TITLES[slug] ?? formatSlugTitle(slug);
+
+  if (!slug) {
+    notFound();
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl capitalize">{slug.replace(/-/g, ' ')}</CardTitle>
-        </CardHeader>
-        <CardContent>
+    <div className="container mx-auto max-w-3xl px-4 py-8">
+      <h1 className="text-3xl font-bold">{title}</h1>
+      <Card className="mt-6">
+        <CardContent className="pt-6">
           <p className="text-muted-foreground">
-            CMS-driven blog content placeholder. The content for this post will
-            be loaded from the CMS once Phase 3 CMS integration is completed.
+            Artículo del blog gestionado por CMS (placeholder). El contenido de esta
+            publicación se cargará desde el panel de administración cuando la
+            integración CMS esté disponible.
           </p>
         </CardContent>
       </Card>

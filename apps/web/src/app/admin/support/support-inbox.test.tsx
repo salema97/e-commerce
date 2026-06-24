@@ -54,6 +54,7 @@ vi.mock('@tanstack/react-query', async () => {
 });
 
 vi.mock('@/lib/client-api', () => ({
+  useAuthApiReady: () => true,
   useApiClient: () => ({
     conversations: {
       findAll: vi.fn().mockResolvedValue({ data: [], meta: { page: 1, limit: 20, total: 0, totalPages: 0 } }),

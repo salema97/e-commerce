@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useApiClient } from '@/lib/client-api';
+import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { ConversationList } from '@/components/admin/support/conversation-list';
 import { ConversationDetail } from '@/components/admin/support/conversation-detail';
 import type { Conversation, ConversationStatus } from '@repo/shared-types';
@@ -13,6 +13,7 @@ interface SupportInboxProps {
 
 export function SupportInbox({ currentUserId }: SupportInboxProps) {
   const api = useApiClient();
+  const authReady = useAuthApiReady();
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [filters, setFilters] = React.useState<{
@@ -32,6 +33,7 @@ export function SupportInbox({ currentUserId }: SupportInboxProps) {
       assignedToMe: filters.assignedToMe ? 'true' : undefined,
       search: filters.search || undefined,
     }),
+    enabled: authReady,
     refetchInterval: 10_000,
   });
 
@@ -42,20 +44,21 @@ export function SupportInbox({ currentUserId }: SupportInboxProps) {
   const conversationDetailQuery = useQuery({
     queryKey: ['conversations', selectedId],
     queryFn: () => api.conversations.findOne(selectedId!),
-    enabled: Boolean(selectedId),
+    enabled: authReady && Boolean(selectedId),
     refetchInterval: 10_000,
   });
 
   const messagesQuery = useQuery({
     queryKey: ['conversations', selectedId, 'messages'],
     queryFn: () => api.messages.findAll(selectedId!),
-    enabled: Boolean(selectedId),
+    enabled: authReady && Boolean(selectedId),
     refetchInterval: 10_000,
   });
 
   const quickRepliesQuery = useQuery({
     queryKey: ['whatsapp', 'quick-replies'],
     queryFn: () => api.whatsapp.getQuickReplies(),
+    enabled: authReady,
   });
 
   const createMessage = useMutation({
@@ -104,11 +107,16 @@ export function SupportInbox({ currentUserId }: SupportInboxProps) {
   return (
     <div className="flex h-[calc(100vh-7rem)] flex-col gap-4">
       <h1 className="text-2xl font-bold">Bandeja de soporte</h1>
+      {conversationsQuery.isError ? (
+        <p className="text-sm text-destructive">
+          No se pudieron cargar las conversaciones. Recarga la página o vuelve a iniciar sesión.
+        </p>
+      ) : null}
       <div className="grid flex-1 overflow-hidden rounded-lg border lg:grid-cols-[360px_1fr]">
         <ConversationList
           conversations={conversationsQuery.data?.data ?? []}
           selectedId={selectedId}
-          isLoading={conversationsQuery.isLoading}
+          isLoading={conversationsQuery.isLoading || !authReady}
           filter={filters}
           onFilterChange={(changes) => setFilters((prev) => ({ ...prev, ...changes }))}
           onSelect={handleSelect}

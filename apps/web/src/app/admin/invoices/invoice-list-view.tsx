@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useApiClient } from '@/lib/client-api';
+import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -33,6 +33,7 @@ function matchesSearch(invoice: InvoiceResponseDto, search: string): boolean {
 
 export function InvoiceListView() {
   const api = useApiClient();
+  const authReady = useAuthApiReady();
   const queryClient = useQueryClient();
   const [filters, setFilters] = React.useState<InvoiceFiltersState>({
     search: '',
@@ -69,6 +70,7 @@ export function InvoiceListView() {
         offset?: number;
         orderId?: string;
       }),
+    enabled: authReady,
     refetchInterval: 15_000,
   });
 
@@ -121,6 +123,12 @@ export function InvoiceListView() {
                   </TableCell>
                 </TableRow>
               ))
+            ) : invoicesQuery.isError ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-destructive">
+                  No se pudieron cargar las facturas. Recarga la página o vuelve a iniciar sesión.
+                </TableCell>
+              </TableRow>
             ) : filteredInvoices.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-muted-foreground">

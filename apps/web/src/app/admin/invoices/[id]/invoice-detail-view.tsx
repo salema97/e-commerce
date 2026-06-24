@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useApiClient } from '@/lib/client-api';
+import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,18 +17,20 @@ interface InvoiceDetailViewProps {
 
 export function InvoiceDetailView({ id }: InvoiceDetailViewProps) {
   const api = useApiClient();
+  const authReady = useAuthApiReady();
   const queryClient = useQueryClient();
 
   const invoiceQuery = useQuery({
     queryKey: ['invoices', id],
     queryFn: () => api.invoices.findOne(id),
+    enabled: authReady,
     refetchInterval: 15_000,
   });
 
   const orderQuery = useQuery({
     queryKey: ['orders', invoiceQuery.data?.orderId],
     queryFn: () => api.orders.findOne(invoiceQuery.data!.orderId),
-    enabled: Boolean(invoiceQuery.data?.orderId),
+    enabled: authReady && Boolean(invoiceQuery.data?.orderId),
   });
 
   const invoice = invoiceQuery.data;
