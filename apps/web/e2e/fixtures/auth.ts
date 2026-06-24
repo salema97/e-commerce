@@ -29,7 +29,32 @@ const SEED_EMAIL_BY_ROLE: Record<TestRole, string> = {
   CUSTOMER: 'cliente@example.com',
 };
 
+const LANDING_BY_ROLE: Record<TestRole, string> = {
+  SUPER_ADMIN: '/admin/dashboard',
+  ADMIN: '/admin/dashboard',
+  FINANCE: '/admin/finance',
+  INVENTORY: '/admin/inventory',
+  SUPPORT: '/admin/support',
+  CUSTOMER: '/account',
+};
+
 const apiTokenCache = new Map<TestRole, string>();
+
+export async function presetCookieConsent(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'ecommerce-consent-v1',
+      JSON.stringify({ necessary: true, analytics: true, recording: false }),
+    );
+  });
+}
+
+export async function dismissCookieBanner(page: Page): Promise<void> {
+  const accept = page.getByRole('button', { name: 'Aceptar todo' });
+  if (await accept.isVisible().catch(() => false)) {
+    await accept.click();
+  }
+}
 
 export async function getApiAuthHeaders(
   request: APIRequestContext,
@@ -55,6 +80,7 @@ export async function getApiAuthHeaders(
 }
 
 export async function authenticatePage(page: Page, user: TestUser): Promise<void> {
+  await presetCookieConsent(page);
   const email = SEED_EMAIL_BY_ROLE[user.role];
   const res = await page.request.post('/api/auth/login', {
     data: { email, password: SEED_PASSWORD },
@@ -62,7 +88,10 @@ export async function authenticatePage(page: Page, user: TestUser): Promise<void
   if (!res.ok()) {
     throw new Error(`Login failed for ${email}: ${await res.text()}`);
   }
-  await page.goto('/');
+
+  await page.goto(LANDING_BY_ROLE[user.role]);
+  await dismissCookieBanner(page);
+  await page.waitForURL((url) => !url.pathname.startsWith('/sign-in'), { timeout: 15_000 });
 }
 
 export async function clearAuth(page: Page): Promise<void> {

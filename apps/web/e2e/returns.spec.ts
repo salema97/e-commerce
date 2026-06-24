@@ -5,6 +5,7 @@ import {
   createTestOrder,
   createCompletedPayment,
   createReturnRequest,
+  presetCookieConsent,
   transitionReturnStatus,
   getApiAuthHeaders,
   TEST_CUSTOMER,
@@ -101,6 +102,7 @@ test.describe('returns e2e', () => {
     await createCompletedPayment(request, order.id);
 
     await clearAuth(page);
+    await presetCookieConsent(page);
     await page.goto(`/orders/${order.id}/return`);
 
     await expect(page.locator('body')).toContainText('Correo del pedido');

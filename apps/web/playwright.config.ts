@@ -24,5 +24,9 @@ export default defineConfig({
     command: 'pnpm dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
+    env: {
+      AUTH_JWT_ACCESS_SECRET:
+        process.env.AUTH_JWT_ACCESS_SECRET ?? 'dev-access-secret-change-me-32chars-min',
+    },
   },
 });
