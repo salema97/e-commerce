@@ -24,15 +24,10 @@ export function WebPushOptIn(): React.ReactElement {
   const hooks = useApiQueryHooks();
   const registerToken = hooks.useRegisterPushToken();
   const removeToken = hooks.useRemovePushToken();
-  const [enabled, setEnabled] = React.useState(false);
+  const [enabled, setEnabled] = React.useState(() =>
+    typeof window !== 'undefined' ? Boolean(window.localStorage.getItem(STORAGE_KEY)) : false,
+  );
   const [message, setMessage] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    setEnabled(Boolean(window.localStorage.getItem(STORAGE_KEY)));
-  }, []);
 
   async function handleToggle(checked: boolean): Promise<void> {
     setMessage(null);

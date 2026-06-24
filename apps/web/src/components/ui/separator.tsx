@@ -6,21 +6,32 @@ export function Separator({
   orientation = 'horizontal',
   ref,
   ...props
-}: React.HTMLAttributes<HTMLDivElement> & {
+}: React.HTMLAttributes<HTMLElement> & {
   orientation?: 'horizontal' | 'vertical';
-  ref?: React.Ref<HTMLDivElement>;
+  ref?: React.Ref<HTMLElement>;
 }) {
+  const sharedClassName = cn(
+    'shrink-0 border-0 bg-neo-onyx',
+    orientation === 'horizontal' ? 'h-[3px] w-full' : 'h-full w-[3px]',
+    className,
+  );
+
+  if (orientation === 'vertical') {
+    return (
+      <div
+        ref={ref as React.Ref<HTMLDivElement>}
+        aria-orientation="vertical"
+        className={sharedClassName}
+        {...(props as React.HTMLAttributes<HTMLDivElement>)}
+      />
+    );
+  }
+
   return (
-    <div
-      ref={ref}
-      role="separator"
-      aria-orientation={orientation}
-      className={cn(
-        'shrink-0 bg-neo-onyx',
-        orientation === 'horizontal' ? 'h-[3px] w-full' : 'h-full w-[3px]',
-        className,
-      )}
-      {...props}
+    <hr
+      ref={ref as React.Ref<HTMLHRElement>}
+      className={sharedClassName}
+      {...(props as React.HTMLAttributes<HTMLHRElement>)}
     />
   );
 }

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { getServerApiClient } from '@/lib/api';
 import { getSession } from '@/lib/session';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button-variants';
 import { cn } from '@/lib/utils';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { StoreCreditCard } from '@/components/account/store-credit-card';

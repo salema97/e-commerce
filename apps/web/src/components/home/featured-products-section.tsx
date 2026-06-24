@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'motion/react';
+import { m, useReducedMotion } from 'motion/react';
 import { ProductCard } from '@/components/store/product-card';
 import type { Product } from '@repo/shared-types';
 import { fadeUpVariants, productCardVariants, productGridVariants, reducedMotionTransition } from '@/lib/neo-motion';
@@ -15,7 +15,7 @@ export function FeaturedProductsSection({ products }: FeaturedProductsSectionPro
 
   return (
     <section className="container mx-auto px-4">
-      <motion.div
+      <m.div
         className="mb-8 flex items-end justify-between border-b-[6px] border-neo-onyx pb-4"
         variants={fadeUpVariants}
         initial={prefersReducedMotion ? false : 'hidden'}
@@ -27,9 +27,9 @@ export function FeaturedProductsSection({ products }: FeaturedProductsSectionPro
         <Link href="/store" className="px-3 py-1 text-sm font-bold uppercase hover:bg-neo-gold">
           Ver todo
         </Link>
-      </motion.div>
+      </m.div>
 
-      <motion.div
+      <m.div
         className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
         variants={productGridVariants}
         initial={prefersReducedMotion ? false : 'hidden'}
@@ -37,15 +37,15 @@ export function FeaturedProductsSection({ products }: FeaturedProductsSectionPro
         viewport={{ once: true, amount: 0.1 }}
       >
         {products.map((product) => (
-          <motion.div
+          <m.div
             key={product.id}
             variants={productCardVariants}
             transition={prefersReducedMotion ? reducedMotionTransition : undefined}
           >
             <ProductCard product={product} />
-          </motion.div>
+          </m.div>
         ))}
-      </motion.div>
+      </m.div>
     </section>
   );
 }

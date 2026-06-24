@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'motion/react';
+import { m, useReducedMotion } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ProductImage } from '@/components/store/product-image';
@@ -29,7 +29,7 @@ export function HomeHero({ heroProduct, imageUrl, imageAlt }: HomeHeroProps) {
   return (
     <section className="p-4 md:p-8">
       <div className="relative mx-auto grid max-w-7xl grid-cols-1 border-[3px] border-neo-onyx bg-neo-gold shadow-[10px_10px_0_0_#111111] md:grid-cols-12">
-        <motion.div
+        <m.div
           className="flex items-center justify-center border-b-[3px] border-neo-onyx bg-white py-10 md:col-span-1 md:border-b-0 md:border-r-[3px]"
           variants={heroCol1Variants}
           transition={prefersReducedMotion ? reducedMotionTransition : undefined}
@@ -38,9 +38,9 @@ export function HomeHero({ heroProduct, imageUrl, imageAlt }: HomeHeroProps) {
           <h2 className="font-anton text-3xl uppercase tracking-tighter md:text-5xl md:[writing-mode:vertical-rl] md:rotate-180">
             Colección destacada
           </h2>
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           className="relative flex flex-col justify-center bg-neo-gold p-6 md:col-span-7 md:p-12"
           variants={heroCol2Variants}
           transition={prefersReducedMotion ? reducedMotionTransition : undefined}
@@ -63,9 +63,9 @@ export function HomeHero({ heroProduct, imageUrl, imageAlt }: HomeHeroProps) {
               className="relative"
             />
           </div>
-        </motion.div>
+        </m.div>
 
-        <motion.div
+        <m.div
           className="flex flex-col justify-between border-t-[3px] border-neo-onyx bg-white p-8 md:col-span-4 md:border-t-0 md:border-l-[3px] md:p-10"
           variants={heroCol3Variants}
           transition={prefersReducedMotion ? reducedMotionTransition : undefined}
@@ -107,18 +107,18 @@ export function HomeHero({ heroProduct, imageUrl, imageAlt }: HomeHeroProps) {
               </Link>
             </div>
           </div>
-        </motion.div>
+        </m.div>
 
         {!prefersReducedMotion ? (
           <div className="pointer-events-none absolute bottom-4 left-1/2 hidden -translate-x-1/2 md:block">
-            <motion.div
+            <m.div
               className="flex flex-col items-center"
               animate={{ y: [0, 8, 0] }}
               transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
             >
               <span className="mb-2 text-xs font-bold uppercase tracking-[0.3em]">Desplazar</span>
               <div className="h-12 w-px bg-neo-onyx" />
-            </motion.div>
+            </m.div>
           </div>
         ) : null}
       </div>

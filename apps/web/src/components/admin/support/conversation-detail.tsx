@@ -10,6 +10,9 @@ import { ConversationStatusBadge } from './conversation-status-badge';
 import { formatDateTime } from '@repo/shared-utils';
 import type { Conversation, ConversationStatus, Message, QuickReply } from '@repo/shared-types';
 
+const EMPTY_MESSAGES: Message[] = [];
+const EMPTY_QUICK_REPLIES: QuickReply[] = [];
+
 const STATUS_OPTIONS: { value: ConversationStatus; label: string }[] = [
   { value: 'OPEN', label: 'Abierto' },
   { value: 'PENDING', label: 'Pendiente' },
@@ -30,8 +33,8 @@ interface ConversationDetailProps {
 
 export function ConversationDetail({
   conversation,
-  messages = [],
-  quickReplies = [],
+  messages = EMPTY_MESSAGES,
+  quickReplies = EMPTY_QUICK_REPLIES,
   currentUserId,
   onSendMessage,
   onUpdateConversation,

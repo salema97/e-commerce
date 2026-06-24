@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert } from '@/components/ui/alert';
+import { AlertDescription } from '@/components/ui/alert-description';
 import { AnimatedPageShell, NeoItem, NeoStagger } from '@/components/motion/neo-page-transition';
 import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { formatPrice } from '@repo/shared-utils';
@@ -18,34 +19,97 @@ interface ReturnRequestFormProps {
   isGuest?: boolean;
 }
 
+function combineReturnReasons(
+  selected: Record<string, { qty: number; reason: string }>,
+): string {
+  const reasons = Object.values(selected).flatMap((item) => (item.reason ? [item.reason] : []));
+  return reasons.join('; ') || 'Devolución del cliente';
+}
+
+type ReturnFormState = {
+  selected: Record<string, { qty: number; reason: string }>;
+  email: string;
+  isSubmitting: boolean;
+  error: string;
+  submitted: boolean;
+};
+
+type ReturnFormAction =
+  | { type: 'toggle_item'; itemId: string; maxQty: number }
+  | { type: 'set_item_qty'; itemId: string; qty: number }
+  | { type: 'set_item_reason'; itemId: string; reason: string }
+  | { type: 'set_email'; value: string }
+  | { type: 'submit_start' }
+  | { type: 'submit_success' }
+  | { type: 'submit_error'; message: string };
+
+const returnFormInitialState: ReturnFormState = {
+  selected: {},
+  email: '',
+  isSubmitting: false,
+  error: '',
+  submitted: false,
+};
+
+function returnFormReducer(state: ReturnFormState, action: ReturnFormAction): ReturnFormState {
+  switch (action.type) {
+    case 'toggle_item': {
+      if (state.selected[action.itemId]) {
+        const { [action.itemId]: _, ...rest } = state.selected;
+        return { ...state, selected: rest };
+      }
+      return {
+        ...state,
+        selected: { ...state.selected, [action.itemId]: { qty: action.maxQty, reason: '' } },
+      };
+    }
+    case 'set_item_qty':
+      return {
+        ...state,
+        selected: {
+          ...state.selected,
+          [action.itemId]: { ...state.selected[action.itemId], qty: action.qty },
+        },
+      };
+    case 'set_item_reason':
+      return {
+        ...state,
+        selected: {
+          ...state.selected,
+          [action.itemId]: { ...state.selected[action.itemId], reason: action.reason },
+        },
+      };
+    case 'set_email':
+      return { ...state, email: action.value };
+    case 'submit_start':
+      return { ...state, isSubmitting: true, error: '' };
+    case 'submit_success':
+      return { ...state, isSubmitting: false, submitted: true };
+    case 'submit_error':
+      return { ...state, isSubmitting: false, error: action.message };
+    default:
+      return state;
+  }
+}
+
 export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequestFormProps) {
   const router = useRouter();
   const api = useApiClient();
   const authReady = useAuthApiReady();
-  const [selected, setSelected] = React.useState<Record<string, { qty: number; reason: string }>>({});
-  const [email, setEmail] = React.useState('');
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [error, setError] = React.useState('');
-  const [submitted, setSubmitted] = React.useState(false);
+  const [form, dispatch] = React.useReducer(returnFormReducer, returnFormInitialState);
+  const { selected, email, isSubmitting, error, submitted } = form;
 
   const windowDays = 30;
   const isWithinWindow =
     new Date(order.createdAt).getTime() + windowDays * 24 * 60 * 60 * 1000 >= Date.now();
 
   function toggleItem(itemId: string, maxQty: number) {
-    setSelected((prev) => {
-      if (prev[itemId]) {
-        const { [itemId]: _, ...rest } = prev;
-        return rest;
-      }
-      return { ...prev, [itemId]: { qty: maxQty, reason: '' } };
-    });
+    dispatch({ type: 'toggle_item', itemId, maxQty });
   }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setIsSubmitting(true);
-    setError('');
+    dispatch({ type: 'submit_start' });
     const items = Object.entries(selected).map(([itemId, value]) => {
       const orderItem = order.items.find((i) => i.id === itemId)!;
       return {
@@ -61,29 +125,22 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
           orderId: order.id,
           email,
           items,
-          reason:
-            Object.values(selected)
-              .map((item) => item.reason)
-              .filter(Boolean)
-              .join('; ') || 'Devolución del cliente',
+          reason: combineReturnReasons(selected),
         });
       } else {
         await api.returns.createForOrder(order.id, {
           items,
-          reason:
-            Object.values(selected)
-              .map((item) => item.reason)
-              .filter(Boolean)
-              .join('; ') || 'Devolución del cliente',
+          reason: combineReturnReasons(selected),
         });
         router.push(`/orders/${order.id}`);
         router.refresh();
       }
-      setSubmitted(true);
+      dispatch({ type: 'submit_success' });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo enviar la solicitud de devolución');
-    } finally {
-      setIsSubmitting(false);
+      dispatch({
+        type: 'submit_error',
+        message: err instanceof Error ? err.message : 'No se pudo enviar la solicitud de devolución',
+      });
     }
   }
 
@@ -117,7 +174,7 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => dispatch({ type: 'set_email', value: e.target.value })}
                 required
                 placeholder="cliente@ejemplo.com"
               />
@@ -159,16 +216,14 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
                         max={item.quantity}
                         value={selected[item.id].qty}
                         onChange={(e) =>
-                          setSelected((prev) => ({
-                            ...prev,
-                            [item.id]: {
-                              ...prev[item.id],
-                              qty: Math.min(
-                                Math.max(1, Number(e.target.value)),
-                                item.quantity,
-                              ),
-                            },
-                          }))
+                          dispatch({
+                            type: 'set_item_qty',
+                            itemId: item.id,
+                            qty: Math.min(
+                              Math.max(1, Number(e.target.value)),
+                              item.quantity,
+                            ),
+                          })
                         }
                         className="w-24"
                       />
@@ -180,10 +235,11 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
                         type="text"
                         value={selected[item.id].reason}
                         onChange={(e) =>
-                          setSelected((prev) => ({
-                            ...prev,
-                            [item.id]: { ...prev[item.id], reason: e.target.value },
-                          }))
+                          dispatch({
+                            type: 'set_item_reason',
+                            itemId: item.id,
+                            reason: e.target.value,
+                          })
                         }
                         placeholder="Motivo de la devolución de este artículo"
                         className="normal-case"

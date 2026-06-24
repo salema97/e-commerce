@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion, useReducedMotion } from 'motion/react';
+import { m, useReducedMotion } from 'motion/react';
 import {
   LayoutDashboard,
   Package,
@@ -75,7 +75,7 @@ export function AdminSidebar({ role }: AdminSidebarProps) {
                 <div className="h-[3px] w-10 bg-white/15" aria-hidden />
               ) : null}
               <Link href={item.href} title={item.label} className="group relative">
-                <motion.div
+                <m.div
                   whileHover={prefersReducedMotion ? undefined : sidebarIconHover}
                   animate={prefersReducedMotion ? undefined : sidebarIconRest}
                   className={cn(
@@ -86,7 +86,7 @@ export function AdminSidebar({ role }: AdminSidebarProps) {
                   )}
                 >
                   <Icon className="size-6" strokeWidth={2.5} />
-                </motion.div>
+                </m.div>
                 <span
                   className="pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-50 -translate-y-1/2 whitespace-nowrap border-[3px] border-neo-onyx bg-neo-gold px-3 py-1.5 text-xs font-bold uppercase text-neo-onyx opacity-0 shadow-[4px_4px_0_#111] transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
                   role="tooltip"

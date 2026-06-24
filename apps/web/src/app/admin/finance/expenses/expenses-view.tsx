@@ -15,15 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { formatDateTime, expenseStatusLabel } from '@repo/shared-utils';
+import { formatDateTime, expenseStatusLabel, formatPrice } from '@repo/shared-utils';
 import type { Expense, ExpenseCategory, ExpenseStatus } from '@repo/shared-types';
-
-function formatMoney(amount: number): string {
-  return new Intl.NumberFormat('es-EC', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(amount);
-}
 
 export function ExpensesView({
   initialExpenses,
@@ -183,7 +176,7 @@ export function ExpensesView({
                   : '—'}
               </TableCell>
               <TableCell>{expenseStatusLabel(expense.status)}</TableCell>
-              <TableCell>{formatMoney(expense.amount)}</TableCell>
+              <TableCell>{formatPrice(expense.amount)}</TableCell>
               <TableCell className="text-muted-foreground">
                 {expense.description ?? '—'}
               </TableCell>

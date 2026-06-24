@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'motion/react';
+import { m, useReducedMotion } from 'motion/react';
 import type { Category } from '@repo/shared-types';
 import {
   bentoContainerVariants,
@@ -27,7 +27,7 @@ export function CategoryBentoGrid({ categories }: CategoryBentoGridProps) {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <motion.div
+    <m.div
       className="grid-tetris"
       variants={bentoContainerVariants}
       initial={prefersReducedMotion ? false : 'hidden'}
@@ -38,7 +38,7 @@ export function CategoryBentoGrid({ categories }: CategoryBentoGridProps) {
         const layout = layouts[index % layouts.length];
 
         return (
-          <motion.div
+          <m.div
             key={category.id}
             variants={bentoItemVariants}
             transition={prefersReducedMotion ? reducedMotionTransition : undefined}
@@ -59,9 +59,9 @@ export function CategoryBentoGrid({ categories }: CategoryBentoGridProps) {
                 Explorar
               </span>
             </Link>
-          </motion.div>
+          </m.div>
         );
       })}
-    </motion.div>
+    </m.div>
   );
 }

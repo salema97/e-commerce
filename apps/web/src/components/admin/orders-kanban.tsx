@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'motion/react';
+import { m, useReducedMotion } from 'motion/react';
 import { formatPrice, orderStatusLabel } from '@repo/shared-utils';
 import type { Order, OrderStatus } from '@repo/shared-types';
 import { Badge } from '@/components/ui/badge';
@@ -72,7 +72,7 @@ export function OrdersKanban({ orders, totalRevenue }: OrdersKanbanProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-10">
-      <motion.div
+      <m.div
         variants={fadeUpVariants}
         initial={prefersReducedMotion ? false : 'hidden'}
         animate={prefersReducedMotion ? undefined : 'visible'}
@@ -86,14 +86,14 @@ export function OrdersKanban({ orders, totalRevenue }: OrdersKanbanProps) {
             { label: 'Pedidos activos', value: String(activeCount), accent: true },
           ]}
         />
-      </motion.div>
+      </m.div>
 
       <div className="kanban-scroll">
         {columns.map((column, columnIndex) => {
           const columnOrders = orders.filter((order) => column.statuses.includes(order.status));
 
           return (
-            <motion.section
+            <m.section
               key={column.id}
               className="kanban-col"
               custom={columnIndex}
@@ -124,7 +124,7 @@ export function OrdersKanban({ orders, totalRevenue }: OrdersKanbanProps) {
                   </div>
                 ) : (
                   columnOrders.map((order) => (
-                    <motion.div
+                    <m.div
                       key={order.id}
                       variants={kanbanCardVariants}
                       initial={prefersReducedMotion ? false : 'hidden'}
@@ -133,11 +133,11 @@ export function OrdersKanban({ orders, totalRevenue }: OrdersKanbanProps) {
                       transition={prefersReducedMotion ? reducedMotionTransition : undefined}
                     >
                       <OrderKanbanCard order={order} />
-                    </motion.div>
+                    </m.div>
                   ))
                 )}
               </div>
-            </motion.section>
+            </m.section>
           );
         })}
       </div>
@@ -154,7 +154,7 @@ function OrderKanbanCard({ order }: { order: Order }) {
       : (firstItem?.name ?? 'Pedido');
 
   return (
-    <motion.div
+    <m.div
       whileHover={
         prefersReducedMotion
           ? undefined
@@ -190,6 +190,6 @@ function OrderKanbanCard({ order }: { order: Order }) {
           <span className="font-anton text-2xl">{formatPrice(order.total)}</span>
         </div>
       </Link>
-    </motion.div>
+    </m.div>
   );
 }

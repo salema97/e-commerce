@@ -9,17 +9,18 @@ import { useCartStore } from '@/lib/cart-store';
 import type { CartItem } from '@/lib/cart-store';
 import { useApiClient } from '@/lib/client-api';
 import { useAuth } from '@/contexts/auth-context';
+import { AddressForm } from './address-form';
 import {
-  AddressForm,
   EMPTY_ADDRESS,
   isAddressValid,
   toOrderAddress,
   type AddressFormValues,
-} from './address-form';
+} from './address-form.utils';
 import { CouponInput } from './coupon-input';
 import { OrderSummary } from './order-summary';
 import { PaymentForm } from './payment-element';
 import { trackEvent } from '@/lib/analytics/track';
+import { formatPrice } from '@repo/shared-utils';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import type {
   CreateOrderDto,
@@ -31,19 +32,60 @@ import type {
 const SHIPPING_FLAT_RATE = 5;
 const FREE_SHIPPING_THRESHOLD = 50;
 
+type CheckoutState = {
+  address: AddressFormValues;
+  couponCode: string;
+  order: CreatedOrderResult | null;
+  paymentIntent: PaymentIntentResult | null;
+  isSubmitting: boolean;
+  error: string | null;
+};
+
+type CheckoutAction =
+  | { type: 'set_address'; value: AddressFormValues }
+  | { type: 'set_coupon'; value: string }
+  | { type: 'submit_start' }
+  | { type: 'submit_success'; order: CreatedOrderResult; paymentIntent: PaymentIntentResult }
+  | { type: 'submit_error'; message: string };
+
+const checkoutInitialState: CheckoutState = {
+  address: EMPTY_ADDRESS,
+  couponCode: '',
+  order: null,
+  paymentIntent: null,
+  isSubmitting: false,
+  error: null,
+};
+
+function checkoutReducer(state: CheckoutState, action: CheckoutAction): CheckoutState {
+  switch (action.type) {
+    case 'set_address':
+      return { ...state, address: action.value };
+    case 'set_coupon':
+      return { ...state, couponCode: action.value };
+    case 'submit_start':
+      return { ...state, error: null, isSubmitting: true };
+    case 'submit_success':
+      return {
+        ...state,
+        order: action.order,
+        paymentIntent: action.paymentIntent,
+        isSubmitting: false,
+      };
+    case 'submit_error':
+      return { ...state, error: action.message, isSubmitting: false };
+    default:
+      return state;
+  }
+}
+
 export function CheckoutContainer() {
   const router = useRouter();
   const { user } = useAuth();
   const api = useApiClient();
   const { items } = useCartStore();
-
-  const [address, setAddress] = React.useState<AddressFormValues>(EMPTY_ADDRESS);
-  const [couponCode, setCouponCode] = React.useState('');
-
-  const [order, setOrder] = React.useState<CreatedOrderResult | null>(null);
-  const [paymentIntent, setPaymentIntent] = React.useState<PaymentIntentResult | null>(null);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const [checkout, dispatch] = React.useReducer(checkoutReducer, checkoutInitialState);
+  const { address, couponCode, order, paymentIntent, isSubmitting, error } = checkout;
 
   React.useEffect(() => {
     if (items.length === 0) {
@@ -79,8 +121,7 @@ export function CheckoutContainer() {
   }
 
   async function handleCreateOrder() {
-    setError(null);
-    setIsSubmitting(true);
+    dispatch({ type: 'submit_start' });
     try {
       const orderDto: CreateOrderDto = {
         items: items.map((item) => ({
@@ -99,7 +140,6 @@ export function CheckoutContainer() {
       };
 
       const createdOrder = await api.orders.create(orderDto);
-      setOrder(createdOrder);
 
       const intentDto: CreatePaymentIntentDto = {
         orderId: createdOrder.id,
@@ -111,12 +151,10 @@ export function CheckoutContainer() {
         customerEmail: address.email,
       };
       const intent = await api.payments.createIntent(intentDto);
-      setPaymentIntent(intent);
+      dispatch({ type: 'submit_success', order: createdOrder, paymentIntent: intent });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudo iniciar el pago. Por favor, inténtalo de nuevo.';
-      setError(message);
-    } finally {
-      setIsSubmitting(false);
+      dispatch({ type: 'submit_error', message });
     }
   }
 
@@ -129,7 +167,7 @@ export function CheckoutContainer() {
           <>
             <h1 className="text-3xl font-bold">Completa tu pago</h1>
             <p className="mt-2 text-muted-foreground">
-              Pedido {order.orderNumber} · Total {new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(Number(order.total))}
+              Pedido {order.orderNumber} · Total {formatPrice(Number(order.total))}
             </p>
           </>
         }
@@ -178,7 +216,7 @@ export function CheckoutContainer() {
     >
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <AddressForm values={address} onChange={setAddress} />
+          <AddressForm values={address} onChange={(value) => dispatch({ type: 'set_address', value })} />
 
           <Card>
             <CardHeader>
@@ -187,7 +225,7 @@ export function CheckoutContainer() {
             <CardContent>
               <CouponInput
                 couponCode={couponCode}
-                onCouponCodeChange={setCouponCode}
+                onCouponCodeChange={(value) => dispatch({ type: 'set_coupon', value })}
               />
             </CardContent>
           </Card>

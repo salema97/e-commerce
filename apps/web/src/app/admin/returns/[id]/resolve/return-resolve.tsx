@@ -20,15 +20,55 @@ import type { ReturnRequest, RefundMethod, Product, ProductVariant } from '@repo
 
 const METHODS: RefundMethod[] = ['ORIGINAL_PAYMENT', 'STORE_CREDIT', 'EXCHANGE'];
 
+type ResolveFormState = {
+  method: RefundMethod;
+  notes: string;
+  isSubmitting: boolean;
+  exchangeProductId: string;
+  exchangeVariantId: string;
+};
+
+type ResolveFormAction =
+  | { type: 'set_method'; value: RefundMethod }
+  | { type: 'set_notes'; value: string }
+  | { type: 'set_exchange_product'; productId: string }
+  | { type: 'set_exchange_variant'; variantId: string }
+  | { type: 'submit_start' }
+  | { type: 'submit_end' };
+
+const resolveFormInitialState: ResolveFormState = {
+  method: 'ORIGINAL_PAYMENT',
+  notes: '',
+  isSubmitting: false,
+  exchangeProductId: '',
+  exchangeVariantId: '',
+};
+
+function resolveFormReducer(state: ResolveFormState, action: ResolveFormAction): ResolveFormState {
+  switch (action.type) {
+    case 'set_method':
+      return { ...state, method: action.value };
+    case 'set_notes':
+      return { ...state, notes: action.value };
+    case 'set_exchange_product':
+      return { ...state, exchangeProductId: action.productId, exchangeVariantId: '' };
+    case 'set_exchange_variant':
+      return { ...state, exchangeVariantId: action.variantId };
+    case 'submit_start':
+      return { ...state, isSubmitting: true };
+    case 'submit_end':
+      return { ...state, isSubmitting: false };
+    default:
+      return state;
+  }
+}
+
 export default function ResolveReturnPage({ returnRequest }: { returnRequest: ReturnRequest }) {
   const router = useRouter();
   const api = useApiClient();
   const authReady = useAuthApiReady();
-  const [method, setMethod] = React.useState<RefundMethod>('ORIGINAL_PAYMENT');
-  const [notes, setNotes] = React.useState('');
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [exchangeProductId, setExchangeProductId] = React.useState('');
-  const [exchangeVariantId, setExchangeVariantId] = React.useState('');
+  const [form, dispatch] = React.useReducer(resolveFormReducer, resolveFormInitialState);
+  const { method, notes, isSubmitting, exchangeProductId, exchangeVariantId } = form;
   const [products, setProducts] = React.useState<Product[]>([]);
 
   React.useEffect(() => {
@@ -43,12 +83,11 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
   );
 
   function handleProductChange(productId: string) {
-    setExchangeProductId(productId);
-    setExchangeVariantId('');
+    dispatch({ type: 'set_exchange_product', productId });
   }
 
   function handleVariantChange(variantId: string) {
-    setExchangeVariantId(variantId);
+    dispatch({ type: 'set_exchange_variant', variantId });
   }
 
   function getSelectedVariant(): ProductVariant | undefined {
@@ -69,7 +108,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setIsSubmitting(true);
+    dispatch({ type: 'submit_start' });
     try {
       const payload: { refundMethod: RefundMethod; notes?: string; exchangeProductId?: string; exchangeVariantId?: string } = {
         refundMethod: method,
@@ -86,7 +125,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
       router.push(`/admin/returns/${returnRequest.id}`);
       router.refresh();
     } finally {
-      setIsSubmitting(false);
+      dispatch({ type: 'submit_end' });
     }
   }
 
@@ -135,7 +174,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
               <RadioGroup
                 value={method}
-                onValueChange={(value) => setMethod(value as RefundMethod)}
+                onValueChange={(value) => dispatch({ type: 'set_method', value: value as RefundMethod })}
                 className="flex flex-col gap-3"
               >
                 {METHODS.map((m) => (
@@ -197,7 +236,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
                 <Textarea
                   id="notes"
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={(e) => dispatch({ type: 'set_notes', value: e.target.value })}
                   rows={3}
                 />
               </div>

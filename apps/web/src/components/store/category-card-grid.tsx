@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'motion/react';
+import { m, useReducedMotion } from 'motion/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Category } from '@repo/shared-types';
 import { productCardVariants, productGridVariants, reducedMotionTransition } from '@/lib/neo-motion';
@@ -14,7 +14,7 @@ export function CategoryCardGrid({ categories }: CategoryCardGridProps) {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <motion.div
+    <m.div
       className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
       variants={productGridVariants}
       initial={prefersReducedMotion ? false : 'hidden'}
@@ -22,7 +22,7 @@ export function CategoryCardGrid({ categories }: CategoryCardGridProps) {
       viewport={{ once: true, amount: 0.05 }}
     >
       {categories.map((category) => (
-        <motion.div
+        <m.div
           key={category.id}
           variants={productCardVariants}
           transition={prefersReducedMotion ? reducedMotionTransition : undefined}
@@ -39,8 +39,8 @@ export function CategoryCardGrid({ categories }: CategoryCardGridProps) {
               </CardContent>
             </Card>
           </Link>
-        </motion.div>
+        </m.div>
       ))}
-    </motion.div>
+    </m.div>
   );
 }

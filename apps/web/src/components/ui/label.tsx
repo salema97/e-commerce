@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 
 export function Label({
   className,
+  htmlFor,
   ref,
   ...props
 }: React.LabelHTMLAttributes<HTMLLabelElement> & {
@@ -11,6 +12,7 @@ export function Label({
   return (
     <label
       ref={ref}
+      htmlFor={htmlFor}
       className={cn(
         'text-sm font-bold uppercase leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
         className,

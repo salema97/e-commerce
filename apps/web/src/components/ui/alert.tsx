@@ -30,30 +30,3 @@ export function Alert({
     <div ref={ref} role="alert" className={cn(alertVariants({ variant }), className)} {...props} />
   );
 }
-
-export function AlertTitle({
-  className,
-  children,
-  ref,
-  ...props
-}: React.HTMLAttributes<HTMLHeadingElement> & { ref?: React.Ref<HTMLParagraphElement> }) {
-  return (
-    <h5
-      ref={ref}
-      className={cn('mb-1 font-bold uppercase leading-none tracking-tight', className)}
-      {...props}
-    >
-      {children}
-    </h5>
-  );
-}
-
-export function AlertDescription({
-  className,
-  ref,
-  ...props
-}: React.HTMLAttributes<HTMLParagraphElement> & { ref?: React.Ref<HTMLParagraphElement> }) {
-  return (
-    <div ref={ref} className={cn('text-sm font-medium [&_p]:leading-relaxed', className)} {...props} />
-  );
-}

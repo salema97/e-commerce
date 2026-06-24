@@ -8,11 +8,9 @@ import { formatPrice } from '@repo/shared-utils';
 import { FormSelect } from '@/components/ui/form-select';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import {
-  CohortRetentionHeatmap,
-  FunnelBarChart,
-  TopProductsBarChart,
-} from '@/components/admin/analytics-charts';
+import { CohortRetentionHeatmap } from '@/components/admin/cohort-retention-heatmap';
+import { FunnelBarChart } from '@/components/admin/funnel-bar-chart';
+import { TopProductsBarChart } from '@/components/admin/top-products-bar-chart';
 import type {
   AnalyticsOverviewReport,
   CohortRetentionReport,

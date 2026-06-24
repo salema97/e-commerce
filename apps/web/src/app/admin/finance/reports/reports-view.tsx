@@ -15,15 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { formatDateTime, incomeSourceLabel } from '@repo/shared-utils';
+import { formatDateTime, incomeSourceLabel, formatPrice } from '@repo/shared-utils';
 import type { AdminStoreCredit, CashFlowReport, IncomeSource } from '@repo/shared-types';
-
-function formatMoney(amount: number, currency = 'USD'): string {
-  return new Intl.NumberFormat('es-EC', {
-    style: 'currency',
-    currency,
-  }).format(amount);
-}
 
 export function ReportsView({
   initialRange,
@@ -101,7 +94,7 @@ export function ReportsView({
               <CardTitle className="text-base">Ingresos</CardTitle>
             </CardHeader>
             <CardContent className="text-2xl font-semibold">
-              {formatMoney(report.totalIncome)}
+              {formatPrice(report.totalIncome)}
             </CardContent>
           </Card>
           <Card>
@@ -109,7 +102,7 @@ export function ReportsView({
               <CardTitle className="text-base">Gastos</CardTitle>
             </CardHeader>
             <CardContent className="text-2xl font-semibold">
-              {formatMoney(report.totalExpenses)}
+              {formatPrice(report.totalExpenses)}
             </CardContent>
           </Card>
           <Card>
@@ -117,7 +110,7 @@ export function ReportsView({
               <CardTitle className="text-base">Flujo neto</CardTitle>
             </CardHeader>
             <CardContent className="text-2xl font-semibold">
-              {formatMoney(report.netCashFlow)}
+              {formatPrice(report.netCashFlow)}
             </CardContent>
           </Card>
         </div>
@@ -133,7 +126,7 @@ export function ReportsView({
               {Object.entries(report.incomeBySource).map(([source, value]) => (
                 <div key={source} className="flex justify-between">
                   <span>{incomeSourceLabel(source as IncomeSource)}</span>
-                  <span>{formatMoney(Number(value))}</span>
+                  <span>{formatPrice(Number(value))}</span>
                 </div>
               ))}
             </CardContent>
@@ -146,7 +139,7 @@ export function ReportsView({
               {Object.entries(report.expensesByCategory).map(([category, value]) => (
                 <div key={category} className="flex justify-between">
                   <span>{category}</span>
-                  <span>{formatMoney(Number(value))}</span>
+                  <span>{formatPrice(Number(value))}</span>
                 </div>
               ))}
               {Object.keys(report.expensesByCategory).length === 0 ? (
@@ -172,7 +165,7 @@ export function ReportsView({
             {(storeCredits ?? []).map((credit: AdminStoreCredit) => (
               <TableRow key={credit.id}>
                 <TableCell>{credit.userEmail ?? credit.userId}</TableCell>
-                <TableCell>{formatMoney(credit.balance, credit.currency)}</TableCell>
+                <TableCell>{formatPrice(credit.balance, { currency: credit.currency })}</TableCell>
                 <TableCell>
                   {credit.expiresAt ? formatDateTime(credit.expiresAt) : '—'}
                 </TableCell>

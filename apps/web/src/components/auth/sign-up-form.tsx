@@ -10,19 +10,52 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/auth-context';
 import { formatApiError } from '@/lib/api-error';
 
+type SignUpState = {
+  name: string;
+  email: string;
+  password: string;
+  error: string | null;
+  loading: boolean;
+};
+
+type SignUpAction =
+  | { type: 'set_field'; field: 'name' | 'email' | 'password'; value: string }
+  | { type: 'submit_start' }
+  | { type: 'submit_error'; message: string }
+  | { type: 'submit_end' };
+
+const signUpInitialState: SignUpState = {
+  name: '',
+  email: '',
+  password: '',
+  error: null,
+  loading: false,
+};
+
+function signUpReducer(state: SignUpState, action: SignUpAction): SignUpState {
+  switch (action.type) {
+    case 'set_field':
+      return { ...state, [action.field]: action.value };
+    case 'submit_start':
+      return { ...state, loading: true, error: null };
+    case 'submit_error':
+      return { ...state, loading: false, error: action.message };
+    case 'submit_end':
+      return { ...state, loading: false };
+    default:
+      return state;
+  }
+}
+
 export function SignUpForm() {
   const router = useRouter();
   const { setSession } = useAuth();
-  const [name, setName] = React.useState('');
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [error, setError] = React.useState<string | null>(null);
-  const [loading, setLoading] = React.useState(false);
+  const [state, dispatch] = React.useReducer(signUpReducer, signUpInitialState);
+  const { name, email, password, error, loading } = state;
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setLoading(true);
-    setError(null);
+    dispatch({ type: 'submit_start' });
 
     const res = await fetch('/api/auth/register', {
       method: 'POST',
@@ -30,10 +63,9 @@ export function SignUpForm() {
       body: JSON.stringify({ name: name || undefined, email, password }),
     });
 
-    setLoading(false);
     if (!res.ok) {
       const body = await res.json().catch(() => null);
-      setError(formatApiError(body, 'No se pudo crear la cuenta'));
+      dispatch({ type: 'submit_error', message: formatApiError(body, 'No se pudo crear la cuenta') });
       return;
     }
 
@@ -53,7 +85,11 @@ export function SignUpForm() {
 
       <div className="space-y-2">
         <Label htmlFor="name">Nombre</Label>
-        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+        <Input
+          id="name"
+          value={name}
+          onChange={(e) => dispatch({ type: 'set_field', field: 'name', value: e.target.value })}
+        />
       </div>
 
       <div className="space-y-2">
@@ -63,7 +99,7 @@ export function SignUpForm() {
           type="email"
           autoComplete="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => dispatch({ type: 'set_field', field: 'email', value: e.target.value })}
           required
         />
       </div>
@@ -75,7 +111,7 @@ export function SignUpForm() {
           type="password"
           autoComplete="new-password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => dispatch({ type: 'set_field', field: 'password', value: e.target.value })}
           minLength={8}
           required
         />

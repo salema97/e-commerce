@@ -1,6 +1,6 @@
 'use client';
 
-import * as React from 'react';
+import { createContext, use, useCallback, useEffect, useMemo, useState } from 'react';
 import type { AuthUser } from '@repo/shared-types';
 
 interface AuthContextValue {
@@ -12,14 +12,14 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
 }
 
-const AuthContext = React.createContext<AuthContextValue | undefined>(undefined);
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = React.useState<AuthUser | null>(null);
-  const [accessToken, setAccessToken] = React.useState<string | null>(null);
-  const [loading, setLoading] = React.useState(true);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const refresh = React.useCallback(async () => {
+  const refresh = useCallback(async () => {
     const res = await fetch('/api/auth/me');
     if (!res.ok) {
       setUser(null);
@@ -31,22 +31,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAccessToken(data.accessToken);
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     void refresh().finally(() => setLoading(false));
   }, [refresh]);
 
-  const setSession = React.useCallback((nextUser: AuthUser, token: string) => {
+  const setSession = useCallback((nextUser: AuthUser, token: string) => {
     setUser(nextUser);
     setAccessToken(token);
   }, []);
 
-  const signOut = React.useCallback(async () => {
+  const signOut = useCallback(async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     setUser(null);
     setAccessToken(null);
   }, []);
 
-  const value = React.useMemo(
+  const value = useMemo(
     () => ({ user, accessToken, loading, setSession, refresh, signOut }),
     [user, accessToken, loading, setSession, refresh, signOut],
   );
@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useAuth() {
-  const ctx = React.useContext(AuthContext);
+  const ctx = use(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 }

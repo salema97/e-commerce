@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useApiQueryHooks } from '@/lib/client-api';
@@ -24,12 +24,12 @@ export function StoreChatWidget() {
 
   const sendMessage = hooks.useSendChatMessage();
 
-  useEffect(() => {
-    if (!open || sessionId || createSession.isPending) {
-      return;
+  function handleOpenChat() {
+    setOpen(true);
+    if (!sessionId && !createSession.isPending) {
+      createSession.mutate({ contactName: 'Visitante' });
     }
-    createSession.mutate({ contactName: 'Visitante' });
-  }, [open, sessionId, createSession]);
+  }
 
   async function handleSendMessage() {
     if (!sessionId || !input.trim()) {
@@ -44,7 +44,7 @@ export function StoreChatWidget() {
     return (
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={handleOpenChat}
         className="fixed bottom-6 right-6 z-50 border-[3px] border-neo-onyx bg-neo-gold px-5 py-3 font-bold uppercase shadow-[4px_4px_0_#111] transition-transform hover:-translate-y-0.5"
       >
         ¿Necesitas ayuda?
