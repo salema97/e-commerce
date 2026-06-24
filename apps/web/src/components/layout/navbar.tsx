@@ -90,8 +90,9 @@ export function Navbar() {
           {!loading && user ? (
             <div className="hidden items-stretch lg:flex">
               <Link
-                href="/orders"
+                href="/account"
                 className="flex items-center border-l-[3px] border-neo-onyx px-4 hover:bg-neo-gold"
+                aria-label="Mi cuenta"
               >
                 <User className="mr-2 size-4" strokeWidth={3} />
                 <span className="max-w-[120px] truncate text-sm font-bold uppercase">
@@ -179,9 +180,25 @@ export function Navbar() {
               </>
             ) : null}
             {user ? (
-              <Button variant="outline" className="w-full" onClick={handleSignOut}>
-                Salir
-              </Button>
+              <>
+                <Link
+                  href="/account"
+                  onClick={() => setMobileOpen(false)}
+                  className={buttonVariants({ variant: 'outline', className: 'w-full' })}
+                >
+                  Mi cuenta
+                </Link>
+                <Link
+                  href="/orders"
+                  onClick={() => setMobileOpen(false)}
+                  className={buttonVariants({ variant: 'outline', className: 'w-full' })}
+                >
+                  Mis pedidos
+                </Link>
+                <Button variant="outline" className="w-full" onClick={handleSignOut}>
+                  Salir
+                </Button>
+              </>
             ) : null}
           </nav>
         </SheetContent>

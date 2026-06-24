@@ -18,6 +18,11 @@ export function Footer() {
             <h3 className="font-anton text-2xl uppercase text-neo-gold md:text-3xl">Soporte</h3>
             <ul className="mt-6 space-y-3 text-sm font-bold uppercase">
               <li>
+                <Link href="/account" className="hover:text-neo-gold">
+                  Mi cuenta
+                </Link>
+              </li>
+              <li>
                 <Link href="/orders" className="hover:text-neo-gold">
                   Pedidos
                 </Link>

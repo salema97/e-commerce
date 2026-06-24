@@ -1,0 +1,16 @@
+schema: spec-driven
+project: e-commerce
+language: es
+testing:
+  strict_tdd: false
+  unit:
+    api: pnpm --filter @repo/api test
+    web: pnpm --filter @repo/web test
+  e2e:
+    web: pnpm --filter @repo/web test:e2e
+  typecheck: pnpm typecheck
+rules:
+  apply:
+    delivery_strategy: auto-chain
+    chain_strategy: stacked-to-main
+    max_pr_lines: 400
