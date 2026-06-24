@@ -166,6 +166,44 @@ async function main() {
     },
   });
 
+  const LEGAL_PAGES = [
+    {
+      slug: 'legal-privacidad',
+      title: 'Política de privacidad',
+      bodyMarkdown: `## Responsable del tratamiento
+Operamos en Ecuador y tratamos datos para gestionar pedidos, soporte y marketing opcional.
+
+## Base legal
+Ejecución de contrato (pedidos), consentimiento (marketing/analítica) e interés legítimo (seguridad).
+
+## Tus derechos
+Puedes exportar o solicitar eliminación de datos desde tu cuenta. Contacto: privacidad@example.com`,
+    },
+    {
+      slug: 'legal-terminos',
+      title: 'Términos de servicio',
+      bodyMarkdown: `Al usar la tienda aceptas estos términos. Los precios incluyen impuestos aplicables en Ecuador salvo indicación contraria.`,
+    },
+    {
+      slug: 'legal-envios',
+      title: 'Política de envíos',
+      bodyMarkdown: `Envíos a nivel nacional entre 2 y 5 días hábiles según ciudad. Costos calculados en checkout.`,
+    },
+    {
+      slug: 'legal-devoluciones',
+      title: 'Política de devoluciones',
+      bodyMarkdown: `Puedes solicitar devolución dentro de 30 días. Contáctanos por WhatsApp o chat web con tu número de pedido.`,
+    },
+  ] as const;
+
+  for (const page of LEGAL_PAGES) {
+    await prisma.cmsPage.upsert({
+      where: { slug: page.slug },
+      update: { title: page.title, bodyMarkdown: page.bodyMarkdown, isPublished: true },
+      create: { ...page, isPublished: true },
+    });
+  }
+
   await prisma.cmsPage.upsert({
     where: { slug: 'politica-devoluciones' },
     update: {},
