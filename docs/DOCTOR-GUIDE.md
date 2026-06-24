@@ -21,7 +21,7 @@ Este documento define **cómo ejecutar los doctores**, qué patrones evitan sus 
 
 | App | Score / estado | Errores críticos |
 |-----|----------------|------------------|
-| Web | **64/100** (antes 39) | **0** (antes 25) |
+| Web | **78/100** (antes 63) | **0** | Bugs 8, Performance 16, A11y 2, Maintainability 10 |
 | API | **83/100** | **0** (antes 6) |
 | Mobile | **20/21 checks** expo-doctor | Duplicado `react` monorepo (19.2.3 vs 19.2.7) — ver §4.3 |
 

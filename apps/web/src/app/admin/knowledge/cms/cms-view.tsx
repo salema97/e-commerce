@@ -66,6 +66,18 @@ export function CmsView({ initialPages }: CmsViewProps) {
     deleteMutation.mutate(id);
   }
 
+  function handleCreatePage(): void {
+    if (!slug.trim() || !title.trim() || !bodyMarkdown.trim()) {
+      return;
+    }
+    createMutation.mutate({
+      slug: slug.trim(),
+      title: title.trim(),
+      bodyMarkdown: bodyMarkdown.trim(),
+      isPublished,
+    });
+  }
+
   return (
     <AnimatedPageShell className="flex min-h-0 flex-1 flex-col gap-6">
       <AdminPageHeader
@@ -74,21 +86,7 @@ export function CmsView({ initialPages }: CmsViewProps) {
         showNetworkStatus={false}
       />
 
-      <form
-        className="neo-panel grid gap-4 p-4 md:grid-cols-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!slug.trim() || !title.trim() || !bodyMarkdown.trim()) {
-            return;
-          }
-          createMutation.mutate({
-            slug: slug.trim(),
-            title: title.trim(),
-            bodyMarkdown: bodyMarkdown.trim(),
-            isPublished,
-          });
-        }}
-      >
+      <div className="neo-panel grid gap-4 p-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="cms-slug">Slug</Label>
           <Input
@@ -129,11 +127,11 @@ export function CmsView({ initialPages }: CmsViewProps) {
           </Label>
         </div>
         <div className="md:col-span-2">
-          <Button type="submit" disabled={createMutation.isPending}>
+          <Button type="button" disabled={createMutation.isPending} onClick={handleCreatePage}>
             {createMutation.isPending ? 'Guardando…' : 'Crear página'}
           </Button>
         </div>
-      </form>
+      </div>
 
       <div className="neo-panel overflow-x-auto">
         <Table>

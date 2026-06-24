@@ -36,8 +36,8 @@ export function ReportsView({
 }) {
   const hooks = useApiQueryHooks();
   const authReady = useAuthApiReady();
-  const [from, setFrom] = React.useState(initialRange.from);
-  const [to, setTo] = React.useState(initialRange.to);
+  const fromRef = React.useRef<HTMLInputElement>(null);
+  const toRef = React.useRef<HTMLInputElement>(null);
   const [applied, setApplied] = React.useState(initialRange);
 
   const { data: report } = hooks.useFinanceCashFlow(applied.from, applied.to, {
@@ -61,20 +61,14 @@ export function ReportsView({
         showNetworkStatus={false}
       />
 
-      <form
-        className="neo-panel flex flex-wrap items-end gap-4 p-4"
-        onSubmit={(event) => {
-          event.preventDefault();
-          setApplied({ from, to });
-        }}
-      >
+      <div className="neo-panel flex flex-wrap items-end gap-4 p-4">
         <div className="space-y-2">
           <Label htmlFor="from">Desde</Label>
           <Input
             id="from"
+            ref={fromRef}
             type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
+            defaultValue={initialRange.from}
             required
           />
         </div>
@@ -82,14 +76,23 @@ export function ReportsView({
           <Label htmlFor="to">Hasta</Label>
           <Input
             id="to"
+            ref={toRef}
             type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
+            defaultValue={initialRange.to}
             required
           />
         </div>
-        <Button type="submit">Generar</Button>
-      </form>
+        <Button
+          type="button"
+          onClick={() => {
+            const from = fromRef.current?.value ?? initialRange.from;
+            const to = toRef.current?.value ?? initialRange.to;
+            setApplied({ from, to });
+          }}
+        >
+          Generar
+        </Button>
+      </div>
 
       {report ? (
         <div className="grid gap-4 md:grid-cols-3">

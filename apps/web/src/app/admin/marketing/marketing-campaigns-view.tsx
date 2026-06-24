@@ -33,13 +33,13 @@ export function MarketingCampaignsView({
 
   const distributePromo = hooks.useDistributePromo();
 
-  const promotions = promotionsQuery.data ?? [];
+  const promotions = promotionsQuery.data ?? initialPromotions;
+  const selectedPromotionId = promotionId || promotions[0]?.id || '';
 
-  React.useEffect(() => {
-    if (!promotionId && promotions[0]) {
-      setPromotionId(promotions[0].id);
-    }
-  }, [promotionId, promotions]);
+  function handleDistribute(): void {
+    if (!selectedPromotionId) return;
+    distributePromo.mutate({ segment, promotionId: selectedPromotionId });
+  }
 
   return (
     <AnimatedPageShell className="flex min-h-0 flex-1 flex-col gap-6">
@@ -49,19 +49,12 @@ export function MarketingCampaignsView({
         showNetworkStatus={false}
       />
 
-      <form
-        className="neo-panel grid max-w-xl gap-4 p-4"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!promotionId) return;
-          distributePromo.mutate({ segment, promotionId });
-        }}
-      >
+      <div className="neo-panel grid max-w-xl gap-4 p-4">
         <div className="space-y-2">
           <Label htmlFor="promotion">Promoción</Label>
           <FormSelect
             id="promotion"
-            value={promotionId}
+            value={selectedPromotionId}
             onValueChange={setPromotionId}
             placeholder="Selecciona una promoción"
             options={promotions.map((promotion) => ({
@@ -84,7 +77,11 @@ export function MarketingCampaignsView({
           />
         </div>
 
-        <Button type="submit" disabled={!promotionId || distributePromo.isPending}>
+        <Button
+          type="button"
+          disabled={!selectedPromotionId || distributePromo.isPending}
+          onClick={handleDistribute}
+        >
           {distributePromo.isPending ? 'Encolando…' : 'Distribuir códigos promo'}
         </Button>
 
@@ -99,7 +96,7 @@ export function MarketingCampaignsView({
             No se pudo encolar la campaña. Intenta de nuevo.
           </p>
         ) : null}
-      </form>
+      </div>
     </AnimatedPageShell>
   );
 }

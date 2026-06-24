@@ -9,14 +9,16 @@ interface AdminInvoiceDetailPageProps {
 }
 
 export default async function AdminInvoiceDetailPage({ params }: AdminInvoiceDetailPageProps) {
-  const { id } = await params;
-  const session = await getCurrentUser();
+  const [{ id }, session, api] = await Promise.all([
+    params,
+    getCurrentUser(),
+    getServerApiClient(),
+  ]);
 
   if (!session || !financeRoles.includes(session.role)) {
     redirect('/sign-in?redirect_url=/admin/invoices');
   }
 
-  const api = await getServerApiClient();
   let invoice: InvoiceResponseDto | null = await api.invoices.findOne(id).catch(() => null);
   let order: Order | null = null;
 

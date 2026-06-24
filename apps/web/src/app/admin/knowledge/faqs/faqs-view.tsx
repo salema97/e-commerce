@@ -67,6 +67,18 @@ export function FaqsView({ initialFaqs, canEdit }: FaqsViewProps) {
     deleteMutation.mutate(id);
   }
 
+  function handleCreateFaq(): void {
+    if (!question.trim() || !answer.trim()) {
+      return;
+    }
+    createMutation.mutate({
+      question: question.trim(),
+      answer: answer.trim(),
+      isPublished,
+      sortOrder: Number(sortOrder) || 0,
+    });
+  }
+
   return (
     <AnimatedPageShell className="flex min-h-0 flex-1 flex-col gap-6">
       <AdminPageHeader
@@ -76,21 +88,7 @@ export function FaqsView({ initialFaqs, canEdit }: FaqsViewProps) {
       />
 
       {canEdit ? (
-        <form
-          className="neo-panel grid gap-4 p-4 md:grid-cols-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!question.trim() || !answer.trim()) {
-              return;
-            }
-            createMutation.mutate({
-              question: question.trim(),
-              answer: answer.trim(),
-              isPublished,
-              sortOrder: Number(sortOrder) || 0,
-            });
-          }}
-        >
+        <div className="neo-panel grid gap-4 p-4 md:grid-cols-2">
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="faq-question">Pregunta</Label>
             <Input
@@ -130,11 +128,11 @@ export function FaqsView({ initialFaqs, canEdit }: FaqsViewProps) {
             </Label>
           </div>
           <div className="md:col-span-2">
-            <Button type="submit" disabled={createMutation.isPending}>
+            <Button type="button" disabled={createMutation.isPending} onClick={handleCreateFaq}>
               {createMutation.isPending ? 'Guardando…' : 'Agregar FAQ'}
             </Button>
           </div>
-        </form>
+        </div>
       ) : (
         <p className="text-sm text-muted-foreground">
           Solo lectura: tu rol puede consultar las FAQ pero no editarlas.

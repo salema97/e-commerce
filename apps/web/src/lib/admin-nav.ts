@@ -35,9 +35,15 @@ export function canAccessAdminPath(role: Role, pathname: string): boolean {
     return filterAdminNav(role).length > 0;
   }
 
-  const match = [...adminNavItems]
-    .filter((item) => normalized === item.href || normalized.startsWith(`${item.href}/`))
-    .sort((left, right) => right.href.length - left.href.length)[0];
+  const match = adminNavItems.reduce<AdminNavItem | undefined>((best, item) => {
+    if (normalized !== item.href && !normalized.startsWith(`${item.href}/`)) {
+      return best;
+    }
+    if (!best || item.href.length > best.href.length) {
+      return item;
+    }
+    return best;
+  }, undefined);
 
   if (!match) {
     return role === 'SUPER_ADMIN' || role === 'ADMIN';

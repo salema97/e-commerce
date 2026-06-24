@@ -33,6 +33,7 @@ export function Alert({
 
 export function AlertTitle({
   className,
+  children,
   ref,
   ...props
 }: React.HTMLAttributes<HTMLHeadingElement> & { ref?: React.Ref<HTMLParagraphElement> }) {
@@ -41,7 +42,9 @@ export function AlertTitle({
       ref={ref}
       className={cn('mb-1 font-bold uppercase leading-none tracking-tight', className)}
       {...props}
-    />
+    >
+      {children}
+    </h5>
   );
 }
 

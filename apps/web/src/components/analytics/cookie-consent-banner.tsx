@@ -58,7 +58,7 @@ export function CookieConsentBanner({ onConsent }: { onConsent: () => void }) {
             (PostHog) y grabación de sesiones (Microsoft Clarity) para mejorar la experiencia.
           </p>
           <label className="flex items-center gap-2">
-            <input type="checkbox" checked disabled readOnly aria-readonly />
+            <input type="checkbox" checked disabled readOnly />
             <span>Necesarias (siempre activas)</span>
           </label>
           <label className="flex items-center gap-2">

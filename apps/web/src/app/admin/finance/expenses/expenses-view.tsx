@@ -86,6 +86,16 @@ export function ExpensesView({
     return map;
   }, [categories]);
 
+  function handleCreateExpense(): void {
+    if (!amount || Number(amount) <= 0) return;
+    createMutation.mutate({
+      amount: Number(amount),
+      description: description || undefined,
+      categoryId: categoryId || undefined,
+      status,
+    });
+  }
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6">
       <AdminPageHeader
@@ -94,19 +104,7 @@ export function ExpensesView({
         showNetworkStatus={false}
       />
 
-      <form
-        className="neo-panel grid gap-4 p-4 md:grid-cols-4"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!amount || Number(amount) <= 0) return;
-          createMutation.mutate({
-            amount: Number(amount),
-            description: description || undefined,
-            categoryId: categoryId || undefined,
-            status,
-          });
-        }}
-      >
+      <div className="neo-panel grid gap-4 p-4 md:grid-cols-4">
         <div className="space-y-2">
           <Label htmlFor="amount">Monto</Label>
           <Input
@@ -157,11 +155,11 @@ export function ExpensesView({
           />
         </div>
         <div className="md:col-span-4">
-          <Button type="submit" disabled={createMutation.isPending}>
+          <Button type="button" disabled={createMutation.isPending} onClick={handleCreateExpense}>
             Registrar gasto
           </Button>
         </div>
-      </form>
+      </div>
 
       <Table>
         <TableHeader>

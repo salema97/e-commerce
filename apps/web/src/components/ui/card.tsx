@@ -28,6 +28,7 @@ export function CardHeader({
 
 export function CardTitle({
   className,
+  children,
   ref,
   ...props
 }: React.HTMLAttributes<HTMLHeadingElement> & { ref?: React.Ref<HTMLHeadingElement> }) {
@@ -36,7 +37,9 @@ export function CardTitle({
       ref={ref}
       className={cn('font-anton text-xl uppercase leading-none tracking-tight', className)}
       {...props}
-    />
+    >
+      {children}
+    </h3>
   );
 }
 

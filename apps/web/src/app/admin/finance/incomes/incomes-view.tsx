@@ -49,6 +49,15 @@ export function IncomesView({ initialIncomes }: { initialIncomes: Income[] }) {
     },
   });
 
+  function handleCreateIncome(): void {
+    if (!amount || Number(amount) <= 0) return;
+    createMutation.mutate({
+      source,
+      amount: Number(amount),
+      notes: notes || undefined,
+    });
+  }
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6">
       <AdminPageHeader
@@ -57,18 +66,7 @@ export function IncomesView({ initialIncomes }: { initialIncomes: Income[] }) {
         showNetworkStatus={false}
       />
 
-      <form
-        className="neo-panel grid gap-4 p-4 md:grid-cols-4"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!amount || Number(amount) <= 0) return;
-          createMutation.mutate({
-            source,
-            amount: Number(amount),
-            notes: notes || undefined,
-          });
-        }}
-      >
+      <div className="neo-panel grid gap-4 p-4 md:grid-cols-4">
         <div className="space-y-2">
           <Label htmlFor="source">Fuente</Label>
           <FormSelect
@@ -103,11 +101,11 @@ export function IncomesView({ initialIncomes }: { initialIncomes: Income[] }) {
           />
         </div>
         <div className="md:col-span-4">
-          <Button type="submit" disabled={createMutation.isPending}>
+          <Button type="button" disabled={createMutation.isPending} onClick={handleCreateIncome}>
             Registrar ingreso
           </Button>
         </div>
-      </form>
+      </div>
 
       <Table>
           <TableHeader>

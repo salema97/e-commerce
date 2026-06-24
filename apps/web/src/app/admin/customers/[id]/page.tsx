@@ -12,8 +12,7 @@ interface AdminCustomerDetailPageProps {
 export default async function AdminCustomerDetailPage({
   params,
 }: AdminCustomerDetailPageProps) {
-  const { id } = await params;
-  const api = await getServerApiClient();
+  const [{ id }, api] = await Promise.all([params, getServerApiClient()]);
 
   const user = await api.users.findOne(id).catch(() => null);
   if (!user) {

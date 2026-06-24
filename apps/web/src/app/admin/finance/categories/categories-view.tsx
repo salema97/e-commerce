@@ -38,6 +38,14 @@ export function CategoriesView({
     },
   });
 
+  function handleCreateCategory(): void {
+    if (!name.trim()) return;
+    createMutation.mutate({
+      name,
+      description: description || undefined,
+    });
+  }
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6">
       <AdminPageHeader
@@ -46,17 +54,7 @@ export function CategoriesView({
         showNetworkStatus={false}
       />
 
-      <form
-        className="neo-panel grid gap-4 p-4 md:grid-cols-3"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!name.trim()) return;
-          createMutation.mutate({
-            name,
-            description: description || undefined,
-          });
-        }}
-      >
+      <div className="neo-panel grid gap-4 p-4 md:grid-cols-3">
         <div className="space-y-2">
           <Label htmlFor="name">Nombre</Label>
           <Input
@@ -75,11 +73,11 @@ export function CategoriesView({
           />
         </div>
         <div className="md:col-span-3">
-          <Button type="submit" disabled={createMutation.isPending}>
+          <Button type="button" disabled={createMutation.isPending} onClick={handleCreateCategory}>
             Crear categoría
           </Button>
         </div>
-      </form>
+      </div>
 
       <Table>
         <TableHeader>

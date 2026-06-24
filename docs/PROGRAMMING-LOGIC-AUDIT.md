@@ -542,16 +542,12 @@ El monorepo tiene un **núcleo coherente y alineado** tras Sprints A–D (jun 20
 - Web con SSR, shell admin unificado, hooks `api-client` en finance/analytics, diseño neo-brutalist  
 - Mobile con paridad comercial completa (help, wishlist, legal CMS, tracking con consent, deep links)  
 
-**Gaps residuales:** ninguno bloqueante tras cierre jun 2026. Cosmético opcional: gráficos avanzados en analytics admin.
+**Gaps residuales:** ninguno bloqueante. Cosmético opcional: ~36 warnings React Doctor restantes (performance SSR en páginas legacy, exports en UI primitives).
 
 | Área | Estado |
 |------|--------|
-| Mobile wishlist + legal CMS | ✅ |
-| API `FINANCE_ROLES` centralizado | ✅ `finance.constants.ts` |
-| Web React Doctor (LazyMotion + forwardRef) | ✅ `NeoMotionProvider` + `m` + UI React 19 |
-| Web `AnimatedPageShell` marketing/knowledge | ✅ |
-| Analytics export CSV | ✅ |
-| Docs JWT (TODO.md) | ✅ Clerk referencias actualizadas |
+| Analytics admin gráficos | ✅ embudo barras, top productos, heatmap cohortes + CSV |
+| React Doctor web | ✅ 78/100 (LazyMotion, forwardRef, forms admin, Promise.all SSR) |
 
 La **mayor fuente de bugs en merge** sigue siendo **cableado olvidado**: `AppModule`, JWT, migraciones, nav admin, providers, consent en E2E. Usar las checklists de §8 antes de cada merge a `main`.
 
