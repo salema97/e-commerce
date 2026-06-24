@@ -23,7 +23,7 @@ Este documento define **cómo ejecutar los doctores**, qué patrones evitan sus 
 |-----|----------------|------------------|
 | Web | **100/100** (antes 90 → 78 → 63) | **0** | 0 warnings |
 | API | **83/100** | **0** (antes 6) |
-| Mobile | **20/21 checks** expo-doctor | Duplicado `react` monorepo (19.2.3 vs 19.2.7) — ver §4.3 |
+| Mobile | **21/21 checks** expo-doctor | **0** — `expo-doctor` como devDependency en `@repo/mobile` |
 
 ---
 
@@ -276,7 +276,7 @@ npx expo install expo-splash-screen
 npx expo install --check   # revisar antes de --fix
 ```
 
-**Monorepo:** mobile usa `react@19.2.3` (Expo SDK 56); web usa `react@19.2.7` (catalog). Documentar en `apps/mobile/package.json` (no en `app.json`):
+**Monorepo:** mobile usa `react: "catalog:"` (misma versión que web, p. ej. `19.2.7`). Expo puede advertir en `expo install --check`; excluir en `apps/mobile/package.json`:
 
 ```json
 "expo": {
@@ -286,15 +286,23 @@ npx expo install --check   # revisar antes de --fix
 }
 ```
 
-#### Duplicado `react` en monorepo (warning persistente)
+**`expo-doctor` en PATH:** declarar `expo-doctor` en `devDependencies` de `apps/mobile` y ejecutar vía `pnpm health:mobile` (script `health:expo` → `expo-doctor`). No depender de instalación global.
 
-Mobile fija `react@19.2.3` (Expo SDK 56); web/catalog usa `19.2.7`. Expo Doctor reporta dos instalaciones de `react`. Mitigaciones aceptadas:
+#### Deduplicar dependencias nativas (expo-doctor check #21)
 
-- `expo.install.exclude` para `react` (no forzar downgrade del catalog en web)
-- `pnpm dedupe` tras cambios de dependencias
-- Duplicado `react-native` en `shared-ui` es esperado (peer + devDep para typecheck del paquete)
+Si expo-doctor reporta duplicados de `react` o `react-native`:
 
-No resolver bajando React del catalog global sin decisión de arquitectura.
+1. **React:** usar `"react": "catalog:"` en `apps/mobile` (no fijar `19.2.3` aparte del catalog).
+2. **`@repo/shared-ui`:** `react-native` solo como **peer** con `peerDependenciesMeta.optional: true` — no en `devDependencies`.
+3. **Typecheck shared-ui:** alias en `packages/shared-ui/tsconfig.json`:
+
+```json
+"paths": {
+  "react-native": ["../../apps/mobile/node_modules/react-native"]
+}
+```
+
+4. Tras quitar `devDependencies.react-native` de shared-ui, borrar `packages/shared-ui/node_modules` y `pnpm install`.
 
 #### Alinear `@types/react` en todo el monorepo
 
@@ -306,17 +314,6 @@ Usar catalog en `pnpm-workspace.yaml`:
 ```
 
 Evita TS2742 en web cuando mobile instala tipos distintos.
-
-#### Duplicado `react-native` en `shared-ui`
-
-Expo Doctor puede avisar copia en `packages/shared-ui/node_modules`. Mitigación:
-
-```bash
-pnpm dedupe
-# o reinstalar: rm -rf node_modules && pnpm install
-```
-
-`shared-ui` declara `react-native` como **peer**; en devDependencies solo para typecheck del paquete.
 
 ### 4.2 Checklist pre-merge mobile
 

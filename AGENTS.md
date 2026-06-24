@@ -391,6 +391,9 @@ FULFILLMENT_PROVIDER=manual
 WMS_PROVIDER=manual
 ALLOW_BACKORDERS=false
 
+# Catalog cache (Phase 13)
+CATALOG_CACHE_TTL_SECONDS=120
+
 # SRI Ecuador e-invoicing (direct integration)
 SRI_MODE=direct
 SRI_RUC=xxx

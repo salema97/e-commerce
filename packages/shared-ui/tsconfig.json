@@ -5,7 +5,10 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "jsx": "react-native",
-    "lib": ["ES2022", "DOM"]
+    "lib": ["ES2022", "DOM"],
+    "paths": {
+      "react-native": ["../../apps/mobile/node_modules/react-native"]
+    }
   },
   "include": ["src/**/*"],
   "references": [
