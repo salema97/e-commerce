@@ -1,4 +1,5 @@
 import { Separator } from '@/components/ui/separator';
+import { ProductImage } from '@/components/store/product-image';
 import { formatPrice } from '@repo/shared-utils';
 import type { CartItem } from '@/lib/cart-store';
 
@@ -27,15 +28,18 @@ export function OrderSummary({
         {items.map((item) => (
           <div
             key={`${item.productId}:${item.variantId ?? ''}`}
-            className="flex items-start justify-between gap-3 text-sm"
+            className="flex items-start gap-3 text-sm"
           >
-            <div className="flex-1">
-              <p className="font-medium">{item.name}</p>
-              <p className="text-muted-foreground">Cantidad: {item.quantity}</p>
+            <ProductImage url={item.imageUrl} alt={item.name} variant="thumbnail" />
+            <div className="flex flex-1 items-start justify-between gap-3">
+              <div className="flex-1">
+                <p className="font-medium">{item.name}</p>
+                <p className="text-muted-foreground">Cantidad: {item.quantity}</p>
+              </div>
+              <span className="font-medium">
+                {formatPrice(item.price * item.quantity)}
+              </span>
             </div>
-            <span className="font-medium">
-              {formatPrice(item.price * item.quantity)}
-            </span>
           </div>
         ))}
       </div>

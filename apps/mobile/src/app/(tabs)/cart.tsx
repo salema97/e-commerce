@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card, Button, neo } from '@repo/shared-ui';
+import { Card, Button, neo, ProductImage } from '@repo/shared-ui';
 import { useCart } from '../../lib/cart.js';
 import { formatPrice } from '@repo/shared-utils';
 
@@ -18,6 +18,7 @@ export default function CartScreen(): React.ReactElement {
   const renderItem = ({ item }: { item: import('../../lib/cart.js').CartItem }) => (
     <Card style={styles.itemCard} padding="sm">
       <View style={styles.row}>
+        <ProductImage url={item.imageUrl} alt={item.name} variant="thumbnail" />
         <View style={styles.info}>
           <Text style={styles.name} numberOfLines={2}>
             {item.name}
@@ -120,7 +121,8 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
   },
   info: {
     flex: 1,

@@ -1,10 +1,14 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { getServerApiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ProductCard } from '@/components/store/product-card';
-import { formatPrice } from '@repo/shared-utils';
+import { ProductImage } from '@/components/store/product-image';
+import {
+  formatPrice,
+  getProductPrimaryImageUrl,
+  getProductPrimaryImageAlt,
+} from '@repo/shared-utils';
 import type { Product, Category } from '@repo/shared-types';
 
 export default async function HomePage() {
@@ -41,25 +45,23 @@ export default async function HomePage() {
           </div>
 
           <div className="relative flex flex-col justify-center bg-neo-gold p-6 md:col-span-7 md:p-12">
-            {heroProduct?.images?.[0] ? (
-              <div className="relative">
+            <div className="relative">
+              {heroProduct && getProductPrimaryImageUrl(heroProduct) ? (
                 <div className="absolute -inset-2 -rotate-1 border-[3px] border-neo-onyx bg-neo-scarlet md:-inset-4" />
-                <div className="relative overflow-hidden border-[3px] border-neo-onyx bg-white shadow-[12px_12px_0_0_#111111]">
-                  <Image
-                    src={heroProduct.images[0].url}
-                    alt={heroProduct.images[0].alt ?? heroProduct.name}
-                    width={800}
-                    height={1000}
-                    className="aspect-[4/5] w-full object-cover"
-                    priority
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="flex aspect-[4/5] items-center justify-center border-[3px] border-neo-onyx bg-white font-bold uppercase">
-                Catálogo en vivo
-              </div>
-            )}
+              ) : null}
+              <ProductImage
+                variant="hero"
+                url={heroProduct ? getProductPrimaryImageUrl(heroProduct) : undefined}
+                alt={heroProduct ? getProductPrimaryImageAlt(heroProduct) : undefined}
+                fallbackLabel="Catálogo en vivo"
+                fill={false}
+                width={800}
+                height={1000}
+                priority
+                imageClassName="aspect-[4/5] w-full"
+                className="relative"
+              />
+            </div>
           </div>
 
           <div className="flex flex-col justify-between border-t-[3px] border-neo-onyx bg-white p-8 md:col-span-4 md:border-t-0 md:border-l-[3px] md:p-10">

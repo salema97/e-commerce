@@ -6,6 +6,7 @@ export { Badge } from './Badge.js';
 export { Modal } from './Modal.js';
 export { ChatBubble } from './ChatBubble.js';
 export { PressableCard, Checkbox } from './PressableCard.js';
+export { ProductImage } from './ProductImage.js';
 export { neo } from './theme.js';
 
 export type { ButtonProps } from './Button.js';
@@ -16,4 +17,5 @@ export type { BadgeProps } from './Badge.js';
 export type { ModalPropsCustom as ModalProps } from './Modal.js';
 export type { ChatBubbleProps } from './ChatBubble.js';
 export type { PressableCardProps, CheckboxProps } from './PressableCard.js';
+export type { ProductImageProps, ProductImageVariant } from './ProductImage.js';
 export type { NeoColors } from './theme.js';

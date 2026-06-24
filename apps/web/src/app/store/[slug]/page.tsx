@@ -1,12 +1,12 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { getServerApiClient } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { ProductImage } from '@/components/store/product-image';
 import { AddToCartButton } from '@/components/cart/add-to-cart-button';
 import { WishlistButton } from '@/components/wishlist/wishlist-button';
-import { formatPrice } from '@repo/shared-utils';
+import { formatPrice, getProductPrimaryImageAlt, getProductPrimaryImageUrl } from '@repo/shared-utils';
 import type { Product } from '@repo/shared-types';
 
 interface ProductPageProps {
@@ -38,27 +38,20 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  const image = product.images?.[0];
+  const imageUrl = getProductPrimaryImageUrl(product);
   const variants = product.variants ?? [];
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid gap-8 border-[3px] border-neo-onyx bg-white shadow-[10px_10px_0_0_#111111] lg:grid-cols-12">
-        <div className="relative aspect-square overflow-hidden border-b-[3px] border-neo-onyx bg-muted lg:col-span-7 lg:border-b-0 lg:border-r-[3px]">
-          {image ? (
-            <Image
-              src={image.url}
-              alt={image.alt ?? product.name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              priority
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center font-bold uppercase text-muted-foreground">
-              Sin imagen
-            </div>
-          )}
+        <div className="relative lg:col-span-7">
+          <ProductImage
+            url={imageUrl}
+            alt={getProductPrimaryImageAlt(product)}
+            variant="detail"
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            priority
+          />
           <div className="absolute top-4 right-4 rotate-[-2deg] border-[3px] border-neo-onyx bg-neo-scarlet px-4 py-2 font-anton text-2xl text-white shadow-[4px_4px_0_#111]">
             {formatPrice(product.price)}
           </div>
@@ -109,7 +102,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <div className="flex-1">
               <AddToCartButton product={product} />
             </div>
-            <WishlistButton productId={product.id} name={product.name} slug={product.slug} />
+            <WishlistButton
+              productId={product.id}
+              name={product.name}
+              slug={product.slug}
+              imageUrl={getProductPrimaryImageUrl(product)}
+            />
           </div>
 
           <Link

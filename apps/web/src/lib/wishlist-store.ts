@@ -5,6 +5,7 @@ export interface WishlistItem {
   productId: string;
   name: string;
   slug: string;
+  imageUrl?: string;
 }
 
 interface WishlistState {

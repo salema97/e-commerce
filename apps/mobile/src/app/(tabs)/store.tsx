@@ -9,9 +9,9 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card, Input, Badge, PressableCard, neo } from '@repo/shared-ui';
+import { Card, Input, Badge, PressableCard, ProductImage, neo } from '@repo/shared-ui';
 import { api } from '../../lib/api.js';
-import { formatPrice } from '@repo/shared-utils';
+import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
 import type { Product, Category } from '@repo/shared-types';
 
 export default function StoreScreen(): React.ReactElement {
@@ -54,10 +54,16 @@ export default function StoreScreen(): React.ReactElement {
 
   const renderProduct = ({ item }: { item: Product }) => (
     <PressableCard
-      padding="sm"
+      padding="none"
       cardStyle={styles.productCard}
       onPress={() => router.push({ pathname: '/(tabs)/product/[id]', params: { id: item.id } })}
     >
+      <ProductImage
+        url={getProductPrimaryImageUrl(item)}
+        alt={getProductPrimaryImageAlt(item)}
+        variant="card"
+      />
+      <View style={styles.productBody}>
         <Text style={styles.productName} numberOfLines={2}>
           {item.name}
         </Text>
@@ -68,6 +74,7 @@ export default function StoreScreen(): React.ReactElement {
           <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
           {item.compareAtPrice ? <Badge variant="destructive" size="sm">Oferta</Badge> : null}
         </View>
+      </View>
     </PressableCard>
   );
 
@@ -171,6 +178,10 @@ const styles = StyleSheet.create({
   },
   productCard: {
     marginBottom: 12,
+    overflow: 'hidden',
+  },
+  productBody: {
+    padding: 12,
   },
   productName: {
     fontSize: 16,

@@ -8,10 +8,10 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Badge, Card, neo } from '@repo/shared-ui';
+import { Button, Badge, Card, neo, ProductImage } from '@repo/shared-ui';
 import { api } from '../../../lib/api.js';
 import { useCart } from '../../../lib/cart.js';
-import { formatPrice } from '@repo/shared-utils';
+import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
 import type { ProductVariant } from '@repo/shared-types';
 
 export default function ProductDetailScreen(): React.ReactElement {
@@ -33,6 +33,7 @@ export default function ProductDetailScreen(): React.ReactElement {
           ? `${product.name} - ${selectedVariant.name}`
           : product.name,
         price: selectedVariant?.price ?? product.price,
+        imageUrl: getProductPrimaryImageUrl(product),
       },
       quantity,
     );
@@ -63,9 +64,11 @@ export default function ProductDetailScreen(): React.ReactElement {
       <ScrollView contentContainerStyle={styles.content}>
         <Card padding="none" style={styles.productShell}>
           <View style={styles.imageSection}>
-            <View style={styles.imagePlaceholder}>
-              <Text style={styles.imagePlaceholderText}>Imagen del producto</Text>
-            </View>
+            <ProductImage
+              url={getProductPrimaryImageUrl(product)}
+              alt={getProductPrimaryImageAlt(product)}
+              variant="detail"
+            />
             <View style={styles.priceSticker}>
               <Text style={styles.priceStickerText}>{formatPrice(effectivePrice)}</Text>
             </View>
@@ -166,20 +169,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   imageSection: {
-    borderBottomWidth: 3,
-    borderBottomColor: neo.onyx,
     position: 'relative',
-  },
-  imagePlaceholder: {
-    height: 280,
-    backgroundColor: '#e8e0cc',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imagePlaceholderText: {
-    color: neo.muted,
-    fontWeight: '700',
-    textTransform: 'uppercase',
   },
   priceSticker: {
     position: 'absolute',

@@ -3,7 +3,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { ProductImage } from '@/components/store/product-image';
 import { useWishlistStore } from '@/lib/wishlist-store';
 
 export default function WishlistPage() {
@@ -35,8 +36,9 @@ export default function WishlistPage() {
       <div className="mt-8 grid gap-4">
         {items.map((item) => (
           <Card key={item.productId}>
-            <CardContent className="flex items-center justify-between p-4">
-              <Link href={`/store/${item.slug}`} className="font-medium hover:underline">
+            <CardContent className="flex items-center gap-4 p-4">
+              <ProductImage url={item.imageUrl} alt={item.name} variant="thumbnail" />
+              <Link href={`/store/${item.slug}`} className="flex-1 font-medium hover:underline">
                 {item.name}
               </Link>
               <Button

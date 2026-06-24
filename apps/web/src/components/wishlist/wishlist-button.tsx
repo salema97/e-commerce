@@ -8,9 +8,10 @@ interface WishlistButtonProps {
   productId: string;
   name: string;
   slug: string;
+  imageUrl?: string;
 }
 
-export function WishlistButton({ productId, name, slug }: WishlistButtonProps) {
+export function WishlistButton({ productId, name, slug, imageUrl }: WishlistButtonProps) {
   const { addItem, removeItem, isInWishlist } = useWishlistStore();
   const inWishlist = isInWishlist(productId);
 
@@ -22,7 +23,7 @@ export function WishlistButton({ productId, name, slug }: WishlistButtonProps) {
         if (inWishlist) {
           removeItem(productId);
         } else {
-          addItem({ productId, name, slug });
+          addItem({ productId, name, slug, imageUrl });
         }
       }}
       aria-label={inWishlist ? 'Eliminar de la lista de deseos' : 'Agregar a la lista de deseos'}

@@ -8,9 +8,9 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card, Button, PressableCard, neo } from '@repo/shared-ui';
+import { Card, Button, PressableCard, ProductImage, neo } from '@repo/shared-ui';
 import { api } from '../../lib/api.js';
-import { formatPrice } from '@repo/shared-utils';
+import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
 import type { Product } from '@repo/shared-types';
 
 export default function HomeScreen(): React.ReactElement {
@@ -27,16 +27,24 @@ export default function HomeScreen(): React.ReactElement {
     <PressableCard
       style={styles.productTouchable}
       cardStyle={styles.productCard}
-      padding="sm"
+      padding="none"
       onPress={() => router.push({ pathname: '/(tabs)/product/[id]', params: { id: item.id } })}
     >
-      <View style={styles.productTop}>
-        <Text style={styles.productName} numberOfLines={2}>
-          {item.name}
-        </Text>
-        {item.isFeatured ? <View style={styles.featuredDot} /> : null}
+      <ProductImage
+        url={getProductPrimaryImageUrl(item)}
+        alt={getProductPrimaryImageAlt(item)}
+        variant="card"
+        style={styles.productImage}
+      />
+      <View style={styles.productBody}>
+        <View style={styles.productTop}>
+          <Text style={styles.productName} numberOfLines={2}>
+            {item.name}
+          </Text>
+          {item.isFeatured ? <View style={styles.featuredDot} /> : null}
+        </View>
+        <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
       </View>
-      <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
     </PressableCard>
   );
 
@@ -141,7 +149,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
   },
   productCard: {
-    minHeight: 130,
+    minHeight: 180,
+    overflow: 'hidden',
+  },
+  productImage: {
+    borderBottomWidth: 0,
+  },
+  productBody: {
+    padding: 12,
+    flex: 1,
     justifyContent: 'space-between',
   },
   productTop: {

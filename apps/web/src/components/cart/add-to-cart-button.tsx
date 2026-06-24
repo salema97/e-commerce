@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FormSelect } from '@/components/ui/form-select';
 import { useCartStore } from '@/lib/cart-store';
+import { getProductPrimaryImageUrl } from '@repo/shared-utils';
 import type { Product } from '@repo/shared-types';
 
 export function AddToCartButton({ product }: { product: Product }) {
@@ -21,7 +22,7 @@ export function AddToCartButton({ product }: { product: Product }) {
       variantId: variantId || undefined,
       name: product.name,
       price: Number(product.price),
-      imageUrl: product.images?.[0]?.url,
+      imageUrl: getProductPrimaryImageUrl(product),
       quantity,
     });
     router.push('/cart');

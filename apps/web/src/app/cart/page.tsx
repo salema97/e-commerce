@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ProductImage } from '@/components/store/product-image';
 import { useCartStore } from '@/lib/cart-store';
 import { formatPrice } from '@repo/shared-utils';
 
@@ -51,6 +52,7 @@ export default function CartPage() {
           {items.map((item) => (
             <Card key={`${item.productId}:${item.variantId ?? ''}`}>
               <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
+                <ProductImage url={item.imageUrl} alt={item.name} variant="thumbnail" />
                 <div className="flex-1">
                   <p className="font-medium">{item.name}</p>
                   <p className="text-sm text-muted-foreground">

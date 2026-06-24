@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { formatPrice } from '@repo/shared-utils';
+import { ProductImage } from '@/components/store/product-image';
+import { formatPrice, getProductPrimaryImageAlt, getProductPrimaryImageUrl } from '@repo/shared-utils';
 import type { Product } from '@repo/shared-types';
 import { cn } from '@/lib/utils';
 
@@ -13,25 +13,19 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, className, size = 'default' }: ProductCardProps) {
-  const image = product.images?.[0];
+  const imageUrl = getProductPrimaryImageUrl(product);
 
   return (
     <Link href={`/store/${product.slug}`} className={cn('group block', className)}>
       <Card className="overflow-hidden transition-transform group-hover:-translate-x-1 group-hover:-translate-y-1 group-hover:shadow-[10px_10px_0_0_#111111]">
-        <div className="relative aspect-square overflow-hidden border-b-[3px] border-neo-onyx bg-muted">
-          {image ? (
-            <Image
-              src={image.url}
-              alt={image.alt ?? product.name}
-              fill
-              className="object-cover grayscale transition-all duration-500 group-hover:grayscale-0"
-              sizes="(max-width: 768px) 100vw, 33vw"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-sm font-bold uppercase text-muted-foreground">
-              Sin imagen
-            </div>
-          )}
+        <div className="relative">
+          <ProductImage
+            url={imageUrl}
+            alt={getProductPrimaryImageAlt(product)}
+            variant="card"
+            sizes="(max-width: 768px) 100vw, 33vw"
+            grayscaleHover
+          />
           {product.compareAtPrice ? (
             <div className="absolute top-3 right-3 rotate-3">
               <Badge variant="destructive">Oferta</Badge>
