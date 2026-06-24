@@ -40,6 +40,7 @@ type CheckoutState = {
   paymentIntent: PaymentIntentResult | null;
   isSubmitting: boolean;
   error: string | null;
+  shippingQuote: ShippingQuote | null;
 };
 
 type CheckoutAction =
@@ -47,7 +48,8 @@ type CheckoutAction =
   | { type: 'set_coupon'; value: string }
   | { type: 'submit_start' }
   | { type: 'submit_success'; order: CreatedOrderResult; paymentIntent: PaymentIntentResult }
-  | { type: 'submit_error'; message: string };
+  | { type: 'submit_error'; message: string }
+  | { type: 'set_shipping_quote'; quote: ShippingQuote | null };
 
 const checkoutInitialState: CheckoutState = {
   address: EMPTY_ADDRESS,
@@ -56,6 +58,7 @@ const checkoutInitialState: CheckoutState = {
   paymentIntent: null,
   isSubmitting: false,
   error: null,
+  shippingQuote: null,
 };
 
 function checkoutReducer(state: CheckoutState, action: CheckoutAction): CheckoutState {
@@ -75,6 +78,8 @@ function checkoutReducer(state: CheckoutState, action: CheckoutAction): Checkout
       };
     case 'submit_error':
       return { ...state, error: action.message, isSubmitting: false };
+    case 'set_shipping_quote':
+      return { ...state, shippingQuote: action.quote };
     default:
       return state;
   }
@@ -86,15 +91,27 @@ export function CheckoutContainer() {
   const api = useApiClient();
   const { items } = useCartStore();
   const [checkout, dispatch] = React.useReducer(checkoutReducer, checkoutInitialState);
-  const { address, couponCode, order, paymentIntent, isSubmitting, error } = checkout;
-  const [mounted, setMounted] = React.useState(false);
-  const [shippingQuote, setShippingQuote] = React.useState<ShippingQuote | null>(null);
+  const {
+    address,
+    couponCode,
+    order,
+    paymentIntent,
+    isSubmitting,
+    error,
+    shippingQuote,
+  } = checkout;
+  const mounted = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+  const beginCheckoutTrackedRef = React.useRef(false);
 
   React.useEffect(() => {
-    setMounted(true);
-    if (items.length === 0) {
+    if (beginCheckoutTrackedRef.current || items.length === 0) {
       return;
     }
+    beginCheckoutTrackedRef.current = true;
     void trackEvent('begin_checkout', {
       cartTotal: items.reduce((sum, item) => sum + item.price * item.quantity, 0),
       itemsCount: items.reduce((sum, item) => sum + item.quantity, 0),
@@ -115,7 +132,7 @@ export function CheckoutContainer() {
 
   React.useEffect(() => {
     if (!isAddressValid(address) || items.length === 0) {
-      setShippingQuote(null);
+      dispatch({ type: 'set_shipping_quote', quote: null });
       return;
     }
 
@@ -128,10 +145,14 @@ export function CheckoutContainer() {
         freeShipping: false,
       })
       .then((quote) => {
-        if (!cancelled) setShippingQuote(quote);
+        if (!cancelled) {
+          dispatch({ type: 'set_shipping_quote', quote });
+        }
       })
       .catch(() => {
-        if (!cancelled) setShippingQuote(null);
+        if (!cancelled) {
+          dispatch({ type: 'set_shipping_quote', quote: null });
+        }
       });
 
     return () => {
