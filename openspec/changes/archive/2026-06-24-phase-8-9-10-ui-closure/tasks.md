@@ -37,7 +37,7 @@
 
 ## Phase 4: Verification & Archive
 
-- [ ] 4.1 Run typecheck + web unit + web e2e
-- [ ] 4.2 Write `verify-report.md`
-- [ ] 4.3 Archive change to `openspec/changes/archive/`
-- [ ] 4.4 Close stale PR #1 (phase 8 already on main)
+- [x] 4.1 Run typecheck + web unit + web e2e
+- [x] 4.2 Write `verify-report.md`
+- [x] 4.3 Archive change to `openspec/changes/archive/`
+- [x] 4.4 Close stale PR #1 (phase 8 already on main)
