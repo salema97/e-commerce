@@ -4,7 +4,6 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Badge, Card, neo, ProductImage } from '@repo/shared-ui';
@@ -18,7 +17,7 @@ import type { ProductVariant } from '@repo/shared-types';
 export default function ProductDetailScreen(): React.ReactElement {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: product, isLoading, error } = api.hooks.useProduct(id ?? '');
+  const { data: product, error } = api.hooks.useProduct(id ?? '');
   const { addItem, itemCount } = useCart();
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>();
   const [quantity, setQuantity] = useState(1);
@@ -41,14 +40,6 @@ export default function ProductDetailScreen(): React.ReactElement {
 
     router.push('/(tabs)/cart');
   };
-
-  if (isLoading) {
-    return (
-      <NeoScreen style={styles.center}>
-        <ActivityIndicator size="large" color={neo.onyx} />
-      </NeoScreen>
-    );
-  }
 
   if (error || !product) {
     return (

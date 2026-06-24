@@ -6,13 +6,14 @@ import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { ConversationList } from '@/components/admin/support/conversation-list';
 import { ConversationDetail } from '@/components/admin/support/conversation-detail';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
-import type { Conversation, ConversationStatus } from '@repo/shared-types';
+import type { Conversation, ConversationStatus, PaginatedConversations } from '@repo/shared-types';
 
 interface SupportInboxProps {
   currentUserId: string;
+  initialConversations: PaginatedConversations;
 }
 
-export function SupportInbox({ currentUserId }: SupportInboxProps) {
+export function SupportInbox({ currentUserId, initialConversations }: SupportInboxProps) {
   const api = useApiClient();
   const authReady = useAuthApiReady();
   const queryClient = useQueryClient();
@@ -34,6 +35,10 @@ export function SupportInbox({ currentUserId }: SupportInboxProps) {
       assignedToMe: filters.assignedToMe ? 'true' : undefined,
       search: filters.search || undefined,
     }),
+    initialData:
+      filters.search === '' && filters.status === '' && !filters.assignedToMe
+        ? initialConversations
+        : undefined,
     enabled: authReady,
     refetchInterval: 10_000,
   });
@@ -119,7 +124,6 @@ export function SupportInbox({ currentUserId }: SupportInboxProps) {
         <ConversationList
           conversations={conversationsQuery.data?.data ?? []}
           selectedId={selectedId}
-          isLoading={conversationsQuery.isLoading || !authReady}
           filter={filters}
           onFilterChange={(changes) => setFilters((prev) => ({ ...prev, ...changes }))}
           onSelect={handleSelect}
@@ -128,7 +132,6 @@ export function SupportInbox({ currentUserId }: SupportInboxProps) {
           <ConversationDetail
             conversation={activeConversation}
             messages={messagesQuery.data?.data ?? []}
-            isLoadingMessages={messagesQuery.isLoading}
             quickReplies={quickRepliesQuery.data ?? []}
             currentUserId={currentUserId}
             onSendMessage={handleSendMessage}

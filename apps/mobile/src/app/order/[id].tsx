@@ -20,7 +20,7 @@ export default function OrderDetailScreen(): React.ReactElement {
   const params = useLocalSearchParams<{ id: string }>();
   const orderId = params.id;
 
-  const { data: order, isLoading, isError } = api.hooks.useOrder(orderId, {
+  const { data: order, isError } = api.hooks.useOrder(orderId, {
     refetchInterval: (query) => {
       const current = query.state.data as Order | undefined;
       if (current && (current.status === 'PAYMENT_PENDING' || current.status === 'PENDING')) {
@@ -29,14 +29,6 @@ export default function OrderDetailScreen(): React.ReactElement {
       return false;
     },
   });
-
-  if (isLoading) {
-    return (
-      <NeoScreen style={styles.center}>
-        <Text style={styles.muted}>Cargando pedido...</Text>
-      </NeoScreen>
-    );
-  }
 
   if (isError || !order) {
     return (

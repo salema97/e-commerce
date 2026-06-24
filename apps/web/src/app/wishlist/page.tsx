@@ -10,15 +10,6 @@ import { useWishlistStore } from '@/lib/wishlist-store';
 
 export default function WishlistPage() {
   const { items, removeItem } = useWishlistStore();
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return <div className="container mx-auto px-4 py-8">Cargando lista de deseos…</div>;
-  }
 
   if (items.length === 0) {
     return (

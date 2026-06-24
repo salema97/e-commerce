@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useCartStore } from '@/lib/cart-store';
 import type { CartItem } from '@/lib/cart-store';
 import { useApiClient } from '@/lib/client-api';
@@ -36,7 +35,6 @@ export function CheckoutContainer() {
   const { user } = useAuth();
   const api = useApiClient();
   const { items } = useCartStore();
-  const [mounted, setMounted] = React.useState(false);
 
   const [address, setAddress] = React.useState<AddressFormValues>(EMPTY_ADDRESS);
   const [couponCode, setCouponCode] = React.useState('');
@@ -46,11 +44,7 @@ export function CheckoutContainer() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Client-side estimate for the summary. The server recomputes totals
+  // Client-side estimate for the summary.
   // (subtotal, discount, IVA, shipping) authoritatively on order creation.
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT_RATE;
@@ -61,10 +55,6 @@ export function CheckoutContainer() {
   const taxableBase = Math.max(0, subtotal - discount);
   const tax = taxableBase * taxRate;
   const total = taxableBase + tax + shipping;
-
-  if (!mounted) {
-    return <CheckoutSkeleton />;
-  }
 
   if (items.length === 0 && !order) {
     return (
@@ -253,21 +243,6 @@ function OrderSummaryCard(props: OrderSummaryCardProps) {
           <OrderSummary {...props} />
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-function CheckoutSkeleton() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <Skeleton className="h-10 w-40" />
-      <div className="mt-8 grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          <Skeleton className="h-64 w-full" />
-          <Skeleton className="h-32 w-full" />
-        </div>
-        <Skeleton className="h-72 w-full" />
-      </div>
     </div>
   );
 }

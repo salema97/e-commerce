@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button, PressableCard, ProductImage, neo } from '@repo/shared-ui';
@@ -22,7 +21,7 @@ import {
 
 export default function HomeScreen(): React.ReactElement {
   const router = useRouter();
-  const { data: products, isLoading, error } = api.hooks.useProducts();
+  const { data: products, error } = api.hooks.useProducts();
 
   const featuredProducts = React.useMemo(() => {
     if (!products) return [];
@@ -68,9 +67,7 @@ export default function HomeScreen(): React.ReactElement {
         </View>
       </NeoEnterFromTop>
 
-      {isLoading ? (
-        <ActivityIndicator size="large" color={neo.onyx} style={styles.loader} />
-      ) : error ? (
+      {error ? (
         <View style={styles.center}>
           <Text style={styles.error}>No se pudieron cargar los productos.</Text>
           <Text style={styles.errorDetail}>{error.message}</Text>

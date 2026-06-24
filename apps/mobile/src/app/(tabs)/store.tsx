@@ -5,7 +5,6 @@ import {
   FlatList,
   Pressable,
   StyleSheet,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Input, Badge, PressableCard, ProductImage, neo } from '@repo/shared-ui';
@@ -22,11 +21,10 @@ export default function StoreScreen(): React.ReactElement {
 
   const {
     data: products,
-    isLoading: productsLoading,
     error: productsError,
   } = api.hooks.useProducts();
 
-  const { data: categories, isLoading: categoriesLoading } = api.hooks.useCategories();
+  const { data: categories } = api.hooks.useCategories();
 
   const filteredProducts = useMemo(() => {
     if (!products) return [];
@@ -96,8 +94,7 @@ export default function StoreScreen(): React.ReactElement {
         </View>
       </NeoEnterFromTop>
 
-      {categoriesLoading ? null : (
-        <FlatList
+      <FlatList
           horizontal
           data={categories ?? []}
           keyExtractor={(item) => item.id}
@@ -105,11 +102,8 @@ export default function StoreScreen(): React.ReactElement {
           contentContainerStyle={styles.categories}
           showsHorizontalScrollIndicator={false}
         />
-      )}
 
-      {productsLoading ? (
-        <ActivityIndicator size="large" color={neo.onyx} style={styles.loader} />
-      ) : productsError ? (
+      {productsError ? (
         <View style={styles.center}>
           <Text style={styles.error}>No se pudieron cargar los productos.</Text>
         </View>

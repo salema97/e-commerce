@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ProductImage } from '@/components/store/product-image';
 import { AnimatedPageShell, NeoItem, NeoStagger } from '@/components/motion/neo-page-transition';
 import { useCartStore } from '@/lib/cart-store';
@@ -16,15 +15,6 @@ import { formatPrice } from '@repo/shared-utils';
 export default function CartPage() {
   const router = useRouter();
   const { items, updateItem, removeItem } = useCartStore();
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return <CartSkeleton />;
-  }
 
   if (items.length === 0) {
     return (
@@ -118,21 +108,5 @@ export default function CartPage() {
         </div>
       </div>
     </AnimatedPageShell>
-  );
-}
-
-function CartSkeleton() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <Skeleton className="h-10 w-48" />
-      <div className="mt-8 grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2 flex flex-col gap-4">
-          {[1, 2].map((i) => (
-            <Skeleton key={i} className="h-24 w-full" />
-          ))}
-        </div>
-        <Skeleton className="h-64 w-full" />
-      </div>
-    </div>
   );
 }

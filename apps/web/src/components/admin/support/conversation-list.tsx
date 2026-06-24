@@ -4,7 +4,6 @@ import * as React from 'react';
 import { Input } from '@/components/ui/input';
 import { FormSelect } from '@/components/ui/form-select';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ConversationStatusBadge } from './conversation-status-badge';
 import { formatRelativeDate } from '@repo/shared-utils';
 import type { Conversation, ConversationStatus } from '@repo/shared-types';
@@ -20,7 +19,6 @@ const STATUS_OPTIONS: { value: ConversationStatus | ''; label: string }[] = [
 interface ConversationListProps {
   conversations: Conversation[];
   selectedId?: string | null;
-  isLoading?: boolean;
   filter: {
     search: string;
     status: ConversationStatus | '';
@@ -33,7 +31,6 @@ interface ConversationListProps {
 export function ConversationList({
   conversations,
   selectedId,
-  isLoading,
   filter,
   onFilterChange,
   onSelect,
@@ -72,13 +69,7 @@ export function ConversationList({
       </div>
 
       <div className="flex-1 overflow-auto">
-        {isLoading ? (
-          <div className="flex flex-col gap-3 p-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
-            ))}
-          </div>
-        ) : conversations.length === 0 ? (
+        {conversations.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground">
             No hay conversaciones que coincidan con los filtros.
           </div>

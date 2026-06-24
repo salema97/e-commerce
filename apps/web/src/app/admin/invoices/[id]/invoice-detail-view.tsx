@@ -6,18 +6,20 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { InvoiceStatusBadge } from '@/components/admin/invoices/invoice-status-badge';
 import { InvoiceActions } from '@/components/admin/invoices/invoice-actions';
 import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
 import { formatDateTime, formatPrice } from '@repo/shared-utils';
+import type { InvoiceResponseDto, Order } from '@repo/shared-types';
 
 interface InvoiceDetailViewProps {
   id: string;
+  initialInvoice: InvoiceResponseDto;
+  initialOrder: Order | null;
 }
 
-export function InvoiceDetailView({ id }: InvoiceDetailViewProps) {
+export function InvoiceDetailView({ id, initialInvoice, initialOrder }: InvoiceDetailViewProps) {
   const api = useApiClient();
   const authReady = useAuthApiReady();
   const queryClient = useQueryClient();
@@ -25,6 +27,7 @@ export function InvoiceDetailView({ id }: InvoiceDetailViewProps) {
   const invoiceQuery = useQuery({
     queryKey: ['invoices', id],
     queryFn: () => api.invoices.findOne(id),
+    initialData: initialInvoice,
     enabled: authReady,
     refetchInterval: 15_000,
   });
@@ -32,6 +35,7 @@ export function InvoiceDetailView({ id }: InvoiceDetailViewProps) {
   const orderQuery = useQuery({
     queryKey: ['orders', invoiceQuery.data?.orderId],
     queryFn: () => api.orders.findOne(invoiceQuery.data!.orderId),
+    initialData: initialOrder ?? undefined,
     enabled: authReady && Boolean(invoiceQuery.data?.orderId),
   });
 
@@ -41,15 +45,6 @@ export function InvoiceDetailView({ id }: InvoiceDetailViewProps) {
   function handleRetry() {
     queryClient.invalidateQueries({ queryKey: ['invoices'] });
     queryClient.invalidateQueries({ queryKey: ['invoices', id] });
-  }
-
-  if (invoiceQuery.isLoading) {
-    return (
-      <AnimatedPageShell className="flex flex-col gap-6">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-64 w-full" />
-      </AnimatedPageShell>
-    );
   }
 
   if (!invoice) {
@@ -132,9 +127,7 @@ export function InvoiceDetailView({ id }: InvoiceDetailViewProps) {
               <CardTitle>Orden asociada</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3">
-              {orderQuery.isLoading ? (
-                <Skeleton className="h-20 w-full" />
-              ) : order ? (
+              {order ? (
                 <>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Orden</span>

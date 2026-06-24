@@ -13,7 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
 import { InvoiceFilters, InvoiceFiltersState } from '@/components/admin/invoices/invoice-filters';
 import { InvoiceStatusBadge } from '@/components/admin/invoices/invoice-status-badge';
 import { InvoiceActions } from '@/components/admin/invoices/invoice-actions';
@@ -32,7 +31,7 @@ function matchesSearch(invoice: InvoiceResponseDto, search: string): boolean {
   );
 }
 
-export function InvoiceListView() {
+export function InvoiceListView({ initialInvoices }: { initialInvoices: InvoiceResponseDto[] }) {
   const api = useApiClient();
   const authReady = useAuthApiReady();
   const queryClient = useQueryClient();
@@ -71,6 +70,9 @@ export function InvoiceListView() {
         offset?: number;
         orderId?: string;
       }),
+    initialData: offset === 0 && !appliedFilters.status && !appliedFilters.from && !appliedFilters.to && !appliedFilters.search
+      ? initialInvoices
+      : undefined,
     enabled: authReady,
     refetchInterval: 15_000,
   });
@@ -116,15 +118,7 @@ export function InvoiceListView() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {invoicesQuery.isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell colSpan={7}>
-                    <Skeleton className="h-8 w-full" />
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : invoicesQuery.isError ? (
+            {invoicesQuery.isError ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-destructive">
                   No se pudieron cargar las facturas. Recarga la página o vuelve a iniciar sesión.

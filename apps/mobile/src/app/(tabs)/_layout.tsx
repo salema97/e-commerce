@@ -1,8 +1,26 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect } from 'react';
 import { Tabs } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@repo/api-client';
 import { neo } from '@repo/shared-ui';
+import { api } from '../../lib/api.js';
 
 export default function TabLayout(): React.ReactElement {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.products(),
+      queryFn: () => api.client.products.findAll({ status: 'ACTIVE' }),
+    });
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.categories,
+      queryFn: () => api.client.categories.findAll(),
+    });
+  }, [queryClient]);
+
   return (
     <Tabs
       screenOptions={{

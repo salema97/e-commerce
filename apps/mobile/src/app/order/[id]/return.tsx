@@ -26,17 +26,9 @@ export default function ReturnRequestScreen(): React.ReactElement {
   const params = useLocalSearchParams<{ id: string }>();
   const orderId = params.id;
 
-  const { data: order, isLoading, isError } = api.hooks.useOrder(orderId);
+  const { data: order, isError } = api.hooks.useOrder(orderId);
   const createReturn = api.hooks.useCreateReturnRequest();
   const [selected, setSelected] = React.useState<Record<string, { qty: number; reason: string }>>({});
-
-  if (isLoading) {
-    return (
-      <NeoScreen style={styles.center}>
-        <Text style={styles.muted}>Cargando pedido...</Text>
-      </NeoScreen>
-    );
-  }
 
   if (isError || !order) {
     return (

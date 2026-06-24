@@ -30,6 +30,7 @@ vi.mock('@tanstack/react-query', async () => {
               {
                 id: 'c1',
                 remoteJid: '+593991234567',
+                instance: 'ecommerce',
                 contactName: 'Juan Pérez',
                 status: 'OPEN',
                 assignedAgentId: null,
@@ -72,12 +73,30 @@ vi.mock('@/lib/client-api', () => ({
 }));
 
 describe('SupportInbox polling', () => {
+  const initialConversations = {
+    data: [
+      {
+        id: 'c1',
+        remoteJid: '+593991234567',
+        instance: 'ecommerce',
+        contactName: 'Juan Pérez',
+        status: 'OPEN' as const,
+        assignedAgentId: null,
+        lastMessageAt: new Date().toISOString(),
+        unreadCount: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ],
+    meta: { page: 1, limit: 20, total: 1, totalPages: 1 },
+  };
+
   beforeEach(() => {
     mockQueryOptions.length = 0;
   });
 
   it('configures polling for conversations, detail, and messages queries', () => {
-    render(<SupportInbox currentUserId="u1" />);
+    render(<SupportInbox currentUserId="u1" initialConversations={initialConversations} />);
 
     const pollConfigs = mockQueryOptions.filter(
       (options) => (options as { refetchInterval?: number }).refetchInterval === 10_000,
@@ -88,7 +107,7 @@ describe('SupportInbox polling', () => {
   });
 
   it('passes filters to the conversations query function', () => {
-    render(<SupportInbox currentUserId="u1" />);
+    render(<SupportInbox currentUserId="u1" initialConversations={initialConversations} />);
 
     const conversationsQuery = mockQueryOptions.find(
       (options) =>

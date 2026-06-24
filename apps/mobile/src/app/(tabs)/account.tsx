@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../providers/AuthProvider.js';
@@ -17,8 +16,8 @@ import type { Order } from '@repo/shared-types';
 
 export default function AccountScreen(): React.ReactElement {
   const router = useRouter();
-  const { user, loading, signOut } = useAuth();
-  const { data: orders, isLoading } = api.hooks.useOrders({ limit: 10 });
+  const { user, signOut } = useAuth();
+  const { data: orders } = api.hooks.useOrders({ limit: 10 });
 
   const handleSignOut = async (): Promise<void> => {
     await signOut();
@@ -74,10 +73,7 @@ export default function AccountScreen(): React.ReactElement {
 
       <Text style={styles.sectionTitle}>Pedidos recientes</Text>
 
-      {isLoading ? (
-        <ActivityIndicator size="large" color={neo.onyx} style={styles.loader} />
-      ) : (
-        <FlatList
+      <FlatList
           data={orders?.data ?? []}
           keyExtractor={(item) => item.id}
           renderItem={renderOrder}
@@ -86,7 +82,6 @@ export default function AccountScreen(): React.ReactElement {
             <Text style={styles.empty}>Aún no tienes pedidos.</Text>
           }
         />
-      )}
 
       <View style={styles.footer}>
         <Button variant="outline" onPress={handleSignOut} size="lg">

@@ -4,7 +4,6 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { FormSelect } from '@/components/ui/form-select';
 import { Textarea } from '@/components/ui/textarea';
-import { Skeleton } from '@/components/ui/skeleton';
 import { MessageBubble } from './message-bubble';
 import { QuickReplyPicker } from './quick-reply-picker';
 import { ConversationStatusBadge } from './conversation-status-badge';
@@ -21,7 +20,6 @@ const STATUS_OPTIONS: { value: ConversationStatus; label: string }[] = [
 interface ConversationDetailProps {
   conversation: Conversation;
   messages?: Message[];
-  isLoadingMessages?: boolean;
   quickReplies?: QuickReply[];
   currentUserId?: string;
   onSendMessage: (content: string) => void | Promise<void>;
@@ -33,7 +31,6 @@ interface ConversationDetailProps {
 export function ConversationDetail({
   conversation,
   messages = [],
-  isLoadingMessages,
   quickReplies = [],
   currentUserId,
   onSendMessage,
@@ -104,13 +101,7 @@ export function ConversationDetail({
       </div>
 
       <div className="flex-1 overflow-auto p-4">
-        {isLoadingMessages ? (
-          <div className="flex flex-col gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-16 w-2/3" />
-            ))}
-          </div>
-        ) : messages.length === 0 ? (
+        {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
             No hay mensajes aún. Envía una respuesta para iniciar la conversación.
           </div>

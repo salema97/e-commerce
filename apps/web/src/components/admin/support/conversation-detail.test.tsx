@@ -143,12 +143,11 @@ describe('ConversationDetail', () => {
     expect(screen.getByRole('button', { name: /Enviando/i })).toBeDisabled();
   });
 
-  it('shows loading skeleton when messages are loading', () => {
+  it('shows empty state when there are no messages', () => {
     render(
       <ConversationDetail
         conversation={makeConversation()}
         messages={[]}
-        isLoadingMessages
         quickReplies={[]}
         currentUserId="u1"
         onSendMessage={vi.fn()}
@@ -156,6 +155,6 @@ describe('ConversationDetail', () => {
       />,
     );
 
-    expect(document.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
+    expect(screen.getByText(/No hay mensajes aún/i)).toBeInTheDocument();
   });
 });
