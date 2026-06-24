@@ -20,7 +20,7 @@ function formatSlugTitle(slug: string): string {
 export async function generateMetadata({ params }: BlogPageProps) {
   const { slug } = await params;
   const title = BLOG_TITLES[slug] ?? formatSlugTitle(slug);
-  return { title: `Blog: ${title}` };
+  return { title: `Artículo: ${title}` };
 }
 
 export default async function BlogPostPage({ params }: BlogPageProps) {

@@ -61,11 +61,11 @@ export function AddressForm({ values, onChange }: AddressFormProps) {
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Contact Information</CardTitle>
+          <CardTitle>Información de contacto</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Correo electrónico</Label>
             <Input
               id="email"
               type="email"
@@ -75,7 +75,7 @@ export function AddressForm({ values, onChange }: AddressFormProps) {
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="phone">Phone</Label>
+            <Label htmlFor="phone">Teléfono</Label>
             <Input
               id="phone"
               type="tel"
@@ -88,11 +88,11 @@ export function AddressForm({ values, onChange }: AddressFormProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Shipping Address</CardTitle>
+          <CardTitle>Dirección de envío</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="recipientName">Full name</Label>
+            <Label htmlFor="recipientName">Nombre completo</Label>
             <Input
               id="recipientName"
               required
@@ -101,7 +101,7 @@ export function AddressForm({ values, onChange }: AddressFormProps) {
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="street">Address</Label>
+            <Label htmlFor="street">Dirección</Label>
             <Input
               id="street"
               required
@@ -111,7 +111,7 @@ export function AddressForm({ values, onChange }: AddressFormProps) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="city">City</Label>
+              <Label htmlFor="city">Ciudad</Label>
               <Input
                 id="city"
                 required
@@ -120,7 +120,7 @@ export function AddressForm({ values, onChange }: AddressFormProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="state">State / Province</Label>
+              <Label htmlFor="state">Provincia</Label>
               <Input
                 id="state"
                 value={values.state}
@@ -130,7 +130,7 @@ export function AddressForm({ values, onChange }: AddressFormProps) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="zipCode">Postal code</Label>
+              <Label htmlFor="zipCode">Código postal</Label>
               <Input
                 id="zipCode"
                 value={values.zipCode}
@@ -138,7 +138,7 @@ export function AddressForm({ values, onChange }: AddressFormProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="country">Country</Label>
+              <Label htmlFor="country">País</Label>
               <Input
                 id="country"
                 required
@@ -148,7 +148,7 @@ export function AddressForm({ values, onChange }: AddressFormProps) {
             </div>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="notes">Order notes</Label>
+            <Label htmlFor="notes">Notas del pedido</Label>
             <Textarea
               id="notes"
               value={values.notes}

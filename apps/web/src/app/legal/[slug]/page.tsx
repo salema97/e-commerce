@@ -6,10 +6,10 @@ interface LegalPageProps {
 }
 
 const LEGAL_TITLES: Record<string, string> = {
-  privacy: 'Privacy Policy',
-  terms: 'Terms of Service',
-  shipping: 'Shipping Policy',
-  returns: 'Return Policy',
+  privacy: 'Política de privacidad',
+  terms: 'Términos de servicio',
+  shipping: 'Política de envíos',
+  returns: 'Política de devoluciones',
 };
 
 export async function generateMetadata({ params }: LegalPageProps) {

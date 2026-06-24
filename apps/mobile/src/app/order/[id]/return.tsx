@@ -32,7 +32,7 @@ export default function ReturnRequestScreen(): React.ReactElement {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.center}>
-        <Text style={styles.muted}>Loading order...</Text>
+        <Text style={styles.muted}>Cargando pedido...</Text>
       </SafeAreaView>
     );
   }
@@ -40,8 +40,8 @@ export default function ReturnRequestScreen(): React.ReactElement {
   if (isError || !order) {
     return (
       <SafeAreaView style={styles.center}>
-        <Text style={styles.error}>Could not load order.</Text>
-        <Button onPress={() => router.back()}>Go back</Button>
+        <Text style={styles.error}>No se pudo cargar el pedido.</Text>
+        <Button onPress={() => router.back()}>Volver</Button>
       </SafeAreaView>
     );
   }
@@ -77,7 +77,7 @@ export default function ReturnRequestScreen(): React.ReactElement {
       orderId: currentOrder.id,
       data: {
         items,
-        reason: items.map((i) => i.reason).join('; ') || 'Customer return',
+        reason: items.map((i) => i.reason).join('; ') || 'Devolución del cliente',
       },
     });
     router.replace(`/order/${orderId}`);
@@ -86,30 +86,32 @@ export default function ReturnRequestScreen(): React.ReactElement {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Request return</Text>
-        <Text style={styles.subtitle}>Order #{currentOrder.orderNumber}</Text>
+        <Text style={styles.title}>Solicitar devolución</Text>
+        <Text style={styles.subtitle}>Pedido #{currentOrder.orderNumber}</Text>
 
         {!isDelivered ? (
           <Card style={styles.banner}>
-            <Text style={styles.bannerTitle}>Order not delivered</Text>
+            <Text style={styles.bannerTitle}>Pedido no entregado</Text>
             <Text style={styles.bannerText}>
-              You can request a return after the order has been delivered.
+              Puedes solicitar una devolución después de que el pedido haya sido entregado.
             </Text>
           </Card>
         ) : null}
 
         {isDelivered && !isWithinWindow ? (
           <Card style={styles.banner}>
-            <Text style={styles.bannerTitle}>Return window closed</Text>
+            <Text style={styles.bannerTitle}>Plazo de devolución cerrado</Text>
             <Text style={styles.bannerText}>
-              The return window for this order has expired.
+              El plazo de devolución para este pedido ha expirado.
             </Text>
           </Card>
         ) : null}
 
         {isDelivered && isWithinWindow ? (
           <Text style={styles.windowText}>
-            Return window: {remainingDays} day{remainingDays === 1 ? '' : 's'} remaining
+            {remainingDays === 1
+              ? 'Plazo de devolución: queda 1 día'
+              : `Plazo de devolución: quedan ${remainingDays} días`}
           </Text>
         ) : null}
 
@@ -123,7 +125,7 @@ export default function ReturnRequestScreen(): React.ReactElement {
                 onPress={() => toggleItem(item.id, item.quantity)}
                 disabled={!canRequestReturn}
               >
-                {selected[item.id] ? 'Selected' : 'Select'}
+                {selected[item.id] ? 'Seleccionado' : 'Seleccionar'}
               </Button>
             </View>
             <Text style={styles.meta}>
@@ -132,7 +134,7 @@ export default function ReturnRequestScreen(): React.ReactElement {
 
             {selected[item.id] ? (
               <View style={styles.inputs}>
-                <Text style={styles.label}>Quantity (max {item.quantity})</Text>
+                <Text style={styles.label}>Cantidad (máx. {item.quantity})</Text>
                 <TextInput
                   style={[styles.input, !canRequestReturn && styles.inputDisabled]}
                   keyboardType="numeric"
@@ -151,7 +153,7 @@ export default function ReturnRequestScreen(): React.ReactElement {
                   }
                   editable={canRequestReturn}
                 />
-                <Text style={styles.label}>Reason</Text>
+                <Text style={styles.label}>Motivo</Text>
                 <TextInput
                   style={[styles.input, !canRequestReturn && styles.inputDisabled]}
                   value={selected[item.id].reason}
@@ -161,7 +163,7 @@ export default function ReturnRequestScreen(): React.ReactElement {
                       [item.id]: { ...prev[item.id], reason: text },
                     }))
                   }
-                  placeholder="Reason for returning this item"
+                  placeholder="Motivo de la devolución de este artículo"
                   editable={canRequestReturn}
                 />
               </View>
@@ -174,7 +176,7 @@ export default function ReturnRequestScreen(): React.ReactElement {
           disabled={createReturn.isPending || Object.keys(selected).length === 0 || !canRequestReturn}
           size="lg"
         >
-          {createReturn.isPending ? 'Submitting...' : 'Submit return request'}
+          {createReturn.isPending ? 'Enviando...' : 'Enviar solicitud de devolución'}
         </Button>
       </ScrollView>
     </SafeAreaView>

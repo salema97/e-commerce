@@ -41,26 +41,26 @@ export default function NewProductPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Add Product</h1>
+      <h1 className="text-2xl font-bold">Agregar producto</h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Product Details</CardTitle>
+            <CardTitle>Detalles del producto</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">Nombre</Label>
               <Input id="name" name="name" required />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="slug">Slug</Label>
+              <Label htmlFor="slug">URL amigable</Label>
               <Input id="slug" name="slug" required />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Descripción</Label>
               <Textarea id="description" name="description" />
             </div>
 
@@ -70,42 +70,42 @@ export default function NewProductPage() {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status">Estado</Label>
               <Select id="status" name="status" defaultValue="DRAFT">
-                <option value="DRAFT">Draft</option>
-                <option value="ACTIVE">Active</option>
-                <option value="ARCHIVED">Archived</option>
+                <option value="DRAFT">Borrador</option>
+                <option value="ACTIVE">Activo</option>
+                <option value="ARCHIVED">Archivado</option>
               </Select>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="price">Price</Label>
+                <Label htmlFor="price">Precio</Label>
                 <Input id="price" name="price" type="number" step="0.01" required />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="compareAtPrice">Compare at price</Label>
+                <Label htmlFor="compareAtPrice">Precio de comparación</Label>
                 <Input id="compareAtPrice" name="compareAtPrice" type="number" step="0.01" />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="cost">Cost</Label>
+                <Label htmlFor="cost">Costo</Label>
                 <Input id="cost" name="cost" type="number" step="0.01" />
               </div>
             </div>
 
             <div className="flex items-center gap-2">
               <input id="isFeatured" name="isFeatured" type="checkbox" />
-              <Label htmlFor="isFeatured">Featured product</Label>
+              <Label htmlFor="isFeatured">Producto destacado</Label>
             </div>
           </CardContent>
         </Card>
 
         <div className="flex gap-4">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save product'}
+            {isSubmitting ? 'Guardando…' : 'Guardar producto'}
           </Button>
           <Button type="button" variant="outline" onClick={() => router.back()}>
-            Cancel
+            Cancelar
           </Button>
         </div>
       </form>

@@ -60,7 +60,7 @@ export function RefundPanel({ order }: RefundPanelProps) {
       setAmount('');
       router.refresh();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Refund failed.';
+      const message = err instanceof Error ? err.message : 'El reembolso falló.';
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -70,7 +70,7 @@ export function RefundPanel({ order }: RefundPanelProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Refunds</CardTitle>
+        <CardTitle>Reembolsos</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
         {refunds.length > 0 ? (
@@ -79,7 +79,7 @@ export function RefundPanel({ order }: RefundPanelProps) {
               <div key={refund.id} className="flex flex-col gap-1 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">
-                    {refund.type === 'partial' ? 'Partial refund' : 'Full refund'} · {formatPrice(refund.amount)}
+                    {refund.type === 'partial' ? 'Reembolso parcial' : 'Reembolso total'} · {formatPrice(refund.amount)}
                   </span>
                   <Badge variant={refundStatusVariant(refund.status)}>
                     {refundStatusLabel(refund.status)}
@@ -89,33 +89,33 @@ export function RefundPanel({ order }: RefundPanelProps) {
                   <span className="text-muted-foreground">{refund.reason}</span>
                 ) : null}
                 <span className="text-xs text-muted-foreground">
-                  {new Date(refund.createdAt).toLocaleString()}
+                  {new Date(refund.createdAt).toLocaleString('es-EC')}
                 </span>
               </div>
             ))}
             <Separator />
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">No refunds issued yet.</p>
+          <p className="text-sm text-muted-foreground">Aún no se han emitido reembolsos.</p>
         )}
 
         {canRefund ? (
           <form onSubmit={handleRefund} className="flex flex-col gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="refundType">Refund type</Label>
+              <Label htmlFor="refundType">Tipo de reembolso</Label>
               <Select
                 id="refundType"
                 value={type}
                 onChange={(e) => setType(e.target.value as 'full' | 'partial')}
               >
-                <option value="full">Full ({formatPrice(Number(order.total))})</option>
-                <option value="partial">Partial</option>
+                <option value="full">Total ({formatPrice(Number(order.total))})</option>
+                <option value="partial">Parcial</option>
               </Select>
             </div>
 
             {type === 'partial' ? (
               <div className="grid gap-2">
-                <Label htmlFor="refundAmount">Amount (USD)</Label>
+                <Label htmlFor="refundAmount">Monto (USD)</Label>
                 <Input
                   id="refundAmount"
                   type="number"
@@ -130,12 +130,12 @@ export function RefundPanel({ order }: RefundPanelProps) {
             ) : null}
 
             <div className="grid gap-2">
-              <Label htmlFor="refundReason">Reason</Label>
+              <Label htmlFor="refundReason">Motivo</Label>
               <Textarea
                 id="refundReason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Reason for refund (optional)"
+                placeholder="Motivo del reembolso (opcional)"
               />
             </div>
 
@@ -147,13 +147,13 @@ export function RefundPanel({ order }: RefundPanelProps) {
               disabled={isSubmitting || (type === 'partial' && !amount)}
             >
               {isSubmitting
-                ? 'Processing refund...'
-                : `Issue ${type} refund${type === 'partial' ? '' : ` of ${formatPrice(Number(order.total))}`}`}
+                ? 'Procesando reembolso…'
+                : `Emitir reembolso ${type === 'partial' ? 'parcial' : `total de ${formatPrice(Number(order.total))}`}`}
             </Button>
           </form>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Refunds are only available for paid orders.
+            Los reembolsos solo están disponibles para pedidos pagados.
           </p>
         )}
       </CardContent>

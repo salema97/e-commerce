@@ -23,7 +23,7 @@ export default function SignUpScreen(): React.ReactElement {
       await signUp(email, password, name || undefined);
       router.replace('/(tabs)');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Sign-up failed';
+      const message = err instanceof Error ? err.message : 'Error al registrarse';
       setError(message);
     } finally {
       setLoading(false);

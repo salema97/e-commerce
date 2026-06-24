@@ -22,7 +22,7 @@ export default function SignInScreen(): React.ReactElement {
       await signIn(email, password);
       router.replace('/(tabs)');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Sign-in failed';
+      const message = err instanceof Error ? err.message : 'Error al iniciar sesión';
       setError(message);
     } finally {
       setLoading(false);

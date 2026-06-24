@@ -27,19 +27,19 @@ export default async function AdminReturnsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Returns</h1>
+      <h1 className="text-2xl font-bold">Devoluciones</h1>
 
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Return</TableHead>
-              <TableHead>Order</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Resolution</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Devolución</TableHead>
+              <TableHead>Pedido</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead>Resolución</TableHead>
+              <TableHead>Fecha</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -47,7 +47,7 @@ export default async function AdminReturnsPage({
               <TableRow key={returnRequest.id}>
                 <TableCell className="font-medium">{returnRequest.id.slice(0, 8)}</TableCell>
                 <TableCell>{returnRequest.order?.orderNumber.slice(0, 8) ?? '-'}</TableCell>
-                <TableCell>{returnRequest.order?.customerEmail ?? 'Guest'}</TableCell>
+                <TableCell>{returnRequest.order?.customerEmail ?? 'Invitado'}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{returnStatusLabel(returnRequest.status)}</Badge>
                 </TableCell>
@@ -59,7 +59,7 @@ export default async function AdminReturnsPage({
                 <TableCell>{formatDate(returnRequest.createdAt)}</TableCell>
                 <TableCell className="text-right">
                   <Link href={`/admin/returns/${returnRequest.id}`}>
-                    <Button variant="outline" size="sm">View</Button>
+                    <Button variant="outline" size="sm">Ver</Button>
                   </Link>
                 </TableCell>
               </TableRow>

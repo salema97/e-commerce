@@ -31,7 +31,7 @@ export function AddToCartButton({ product }: { product: Product }) {
     <div className="flex flex-col gap-4">
       {product.variants && product.variants.length > 0 ? (
         <div className="flex flex-col gap-2">
-          <Label htmlFor="variant">Variant</Label>
+          <Label htmlFor="variant">Variante</Label>
           <Select
             id="variant"
             value={variantId}
@@ -47,7 +47,7 @@ export function AddToCartButton({ product }: { product: Product }) {
       ) : null}
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="quantity">Quantity</Label>
+        <Label htmlFor="quantity">Cantidad</Label>
         <Input
           id="quantity"
           type="number"
@@ -58,8 +58,8 @@ export function AddToCartButton({ product }: { product: Product }) {
         />
       </div>
 
-      <Button onClick={handleAdd} className="w-full sm:w-auto">
-        Add to cart
+      <Button onClick={handleAdd} className="w-full font-anton text-xl sm:w-auto">
+        Agregar al carrito
       </Button>
     </div>
   );

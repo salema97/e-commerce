@@ -54,11 +54,11 @@ export default function ReturnDetail({ returnRequest }: { returnRequest: ReturnR
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">Return {returnRequest.id.slice(0, 8)}</h1>
+          <h1 className="text-2xl font-bold">Devolución {returnRequest.id.slice(0, 8)}</h1>
           <Badge variant="outline">{returnStatusLabel(returnRequest.status)}</Badge>
         </div>
         <Link href={`/admin/returns/${returnRequest.id}/resolve`}>
-          <Button disabled={returnRequest.status !== 'INSPECTION'}>Resolve</Button>
+          <Button disabled={returnRequest.status !== 'INSPECTION'}>Resolver</Button>
         </Link>
       </div>
 
@@ -68,7 +68,7 @@ export default function ReturnDetail({ returnRequest }: { returnRequest: ReturnR
         <div className="lg:col-span-2 flex flex-col gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Items</CardTitle>
+              <CardTitle>Artículos</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               {returnRequest.items.map((item) => (
@@ -76,7 +76,7 @@ export default function ReturnDetail({ returnRequest }: { returnRequest: ReturnR
                   <div>
                     <p className="font-medium">{item.productId}</p>
                     <p className="text-sm text-muted-foreground">
-                      Qty: {item.quantity} · Condition: {item.condition ?? 'Not inspected'}
+                      Cantidad: {item.quantity} · Condición: {item.condition ?? 'Sin inspeccionar'}
                     </p>
                   </div>
                   <span className="font-semibold">
@@ -91,15 +91,15 @@ export default function ReturnDetail({ returnRequest }: { returnRequest: ReturnR
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Summary</CardTitle>
+              <CardTitle>Resumen</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
               <div className="flex justify-between text-sm">
-                <span>Reason</span>
+                <span>Motivo</span>
                 <span>{returnRequest.reason}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Resolution</span>
+                <span>Resolución</span>
                 <span>
                   {returnRequest.refundMethod
                     ? refundMethodLabel(returnRequest.refundMethod)
@@ -107,14 +107,14 @@ export default function ReturnDetail({ returnRequest }: { returnRequest: ReturnR
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Created</span>
+                <span>Creada</span>
                 <span>{formatDate(returnRequest.createdAt)}</span>
               </div>
               {returnRequest.creditNote ? (
                 <>
                   <Separator />
                   <div className="flex justify-between text-sm">
-                    <span>Credit note</span>
+                    <span>Nota de crédito</span>
                     <span>{returnRequest.creditNote.accessKey.slice(0, 16)}</span>
                   </div>
                 </>
@@ -125,19 +125,19 @@ export default function ReturnDetail({ returnRequest }: { returnRequest: ReturnR
           {availableTransitions.length > 0 ? (
             <Card>
               <CardHeader>
-                <CardTitle>Update Status</CardTitle>
+                <CardTitle>Actualizar estado</CardTitle>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleStatusUpdate} className="flex flex-col gap-4">
                   <div className="grid gap-2">
-                    <label htmlFor="status" className="text-sm font-medium">Status</label>
+                    <label htmlFor="status" className="text-sm font-medium">Estado</label>
                     <select
                       id="status"
                       name="status"
                       className="rounded-md border px-3 py-2 text-sm"
                       defaultValue=""
                     >
-                      <option value="" disabled>Select status</option>
+                      <option value="" disabled>Seleccionar estado</option>
                       {availableTransitions.map((status) => (
                         <option key={status} value={status}>
                           {returnStatusLabel(status)}
@@ -146,7 +146,7 @@ export default function ReturnDetail({ returnRequest }: { returnRequest: ReturnR
                     </select>
                   </div>
                   <div className="grid gap-2">
-                    <label htmlFor="notes" className="text-sm font-medium">Notes</label>
+                    <label htmlFor="notes" className="text-sm font-medium">Notas</label>
                     <textarea
                       id="notes"
                       name="notes"
@@ -155,7 +155,7 @@ export default function ReturnDetail({ returnRequest }: { returnRequest: ReturnR
                     />
                   </div>
                   <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? 'Updating...' : 'Update status'}
+                    {isSubmitting ? 'Actualizando…' : 'Actualizar estado'}
                   </Button>
                 </form>
               </CardContent>

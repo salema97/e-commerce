@@ -8,22 +8,26 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
+import { useCartStore } from '@/lib/cart-store';
 
 const storeLinks = [
-  { href: '/store', label: 'Shop' },
-  { href: '/categories', label: 'Categories' },
+  { href: '/store', label: 'Tienda' },
+  { href: '/categories', label: 'Categorías' },
 ];
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, loading, signOut } = useAuth();
+  const cartCount = useCartStore((state) =>
+    state.items.reduce((sum, item) => sum + item.quantity, 0),
+  );
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
   const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN';
   const navLinks = [
     ...storeLinks,
-    ...(isAdmin ? [{ href: '/admin/dashboard', label: 'Admin' }] : []),
+    ...(isAdmin ? [{ href: '/admin/dashboard', label: 'Administración' }] : []),
   ];
 
   async function handleSignOut() {
@@ -33,20 +37,25 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur">
-      <div className="container mx-auto flex h-14 items-center px-4">
-        <Link href="/" className="mr-6 flex items-center gap-2 font-semibold">
-          Store
+    <header className="sticky top-0 z-50 bg-neo-lace brutalist-border-b">
+      <div className="flex h-20 items-stretch">
+        <Link
+          href="/"
+          className="flex flex-none items-center border-r-[3px] border-neo-onyx bg-neo-gold px-6 md:px-8"
+        >
+          <span className="font-anton text-3xl uppercase tracking-tighter md:text-4xl">NEO.STORE</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6 text-sm">
+        <nav className="hidden flex-grow items-center gap-8 px-8 md:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={cn(
-                'transition-colors hover:text-foreground/80',
-                pathname === link.href ? 'text-foreground' : 'text-foreground/60',
+                'px-4 py-1 text-lg font-bold uppercase transition-colors hover:bg-neo-gold',
+                pathname === link.href || pathname.startsWith(`${link.href}/`)
+                  ? 'bg-neo-gold'
+                  : '',
               )}
             >
               {link.label}
@@ -54,45 +63,63 @@ export function Navbar() {
           ))}
         </nav>
 
-        <div className="flex flex-1 items-center justify-end gap-2">
-          <Link href="/store">
-            <Button variant="ghost" size="icon" aria-label="Search">
-              <Search className="size-4" />
-            </Button>
+        <div className="ml-auto flex flex-none items-stretch">
+          <Link
+            href="/wishlist"
+            className="hidden items-center border-l-[3px] border-neo-onyx px-5 hover:bg-neo-gold md:flex"
+            aria-label="Lista de deseos"
+          >
+            <Heart className="size-5" strokeWidth={3} />
           </Link>
 
-          <Link href="/wishlist">
-            <Button variant="ghost" size="icon" aria-label="Wishlist">
-              <Heart className="size-4" />
-            </Button>
+          <Link
+            href="/cart"
+            className="flex items-center border-l-[3px] border-neo-onyx px-5 transition-colors hover:bg-neo-scarlet hover:text-white md:px-8"
+          >
+            <span className="font-anton text-lg md:text-xl">CARRITO ({cartCount})</span>
           </Link>
 
-          <Link href="/cart">
-            <Button variant="ghost" size="icon" aria-label="Cart">
-              <ShoppingCart className="size-4" />
-            </Button>
+          <Link
+            href="/store"
+            className="flex items-center border-l-[3px] border-neo-onyx bg-neo-onyx px-5 text-white hover:bg-neo-scarlet md:px-8"
+            aria-label="Buscar"
+          >
+            <Search className="size-6" strokeWidth={3} />
           </Link>
 
           {!loading && user ? (
-            <div className="hidden md:flex items-center gap-2">
-              <Link href="/orders">
-                <Button variant="ghost" size="sm">
-                  <User className="mr-2 size-4" />
+            <div className="hidden items-stretch lg:flex">
+              <Link
+                href="/orders"
+                className="flex items-center border-l-[3px] border-neo-onyx px-4 hover:bg-neo-gold"
+              >
+                <User className="mr-2 size-4" strokeWidth={3} />
+                <span className="max-w-[120px] truncate text-sm font-bold uppercase">
                   {user.name ?? user.email}
-                </Button>
+                </span>
               </Link>
-              <Button variant="outline" size="sm" onClick={handleSignOut}>
-                <LogOut className="mr-2 size-4" />
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="flex items-center border-l-[3px] border-neo-onyx px-4 font-bold uppercase hover:bg-neo-gold"
+              >
+                <LogOut className="mr-2 size-4" strokeWidth={3} />
                 Salir
-              </Button>
+              </button>
             </div>
           ) : !loading ? (
-            <div className="hidden md:flex items-center gap-2">
-              <Link href="/sign-in" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
-                Iniciar sesión
+            <div className="hidden items-stretch lg:flex">
+              <Link
+                href="/sign-in"
+                className="flex items-center border-l-[3px] border-neo-onyx px-5 font-bold uppercase hover:bg-neo-gold"
+              >
+                Entrar
               </Link>
-              <Link href="/sign-up" className={buttonVariants({ size: 'sm' })}>
-                Registrarse
+              <Link
+                href="/sign-up"
+                className="flex items-center border-l-[3px] border-neo-onyx bg-neo-gold px-5 font-bold uppercase hover:bg-white"
+              >
+                Registro
               </Link>
             </div>
           ) : null}
@@ -100,40 +127,52 @@ export function Navbar() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="h-full rounded-none border-l-[3px] border-neo-onyx lg:hidden"
             onClick={() => setMobileOpen(true)}
-            aria-label="Open menu"
+            aria-label="Abrir menú"
           >
-            <Menu className="size-5" />
+            <Menu className="size-5" strokeWidth={3} />
           </Button>
         </div>
       </div>
 
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen} side="right">
-        <SheetContent>
+        <SheetContent className="border-l-[3px] border-neo-onyx bg-neo-lace">
           <SheetHeader>
-            <SheetTitle>Menu</SheetTitle>
+            <SheetTitle className="font-anton text-3xl uppercase">Menú</SheetTitle>
           </SheetHeader>
-          <nav className="flex flex-col gap-4 mt-4">
+          <nav className="mt-6 flex flex-col gap-3">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className={cn(
-                  'text-sm font-medium',
-                  pathname === link.href ? 'text-foreground' : 'text-foreground/60',
-                )}
+                className="border-[3px] border-neo-onyx bg-white px-4 py-3 text-sm font-bold uppercase shadow-[4px_4px_0_0_#111]"
               >
                 {link.label}
               </Link>
             ))}
+            <Link
+              href="/wishlist"
+              onClick={() => setMobileOpen(false)}
+              className={buttonVariants({ variant: 'outline', className: 'w-full' })}
+            >
+              Lista de deseos
+            </Link>
             {!loading && !user ? (
               <>
-                <Link href="/sign-in" className={buttonVariants({ variant: 'outline', className: 'w-full' })}>
+                <Link
+                  href="/sign-in"
+                  onClick={() => setMobileOpen(false)}
+                  className={buttonVariants({ variant: 'outline', className: 'w-full' })}
+                >
                   Iniciar sesión
                 </Link>
-                <Link href="/sign-up" className={buttonVariants({ className: 'w-full' })}>
+                <Link
+                  href="/sign-up"
+                  onClick={() => setMobileOpen(false)}
+                  className={buttonVariants({ className: 'w-full' })}
+                >
                   Registrarse
                 </Link>
               </>

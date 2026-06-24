@@ -34,7 +34,7 @@ export default function EditCategoryPage({ category }: { category: Category }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Edit Category</h1>
+      <h1 className="text-2xl font-bold">Editar categoría</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Card>
           <CardHeader>
@@ -42,15 +42,15 @@ export default function EditCategoryPage({ category }: { category: Category }) {
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">Nombre</Label>
               <Input id="name" name="name" defaultValue={category.name} required />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="slug">Slug</Label>
+              <Label htmlFor="slug">URL amigable</Label>
               <Input id="slug" name="slug" defaultValue={category.slug} required />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Descripción</Label>
               <Textarea
                 id="description"
                 name="description"
@@ -64,16 +64,16 @@ export default function EditCategoryPage({ category }: { category: Category }) {
                 type="checkbox"
                 defaultChecked={category.isActive}
               />
-              <Label htmlFor="isActive">Active</Label>
+              <Label htmlFor="isActive">Activa</Label>
             </div>
           </CardContent>
         </Card>
         <div className="flex gap-4">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save changes'}
+            {isSubmitting ? 'Guardando…' : 'Guardar cambios'}
           </Button>
           <Button type="button" variant="outline" onClick={() => router.back()}>
-            Cancel
+            Cancelar
           </Button>
         </div>
       </form>

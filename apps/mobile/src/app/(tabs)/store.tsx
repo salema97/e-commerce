@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card, Input, Badge } from '@repo/shared-ui';
+import { Card, Input, Badge, neo } from '@repo/shared-ui';
 import { api } from '../../lib/api.js';
 import { formatPrice } from '@repo/shared-utils';
 import type { Product, Category } from '@repo/shared-types';
@@ -25,10 +25,7 @@ export default function StoreScreen(): React.ReactElement {
     error: productsError,
   } = api.hooks.useProducts();
 
-  const {
-    data: categories,
-    isLoading: categoriesLoading,
-  } = api.hooks.useCategories();
+  const { data: categories, isLoading: categoriesLoading } = api.hooks.useCategories();
 
   const filteredProducts = useMemo(() => {
     if (!products) return [];
@@ -49,7 +46,7 @@ export default function StoreScreen(): React.ReactElement {
       }
       style={styles.chip}
     >
-      <Badge variant={selectedCategory === item.id ? 'primary' : 'secondary'}>
+      <Badge variant={selectedCategory === item.id ? 'secondary' : 'outline'}>
         {item.name}
       </Badge>
     </TouchableOpacity>
@@ -57,15 +54,20 @@ export default function StoreScreen(): React.ReactElement {
 
   const renderProduct = ({ item }: { item: Product }) => (
     <TouchableOpacity
-      activeOpacity={0.8}
+      activeOpacity={0.9}
       onPress={() => router.push({ pathname: '/(tabs)/product/[id]', params: { id: item.id } })}
     >
       <Card style={styles.productCard}>
-        <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+        <Text style={styles.productName} numberOfLines={2}>
+          {item.name}
+        </Text>
         {item.category ? (
           <Text style={styles.categoryName}>{(item.category as Category).name}</Text>
         ) : null}
-        <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
+        <View style={styles.priceRow}>
+          <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
+          {item.compareAtPrice ? <Badge variant="destructive" size="sm">Oferta</Badge> : null}
+        </View>
       </Card>
     </TouchableOpacity>
   );
@@ -73,7 +75,8 @@ export default function StoreScreen(): React.ReactElement {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Tienda</Text>
+        <Text style={styles.seasonLabel}>Catálogo</Text>
+        <Text style={styles.title}>TIENDA</Text>
         <Input
           placeholder="Buscar productos..."
           value={search}
@@ -94,7 +97,7 @@ export default function StoreScreen(): React.ReactElement {
       )}
 
       {productsLoading ? (
-        <ActivityIndicator size="large" color="#171717" style={styles.loader} />
+        <ActivityIndicator size="large" color={neo.onyx} style={styles.loader} />
       ) : productsError ? (
         <View style={styles.center}>
           <Text style={styles.error}>No se pudieron cargar los productos.</Text>
@@ -117,20 +120,30 @@ export default function StoreScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: neo.bg,
   },
   header: {
-    padding: 24,
-    paddingBottom: 12,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  seasonLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    color: neo.muted,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#171717',
+    fontSize: 36,
+    fontWeight: '900',
+    color: neo.onyx,
+    textTransform: 'uppercase',
     marginBottom: 12,
+    letterSpacing: -1,
   },
   search: {
-    marginBottom: 8,
+    marginBottom: 4,
   },
   categories: {
     paddingHorizontal: 16,
@@ -149,8 +162,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   error: {
-    color: '#ef4444',
+    color: neo.scarlet,
     textAlign: 'center',
+    fontWeight: '700',
   },
   list: {
     padding: 16,
@@ -161,23 +175,32 @@ const styles = StyleSheet.create({
   },
   productName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#171717',
+    fontWeight: '800',
+    color: neo.onyx,
+    textTransform: 'uppercase',
   },
   categoryName: {
-    fontSize: 13,
-    color: '#737373',
+    fontSize: 12,
+    color: neo.muted,
     marginTop: 4,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
   },
   productPrice: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#171717',
-    marginTop: 8,
+    fontSize: 20,
+    fontWeight: '900',
+    color: neo.onyx,
   },
   empty: {
     textAlign: 'center',
-    color: '#737373',
+    color: neo.muted,
     marginTop: 24,
+    fontWeight: '600',
   },
 });

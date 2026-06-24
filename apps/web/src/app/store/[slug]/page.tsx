@@ -3,7 +3,6 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { getServerApiClient } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { AddToCartButton } from '@/components/cart/add-to-cart-button';
 import { WishlistButton } from '@/components/wishlist/wishlist-button';
@@ -21,10 +20,10 @@ export async function generateMetadata({ params }: ProductPageProps) {
     const product = await api.products.findBySlug(slug);
     return {
       title: product.name,
-      description: product.description ?? `Buy ${product.name}`,
+      description: product.description ?? `Comprar ${product.name}`,
     };
   } catch {
-    return { title: 'Product not found' };
+    return { title: 'Producto no encontrado' };
   }
 }
 
@@ -44,8 +43,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="grid gap-8 lg:grid-cols-2">
-        <div className="relative aspect-square overflow-hidden rounded-xl border bg-muted">
+      <div className="grid gap-8 border-[3px] border-neo-onyx bg-white shadow-[10px_10px_0_0_#111111] lg:grid-cols-12">
+        <div className="relative aspect-square overflow-hidden border-b-[3px] border-neo-onyx bg-muted lg:col-span-7 lg:border-b-0 lg:border-r-[3px]">
           {image ? (
             <Image
               src={image.url}
@@ -56,58 +55,71 @@ export default async function ProductPage({ params }: ProductPageProps) {
               priority
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-muted-foreground">
-              No image
+            <div className="flex h-full items-center justify-center font-bold uppercase text-muted-foreground">
+              Sin imagen
             </div>
           )}
+          <div className="absolute top-4 right-4 rotate-[-2deg] border-[3px] border-neo-onyx bg-neo-scarlet px-4 py-2 font-anton text-2xl text-white shadow-[4px_4px_0_#111]">
+            {formatPrice(product.price)}
+          </div>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6 p-6 lg:col-span-5 lg:p-10">
           <div className="flex flex-wrap gap-2">
-            {product.isFeatured ? <Badge>Featured</Badge> : null}
-            {product.compareAtPrice ? <Badge variant="secondary">Sale</Badge> : null}
+            {product.isFeatured ? <Badge variant="secondary">Destacado</Badge> : null}
+            {product.compareAtPrice ? <Badge variant="destructive">Oferta</Badge> : null}
+            <Badge variant="outline">En stock</Badge>
           </div>
 
-          <h1 className="text-3xl font-bold">{product.name}</h1>
+          <h1 className="font-anton text-4xl uppercase leading-[0.9] md:text-5xl">{product.name}</h1>
 
-          <div className="flex items-baseline gap-3">
-            <span className="text-2xl font-semibold">{formatPrice(product.price)}</span>
+          <div className="flex items-end gap-3 border-b-4 border-neo-onyx pb-4">
+            <span className="font-anton text-5xl">{formatPrice(product.price)}</span>
             {product.compareAtPrice ? (
-              <span className="text-lg text-muted-foreground line-through">
+              <span className="text-lg font-bold text-muted-foreground line-through">
                 {formatPrice(product.compareAtPrice)}
               </span>
             ) : null}
           </div>
 
-          <p className="text-muted-foreground">
-            {product.description ?? 'No description available.'}
-          </p>
+          {product.description ? (
+            <p className="text-base font-bold leading-relaxed text-muted-foreground">
+              {product.description}
+            </p>
+          ) : null}
 
-          <AddToCartButton product={product} />
-          <WishlistButton productId={product.id} name={product.name} slug={product.slug} />
+          {variants.length > 0 ? (
+            <div>
+              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                Variantes
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {variants.map((variant) => (
+                  <Badge key={variant.id} variant="outline">
+                    {variant.name}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <Separator className="border-neo-onyx" />
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+            <div className="flex-1">
+              <AddToCartButton product={product} />
+            </div>
+            <WishlistButton productId={product.id} name={product.name} slug={product.slug} />
+          </div>
+
+          <Link
+            href="/store"
+            className="text-sm font-bold uppercase underline-offset-4 hover:underline"
+          >
+            ← Volver a la tienda
+          </Link>
         </div>
       </div>
-
-      <Separator className="my-10" />
-
-      {variants.length > 0 ? (
-        <section>
-          <h2 className="text-xl font-semibold mb-4">Variants</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {variants.map((variant) => (
-              <Card key={variant.id}>
-                <CardContent className="p-4">
-                  <p className="font-medium">{variant.name}</p>
-                  <p className="text-sm text-muted-foreground">SKU: {variant.sku}</p>
-                  {variant.price ? (
-                    <p className="mt-2 font-semibold">{formatPrice(variant.price)}</p>
-                  ) : null}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-      ) : null}
     </div>
   );
 }

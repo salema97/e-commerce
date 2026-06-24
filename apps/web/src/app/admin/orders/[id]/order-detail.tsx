@@ -49,7 +49,7 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Order {order.orderNumber}</h1>
+        <h1 className="text-2xl font-bold">Pedido {order.orderNumber}</h1>
         <Badge variant="outline">{orderStatusLabel(order.status)}</Badge>
       </div>
 
@@ -57,7 +57,7 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
         <div className="lg:col-span-2 flex flex-col gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Items</CardTitle>
+              <CardTitle>Artículos</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               {order.items.map((item) => (
@@ -68,7 +68,7 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
                   <div>
                     <p className="font-medium">{item.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      SKU: {item.sku} · Qty: {item.quantity}
+                      SKU: {item.sku} · Cantidad: {item.quantity}
                     </p>
                   </div>
                   <span className="font-semibold">
@@ -83,7 +83,7 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Summary</CardTitle>
+              <CardTitle>Resumen</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
               <div className="flex justify-between text-sm">
@@ -92,16 +92,16 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
               </div>
               {Number(order.discountAmount) > 0 ? (
                 <div className="flex justify-between text-sm text-green-600">
-                  <span>Discount{order.couponCode ? ` (${order.couponCode})` : null}</span>
+                  <span>Descuento{order.couponCode ? ` (${order.couponCode})` : null}</span>
                   <span>-{formatPrice(order.discountAmount)}</span>
                 </div>
               ) : null}
               <div className="flex justify-between text-sm">
-                <span>Tax</span>
+                <span>IVA</span>
                 <span>{formatPrice(order.taxAmount)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Shipping</span>
+                <span>Envío</span>
                 <span>{formatPrice(order.shippingAmount)}</span>
               </div>
               <Separator />
@@ -116,12 +116,12 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Update Status</CardTitle>
+              <CardTitle>Actualizar estado</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleStatusUpdate} className="flex flex-col gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="status">Status</Label>
+                  <Label htmlFor="status">Estado</Label>
                   <Select id="status" name="status" defaultValue={order.status}>
                     {ORDER_STATUSES.map((status) => (
                       <option key={status} value={status}>
@@ -131,11 +131,11 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="notes">Notes</Label>
+                  <Label htmlFor="notes">Notas</Label>
                   <Textarea id="notes" name="notes" />
                 </div>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Updating...' : 'Update status'}
+                  {isSubmitting ? 'Actualizando…' : 'Actualizar estado'}
                 </Button>
               </form>
             </CardContent>

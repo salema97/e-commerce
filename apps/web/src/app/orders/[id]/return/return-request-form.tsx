@@ -60,7 +60,7 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
             Object.values(selected)
               .map((item) => item.reason)
               .filter(Boolean)
-              .join('; ') || 'Customer return',
+              .join('; ') || 'Devolución del cliente',
         });
       } else {
         await api.returns.createForOrder(order.id, {
@@ -69,14 +69,14 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
             Object.values(selected)
               .map((item) => item.reason)
               .filter(Boolean)
-              .join('; ') || 'Customer return',
+              .join('; ') || 'Devolución del cliente',
         });
         router.push(`/orders/${order.id}`);
         router.refresh();
       }
       setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit return request');
+      setError(err instanceof Error ? err.message : 'No se pudo enviar la solicitud de devolución');
     } finally {
       setIsSubmitting(false);
     }
@@ -85,9 +85,9 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
   if (submitted && isGuest) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="mb-4 text-2xl font-bold">Return request submitted</h1>
+        <h1 className="mb-4 text-2xl font-bold">Solicitud de devolución enviada</h1>
         <p className="text-muted-foreground">
-          We received your return request for order {order.orderNumber}. Status: Requested.
+          Recibimos tu solicitud de devolución para el pedido {order.orderNumber}. Estado: Solicitada.
         </p>
       </div>
     );
@@ -95,16 +95,16 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">Request return for order {order.orderNumber}</h1>
+      <h1 className="mb-6 text-2xl font-bold">Solicitar devolución del pedido {order.orderNumber}</h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {isGuest ? (
           <Card>
             <CardHeader>
-              <CardTitle>Order email</CardTitle>
+              <CardTitle>Correo del pedido</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
-              <label htmlFor="email" className="text-sm font-medium">Email address associated with this order</label>
+              <label htmlFor="email" className="text-sm font-medium">Correo electrónico asociado a este pedido</label>
               <input
                 id="email"
                 type="email"
@@ -112,7 +112,7 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="rounded-md border px-3 py-2 text-sm"
-                placeholder="customer@example.com"
+                placeholder="cliente@ejemplo.com"
               />
             </CardContent>
           </Card>
@@ -120,7 +120,7 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
 
         <Card>
           <CardHeader>
-            <CardTitle>Select items</CardTitle>
+            <CardTitle>Seleccionar artículos</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             {order.items.map((item) => (
@@ -142,7 +142,7 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
                 {selected[item.id] ? (
                   <div className="mt-4 grid gap-3">
                     <div className="grid gap-1">
-                      <label className="text-sm font-medium">Quantity</label>
+                      <label className="text-sm font-medium">Cantidad</label>
                       <input
                         type="number"
                         min={1}
@@ -164,7 +164,7 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
                       />
                     </div>
                     <div className="grid gap-1">
-                      <label className="text-sm font-medium">Reason</label>
+                      <label className="text-sm font-medium">Motivo</label>
                       <input
                         type="text"
                         value={selected[item.id].reason}
@@ -175,7 +175,7 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
                           }))
                         }
                         className="rounded-md border px-3 py-2 text-sm"
-                        placeholder="Reason for returning this item"
+                        placeholder="Motivo de la devolución de este artículo"
                       />
                     </div>
                   </div>
@@ -199,12 +199,12 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
             || (!isGuest && !authReady)
           }
         >
-          {isSubmitting ? 'Submitting...' : 'Submit return request'}
+          {isSubmitting ? 'Enviando…' : 'Enviar solicitud de devolución'}
         </Button>
 
         {!isWithinWindow ? (
           <p className="text-sm text-destructive">
-            The return window for this order has closed.
+            El plazo de devolución para este pedido ha finalizado.
           </p>
         ) : null}
       </form>

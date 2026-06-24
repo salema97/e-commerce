@@ -15,15 +15,15 @@ export default function WishlistPage() {
   }, []);
 
   if (!mounted) {
-    return <div className="container mx-auto px-4 py-8">Loading wishlist...</div>;
+    return <div className="container mx-auto px-4 py-8">Cargando lista de deseos…</div>;
   }
 
   if (items.length === 0) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-semibold">Your wishlist is empty</h1>
+        <h1 className="text-2xl font-semibold">Tu lista de deseos está vacía</h1>
         <Link href="/store">
-          <Button className="mt-6">Explore products</Button>
+          <Button className="mt-6">Explorar productos</Button>
         </Link>
       </div>
     );
@@ -31,7 +31,7 @@ export default function WishlistPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold">Wishlist</h1>
+      <h1 className="text-3xl font-bold">Lista de deseos</h1>
       <div className="mt-8 grid gap-4">
         {items.map((item) => (
           <Card key={item.productId}>
@@ -44,7 +44,7 @@ export default function WishlistPage() {
                 size="sm"
                 onClick={() => removeItem(item.productId)}
               >
-                Remove
+                Eliminar
               </Button>
             </CardContent>
           </Card>

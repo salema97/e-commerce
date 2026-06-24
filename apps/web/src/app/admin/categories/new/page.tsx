@@ -33,37 +33,37 @@ export default function NewCategoryPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Add Category</h1>
+      <h1 className="text-2xl font-bold">Agregar categoría</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Category Details</CardTitle>
+            <CardTitle>Detalles de la categoría</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">Nombre</Label>
               <Input id="name" name="name" required />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="slug">Slug</Label>
+              <Label htmlFor="slug">URL amigable</Label>
               <Input id="slug" name="slug" required />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Descripción</Label>
               <Textarea id="description" name="description" />
             </div>
             <div className="flex items-center gap-2">
               <input id="isActive" name="isActive" type="checkbox" defaultChecked />
-              <Label htmlFor="isActive">Active</Label>
+              <Label htmlFor="isActive">Activa</Label>
             </div>
           </CardContent>
         </Card>
         <div className="flex gap-4">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save category'}
+            {isSubmitting ? 'Guardando…' : 'Guardar categoría'}
           </Button>
           <Button type="button" variant="outline" onClick={() => router.back()}>
-            Cancel
+            Cancelar
           </Button>
         </div>
       </form>

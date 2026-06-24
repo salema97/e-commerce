@@ -26,12 +26,12 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-semibold">Your cart is empty</h1>
-        <p className="mt-2 text-muted-foreground">
-          Looks like you have not added anything yet.
+        <h1 className="font-anton text-4xl uppercase">Carrito vacío</h1>
+        <p className="mt-2 font-bold text-muted-foreground">
+          Aún no has agregado productos.
         </p>
         <Link href="/store">
-          <Button className="mt-6">Continue shopping</Button>
+          <Button className="mt-6">Seguir comprando</Button>
         </Link>
       </div>
     );
@@ -43,7 +43,7 @@ export default function CartPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold">Shopping Cart</h1>
+      <h1 className="font-anton text-4xl uppercase md:text-5xl">Carrito</h1>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 flex flex-col gap-4">
@@ -53,11 +53,11 @@ export default function CartPage() {
                 <div className="flex-1">
                   <p className="font-medium">{item.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {formatPrice(item.price)} each
+                    {formatPrice(item.price)} c/u
                   </p>
                   {item.variantId ? (
                     <p className="text-sm text-muted-foreground">
-                      Variant: {item.variantId}
+                      Variante: {item.variantId}
                     </p>
                   ) : null}
                 </div>
@@ -76,7 +76,7 @@ export default function CartPage() {
                     size="sm"
                     onClick={() => removeItem(item.productId, item.variantId)}
                   >
-                    Remove
+                    Eliminar
                   </Button>
                 </div>
               </CardContent>
@@ -87,7 +87,7 @@ export default function CartPage() {
         <div>
           <Card>
             <CardHeader>
-              <CardTitle>Order Summary</CardTitle>
+              <CardTitle>Resumen del pedido</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <div className="flex justify-between text-sm">
@@ -95,8 +95,8 @@ export default function CartPage() {
                 <span>{formatPrice(subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Shipping</span>
-                <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
+                <span>Envío</span>
+                <span>{shipping === 0 ? 'Gratis' : formatPrice(shipping)}</span>
               </div>
               <Separator />
               <div className="flex justify-between font-semibold">
@@ -104,7 +104,7 @@ export default function CartPage() {
                 <span>{formatPrice(total)}</span>
               </div>
               <Button className="w-full" onClick={() => router.push('/checkout')}>
-                Proceed to checkout
+                Finalizar compra
               </Button>
             </CardContent>
           </Card>

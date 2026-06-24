@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
+import { neo } from './theme.js';
 
 export interface BadgeProps {
   children: React.ReactNode;
@@ -32,34 +33,34 @@ function getVariantStyles(variant: BadgeProps['variant']) {
   switch (variant) {
     case 'primary':
       return {
-        container: { backgroundColor: '#171717' },
-        text: { color: '#ffffff' },
+        container: { backgroundColor: neo.onyx },
+        text: { color: neo.gold },
       };
     case 'secondary':
       return {
-        container: { backgroundColor: '#f5f5f5' },
-        text: { color: '#171717' },
+        container: { backgroundColor: neo.gold },
+        text: { color: neo.onyx },
       };
     case 'outline':
       return {
-        container: { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#e5e5e5' },
-        text: { color: '#171717' },
+        container: { backgroundColor: neo.white },
+        text: { color: neo.onyx },
       };
     case 'destructive':
       return {
-        container: { backgroundColor: '#fef2f2' },
-        text: { color: '#ef4444' },
+        container: { backgroundColor: neo.scarlet },
+        text: { color: neo.white },
       };
     case 'success':
       return {
-        container: { backgroundColor: '#f0fdf4' },
-        text: { color: '#22c55e' },
+        container: { backgroundColor: neo.green },
+        text: { color: neo.white },
       };
     case 'default':
     default:
       return {
-        container: { backgroundColor: '#fafafa' },
-        text: { color: '#525252' },
+        container: { backgroundColor: neo.white },
+        text: { color: neo.onyx },
       };
   }
 }
@@ -67,19 +68,23 @@ function getVariantStyles(variant: BadgeProps['variant']) {
 function getSizeStyles(size: BadgeProps['size']) {
   switch (size) {
     case 'sm':
-      return { container: { paddingVertical: 2, paddingHorizontal: 8 }, text: { fontSize: 11 } };
+      return { container: { paddingVertical: 2, paddingHorizontal: 8 }, text: { fontSize: 10 } };
     case 'md':
     default:
-      return { container: { paddingVertical: 4, paddingHorizontal: 10 }, text: { fontSize: 12 } };
+      return { container: { paddingVertical: 4, paddingHorizontal: 10 }, text: { fontSize: 11 } };
   }
 }
 
 const styles = StyleSheet.create({
   base: {
     alignSelf: 'flex-start',
-    borderRadius: 9999,
+    borderRadius: 0,
+    borderWidth: 2,
+    borderColor: neo.onyx,
   },
   text: {
-    fontWeight: '500',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
 });

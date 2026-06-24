@@ -9,7 +9,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../providers/AuthProvider.js';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Card, Badge } from '@repo/shared-ui';
+import { Button, Card, Badge, neo } from '@repo/shared-ui';
 import { api } from '../../lib/api.js';
 import { formatPrice, formatDate, orderStatusLabel } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
@@ -27,11 +27,11 @@ export default function AccountScreen(): React.ReactElement {
   const renderOrder = ({ item }: { item: Order }) => (
     <Card style={styles.orderCard}>
       <View style={styles.orderHeader}>
-        <Text style={styles.orderNumber}>Pedido #{item.orderNumber}</Text>
+        <Text style={styles.orderNumber}>#{item.orderNumber}</Text>
         <Badge variant="secondary">{orderStatusLabel(item.status)}</Badge>
       </View>
       <Text style={styles.orderDate}>{formatDate(item.createdAt)}</Text>
-      <Text style={styles.orderTotal}>Total: {formatPrice(item.total)}</Text>
+      <Text style={styles.orderTotal}>{formatPrice(item.total)}</Text>
     </Card>
   );
 
@@ -39,8 +39,9 @@ export default function AccountScreen(): React.ReactElement {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
-          <Text style={styles.title}>Cuenta</Text>
-          <Text style={styles.message}>Inicia sesión para ver tus pedidos y direcciones.</Text>
+          <Text style={styles.seasonLabel}>Acceso</Text>
+          <Text style={styles.title}>CUENTA</Text>
+          <Text style={styles.message}>Inicia sesión para ver tus pedidos.</Text>
           <Button onPress={() => router.push('/sign-in')} style={styles.authButton}>
             Iniciar sesión
           </Button>
@@ -58,7 +59,10 @@ export default function AccountScreen(): React.ReactElement {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Mi cuenta</Text>
+      <View style={styles.header}>
+        <Text style={styles.seasonLabel}>Perfil</Text>
+        <Text style={styles.title}>MI CUENTA</Text>
+      </View>
 
       <Card style={styles.profileCard}>
         <Text style={styles.label}>Correo</Text>
@@ -68,7 +72,7 @@ export default function AccountScreen(): React.ReactElement {
       <Text style={styles.sectionTitle}>Pedidos recientes</Text>
 
       {isLoading ? (
-        <ActivityIndicator size="large" color="#171717" style={styles.loader} />
+        <ActivityIndicator size="large" color={neo.onyx} style={styles.loader} />
       ) : (
         <FlatList
           data={orders?.data ?? []}
@@ -93,7 +97,7 @@ export default function AccountScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: neo.bg,
   },
   center: {
     flex: 1,
@@ -101,21 +105,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
   },
-  title: {
-    fontSize: 28,
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  seasonLabel: {
+    fontSize: 10,
     fontWeight: '700',
-    color: '#171717',
-    padding: 24,
-    paddingBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    color: neo.muted,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: neo.onyx,
+    textTransform: 'uppercase',
+    letterSpacing: -1,
   },
   message: {
     fontSize: 16,
-    color: '#737373',
+    color: neo.muted,
     textAlign: 'center',
     marginBottom: 24,
+    fontWeight: '600',
+    marginTop: 8,
   },
   authButton: {
-    minWidth: 200,
+    minWidth: 220,
     marginBottom: 12,
   },
   profileCard: {
@@ -123,21 +141,26 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
-    fontSize: 13,
-    color: '#737373',
+    fontSize: 11,
+    color: neo.muted,
     marginBottom: 4,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   value: {
     fontSize: 16,
-    color: '#171717',
-    fontWeight: '500',
+    color: neo.onyx,
+    fontWeight: '700',
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#171717',
-    paddingHorizontal: 24,
+    fontSize: 14,
+    fontWeight: '800',
+    color: neo.onyx,
+    paddingHorizontal: 20,
     marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   loader: {
     marginTop: 40,
@@ -154,35 +177,39 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+    gap: 8,
   },
   orderNumber: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#171717',
+    fontSize: 14,
+    fontWeight: '800',
+    color: neo.onyx,
+    textTransform: 'uppercase',
   },
   orderDate: {
-    fontSize: 13,
-    color: '#737373',
+    fontSize: 12,
+    color: neo.muted,
     marginBottom: 6,
+    fontWeight: '600',
   },
   orderTotal: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#171717',
+    fontSize: 20,
+    fontWeight: '900',
+    color: neo.onyx,
   },
   empty: {
     textAlign: 'center',
-    color: '#737373',
+    color: neo.muted,
     marginTop: 24,
+    fontWeight: '600',
   },
   footer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 24,
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#e5e5e5',
+    padding: 20,
+    backgroundColor: neo.bg,
+    borderTopWidth: 3,
+    borderTopColor: neo.onyx,
   },
 });

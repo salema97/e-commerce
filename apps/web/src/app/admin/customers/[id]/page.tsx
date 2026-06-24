@@ -23,7 +23,7 @@ export default async function AdminCustomerDetailPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Customer Details</h1>
+      <h1 className="text-2xl font-bold">Detalles del cliente</h1>
 
       <Card>
         <CardHeader>
@@ -32,17 +32,17 @@ export default async function AdminCustomerDetailPage({
         <CardContent className="grid gap-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-muted-foreground">Phone</p>
+              <p className="text-sm text-muted-foreground">Teléfono</p>
               <p className="font-medium">{user.phone ?? '-'}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Role</p>
+              <p className="text-sm text-muted-foreground">Rol</p>
               <Badge variant="secondary">{user.role}</Badge>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Joined</p>
+              <p className="text-sm text-muted-foreground">Registro</p>
               <p className="font-medium">
-                {new Date(user.createdAt).toLocaleDateString()}
+                {new Date(user.createdAt).toLocaleDateString('es-EC')}
               </p>
             </div>
           </div>

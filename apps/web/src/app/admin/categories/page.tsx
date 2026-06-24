@@ -18,9 +18,9 @@ export default async function AdminCategoriesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Categories</h1>
+        <h1 className="text-2xl font-bold">Categorías</h1>
         <Link href="/admin/categories/new">
-          <Button>Add category</Button>
+          <Button>Agregar categoría</Button>
         </Link>
       </div>
 
@@ -28,10 +28,10 @@ export default async function AdminCategoriesPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Slug</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Nombre</TableHead>
+              <TableHead>URL amigable</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -41,12 +41,12 @@ export default async function AdminCategoriesPage() {
                 <TableCell>{category.slug}</TableCell>
                 <TableCell>
                   <Badge variant={category.isActive ? 'default' : 'secondary'}>
-                    {category.isActive ? 'Active' : 'Inactive'}
+                    {category.isActive ? 'Activa' : 'Inactiva'}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <Link href={`/admin/categories/${category.id}`}>
-                    <Button variant="outline" size="sm">Edit</Button>
+                    <Button variant="outline" size="sm">Editar</Button>
                   </Link>
                 </TableCell>
               </TableRow>

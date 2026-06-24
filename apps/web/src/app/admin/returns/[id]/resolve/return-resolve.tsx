@@ -59,7 +59,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
     const variant = getSelectedVariant();
     const totalQuantity = returnRequest.items.reduce((sum, item) => sum + item.quantity, 0);
     const label = variant ? `${selectedProduct.name} — ${variant.name}` : selectedProduct.name;
-    return `${label} (Qty: ${totalQuantity})`;
+    return `${label} (Cantidad: ${totalQuantity})`;
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -72,7 +72,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
       };
       if (method === 'EXCHANGE') {
         if (!exchangeProductId) {
-          throw new Error('Select a replacement product for exchange');
+          throw new Error('Selecciona un producto de reemplazo para el cambio');
         }
         payload.exchangeProductId = exchangeProductId;
         if (exchangeVariantId) payload.exchangeVariantId = exchangeVariantId;
@@ -88,21 +88,21 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-bold">Resolve Return</h1>
+        <h1 className="text-2xl font-bold">Resolver devolución</h1>
         <Badge variant="outline">{returnStatusLabel(returnRequest.status)}</Badge>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Items to resolve</CardTitle>
+            <CardTitle>Artículos a resolver</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             {returnRequest.items.map((item) => (
               <div key={item.id} className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">{item.productId}</p>
-                  <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                  <p className="text-sm text-muted-foreground">Cantidad: {item.quantity}</p>
                 </div>
                 <span className="font-semibold">
                   {formatPrice((item.refundValue ?? 0) * item.quantity)}
@@ -110,7 +110,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
               </div>
             ))}
             <div className="flex justify-between border-t pt-4 font-semibold">
-              <span>Total refund value</span>
+              <span>Valor total del reembolso</span>
               <span>{formatPrice(total)}</span>
             </div>
           </CardContent>
@@ -118,7 +118,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
 
         <Card>
           <CardHeader>
-            <CardTitle>Resolution method</CardTitle>
+            <CardTitle>Método de resolución</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -143,7 +143,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
               {method === 'EXCHANGE' ? (
                 <div className="grid gap-3">
                   <div className="grid gap-2">
-                    <label htmlFor="exchangeProduct" className="text-sm font-medium">Replacement product</label>
+                    <label htmlFor="exchangeProduct" className="text-sm font-medium">Producto de reemplazo</label>
                     <select
                       id="exchangeProduct"
                       value={exchangeProductId}
@@ -151,7 +151,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
                       className="rounded-md border px-3 py-2 text-sm"
                       required
                     >
-                      <option value="" disabled>Select a product</option>
+                      <option value="" disabled>Seleccionar un producto</option>
                       {products?.map((product: Product) => (
                         <option key={product.id} value={product.id}>
                           {product.name}
@@ -162,14 +162,14 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
 
                   {selectedProduct && selectedProduct.variants && selectedProduct.variants.length > 0 ? (
                     <div className="grid gap-2">
-                      <label htmlFor="exchangeVariant" className="text-sm font-medium">Variant</label>
+                      <label htmlFor="exchangeVariant" className="text-sm font-medium">Variante</label>
                       <select
                         id="exchangeVariant"
                         value={exchangeVariantId}
                         onChange={(e) => handleVariantChange(e.target.value)}
                         className="rounded-md border px-3 py-2 text-sm"
                       >
-                        <option value="">Default variant</option>
+                        <option value="">Variante predeterminada</option>
                         {selectedProduct.variants.map((variant: ProductVariant) => (
                           <option key={variant.id} value={variant.id}>
                             {variant.name} ({variant.sku})
@@ -186,7 +186,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
               ) : null}
 
               <div className="grid gap-2">
-                <label htmlFor="notes" className="text-sm font-medium">Notes</label>
+                <label htmlFor="notes" className="text-sm font-medium">Notas</label>
                 <textarea
                   id="notes"
                   value={notes}
@@ -197,7 +197,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
               </div>
 
               <Button type="submit" disabled={isSubmitting || !authReady || returnRequest.status !== 'INSPECTION' || (method === 'EXCHANGE' && !exchangeProductId)}>
-                {isSubmitting ? 'Resolving...' : 'Confirm resolution'}
+                {isSubmitting ? 'Resolviendo…' : 'Confirmar resolución'}
               </Button>
             </form>
           </CardContent>

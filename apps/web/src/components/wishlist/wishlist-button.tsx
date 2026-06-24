@@ -25,7 +25,7 @@ export function WishlistButton({ productId, name, slug }: WishlistButtonProps) {
           addItem({ productId, name, slug });
         }
       }}
-      aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+      aria-label={inWishlist ? 'Eliminar de la lista de deseos' : 'Agregar a la lista de deseos'}
     >
       <Heart className={inWishlist ? 'fill-current' : ''} />
     </Button>

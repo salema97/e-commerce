@@ -25,13 +25,13 @@ export default async function OrdersPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold">Order History</h1>
+      <h1 className="text-3xl font-bold">Historial de pedidos</h1>
 
       {orders.length === 0 ? (
         <div className="mt-8 text-center">
-          <p className="text-muted-foreground">You have not placed any orders yet.</p>
+          <p className="text-muted-foreground">Aún no has realizado ningún pedido.</p>
           <Link href="/store">
-            <Button className="mt-4">Start shopping</Button>
+            <Button className="mt-4">Empezar a comprar</Button>
           </Link>
         </div>
       ) : (

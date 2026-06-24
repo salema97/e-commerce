@@ -18,16 +18,16 @@ export default async function AdminCustomersPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Customers</h1>
+      <h1 className="text-2xl font-bold">Clientes</h1>
 
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Correo electrónico</TableHead>
+              <TableHead>Teléfono</TableHead>
+              <TableHead>Rol</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -40,7 +40,7 @@ export default async function AdminCustomersPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   <Link href={`/admin/customers/${user.id}`}>
-                    <Button variant="outline" size="sm">View</Button>
+                    <Button variant="outline" size="sm">Ver</Button>
                   </Link>
                 </TableCell>
               </TableRow>

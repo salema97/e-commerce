@@ -1,19 +1,38 @@
 import React from 'react';
 import { View, StyleSheet, type ViewStyle } from 'react-native';
+import { neo } from './theme.js';
 
 export interface CardProps {
   children: React.ReactNode;
   style?: ViewStyle;
   padding?: 'none' | 'sm' | 'md' | 'lg';
+  variant?: 'default' | 'gold' | 'dark';
 }
 
-export const Card: React.FC<CardProps> = ({ children, style, padding = 'md' }) => {
+export const Card: React.FC<CardProps> = ({
+  children,
+  style,
+  padding = 'md',
+  variant = 'default',
+}) => {
   return (
-    <View style={[styles.base, getPaddingStyle(padding), style]}>
+    <View style={[styles.base, variantStyles[variant], getPaddingStyle(padding), style]}>
       {children}
     </View>
   );
 };
+
+const variantStyles = {
+  default: {
+    backgroundColor: neo.white,
+  },
+  gold: {
+    backgroundColor: neo.gold,
+  },
+  dark: {
+    backgroundColor: neo.onyx,
+  },
+} as const;
 
 function getPaddingStyle(padding: CardProps['padding']): ViewStyle {
   switch (padding) {
@@ -31,14 +50,13 @@ function getPaddingStyle(padding: CardProps['padding']): ViewStyle {
 
 const styles = StyleSheet.create({
   base: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e5e5e5',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    borderRadius: 0,
+    borderWidth: 3,
+    borderColor: neo.onyx,
+    shadowColor: neo.onyx,
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 6,
   },
 });

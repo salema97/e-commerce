@@ -50,7 +50,7 @@ export default function CheckoutScreen(): React.ReactElement {
 
   async function handleCheckout(): Promise<void> {
     if (!stripe) {
-      Alert.alert('Error', 'Stripe no esta disponible. Construye con un development build.');
+      Alert.alert('Error', 'Stripe no está disponible. Construye con una compilación de desarrollo.');
       return;
     }
 
@@ -85,7 +85,7 @@ export default function CheckoutScreen(): React.ReactElement {
       const paymentIntent = await createPaymentIntent.mutateAsync(intentDto);
 
       if (!paymentIntent.clientSecret) {
-        throw new Error('No se recibio el client secret de Stripe.');
+        throw new Error('No se recibió el client secret de Stripe.');
       }
 
       const { error: initError } = await stripe.initPaymentSheet({
@@ -134,7 +134,7 @@ export default function CheckoutScreen(): React.ReactElement {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Checkout</Text>
+        <Text style={styles.title}>Finalizar compra</Text>
 
         <Card style={styles.summary}>
           <Text style={styles.sectionTitle}>Resumen del pedido</Text>
@@ -151,7 +151,7 @@ export default function CheckoutScreen(): React.ReactElement {
             <Text style={styles.subValue}>{formatPrice(cartTotal)}</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.subLabel}>Envio</Text>
+            <Text style={styles.subLabel}>Envío</Text>
             <Text style={styles.subValue}>
               {shipping === 0 ? 'Gratis' : formatPrice(shipping)}
             </Text>
@@ -171,7 +171,7 @@ export default function CheckoutScreen(): React.ReactElement {
 
         <Text style={styles.sectionTitle}>Datos de contacto</Text>
         <Input
-          label="Correo electronico"
+          label="Correo electrónico"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
@@ -179,14 +179,14 @@ export default function CheckoutScreen(): React.ReactElement {
           containerStyle={styles.field}
         />
         <Input
-          label="Telefono"
+          label="Teléfono"
           value={phone}
           onChangeText={setPhone}
           keyboardType="phone-pad"
           containerStyle={styles.field}
         />
 
-        <Text style={styles.sectionTitle}>Direccion de envio</Text>
+        <Text style={styles.sectionTitle}>Dirección de envío</Text>
         <Input
           label="Nombre del destinatario"
           value={recipientName}
@@ -210,22 +210,22 @@ export default function CheckoutScreen(): React.ReactElement {
         </View>
         <View style={styles.row}>
           <Input
-            label="Codigo postal"
+            label="Código postal"
             value={zipCode}
             onChangeText={setZipCode}
             containerStyle={[styles.field, styles.halfField]}
           />
           <Input
-            label="Pais"
+            label="País"
             value={country}
             onChangeText={setCountry}
             containerStyle={[styles.field, styles.halfField]}
           />
         </View>
 
-        <Text style={styles.sectionTitle}>Cupon (opcional)</Text>
+        <Text style={styles.sectionTitle}>Cupón (opcional)</Text>
         <Input
-          label="Codigo de cupon"
+          label="Código de cupón"
           value={couponCode}
           onChangeText={setCouponCode}
           autoCapitalize="none"

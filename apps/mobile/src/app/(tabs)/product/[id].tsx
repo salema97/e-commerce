@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Badge } from '@repo/shared-ui';
+import { Button, Badge, Card, neo } from '@repo/shared-ui';
 import { api } from '../../../lib/api.js';
 import { useCart } from '../../../lib/cart.js';
 import { formatPrice } from '@repo/shared-utils';
@@ -43,7 +43,7 @@ export default function ProductDetailScreen(): React.ReactElement {
   if (isLoading) {
     return (
       <SafeAreaView style={styles.center}>
-        <ActivityIndicator size="large" color="#171717" />
+        <ActivityIndicator size="large" color={neo.onyx} />
       </SafeAreaView>
     );
   }
@@ -61,65 +61,77 @@ export default function ProductDetailScreen(): React.ReactElement {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.imagePlaceholder}>
-          <Text style={styles.imagePlaceholderText}>Imagen del producto</Text>
-        </View>
-
-        <View style={styles.header}>
-          <Text style={styles.name}>{product.name}</Text>
-          <Text style={styles.price}>{formatPrice(effectivePrice)}</Text>
-        </View>
-
-        {product.description ? (
-          <Text style={styles.description}>{product.description}</Text>
-        ) : null}
-
-        {product.variants && product.variants.length > 0 ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Variantes</Text>
-            <View style={styles.variants}>
-              {product.variants.map((variant) => (
-                <View key={variant.id} style={styles.chip}>
-                  <Button
-                    variant={
-                      selectedVariant?.id === variant.id ? 'primary' : 'outline'
-                    }
-                    size="sm"
-                    onPress={() => setSelectedVariant(variant)}
-                  >
-                    {variant.name} ({formatPrice(variant.price ?? product.price)})
-                  </Button>
-                </View>
-              ))}
+        <Card padding="none" style={styles.productShell}>
+          <View style={styles.imageSection}>
+            <View style={styles.imagePlaceholder}>
+              <Text style={styles.imagePlaceholderText}>Imagen del producto</Text>
+            </View>
+            <View style={styles.priceSticker}>
+              <Text style={styles.priceStickerText}>{formatPrice(effectivePrice)}</Text>
             </View>
           </View>
-        ) : null}
 
-        <View style={styles.quantity}>
-          <Text style={styles.sectionTitle}>Cantidad</Text>
-          <View style={styles.quantityControls}>
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={() => setQuantity((q) => Math.max(1, q - 1))}
-            >
-              -
-            </Button>
-            <Text style={styles.quantityValue}>{quantity}</Text>
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={() => setQuantity((q) => q + 1)}
-            >
-              +
-            </Button>
+          <View style={styles.infoSection}>
+            <View style={styles.badgeRow}>
+              {product.isFeatured ? <Badge variant="secondary">Destacado</Badge> : null}
+              <Badge variant="primary">En stock</Badge>
+            </View>
+
+            <Text style={styles.name}>{product.name}</Text>
+
+            {product.description ? (
+              <Text style={styles.description}>{product.description}</Text>
+            ) : null}
+
+            {product.variants && product.variants.length > 0 ? (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Variante</Text>
+                <View style={styles.variants}>
+                  {product.variants.map((variant) => {
+                    const selected = selectedVariant?.id === variant.id;
+                    return (
+                      <View key={variant.id} style={styles.variantChip}>
+                        <Button
+                          variant={selected ? 'secondary' : 'outline'}
+                          size="sm"
+                          onPress={() => setSelectedVariant(variant)}
+                        >
+                          {variant.name}
+                        </Button>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            ) : null}
+
+            <View style={styles.quantitySection}>
+              <Text style={styles.sectionTitle}>Cantidad</Text>
+              <View style={styles.quantityControls}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onPress={() => setQuantity((q) => Math.max(1, q - 1))}
+                >
+                  -
+                </Button>
+                <Text style={styles.quantityValue}>{quantity}</Text>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onPress={() => setQuantity((q) => q + 1)}
+                >
+                  +
+                </Button>
+              </View>
+            </View>
           </View>
-        </View>
+        </Card>
       </ScrollView>
 
       <View style={styles.footer}>
         {itemCount > 0 ? (
-          <Badge variant="secondary" style={styles.cartBadge}>
+          <Badge variant="outline" style={styles.cartBadge}>
             {itemCount} en el carrito
           </Badge>
         ) : null}
@@ -134,71 +146,109 @@ export default function ProductDetailScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: neo.bg,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: neo.bg,
   },
   error: {
-    color: '#ef4444',
+    color: neo.scarlet,
+    fontWeight: '700',
   },
   content: {
-    padding: 24,
-    paddingBottom: 140,
+    padding: 16,
+    paddingBottom: 160,
+  },
+  productShell: {
+    overflow: 'hidden',
+  },
+  imageSection: {
+    borderBottomWidth: 3,
+    borderBottomColor: neo.onyx,
+    position: 'relative',
   },
   imagePlaceholder: {
-    height: 240,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 12,
+    height: 280,
+    backgroundColor: '#e8e0cc',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
   },
   imagePlaceholderText: {
-    color: '#737373',
+    color: neo.muted,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
-  header: {
-    marginBottom: 16,
+  priceSticker: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    backgroundColor: neo.scarlet,
+    borderWidth: 3,
+    borderColor: neo.onyx,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    transform: [{ rotate: '-2deg' }],
+    shadowColor: neo.onyx,
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+  },
+  priceStickerText: {
+    color: neo.white,
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  infoSection: {
+    padding: 16,
+    gap: 12,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   name: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#171717',
-    marginBottom: 8,
-  },
-  price: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#171717',
+    fontSize: 28,
+    fontWeight: '900',
+    color: neo.onyx,
+    textTransform: 'uppercase',
+    lineHeight: 30,
+    letterSpacing: -0.5,
   },
   description: {
-    fontSize: 15,
-    color: '#525252',
-    lineHeight: 22,
-    marginBottom: 20,
+    fontSize: 14,
+    color: neo.muted,
+    lineHeight: 20,
+    fontWeight: '600',
   },
   section: {
-    marginBottom: 20,
+    marginTop: 8,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#171717',
-    marginBottom: 10,
+    fontSize: 11,
+    fontWeight: '800',
+    color: neo.muted,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   variants: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  chip: {
-    marginBottom: 8,
+  variantChip: {
+    marginBottom: 4,
   },
-  quantity: {
-    marginBottom: 20,
+  quantitySection: {
+    marginTop: 8,
+    borderTopWidth: 2,
+    borderTopColor: 'rgba(17,17,17,0.1)',
+    paddingTop: 12,
   },
   quantityControls: {
     flexDirection: 'row',
@@ -207,19 +257,20 @@ const styles = StyleSheet.create({
   },
   quantityValue: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '800',
     minWidth: 32,
     textAlign: 'center',
+    color: neo.onyx,
   },
   footer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 24,
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#e5e5e5',
+    padding: 20,
+    backgroundColor: neo.bg,
+    borderTopWidth: 3,
+    borderTopColor: neo.onyx,
   },
   cartBadge: {
     marginBottom: 12,

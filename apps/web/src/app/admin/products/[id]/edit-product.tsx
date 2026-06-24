@@ -9,7 +9,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useApiClient } from '@/lib/client-api';
-import { formatPrice } from '@repo/shared-utils';
 import type { Product, ProductStatus } from '@repo/shared-types';
 
 export default function EditProductPage({ product }: { product: Product }) {
@@ -42,7 +41,7 @@ export default function EditProductPage({ product }: { product: Product }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Edit Product</h1>
+      <h1 className="text-2xl font-bold">Editar producto</h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Card>
@@ -51,17 +50,17 @@ export default function EditProductPage({ product }: { product: Product }) {
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">Nombre</Label>
               <Input id="name" name="name" defaultValue={product.name} required />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="slug">Slug</Label>
+              <Label htmlFor="slug">URL amigable</Label>
               <Input id="slug" name="slug" defaultValue={product.slug} required />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Descripción</Label>
               <Textarea
                 id="description"
                 name="description"
@@ -75,17 +74,17 @@ export default function EditProductPage({ product }: { product: Product }) {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status">Estado</Label>
               <Select id="status" name="status" defaultValue={product.status}>
-                <option value="DRAFT">Draft</option>
-                <option value="ACTIVE">Active</option>
-                <option value="ARCHIVED">Archived</option>
+                <option value="DRAFT">Borrador</option>
+                <option value="ACTIVE">Activo</option>
+                <option value="ARCHIVED">Archivado</option>
               </Select>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="price">Price</Label>
+                <Label htmlFor="price">Precio</Label>
                 <Input
                   id="price"
                   name="price"
@@ -96,7 +95,7 @@ export default function EditProductPage({ product }: { product: Product }) {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="compareAtPrice">Compare at price</Label>
+                <Label htmlFor="compareAtPrice">Precio de comparación</Label>
                 <Input
                   id="compareAtPrice"
                   name="compareAtPrice"
@@ -106,7 +105,7 @@ export default function EditProductPage({ product }: { product: Product }) {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="cost">Cost</Label>
+                <Label htmlFor="cost">Costo</Label>
                 <Input
                   id="cost"
                   name="cost"
@@ -124,17 +123,17 @@ export default function EditProductPage({ product }: { product: Product }) {
                 type="checkbox"
                 defaultChecked={product.isFeatured}
               />
-              <Label htmlFor="isFeatured">Featured product</Label>
+              <Label htmlFor="isFeatured">Producto destacado</Label>
             </div>
           </CardContent>
         </Card>
 
         <div className="flex gap-4">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save changes'}
+            {isSubmitting ? 'Guardando…' : 'Guardar cambios'}
           </Button>
           <Button type="button" variant="outline" onClick={() => router.back()}>
-            Cancel
+            Cancelar
           </Button>
         </div>
       </form>

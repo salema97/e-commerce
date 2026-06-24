@@ -57,7 +57,7 @@ export function SignUpForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="email">Correo</Label>
+        <Label htmlFor="email">Correo electrónico</Label>
         <Input
           id="email"
           type="email"

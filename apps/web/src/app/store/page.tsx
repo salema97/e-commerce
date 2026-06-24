@@ -1,14 +1,10 @@
-import * as React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { getServerApiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { formatPrice } from '@repo/shared-utils';
+import { ProductCard } from '@/components/store/product-card';
 import type { Product, Category } from '@repo/shared-types';
 
 interface StorePageProps {
@@ -47,7 +43,8 @@ export default async function StorePage({ searchParams }: StorePageProps) {
 
   if (search) {
     const q = search.toLowerCase();
-    products = products.filter((p) => p.name.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q),
+    products = products.filter(
+      (p) => p.name.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q),
     );
   }
 
@@ -57,28 +54,43 @@ export default async function StorePage({ searchParams }: StorePageProps) {
   const start = (page - 1) * limit;
   const paginatedProducts = products.slice(start, start + limit);
   const totalPages = Math.ceil(total / limit);
+  const activeCategory = categories.find((c) => c.slug === categorySlug);
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold">Shop</h1>
+      <header className="mb-10 border-b-[6px] border-neo-onyx pb-6">
+        <p className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">Catálogo</p>
+        <h1 className="font-anton text-5xl uppercase md:text-7xl">
+          {activeCategory?.name ?? 'Tienda'}
+        </h1>
+      </header>
 
-      <div className="mt-6 flex flex-col gap-4 lg:flex-row">
-        <aside className="w-full lg:w-64">
-          <form className="flex flex-col gap-4" action="/store" method="GET">
+      <div className="mt-6 flex flex-col gap-8 lg:flex-row">
+        <aside className="w-full lg:w-72">
+          <form
+            className="flex flex-col gap-4 border-[3px] border-neo-onyx bg-white p-5 shadow-[6px_6px_0_0_#111111]"
+            action="/store"
+            method="GET"
+          >
             <div className="flex flex-col gap-2">
-              <label htmlFor="search" className="text-sm font-medium">Search</label>
+              <label htmlFor="search" className="text-sm font-bold uppercase">
+                Buscar
+              </label>
               <Input
                 id="search"
                 name="search"
                 defaultValue={search}
-                placeholder="Search products..."
+                placeholder="Buscar productos..."
+                className="normal-case"
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor="category" className="text-sm font-medium">Category</label>
+              <label htmlFor="category" className="text-sm font-bold uppercase">
+                Categoría
+              </label>
               <Select id="category" name="category" defaultValue={categorySlug ?? ''}>
-                <option value="">All categories</option>
+                <option value="">Todas</option>
                 {categories.map((category) => (
                   <option key={category.id} value={category.slug}>
                     {category.name}
@@ -88,22 +100,26 @@ export default async function StorePage({ searchParams }: StorePageProps) {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor="sort" className="text-sm font-medium">Sort by</label>
+              <label htmlFor="sort" className="text-sm font-bold uppercase">
+                Ordenar
+              </label>
               <Select id="sort" name="sort" defaultValue={sort}>
-                <option value="newest">Newest</option>
-                <option value="price_asc">Price: Low to high</option>
-                <option value="price_desc">Price: High to low</option>
-                <option value="name_asc">Name: A-Z</option>
+                <option value="newest">Más recientes</option>
+                <option value="price_asc">Precio: menor a mayor</option>
+                <option value="price_desc">Precio: mayor a menor</option>
+                <option value="name_asc">Nombre A-Z</option>
               </Select>
             </div>
 
-            <Button type="submit" className="w-full">Apply filters</Button>
+            <Button type="submit" className="w-full">
+              Aplicar filtros
+            </Button>
           </form>
         </aside>
 
         <div className="flex-1">
-          <div className="mb-4 text-sm text-muted-foreground">
-            Showing {paginatedProducts.length} of {total} products
+          <div className="mb-6 text-sm font-bold uppercase tracking-wide text-muted-foreground">
+            Mostrando {paginatedProducts.length} de {total} productos
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
@@ -113,68 +129,34 @@ export default async function StorePage({ searchParams }: StorePageProps) {
           </div>
 
           {paginatedProducts.length === 0 ? (
-            <div className="py-20 text-center text-muted-foreground">
-              No products found.
+            <div className="border-[3px] border-dashed border-neo-onyx py-20 text-center font-bold uppercase text-muted-foreground">
+              No se encontraron productos.
             </div>
           ) : null}
 
-          <Separator className="my-8" />
+          <Separator className="my-8 border-neo-onyx" />
 
           <div className="flex items-center justify-between">
-            <Link
-              href={buildHref({ ...params, page: String(page - 1) })}
-              aria-disabled={page <= 1}
-            >
-              <Button variant="outline" disabled={page <= 1}>Previous</Button>
+            <Link href={buildHref({ ...params, page: String(page - 1) })} aria-disabled={page <= 1}>
+              <Button variant="outline" disabled={page <= 1}>
+                Anterior
+              </Button>
             </Link>
-            <span className="text-sm">
-              Page {page} of {totalPages}
+            <span className="text-sm font-bold uppercase">
+              Página {page} de {totalPages || 1}
             </span>
             <Link
               href={buildHref({ ...params, page: String(page + 1) })}
               aria-disabled={page >= totalPages}
             >
-              <Button variant="outline" disabled={page >= totalPages}>Next</Button>
+              <Button variant="outline" disabled={page >= totalPages}>
+                Siguiente
+              </Button>
             </Link>
           </div>
         </div>
       </div>
     </div>
-  );
-}
-
-function ProductCard({ product }: { product: Product }) {
-  const image = product.images?.[0];
-
-  return (
-    <Link href={`/store/${product.slug}`}>
-      <Card className="group overflow-hidden hover:border-primary/50 transition-colors">
-        <div className="relative aspect-square overflow-hidden bg-muted">
-          {image ? (
-            <Image
-              src={image.url}
-              alt={image.alt ?? product.name}
-              fill
-              className="object-cover transition-transform group-hover:scale-105"
-              sizes="(max-width: 768px) 100vw, 33vw"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-              No image
-            </div>
-          )}
-        </div>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">{product.name}</CardTitle>
-        </CardHeader>
-        <CardContent className="flex items-center justify-between">
-          <span className="font-semibold">{formatPrice(product.price)}</span>
-          {product.compareAtPrice ? (
-            <Badge variant="secondary">Sale</Badge>
-          ) : null}
-        </CardContent>
-      </Card>
-    </Link>
   );
 }
 

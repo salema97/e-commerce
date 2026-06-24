@@ -33,32 +33,32 @@ export default function NewInventoryPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Add Inventory</h1>
+      <h1 className="text-2xl font-bold">Agregar inventario</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Stock Entry</CardTitle>
+            <CardTitle>Entrada de stock</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="productId">Product ID</Label>
+              <Label htmlFor="productId">ID del producto</Label>
               <Input id="productId" name="productId" required />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="variantId">Variant ID (optional)</Label>
+              <Label htmlFor="variantId">ID de variante (opcional)</Label>
               <Input id="variantId" name="variantId" />
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="quantity">Quantity</Label>
+                <Label htmlFor="quantity">Cantidad</Label>
                 <Input id="quantity" name="quantity" type="number" defaultValue={0} required />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="reservedQuantity">Reserved</Label>
+                <Label htmlFor="reservedQuantity">Reservado</Label>
                 <Input id="reservedQuantity" name="reservedQuantity" type="number" defaultValue={0} />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="lowStockThreshold">Low stock threshold</Label>
+                <Label htmlFor="lowStockThreshold">Umbral de stock bajo</Label>
                 <Input id="lowStockThreshold" name="lowStockThreshold" type="number" />
               </div>
             </div>
@@ -66,10 +66,10 @@ export default function NewInventoryPage() {
         </Card>
         <div className="flex gap-4">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save stock'}
+            {isSubmitting ? 'Guardando…' : 'Guardar stock'}
           </Button>
           <Button type="button" variant="outline" onClick={() => router.back()}>
-            Cancel
+            Cancelar
           </Button>
         </div>
       </form>

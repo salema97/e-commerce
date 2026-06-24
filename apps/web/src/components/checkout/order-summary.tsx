@@ -31,7 +31,7 @@ export function OrderSummary({
           >
             <div className="flex-1">
               <p className="font-medium">{item.name}</p>
-              <p className="text-muted-foreground">Qty: {item.quantity}</p>
+              <p className="text-muted-foreground">Cantidad: {item.quantity}</p>
             </div>
             <span className="font-medium">
               {formatPrice(item.price * item.quantity)}
@@ -50,18 +50,18 @@ export function OrderSummary({
         {discount > 0 ? (
           <div className="flex justify-between text-green-600">
             <span>
-              Discount{couponCode ? ` (${couponCode})` : null}
+              Descuento{couponCode ? ` (${couponCode})` : null}
             </span>
             <span>-{formatPrice(discount)}</span>
           </div>
         ) : null}
         <div className="flex justify-between">
-          <span>Tax (IVA 15%)</span>
+          <span>IVA (15%)</span>
           <span>{formatPrice(tax)}</span>
         </div>
         <div className="flex justify-between">
-          <span>Shipping</span>
-          <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
+          <span>Envío</span>
+          <span>{shipping === 0 ? 'Gratis' : formatPrice(shipping)}</span>
         </div>
       </div>
 

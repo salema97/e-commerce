@@ -25,16 +25,16 @@ interface NavItem {
 }
 
 const adminNav: NavItem[] = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'ADMIN'] },
-  { href: '/admin/products', label: 'Products', icon: Package, roles: ['SUPER_ADMIN', 'ADMIN'] },
-  { href: '/admin/categories', label: 'Categories', icon: Tags, roles: ['SUPER_ADMIN', 'ADMIN'] },
-  { href: '/admin/inventory', label: 'Inventory', icon: Warehouse, roles: ['SUPER_ADMIN', 'ADMIN', 'INVENTORY'] },
-  { href: '/admin/orders', label: 'Orders', icon: ShoppingBag, roles: ['SUPER_ADMIN', 'ADMIN'] },
-  { href: '/admin/returns', label: 'Returns', icon: RotateCcw, roles: ['SUPER_ADMIN', 'ADMIN'] },
-  { href: '/admin/customers', label: 'Customers', icon: Users, roles: ['SUPER_ADMIN', 'ADMIN'] },
-  { href: '/admin/support', label: 'Support', icon: MessageSquare, roles: ['SUPER_ADMIN', 'ADMIN', 'SUPPORT'] },
+  { href: '/admin/dashboard', label: 'Panel', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { href: '/admin/products', label: 'Productos', icon: Package, roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { href: '/admin/categories', label: 'Categorías', icon: Tags, roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { href: '/admin/inventory', label: 'Inventario', icon: Warehouse, roles: ['SUPER_ADMIN', 'ADMIN', 'INVENTORY'] },
+  { href: '/admin/orders', label: 'Pedidos', icon: ShoppingBag, roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { href: '/admin/returns', label: 'Devoluciones', icon: RotateCcw, roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { href: '/admin/customers', label: 'Clientes', icon: Users, roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { href: '/admin/support', label: 'Soporte', icon: MessageSquare, roles: ['SUPER_ADMIN', 'ADMIN', 'SUPPORT'] },
   { href: '/admin/invoices', label: 'Facturación', icon: FileText, roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] },
-  { href: '/admin/finance', label: 'Finance', icon: BarChart3, roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] },
+  { href: '/admin/finance', label: 'Finanzas', icon: BarChart3, roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] },
 ];
 
 interface AdminSidebarProps {
@@ -43,13 +43,19 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ role }: AdminSidebarProps) {
   const pathname = usePathname();
-
   const visibleNav = adminNav.filter((item) => item.roles.includes(role));
 
   return (
-    <aside className="hidden lg:flex w-64 flex-col border-r bg-muted/30">
-      <div className="p-4 font-semibold">Admin Panel</div>
-      <nav className="flex flex-col gap-1 px-3">
+    <aside className="fixed left-0 top-20 z-40 hidden h-[calc(100vh-5rem)] w-24 flex-col items-center border-r-[4px] border-neo-onyx bg-neo-onyx py-8 lg:flex">
+      <Link
+        href="/admin/dashboard"
+        className="mb-12 flex h-14 w-14 rotate-3 items-center justify-center border-[3px] border-white bg-neo-gold shadow-[4px_4px_0_white]"
+        title="Administración"
+      >
+        <span className="font-anton text-3xl text-neo-onyx">NB</span>
+      </Link>
+
+      <nav className="flex flex-1 flex-col gap-8">
         {visibleNav.map((item) => {
           const Icon = item.icon;
           const active = pathname.startsWith(item.href);
@@ -57,15 +63,19 @@ export function AdminSidebar({ role }: AdminSidebarProps) {
             <Link
               key={item.href}
               href={item.href}
-              className={cn(
-                'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                active
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-foreground/70 hover:bg-muted hover:text-foreground',
-              )}
+              title={item.label}
+              className="group relative"
             >
-              <Icon className="size-4" />
-              {item.label}
+              <div
+                className={cn(
+                  'flex h-14 w-14 items-center justify-center border-[3px] shadow-[4px_4px_0_white] transition-colors',
+                  active
+                    ? 'border-white bg-neo-gold text-neo-onyx'
+                    : 'border-white/20 bg-white/10 text-white hover:border-white hover:bg-white/20',
+                )}
+              >
+                <Icon className="size-6" strokeWidth={2.5} />
+              </div>
             </Link>
           );
         })}

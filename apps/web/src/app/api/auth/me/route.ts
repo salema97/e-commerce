@@ -8,7 +8,7 @@ export async function GET() {
   const cookieStore = await cookies();
   const token = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
   if (!token) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ message: 'No autorizado' }, { status: 401 });
   }
 
   const upstream = await fetch(`${API_BASE}/auth/me`, {

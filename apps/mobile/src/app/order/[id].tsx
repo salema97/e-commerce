@@ -56,19 +56,19 @@ export default function OrderDetailScreen(): React.ReactElement {
 
         {order.status === 'PAYMENT_PENDING' || order.status === 'PENDING' ? (
           <Text style={styles.notice}>
-            Estamos confirmando tu pago. Esta pantalla se actualizara
-            automaticamente.
+            Estamos confirmando tu pago. Esta pantalla se actualizará
+            automáticamente.
           </Text>
         ) : null}
 
         <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Articulos</Text>
+          <Text style={styles.sectionTitle}>Artículos</Text>
           {order.items.map((item) => (
             <View key={item.id} style={styles.itemRow}>
               <View style={styles.itemInfo}>
                 <Text style={styles.itemName}>{item.name}</Text>
                 <Text style={styles.itemMeta}>
-                  SKU: {item.sku} · Qty: {item.quantity}
+                  SKU: {item.sku} · Cant.: {item.quantity}
                 </Text>
               </View>
               <Text style={styles.itemPrice}>
@@ -97,7 +97,7 @@ export default function OrderDetailScreen(): React.ReactElement {
             <Text style={styles.value}>{formatPrice(Number(order.taxAmount))}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>Envio</Text>
+            <Text style={styles.label}>Envío</Text>
             <Text style={styles.value}>{formatPrice(Number(order.shippingAmount))}</Text>
           </View>
           <View style={[styles.row, styles.totalRow]}>
@@ -108,7 +108,7 @@ export default function OrderDetailScreen(): React.ReactElement {
 
         {order.shippingAddress ? (
           <Card style={styles.section}>
-            <Text style={styles.sectionTitle}>Direccion de envio</Text>
+            <Text style={styles.sectionTitle}>Dirección de envío</Text>
             <Text style={styles.addressLine}>{order.shippingAddress.recipientName}</Text>
             <Text style={styles.addressLine}>{order.shippingAddress.street}</Text>
             <Text style={styles.addressLine}>
@@ -124,7 +124,7 @@ export default function OrderDetailScreen(): React.ReactElement {
             onPress={() => router.push(`/order/${orderId}/return`)}
             size="lg"
           >
-            Request return
+            Solicitar devolución
           </Button>
         ) : null}
 

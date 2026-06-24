@@ -67,9 +67,9 @@ export function CheckoutContainer() {
   if (items.length === 0 && !order) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-semibold">Your cart is empty</h1>
+        <h1 className="text-2xl font-semibold">Tu carrito está vacío</h1>
         <Button className="mt-6" onClick={() => router.push('/store')}>
-          Continue shopping
+          Seguir comprando
         </Button>
       </div>
     );
@@ -110,7 +110,7 @@ export function CheckoutContainer() {
       const intent = await api.payments.createIntent(intentDto);
       setPaymentIntent(intent);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unable to start checkout. Please try again.';
+      const message = err instanceof Error ? err.message : 'No se pudo iniciar el pago. Por favor, inténtalo de nuevo.';
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -121,15 +121,15 @@ export function CheckoutContainer() {
   if (order && paymentIntent?.clientSecret) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold">Complete your payment</h1>
+        <h1 className="text-3xl font-bold">Completa tu pago</h1>
         <p className="mt-2 text-muted-foreground">
-          Order {order.orderNumber} · Total {new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(Number(order.total))}
+          Pedido {order.orderNumber} · Total {new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(Number(order.total))}
         </p>
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Payment</CardTitle>
+                <CardTitle>Pago</CardTitle>
               </CardHeader>
               <CardContent>
                 <PaymentForm
@@ -144,7 +144,7 @@ export function CheckoutContainer() {
                 href={`/orders/${order.id}`}
                 className="text-sm font-medium text-primary underline-offset-4 hover:underline"
               >
-                View order details
+                Ver detalles del pedido
               </Link>
             </div>
           </div>
@@ -164,7 +164,7 @@ export function CheckoutContainer() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold">Checkout</h1>
+      <h1 className="text-3xl font-bold">Finalizar compra</h1>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 flex flex-col gap-6">
@@ -172,7 +172,7 @@ export function CheckoutContainer() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Coupon</CardTitle>
+              <CardTitle>Cupón</CardTitle>
             </CardHeader>
             <CardContent>
               <CouponInput
@@ -184,13 +184,13 @@ export function CheckoutContainer() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Payment</CardTitle>
+              <CardTitle>Pago</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
                 {user
-                  ? 'Click continue to create your order and load the secure Stripe payment form.'
-                  : 'You are checking out as a guest. You can create an account after purchase.'}
+                  ? 'Haz clic en continuar para crear tu pedido y cargar el formulario seguro de pago con Stripe.'
+                  : 'Estás comprando como invitado. Puedes crear una cuenta después de la compra.'}
               </p>
             </CardContent>
           </Card>
@@ -205,7 +205,7 @@ export function CheckoutContainer() {
             disabled={!isAddressValid(address) || isSubmitting}
             onClick={handleCreateOrder}
           >
-            {isSubmitting ? 'Preparing payment...' : `Continue to payment`}
+            {isSubmitting ? 'Preparando pago…' : 'Continuar al pago'}
           </Button>
         </div>
 
@@ -238,7 +238,7 @@ function OrderSummaryCard(props: OrderSummaryCardProps) {
     <div>
       <Card className="sticky top-24">
         <CardHeader>
-          <CardTitle>Order Summary</CardTitle>
+          <CardTitle>Resumen del pedido</CardTitle>
         </CardHeader>
         <CardContent>
           <OrderSummary {...props} />

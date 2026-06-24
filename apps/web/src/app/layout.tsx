@@ -1,22 +1,29 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Anton, Space_Grotesk } from 'next/font/google';
 import { Providers } from './providers';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import ServiceWorkerRegistration from '@/components/pwa/service-worker-registration';
 import './globals.css';
 
-const inter = Inter({
+const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
-  variable: '--font-sans',
+  variable: '--font-space-grotesk',
+  weight: ['400', '500', '700'],
+});
+
+const anton = Anton({
+  subsets: ['latin'],
+  variable: '--font-anton',
+  weight: '400',
 });
 
 export const metadata: Metadata = {
   title: {
-    default: 'E-commerce Store',
-    template: '%s | E-commerce Store',
+    default: 'NEO.STORE',
+    template: '%s | NEO.STORE',
   },
-  description: 'Your local e-commerce destination.',
+  description: 'Tu tienda online local.',
 };
 
 export default function RootLayout({
@@ -25,8 +32,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className="min-h-screen flex flex-col font-sans antialiased">
+    <html lang="es" className={`${spaceGrotesk.variable} ${anton.variable}`}>
+      <body className="min-h-screen flex flex-col font-sans antialiased overflow-x-clip">
         <Providers>
           <Navbar />
           <main className="flex-1">{children}</main>

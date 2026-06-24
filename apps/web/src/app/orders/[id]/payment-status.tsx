@@ -50,13 +50,13 @@ export function PaymentStatus({ orderId, payments }: PaymentStatusProps) {
     <div className="flex flex-col gap-3">
       {primaryPayment ? (
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Payment</span>
+          <span className="text-sm text-muted-foreground">Pago</span>
           <Badge variant={statusVariant(primaryPayment.status)}>
             {paymentStatusLabel(primaryPayment.status)}
           </Badge>
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">No payment recorded yet.</p>
+        <p className="text-sm text-muted-foreground">Aún no hay pago registrado.</p>
       )}
 
       <button
@@ -65,10 +65,10 @@ export function PaymentStatus({ orderId, payments }: PaymentStatusProps) {
         disabled={isGenerating}
         className="self-start text-sm font-medium text-primary underline-offset-4 hover:underline disabled:opacity-50"
       >
-        {isGenerating ? 'Preparing receipt...' : 'Download receipt'}
+        {isGenerating ? 'Preparando recibo…' : 'Descargar recibo'}
       </button>
       {receiptUrl ? (
-        <p className="text-xs text-muted-foreground">Receipt URL: {receiptUrl}</p>
+        <p className="text-xs text-muted-foreground">URL del recibo: {receiptUrl}</p>
       ) : null}
     </div>
   );

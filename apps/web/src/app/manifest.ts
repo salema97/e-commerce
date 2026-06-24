@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'E-commerce Store',
-    short_name: 'Store',
-    description: 'Your local e-commerce destination',
+    name: 'NEO.STORE',
+    short_name: 'NEO.STORE',
+    description: 'Tu tienda online local',
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',

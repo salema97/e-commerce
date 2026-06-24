@@ -40,7 +40,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Order {order.orderNumber}</h1>
+        <h1 className="text-3xl font-bold">Pedido {order.orderNumber}</h1>
         <Badge variant="outline">{orderStatusLabel(order.status)}</Badge>
       </div>
 
@@ -48,7 +48,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
         <div className="lg:col-span-2 flex flex-col gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Items</CardTitle>
+              <CardTitle>Artículos</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               {order.items.map((item) => (
@@ -59,7 +59,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
                   <div>
                     <p className="font-medium">{item.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      SKU: {item.sku} · Qty: {item.quantity}
+                      SKU: {item.sku} · Cantidad: {item.quantity}
                     </p>
                   </div>
                   <span className="font-semibold">
@@ -73,7 +73,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
           {order.statusHistory && order.statusHistory.length > 0 ? (
             <Card>
               <CardHeader>
-                <CardTitle>Status History</CardTitle>
+                <CardTitle>Historial de estado</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
                 {order.statusHistory.map((entry) => (
@@ -92,7 +92,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Summary</CardTitle>
+              <CardTitle>Resumen</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
               <div className="flex justify-between text-sm">
@@ -101,16 +101,16 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
               </div>
               {Number(order.discountAmount) > 0 ? (
                 <div className="flex justify-between text-sm text-green-600">
-                  <span>Discount{order.couponCode ? ` (${order.couponCode})` : null}</span>
+                  <span>Descuento{order.couponCode ? ` (${order.couponCode})` : null}</span>
                   <span>-{formatPrice(order.discountAmount)}</span>
                 </div>
               ) : null}
               <div className="flex justify-between text-sm">
-                <span>Tax</span>
+                <span>IVA</span>
                 <span>{formatPrice(order.taxAmount)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Shipping</span>
+                <span>Envío</span>
                 <span>{formatPrice(order.shippingAmount)}</span>
               </div>
               <Separator />
@@ -123,7 +123,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
               {isReturnable(order) ? (
                 <Link href={`/orders/${order.id}/return`}>
                   <Button variant="outline" className="w-full">
-                    Request return
+                    Solicitar devolución
                   </Button>
                 </Link>
               ) : null}
@@ -132,7 +132,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
 
           <Card>
             <CardHeader>
-              <CardTitle>Shipping Address</CardTitle>
+              <CardTitle>Dirección de envío</CardTitle>
             </CardHeader>
             <CardContent>
               {order.shippingAddress ? (
@@ -145,7 +145,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
                   {order.shippingAddress.zipCode ? `, ${order.shippingAddress.zipCode}` : null}
                 </address>
               ) : (
-                <p className="text-sm text-muted-foreground">No shipping address.</p>
+                <p className="text-sm text-muted-foreground">Sin dirección de envío.</p>
               )}
             </CardContent>
           </Card>

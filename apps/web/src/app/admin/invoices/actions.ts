@@ -27,8 +27,8 @@ export async function retryInvoice(id: string): Promise<InvoiceResponseDto> {
   });
 
   if (!response.ok) {
-    const data = await response.json().catch(() => ({ message: 'Retry failed' }));
-    throw new Error(data.message ?? 'Retry failed');
+    const data = await response.json().catch(() => ({ message: 'Error al reintentar' }));
+    throw new Error(data.message ?? 'Error al reintentar');
   }
 
   return response.json();
@@ -42,8 +42,8 @@ export async function retryCreditNote(id: string): Promise<unknown> {
   });
 
   if (!response.ok) {
-    const data = await response.json().catch(() => ({ message: 'Retry failed' }));
-    throw new Error(data.message ?? 'Retry failed');
+    const data = await response.json().catch(() => ({ message: 'Error al reintentar' }));
+    throw new Error(data.message ?? 'Error al reintentar');
   }
 
   return response.json();
