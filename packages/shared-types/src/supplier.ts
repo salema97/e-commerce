@@ -7,6 +7,9 @@ export interface Supplier {
   phone?: string | null;
   address?: string | null;
   paymentTerms?: string | null;
+  dropshipEnabled?: boolean;
+  dropshipCommissionRate?: number | null;
+  fulfillmentContactEmail?: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -22,6 +25,9 @@ export interface CreateSupplierDto {
   phone?: string;
   address?: string;
   paymentTerms?: string;
+  dropshipEnabled?: boolean;
+  dropshipCommissionRate?: number;
+  fulfillmentContactEmail?: string;
   isActive?: boolean;
 }
 

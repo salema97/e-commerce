@@ -19,12 +19,17 @@ export type OrderStatus =
   | 'PAYMENT_PENDING'
   | 'PAYMENT_FAILED'
   | 'PROCESSING'
+  | 'READY_FOR_PICKUP'
   | 'PARTIALLY_SHIPPED'
   | 'SHIPPED'
   | 'DELIVERED'
   | 'CANCELLED'
   | 'REFUNDED'
   | 'PARTIALLY_REFUNDED';
+
+export type OrderChannel = 'WEB' | 'MOBILE' | 'POS' | 'B2B' | 'MARKETPLACE';
+
+export type ShippingMethodType = 'DELIVERY' | 'PICKUP' | 'POS_IMMEDIATE';
 
 export type PaymentChannel = 'WEB' | 'MOBILE';
 

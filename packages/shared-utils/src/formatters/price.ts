@@ -53,6 +53,7 @@ export function orderStatusLabel(status: OrderStatus): string {
     PAYMENT_PENDING: 'Payment pending',
     PAYMENT_FAILED: 'Payment failed',
     PROCESSING: 'Processing',
+    READY_FOR_PICKUP: 'Ready for pickup',
     PARTIALLY_SHIPPED: 'Partially shipped',
     SHIPPED: 'Shipped',
     DELIVERED: 'Delivered',
