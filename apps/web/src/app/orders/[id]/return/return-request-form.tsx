@@ -4,6 +4,10 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { formatPrice } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
@@ -104,14 +108,13 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
               <CardTitle>Correo del pedido</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
-              <label htmlFor="email" className="text-sm font-medium">Correo electrónico asociado a este pedido</label>
-              <input
+              <Label htmlFor="email">Correo electrónico asociado a este pedido</Label>
+              <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="rounded-md border px-3 py-2 text-sm"
                 placeholder="cliente@ejemplo.com"
               />
             </CardContent>
@@ -124,26 +127,27 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             {order.items.map((item) => (
-              <div key={item.id} className="rounded-md border p-4">
-                <label className="flex cursor-pointer items-center gap-3">
-                  <input
-                    type="checkbox"
+              <div key={item.id} className="border-[3px] border-neo-onyx bg-white p-4 shadow-[4px_4px_0_0_#111111]">
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id={`item-${item.id}`}
                     checked={Boolean(selected[item.id])}
-                    onChange={() => toggleItem(item.id, item.quantity)}
+                    onCheckedChange={() => toggleItem(item.id, item.quantity)}
                   />
-                  <div className="flex-1">
-                    <p className="font-medium">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">
+                  <Label htmlFor={`item-${item.id}`} className="flex flex-1 cursor-pointer flex-col gap-1 normal-case">
+                    <span className="font-bold">{item.name}</span>
+                    <span className="text-sm font-medium text-muted-foreground">
                       SKU: {item.sku} · {formatPrice(item.price * item.quantity)}
-                    </p>
-                  </div>
-                </label>
+                    </span>
+                  </Label>
+                </div>
 
                 {selected[item.id] ? (
-                  <div className="mt-4 grid gap-3">
-                    <div className="grid gap-1">
-                      <label className="text-sm font-medium">Cantidad</label>
-                      <input
+                  <div className="mt-4 flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor={`qty-${item.id}`}>Cantidad</Label>
+                      <Input
+                        id={`qty-${item.id}`}
                         type="number"
                         min={1}
                         max={item.quantity}
@@ -160,12 +164,13 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
                             },
                           }))
                         }
-                        className="w-24 rounded-md border px-3 py-2 text-sm"
+                        className="w-24"
                       />
                     </div>
-                    <div className="grid gap-1">
-                      <label className="text-sm font-medium">Motivo</label>
-                      <input
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor={`reason-${item.id}`}>Motivo</Label>
+                      <Input
+                        id={`reason-${item.id}`}
                         type="text"
                         value={selected[item.id].reason}
                         onChange={(e) =>
@@ -174,8 +179,8 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
                             [item.id]: { ...prev[item.id], reason: e.target.value },
                           }))
                         }
-                        className="rounded-md border px-3 py-2 text-sm"
                         placeholder="Motivo de la devolución de este artículo"
+                        className="normal-case"
                       />
                     </div>
                   </div>
@@ -186,7 +191,9 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
         </Card>
 
         {error ? (
-          <p className="text-sm text-destructive">{error}</p>
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         ) : null}
 
         <Button
@@ -203,9 +210,11 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
         </Button>
 
         {!isWithinWindow ? (
-          <p className="text-sm text-destructive">
-            El plazo de devolución para este pedido ha finalizado.
-          </p>
+          <Alert variant="destructive">
+            <AlertDescription>
+              El plazo de devolución para este pedido ha finalizado.
+            </AlertDescription>
+          </Alert>
         ) : null}
       </form>
     </div>

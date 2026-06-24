@@ -48,7 +48,7 @@ export function SignInForm() {
   return (
     <form onSubmit={onSubmit} className="mx-auto flex w-full max-w-sm flex-col gap-4">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">Iniciar sesión</h1>
+        <h1 className="neo-page-title">Iniciar sesión</h1>
         <p className="text-sm text-muted-foreground">Accede con tu cuenta de la tienda</p>
       </div>
 

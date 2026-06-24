@@ -1,15 +1,19 @@
 export { Button } from './Button.js';
 export { Input } from './Input.js';
+export { Textarea } from './Textarea.js';
 export { Card } from './Card.js';
 export { Badge } from './Badge.js';
 export { Modal } from './Modal.js';
 export { ChatBubble } from './ChatBubble.js';
+export { PressableCard, Checkbox } from './PressableCard.js';
 export { neo } from './theme.js';
 
 export type { ButtonProps } from './Button.js';
 export type { InputProps } from './Input.js';
+export type { TextareaProps } from './Textarea.js';
 export type { CardProps } from './Card.js';
 export type { BadgeProps } from './Badge.js';
 export type { ModalPropsCustom as ModalProps } from './Modal.js';
 export type { ChatBubbleProps } from './ChatBubble.js';
+export type { PressableCardProps, CheckboxProps } from './PressableCard.js';
 export type { NeoColors } from './theme.js';

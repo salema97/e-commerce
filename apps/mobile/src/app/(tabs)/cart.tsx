@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,9 +24,9 @@ export default function CartScreen(): React.ReactElement {
           </Text>
           <Text style={styles.price}>{formatPrice(item.price)}</Text>
         </View>
-        <TouchableOpacity onPress={() => removeItem(item.productId, item.variantId)}>
-          <Text style={styles.remove}>Eliminar</Text>
-        </TouchableOpacity>
+        <Button variant="ghost" size="sm" onPress={() => removeItem(item.productId, item.variantId)}>
+          Eliminar
+        </Button>
       </View>
 
       <View style={styles.quantityRow}>

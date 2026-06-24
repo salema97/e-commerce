@@ -106,13 +106,13 @@ export function SupportInbox({ currentUserId }: SupportInboxProps) {
 
   return (
     <div className="flex h-[calc(100vh-7rem)] flex-col gap-4">
-      <h1 className="text-2xl font-bold">Bandeja de soporte</h1>
+      <h1 className="neo-page-title">Bandeja de soporte</h1>
       {conversationsQuery.isError ? (
         <p className="text-sm text-destructive">
           No se pudieron cargar las conversaciones. Recarga la página o vuelve a iniciar sesión.
         </p>
       ) : null}
-      <div className="grid flex-1 overflow-hidden rounded-lg border lg:grid-cols-[360px_1fr]">
+      <div className="neo-panel grid flex-1 overflow-hidden lg:grid-cols-[360px_1fr]">
         <ConversationList
           conversations={conversationsQuery.data?.data ?? []}
           selectedId={selectedId}

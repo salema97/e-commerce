@@ -18,14 +18,13 @@ export default async function AdminCategoriesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Categorías</h1>
+        <h1 className="neo-page-title">Categorías</h1>
         <Link href="/admin/categories/new">
           <Button>Agregar categoría</Button>
         </Link>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
+      <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Nombre</TableHead>
@@ -53,7 +52,6 @@ export default async function AdminCategoriesPage() {
             ))}
           </TableBody>
         </Table>
-      </div>
     </div>
   );
 }

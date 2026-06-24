@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { FormSelect } from '@/components/ui/form-select';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import {
   formatPrice,
@@ -122,60 +126,56 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-              <div className="flex flex-col gap-3">
+              <RadioGroup
+                value={method}
+                onValueChange={(value) => setMethod(value as RefundMethod)}
+                className="flex flex-col gap-3"
+              >
                 {METHODS.map((m) => (
-                  <label
+                  <Label
                     key={m}
-                    className="flex cursor-pointer items-center gap-3 rounded-md border p-3 hover:bg-muted/50"
+                    htmlFor={`method-${m}`}
+                    className="flex cursor-pointer items-center gap-3 border-[3px] border-neo-onyx bg-white p-3 shadow-[4px_4px_0_0_#111111] transition-colors hover:bg-neo-gold normal-case"
                   >
-                    <input
-                      type="radio"
-                      name="refundMethod"
-                      value={m}
-                      checked={method === m}
-                      onChange={() => setMethod(m)}
-                    />
-                    <span className="font-medium">{refundMethodLabel(m)}</span>
-                  </label>
+                    <RadioGroupItem value={m} id={`method-${m}`} />
+                    <span className="font-bold">{refundMethodLabel(m)}</span>
+                  </Label>
                 ))}
-              </div>
+              </RadioGroup>
 
               {method === 'EXCHANGE' ? (
-                <div className="grid gap-3">
-                  <div className="grid gap-2">
-                    <label htmlFor="exchangeProduct" className="text-sm font-medium">Producto de reemplazo</label>
-                    <select
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="exchangeProduct">Producto de reemplazo</Label>
+                    <FormSelect
                       id="exchangeProduct"
                       value={exchangeProductId}
-                      onChange={(e) => handleProductChange(e.target.value)}
-                      className="rounded-md border px-3 py-2 text-sm"
+                      onValueChange={handleProductChange}
+                      placeholder="Seleccionar un producto"
                       required
-                    >
-                      <option value="" disabled>Seleccionar un producto</option>
-                      {products?.map((product: Product) => (
-                        <option key={product.id} value={product.id}>
-                          {product.name}
-                        </option>
-                      ))}
-                    </select>
+                      options={products.map((product: Product) => ({
+                        value: product.id,
+                        label: product.name,
+                      }))}
+                    />
                   </div>
 
                   {selectedProduct && selectedProduct.variants && selectedProduct.variants.length > 0 ? (
-                    <div className="grid gap-2">
-                      <label htmlFor="exchangeVariant" className="text-sm font-medium">Variante</label>
-                      <select
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="exchangeVariant">Variante</Label>
+                      <FormSelect
                         id="exchangeVariant"
                         value={exchangeVariantId}
-                        onChange={(e) => handleVariantChange(e.target.value)}
-                        className="rounded-md border px-3 py-2 text-sm"
-                      >
-                        <option value="">Variante predeterminada</option>
-                        {selectedProduct.variants.map((variant: ProductVariant) => (
-                          <option key={variant.id} value={variant.id}>
-                            {variant.name} ({variant.sku})
-                          </option>
-                        ))}
-                      </select>
+                        onValueChange={handleVariantChange}
+                        placeholder="Variante predeterminada"
+                        options={[
+                          { value: '', label: 'Variante predeterminada' },
+                          ...selectedProduct.variants.map((variant: ProductVariant) => ({
+                            value: variant.id,
+                            label: `${variant.name} (${variant.sku})`,
+                          })),
+                        ]}
+                      />
                     </div>
                   ) : null}
 
@@ -185,13 +185,12 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
                 </div>
               ) : null}
 
-              <div className="grid gap-2">
-                <label htmlFor="notes" className="text-sm font-medium">Notas</label>
-                <textarea
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="notes">Notas</Label>
+                <Textarea
                   id="notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="rounded-md border px-3 py-2 text-sm"
                   rows={3}
                 />
               </div>

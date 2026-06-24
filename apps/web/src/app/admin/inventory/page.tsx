@@ -17,14 +17,13 @@ export default async function AdminInventoryPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Inventario</h1>
+        <h1 className="neo-page-title">Inventario</h1>
         <Link href="/admin/inventory/new">
           <Button>Agregar stock</Button>
         </Link>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
+      <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Producto</TableHead>
@@ -52,7 +51,6 @@ export default async function AdminInventoryPage() {
             ))}
           </TableBody>
         </Table>
-      </div>
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select } from '@/components/ui/select';
+import { FormSelect } from '@/components/ui/form-select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -103,14 +103,15 @@ export function RefundPanel({ order }: RefundPanelProps) {
           <form onSubmit={handleRefund} className="flex flex-col gap-4">
             <div className="grid gap-2">
               <Label htmlFor="refundType">Tipo de reembolso</Label>
-              <Select
+              <FormSelect
                 id="refundType"
                 value={type}
-                onChange={(e) => setType(e.target.value as 'full' | 'partial')}
-              >
-                <option value="full">Total ({formatPrice(Number(order.total))})</option>
-                <option value="partial">Parcial</option>
-              </Select>
+                onValueChange={(value) => setType(value as 'full' | 'partial')}
+                options={[
+                  { value: 'full', label: `Total (${formatPrice(Number(order.total))})` },
+                  { value: 'partial', label: 'Parcial' },
+                ]}
+              />
             </div>
 
             {type === 'partial' ? (

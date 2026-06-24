@@ -3,13 +3,13 @@ import {
   View,
   Text,
   FlatList,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card, Input, Badge, neo } from '@repo/shared-ui';
+import { Card, Input, Badge, PressableCard, neo } from '@repo/shared-ui';
 import { api } from '../../lib/api.js';
 import { formatPrice } from '@repo/shared-utils';
 import type { Product, Category } from '@repo/shared-types';
@@ -40,7 +40,7 @@ export default function StoreScreen(): React.ReactElement {
   }, [products, search, selectedCategory]);
 
   const renderCategory = ({ item }: { item: Category }) => (
-    <TouchableOpacity
+    <Pressable
       onPress={() =>
         setSelectedCategory((current) => (current === item.id ? null : item.id))
       }
@@ -49,15 +49,15 @@ export default function StoreScreen(): React.ReactElement {
       <Badge variant={selectedCategory === item.id ? 'secondary' : 'outline'}>
         {item.name}
       </Badge>
-    </TouchableOpacity>
+    </Pressable>
   );
 
   const renderProduct = ({ item }: { item: Product }) => (
-    <TouchableOpacity
-      activeOpacity={0.9}
+    <PressableCard
+      padding="sm"
+      cardStyle={styles.productCard}
       onPress={() => router.push({ pathname: '/(tabs)/product/[id]', params: { id: item.id } })}
     >
-      <Card style={styles.productCard}>
         <Text style={styles.productName} numberOfLines={2}>
           {item.name}
         </Text>
@@ -68,8 +68,7 @@ export default function StoreScreen(): React.ReactElement {
           <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
           {item.compareAtPrice ? <Badge variant="destructive" size="sm">Oferta</Badge> : null}
         </View>
-      </Card>
-    </TouchableOpacity>
+    </PressableCard>
   );
 
   return (

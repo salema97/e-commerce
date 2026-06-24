@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useApiClient } from '@/lib/client-api';
 
 export default function NewCategoryPage() {
@@ -53,8 +54,8 @@ export default function NewCategoryPage() {
               <Textarea id="description" name="description" />
             </div>
             <div className="flex items-center gap-2">
-              <input id="isActive" name="isActive" type="checkbox" defaultChecked />
-              <Label htmlFor="isActive">Activa</Label>
+              <Checkbox id="isActive" name="isActive" defaultChecked />
+              <Label htmlFor="isActive" className="normal-case">Activa</Label>
             </div>
           </CardContent>
         </Card>

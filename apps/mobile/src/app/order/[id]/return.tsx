@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card, Button } from '@repo/shared-ui';
+import { Card, Button, Input, Textarea } from '@repo/shared-ui';
 import { api } from '../../../lib/api.js';
 import { formatPrice } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
@@ -134,9 +134,8 @@ export default function ReturnRequestScreen(): React.ReactElement {
 
             {selected[item.id] ? (
               <View style={styles.inputs}>
-                <Text style={styles.label}>Cantidad (máx. {item.quantity})</Text>
-                <TextInput
-                  style={[styles.input, !canRequestReturn && styles.inputDisabled]}
+                <Input
+                  label={`Cantidad (máx. ${item.quantity})`}
                   keyboardType="numeric"
                   value={String(selected[item.id].qty)}
                   onChangeText={(text) =>
@@ -153,9 +152,8 @@ export default function ReturnRequestScreen(): React.ReactElement {
                   }
                   editable={canRequestReturn}
                 />
-                <Text style={styles.label}>Motivo</Text>
-                <TextInput
-                  style={[styles.input, !canRequestReturn && styles.inputDisabled]}
+                <Textarea
+                  label="Motivo"
                   value={selected[item.id].reason}
                   onChangeText={(text) =>
                     setSelected((prev) => ({

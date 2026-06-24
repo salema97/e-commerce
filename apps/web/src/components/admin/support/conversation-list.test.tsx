@@ -92,9 +92,8 @@ describe('ConversationList', () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText(/Filtrar por estado/i), {
-      target: { value: 'PENDING' },
-    });
+    fireEvent.click(screen.getByRole('combobox', { name: /Filtrar por estado/i }));
+    fireEvent.click(screen.getByRole('option', { name: /Pendientes/i }));
 
     expect(onFilterChange).toHaveBeenCalledWith({ status: 'PENDING' });
   });
@@ -129,6 +128,6 @@ describe('ConversationList', () => {
       />,
     );
 
-    expect(screen.getByTestId('conversation-item-c1')).toHaveClass('bg-primary/10');
+    expect(screen.getByTestId('conversation-item-c1')).toHaveClass('bg-neo-gold');
   });
 });

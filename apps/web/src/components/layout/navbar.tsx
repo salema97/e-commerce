@@ -98,14 +98,15 @@ export function Navbar() {
                   {user.name ?? user.email}
                 </span>
               </Link>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={handleSignOut}
-                className="flex items-center border-l-[3px] border-neo-onyx px-4 font-bold uppercase hover:bg-neo-gold"
+                className="h-full rounded-none border-l-[3px] border-neo-onyx px-4 font-bold uppercase hover:bg-neo-gold"
               >
                 <LogOut className="mr-2 size-4" strokeWidth={3} />
                 Salir
-              </button>
+              </Button>
             </div>
           ) : !loading ? (
             <div className="hidden items-stretch lg:flex">
@@ -136,8 +137,8 @@ export function Navbar() {
         </div>
       </div>
 
-      <Sheet open={mobileOpen} onOpenChange={setMobileOpen} side="right">
-        <SheetContent className="border-l-[3px] border-neo-onyx bg-neo-lace">
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="right" className="border-l-[3px] border-neo-onyx bg-neo-lace">
           <SheetHeader>
             <SheetTitle className="font-anton text-3xl uppercase">Menú</SheetTitle>
           </SheetHeader>

@@ -103,9 +103,8 @@ describe('ConversationDetail', () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText(/Estado de la conversación/i), {
-      target: { value: 'RESOLVED' },
-    });
+    fireEvent.click(screen.getByRole('combobox', { name: /Estado de la conversación/i }));
+    fireEvent.click(screen.getByRole('option', { name: /Resuelto/i }));
 
     expect(onUpdateConversation).toHaveBeenCalledWith({ status: 'RESOLVED' });
   });
@@ -122,9 +121,8 @@ describe('ConversationDetail', () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText(/Respuestas rápidas/i), {
-      target: { value: 'greeting' },
-    });
+    fireEvent.click(screen.getByRole('combobox', { name: /Respuestas rápidas/i }));
+    fireEvent.click(screen.getByRole('option', { name: /Saludo/i }));
 
     expect(screen.getByDisplayValue('Hola, ¿cómo estás?')).toBeInTheDocument();
   });

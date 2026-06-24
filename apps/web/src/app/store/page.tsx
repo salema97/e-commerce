@@ -1,10 +1,9 @@
 import Link from 'next/link';
 import { getServerApiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { ProductCard } from '@/components/store/product-card';
+import { StoreFilters } from '@/components/store/store-filters';
 import type { Product, Category } from '@repo/shared-types';
 
 interface StorePageProps {
@@ -67,54 +66,12 @@ export default async function StorePage({ searchParams }: StorePageProps) {
 
       <div className="mt-6 flex flex-col gap-8 lg:flex-row">
         <aside className="w-full lg:w-72">
-          <form
-            className="flex flex-col gap-4 border-[3px] border-neo-onyx bg-white p-5 shadow-[6px_6px_0_0_#111111]"
-            action="/store"
-            method="GET"
-          >
-            <div className="flex flex-col gap-2">
-              <label htmlFor="search" className="text-sm font-bold uppercase">
-                Buscar
-              </label>
-              <Input
-                id="search"
-                name="search"
-                defaultValue={search}
-                placeholder="Buscar productos..."
-                className="normal-case"
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label htmlFor="category" className="text-sm font-bold uppercase">
-                Categoría
-              </label>
-              <Select id="category" name="category" defaultValue={categorySlug ?? ''}>
-                <option value="">Todas</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.slug}>
-                    {category.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label htmlFor="sort" className="text-sm font-bold uppercase">
-                Ordenar
-              </label>
-              <Select id="sort" name="sort" defaultValue={sort}>
-                <option value="newest">Más recientes</option>
-                <option value="price_asc">Precio: menor a mayor</option>
-                <option value="price_desc">Precio: mayor a menor</option>
-                <option value="name_asc">Nombre A-Z</option>
-              </Select>
-            </div>
-
-            <Button type="submit" className="w-full">
-              Aplicar filtros
-            </Button>
-          </form>
+          <StoreFilters
+            search={search}
+            categorySlug={categorySlug}
+            sort={sort}
+            categories={categories}
+          />
         </aside>
 
         <div className="flex-1">

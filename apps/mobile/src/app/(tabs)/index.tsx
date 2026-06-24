@@ -3,13 +3,12 @@ import {
   View,
   Text,
   FlatList,
-  TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card, Button, neo } from '@repo/shared-ui';
+import { Card, Button, PressableCard, neo } from '@repo/shared-ui';
 import { api } from '../../lib/api.js';
 import { formatPrice } from '@repo/shared-utils';
 import type { Product } from '@repo/shared-types';
@@ -25,21 +24,20 @@ export default function HomeScreen(): React.ReactElement {
   }, [products]);
 
   const renderProduct = ({ item }: { item: Product }) => (
-    <TouchableOpacity
-      activeOpacity={0.9}
-      onPress={() => router.push({ pathname: '/(tabs)/product/[id]', params: { id: item.id } })}
+    <PressableCard
       style={styles.productTouchable}
+      cardStyle={styles.productCard}
+      padding="sm"
+      onPress={() => router.push({ pathname: '/(tabs)/product/[id]', params: { id: item.id } })}
     >
-      <Card style={styles.productCard} padding="sm">
-        <View style={styles.productTop}>
-          <Text style={styles.productName} numberOfLines={2}>
-            {item.name}
-          </Text>
-          {item.isFeatured ? <View style={styles.featuredDot} /> : null}
-        </View>
-        <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
-      </Card>
-    </TouchableOpacity>
+      <View style={styles.productTop}>
+        <Text style={styles.productName} numberOfLines={2}>
+          {item.name}
+        </Text>
+        {item.isFeatured ? <View style={styles.featuredDot} /> : null}
+      </View>
+      <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
+    </PressableCard>
   );
 
   return (

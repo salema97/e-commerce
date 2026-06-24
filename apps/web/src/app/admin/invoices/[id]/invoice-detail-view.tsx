@@ -7,6 +7,7 @@ import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { InvoiceStatusBadge } from '@/components/admin/invoices/invoice-status-badge';
 import { InvoiceActions } from '@/components/admin/invoices/invoice-actions';
 import { formatDateTime, formatPrice } from '@repo/shared-utils';
@@ -53,7 +54,7 @@ export function InvoiceDetailView({ id }: InvoiceDetailViewProps) {
   if (!invoice) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold">Factura no encontrada</h1>
+        <h1 className="neo-page-title">Factura no encontrada</h1>
         <Link href="/admin/invoices">
           <Button variant="outline">Volver al listado</Button>
         </Link>
@@ -67,7 +68,7 @@ export function InvoiceDetailView({ id }: InvoiceDetailViewProps) {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">Factura SRI</h1>
+          <h1 className="neo-page-title">Factura SRI</h1>
           <InvoiceStatusBadge status={invoice.status} />
         </div>
         <Link href="/admin/invoices">
@@ -76,13 +77,13 @@ export function InvoiceDetailView({ id }: InvoiceDetailViewProps) {
       </div>
 
       {showError ? (
-        <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
-          <p className="font-medium">La emisión de esta factura falló o fue rechazada por el SRI.</p>
-          <p>
-            Revisa la información e intenta reenviarla. Si el problema persiste, contacta al
-            administrador del sistema.
-          </p>
-        </div>
+        <Alert variant="destructive">
+          <AlertTitle>Error de facturación SRI</AlertTitle>
+          <AlertDescription>
+            La emisión de esta factura falló o fue rechazada por el SRI. Revisa la información e
+            intenta reenviarla. Si el problema persiste, contacta al administrador del sistema.
+          </AlertDescription>
+        </Alert>
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-3">

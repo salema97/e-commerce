@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useCartStore } from '@/lib/cart-store';
 import type { CartItem } from '@/lib/cart-store';
 import { useApiClient } from '@/lib/client-api';
@@ -251,13 +252,13 @@ function OrderSummaryCard(props: OrderSummaryCardProps) {
 function CheckoutSkeleton() {
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="h-8 w-40 animate-pulse rounded bg-muted" />
+      <Skeleton className="h-10 w-40" />
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <div className="h-64 animate-pulse rounded bg-muted" />
-          <div className="h-32 animate-pulse rounded bg-muted" />
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-32 w-full" />
         </div>
-        <div className="h-72 animate-pulse rounded bg-muted" />
+        <Skeleton className="h-72 w-full" />
       </div>
     </div>
   );

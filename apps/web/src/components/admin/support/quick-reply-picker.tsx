@@ -1,6 +1,8 @@
 'use client';
 
+import * as React from 'react';
 import type { QuickReply } from '@repo/shared-types';
+import { FormSelect } from '@/components/ui/form-select';
 
 interface QuickReplyPickerProps {
   replies: QuickReply[];
@@ -9,23 +11,24 @@ interface QuickReplyPickerProps {
 }
 
 export function QuickReplyPicker({ replies, onSelect, disabled }: QuickReplyPickerProps) {
+  const [resetKey, setResetKey] = React.useState(0);
+
   return (
-    <select
-      aria-label="Respuestas rápidas"
-      className="h-9 rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+    <FormSelect
+      key={resetKey}
+      ariaLabel="Respuestas rápidas"
+      placeholder="Respuesta rápida"
       disabled={disabled || replies.length === 0}
-      onChange={(e) => {
-        const reply = replies.find((r) => r.id === e.target.value);
+      triggerClassName="h-9"
+      options={replies.map((reply) => ({
+        value: reply.id,
+        label: reply.label,
+      }))}
+      onValueChange={(replyId) => {
+        const reply = replies.find((item) => item.id === replyId);
         if (reply) onSelect(reply.text);
-        e.target.value = '';
+        setResetKey((current) => current + 1);
       }}
-    >
-      <option value="">Respuesta rápida</option>
-      {replies.map((reply) => (
-        <option key={reply.id} value={reply.id}>
-          {reply.label}
-        </option>
-      ))}
-    </select>
+    />
   );
 }

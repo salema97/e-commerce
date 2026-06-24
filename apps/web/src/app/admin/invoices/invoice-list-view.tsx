@@ -93,7 +93,7 @@ export function InvoiceListView() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Facturación</h1>
+      <h1 className="neo-page-title">Facturación</h1>
 
       <InvoiceFilters
         filters={filters}
@@ -101,8 +101,7 @@ export function InvoiceListView() {
         onSearch={handleApplyFilters}
       />
 
-      <div className="rounded-md border">
-        <Table>
+      <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Clave de acceso</TableHead>
@@ -144,7 +143,7 @@ export function InvoiceListView() {
                   <TableCell>
                     <Link
                       href={`/admin/orders/${invoice.orderId}`}
-                      className="text-primary hover:underline"
+                      className="font-bold uppercase text-neo-onyx underline-offset-4 hover:bg-neo-gold hover:underline"
                     >
                       {invoice.orderId.slice(0, 8)}
                     </Link>
@@ -172,7 +171,6 @@ export function InvoiceListView() {
             )}
           </TableBody>
         </Table>
-      </div>
 
       <div className="flex items-center justify-between">
         <Button

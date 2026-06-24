@@ -18,10 +18,9 @@ export default async function AdminCustomersPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Clientes</h1>
+      <h1 className="neo-page-title">Clientes</h1>
 
-      <div className="rounded-md border">
-        <Table>
+      <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Correo electrónico</TableHead>
@@ -47,7 +46,6 @@ export default async function AdminCustomersPage() {
             ))}
           </TableBody>
         </Table>
-      </div>
     </div>
   );
 }

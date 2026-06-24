@@ -6,6 +6,9 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { FormSelect } from '@/components/ui/form-select';
+import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { useApiClient } from '@/lib/client-api';
 import {
@@ -129,30 +132,23 @@ export default function ReturnDetail({ returnRequest }: { returnRequest: ReturnR
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleStatusUpdate} className="flex flex-col gap-4">
-                  <div className="grid gap-2">
-                    <label htmlFor="status" className="text-sm font-medium">Estado</label>
-                    <select
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="status">Estado</Label>
+                    <FormSelect
                       id="status"
                       name="status"
-                      className="rounded-md border px-3 py-2 text-sm"
                       defaultValue=""
-                    >
-                      <option value="" disabled>Seleccionar estado</option>
-                      {availableTransitions.map((status) => (
-                        <option key={status} value={status}>
-                          {returnStatusLabel(status)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="grid gap-2">
-                    <label htmlFor="notes" className="text-sm font-medium">Notas</label>
-                    <textarea
-                      id="notes"
-                      name="notes"
-                      className="rounded-md border px-3 py-2 text-sm"
-                      rows={3}
+                      placeholder="Seleccionar estado"
+                      required
+                      options={availableTransitions.map((status) => ({
+                        value: status,
+                        label: returnStatusLabel(status),
+                      }))}
                     />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="notes">Notas</Label>
+                    <Textarea id="notes" name="notes" rows={3} />
                   </div>
                   <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? 'Actualizando…' : 'Actualizar estado'}

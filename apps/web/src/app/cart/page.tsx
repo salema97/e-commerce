@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useCartStore } from '@/lib/cart-store';
 import { formatPrice } from '@repo/shared-utils';
 
@@ -117,14 +118,14 @@ export default function CartPage() {
 function CartSkeleton() {
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+      <Skeleton className="h-10 w-48" />
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 flex flex-col gap-4">
           {[1, 2].map((i) => (
-            <div key={i} className="h-24 animate-pulse rounded bg-muted" />
+            <Skeleton key={i} className="h-24 w-full" />
           ))}
         </div>
-        <div className="h-64 animate-pulse rounded bg-muted" />
+        <Skeleton className="h-64 w-full" />
       </div>
     </div>
   );

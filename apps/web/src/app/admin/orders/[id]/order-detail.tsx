@@ -3,9 +3,9 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Select } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { FormSelect } from '@/components/ui/form-select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -122,13 +122,15 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
               <form onSubmit={handleStatusUpdate} className="flex flex-col gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="status">Estado</Label>
-                  <Select id="status" name="status" defaultValue={order.status}>
-                    {ORDER_STATUSES.map((status) => (
-                      <option key={status} value={status}>
-                        {orderStatusLabel(status)}
-                      </option>
-                    ))}
-                  </Select>
+                  <FormSelect
+                    id="status"
+                    name="status"
+                    defaultValue={order.status}
+                    options={ORDER_STATUSES.map((status) => ({
+                      value: status,
+                      label: orderStatusLabel(status),
+                    }))}
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="notes">Notas</Label>

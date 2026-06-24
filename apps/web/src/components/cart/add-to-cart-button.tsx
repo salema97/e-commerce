@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { FormSelect } from '@/components/ui/form-select';
 import { useCartStore } from '@/lib/cart-store';
 import type { Product } from '@repo/shared-types';
 
@@ -32,17 +32,16 @@ export function AddToCartButton({ product }: { product: Product }) {
       {product.variants && product.variants.length > 0 ? (
         <div className="flex flex-col gap-2">
           <Label htmlFor="variant">Variante</Label>
-          <Select
+          <FormSelect
             id="variant"
             value={variantId}
-            onChange={(e) => setVariantId(e.target.value)}
-          >
-            {product.variants.map((variant) => (
-              <option key={variant.id} value={variant.id}>
-                {variant.name}
-              </option>
-            ))}
-          </Select>
+            onValueChange={setVariantId}
+            placeholder="Seleccionar variante"
+            options={product.variants.map((variant) => ({
+              value: variant.id,
+              label: variant.name,
+            }))}
+          />
         </div>
       ) : null}
 

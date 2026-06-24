@@ -47,7 +47,7 @@ export function SignUpForm() {
   return (
     <form onSubmit={onSubmit} className="mx-auto flex w-full max-w-sm flex-col gap-4">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold">Crear cuenta</h1>
+        <h1 className="neo-page-title">Crear cuenta</h1>
         <p className="text-sm text-muted-foreground">Regístrate para comprar y seguir tus pedidos</p>
       </div>
 

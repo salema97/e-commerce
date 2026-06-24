@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select } from '@/components/ui/select';
+import { FormSelect } from '@/components/ui/form-select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useApiClient } from '@/lib/client-api';
 import type { Product, ProductStatus } from '@repo/shared-types';
 
@@ -75,11 +76,16 @@ export default function EditProductPage({ product }: { product: Product }) {
 
             <div className="grid gap-2">
               <Label htmlFor="status">Estado</Label>
-              <Select id="status" name="status" defaultValue={product.status}>
-                <option value="DRAFT">Borrador</option>
-                <option value="ACTIVE">Activo</option>
-                <option value="ARCHIVED">Archivado</option>
-              </Select>
+              <FormSelect
+                id="status"
+                name="status"
+                defaultValue={product.status}
+                options={[
+                  { value: 'DRAFT', label: 'Borrador' },
+                  { value: 'ACTIVE', label: 'Activo' },
+                  { value: 'ARCHIVED', label: 'Archivado' },
+                ]}
+              />
             </div>
 
             <div className="grid grid-cols-3 gap-4">
@@ -117,13 +123,12 @@ export default function EditProductPage({ product }: { product: Product }) {
             </div>
 
             <div className="flex items-center gap-2">
-              <input
+              <Checkbox
                 id="isFeatured"
                 name="isFeatured"
-                type="checkbox"
                 defaultChecked={product.isFeatured}
               />
-              <Label htmlFor="isFeatured">Producto destacado</Label>
+              <Label htmlFor="isFeatured" className="normal-case">Producto destacado</Label>
             </div>
           </CardContent>
         </Card>

@@ -25,14 +25,13 @@ export default async function AdminProductsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Productos</h1>
+        <h1 className="neo-page-title">Productos</h1>
         <Link href="/admin/products/new">
           <Button>Agregar producto</Button>
         </Link>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
+      <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Nombre</TableHead>
@@ -60,7 +59,6 @@ export default async function AdminProductsPage() {
             ))}
           </TableBody>
         </Table>
-      </div>
     </div>
   );
 }
