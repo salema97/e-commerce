@@ -36,7 +36,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 | Phase 8 — Financial Module | ✅ Yes | Incomes, expenses, cash-flow, admin UI merged. |
 | Phase 9 — Email/Push/Marketing | ✅ | Resend/Loops, push Expo/OneSignal, marketing automation, consent UI. |
 | Phase 10 — AI & Conversational | ✅ Yes | Guardrails, RAG, human escalation. |
-| Phase 11 — Advanced Analytics | ❌ | Standard event tracking. |
+| Phase 11 — Advanced Analytics | ✅ | Merged `12427aa`; UI wiring verified post-merge. |
 | Phase 12 — Shipping/Fulfillment | ⚠️ Partial | SDD for WMS/3PL integration if implemented. |
 | Phase 13 — Search/Filters | ❌ | Standard Meilisearch usage. |
 | Phase 14 — Reviews/Referrals/Loyalty | ❌ | Common low-risk features. |

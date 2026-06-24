@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useStripe } from '@stripe/stripe-react-native';
@@ -9,6 +9,8 @@ import { api } from '../lib/api.js';
 import { useCart } from '../lib/cart.js';
 import { formatPrice } from '@repo/shared-utils';
 import type { OrderAddress, CreateOrderDto, CreatePaymentIntentDto } from '@repo/shared-types';
+import { trackMobileEvent } from '../lib/analytics.js';
+import { useAuth } from '../providers/AuthProvider.js';
 
 const FREE_SHIPPING_THRESHOLD = 50;
 const SHIPPING_FLAT_RATE = 5;
@@ -16,8 +18,14 @@ const TAX_RATE = 0.15;
 
 export default function CheckoutScreen(): React.ReactElement {
   const router = useRouter();
+  const { user } = useAuth();
   const { items, total: cartTotal, clearCart } = useCart();
   const stripe = useStripe();
+
+  useEffect(() => {
+    if (items.length === 0) return;
+    void trackMobileEvent('begin_checkout', { itemCount: items.length, total: cartTotal }, user?.id);
+  }, [items.length, cartTotal, user?.id]);
 
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -112,6 +120,7 @@ export default function CheckoutScreen(): React.ReactElement {
 
       // Payment Sheet completed. The Stripe webhook is the source of truth for
       // order status; navigate to the order detail screen.
+      void trackMobileEvent('purchase', { orderId: order.id, total: order.total }, user?.id);
       clearCart();
       router.replace({ pathname: '/order/[id]', params: { id: order.id } });
     } catch {

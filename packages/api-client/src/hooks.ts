@@ -71,6 +71,8 @@ import type {
   Promotion,
   DistributePromoDto,
   DistributePromoResponse,
+  AnalyticsOverviewReport,
+  CohortRetentionReport,
 } from '@repo/shared-types';
 import type { ApiClient } from './client.js';
 
@@ -117,6 +119,9 @@ export const queryKeys = {
   adminFaqs: ['ai', 'faqs', 'admin'] as const,
   adminCmsPages: ['ai', 'cms-pages', 'admin'] as const,
   marketingPromotions: ['marketing', 'promotions'] as const,
+  analyticsOverview: (days: number) => ['analytics', 'overview', days] as const,
+  analyticsFunnel: (days: number) => ['analytics', 'funnel', days] as const,
+  analyticsCohorts: (weeks: number) => ['analytics', 'cohorts', weeks] as const,
 };
 
 export function createQueryHooks(client: ApiClient) {
@@ -1086,6 +1091,36 @@ export function createQueryHooks(client: ApiClient) {
     ) =>
       useMutation({
         mutationFn: (token) => client.notifications.pushTokens.remove(token),
+        ...options,
+      }),
+
+    useAnalyticsOverview: (
+      days = 30,
+      options?: Omit<UseQueryOptions<AnalyticsOverviewReport, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.analyticsOverview(days),
+        queryFn: () => client.analytics.getOverview(days),
+        ...options,
+      }),
+
+    useAnalyticsFunnel: (
+      days = 30,
+      options?: Omit<UseQueryOptions<Record<string, number>, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.analyticsFunnel(days),
+        queryFn: () => client.analytics.getFunnel(days),
+        ...options,
+      }),
+
+    useAnalyticsCohorts: (
+      weeks = 8,
+      options?: Omit<UseQueryOptions<CohortRetentionReport, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.analyticsCohorts(weeks),
+        queryFn: () => client.analytics.getCohorts(weeks),
         ...options,
       }),
   };

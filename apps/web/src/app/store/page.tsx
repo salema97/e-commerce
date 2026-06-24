@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { StoreFilters } from '@/components/store/store-filters';
 import { StoreProductGrid } from '@/components/store/store-product-grid';
+import { StoreAnalyticsTracker } from '@/components/analytics/store-analytics-tracker';
 import type { Product, Category } from '@repo/shared-types';
 
 interface StorePageProps {
@@ -76,6 +77,7 @@ export default async function StorePage({ searchParams }: StorePageProps) {
         </header>
       }
     >
+      <StoreAnalyticsTracker />
       <div className="mt-6 flex flex-col gap-8 lg:flex-row">
         <aside className="w-full lg:w-72">
           <StoreFilters

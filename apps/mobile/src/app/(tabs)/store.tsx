@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,13 +14,32 @@ import { api } from '../../lib/api.js';
 import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
 import type { Product, Category } from '@repo/shared-types';
 import { NeoEnterFromTop, NeoStaggeredItem } from '../../components/neo-animated.js';
+import { trackMobileEvent } from '../../lib/analytics.js';
+import { useAuth } from '../../providers/AuthProvider.js';
 
 export default function StoreScreen(): React.ReactElement {
   const router = useRouter();
+  const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const lastSearchRef = useRef<string | null>(null);
+  const lastCategoryRef = useRef<string | null>(null);
 
   const trimmedSearch = search.trim();
+
+  useEffect(() => {
+    if (trimmedSearch.length >= 2 && trimmedSearch !== lastSearchRef.current) {
+      lastSearchRef.current = trimmedSearch;
+      void trackMobileEvent('search', { query: trimmedSearch }, user?.id);
+    }
+  }, [trimmedSearch, user?.id]);
+
+  useEffect(() => {
+    if (selectedCategory && selectedCategory !== lastCategoryRef.current) {
+      lastCategoryRef.current = selectedCategory;
+      void trackMobileEvent('filter', { categoryId: selectedCategory }, user?.id);
+    }
+  }, [selectedCategory, user?.id]);
 
   const {
     data: products,

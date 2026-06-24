@@ -29,6 +29,7 @@ import { RedisModule } from './common/redis/redis.module.js';
 import { FinanceModule } from './finance/finance.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { AiModule } from './ai/ai.module.js';
+import { AnalyticsModule } from './analytics/analytics.module.js';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { AiModule } from './ai/ai.module.js';
     FinanceModule,
     NotificationsModule,
     AiModule,
+    AnalyticsModule,
   ],
   providers: [
     {

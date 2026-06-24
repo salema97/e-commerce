@@ -18,6 +18,7 @@ import {
   BookOpen,
   Megaphone,
   Store,
+  Wallet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { sidebarIconHover, sidebarIconRest } from '@/lib/neo-motion';
@@ -33,10 +34,11 @@ const navIcons: Record<string, React.ElementType> = {
   '/admin/returns': RotateCcw,
   '/admin/customers': Users,
   '/admin/marketing': Megaphone,
+  '/admin/analytics': BarChart3,
   '/admin/support': MessageSquare,
   '/admin/knowledge': BookOpen,
   '/admin/invoices': FileText,
-  '/admin/finance': BarChart3,
+  '/admin/finance': Wallet,
 };
 
 interface AdminSidebarProps {
