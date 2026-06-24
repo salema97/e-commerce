@@ -32,4 +32,17 @@ export class RedisIdempotencyService {
       return true;
     }
   }
+
+  /**
+   * Releases an idempotency key so a failed delivery can be retried.
+   */
+  async release(key: string): Promise<void> {
+    const fullKey = `${this.keyPrefix}${key}`;
+
+    try {
+      await this.redis.client.del(fullKey);
+    } catch (error) {
+      this.logger.warn({ error, key }, 'Failed to release idempotency key');
+    }
+  }
 }

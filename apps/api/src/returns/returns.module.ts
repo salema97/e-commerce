@@ -8,9 +8,17 @@ import { AuditModule } from '../audit/audit.module.js';
 import { PaymentsModule } from '../payments/payments.module.js';
 import { InvoicesModule } from '../invoices/invoices.module.js';
 import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
+import { NotificationsModule } from '../notifications/notifications.module.js';
 
 @Module({
-  imports: [PrismaModule, AuditModule, PaymentsModule, InvoicesModule, WhatsAppNotificationModule],
+  imports: [
+    PrismaModule,
+    AuditModule,
+    PaymentsModule,
+    InvoicesModule,
+    WhatsAppNotificationModule,
+    NotificationsModule,
+  ],
   controllers: [OrderReturnsController, ReturnsController],
   providers: [ReturnsService, StoreCreditService, ReturnNotificationService],
   exports: [ReturnsService, StoreCreditService, ReturnNotificationService],

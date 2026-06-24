@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { formatDateTime } from '@repo/shared-utils';
+import { formatDateTime, expenseStatusLabel } from '@repo/shared-utils';
 import type { Expense, ExpenseCategory, ExpenseStatus } from '@repo/shared-types';
 
 function formatMoney(amount: number): string {
@@ -129,9 +129,9 @@ export function ExpensesView({
             value={status}
             onValueChange={(value) => setStatus(value as ExpenseStatus)}
             options={[
-              { value: 'PENDING', label: 'PENDING' },
-              { value: 'PAID', label: 'PAID' },
-              { value: 'CANCELLED', label: 'CANCELLED' },
+              { value: 'PENDING', label: expenseStatusLabel('PENDING') },
+              { value: 'PAID', label: expenseStatusLabel('PAID') },
+              { value: 'CANCELLED', label: expenseStatusLabel('CANCELLED') },
             ]}
           />
         </div>
@@ -170,7 +170,7 @@ export function ExpensesView({
                   ? (categoryMap.get(expense.categoryId) ?? expense.categoryId)
                   : '—'}
               </TableCell>
-              <TableCell>{expense.status}</TableCell>
+              <TableCell>{expenseStatusLabel(expense.status)}</TableCell>
               <TableCell>{formatMoney(expense.amount)}</TableCell>
               <TableCell className="text-muted-foreground">
                 {expense.description ?? '—'}

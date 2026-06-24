@@ -96,6 +96,7 @@ export const queryKeys = {
     ['finance', 'expenses', filters ?? {}] as const,
   financeCashFlow: (from: string, to: string) => ['finance', 'cash-flow', from, to] as const,
   financeStoreCredits: ['finance', 'store-credits'] as const,
+  notificationPreferences: ['notifications', 'preferences'] as const,
 };
 
 export function createQueryHooks(client: ApiClient) {
@@ -687,6 +688,42 @@ export function createQueryHooks(client: ApiClient) {
       });
     },
 
+    useNotificationPreferences: (
+      options?: Omit<
+        UseQueryOptions<
+          { emailOptOut: boolean; marketingEmailOptOut: boolean; whatsappOptOut: boolean },
+          Error
+        >,
+        'queryKey' | 'queryFn'
+      >,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.notificationPreferences,
+        queryFn: () => client.notifications.preferences.get(),
+        ...options,
+      }),
+
+    useUpdateNotificationPreferences: (
+      options?: UseMutationOptions<
+        { emailOptOut: boolean; marketingEmailOptOut: boolean; whatsappOptOut: boolean },
+        Error,
+        {
+          emailOptOut?: boolean;
+          marketingEmailOptOut?: boolean;
+          whatsappOptOut?: boolean;
+        }
+      >,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.notifications.preferences.update(data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.notificationPreferences });
+        },
+        ...options,
+      });
+    },
+
     useFinanceExpenseCategories: (
       options?: Omit<UseQueryOptions<ExpenseCategory[], Error>, 'queryKey' | 'queryFn'>,
     ) =>
@@ -750,6 +787,19 @@ export function createQueryHooks(client: ApiClient) {
       useQuery({
         queryKey: queryKeys.financeStoreCredits,
         queryFn: () => client.finance.storeCredits.findAll(),
+        ...options,
+      }),
+
+    useSubscribeBackInStock: (
+      options?: UseMutationOptions<
+        { id: string; productId: string; email: string },
+        Error,
+        { productId: string; email: string }
+      >,
+    ) =>
+      useMutation({
+        mutationFn: ({ productId, email }) =>
+          client.products.subscribeBackInStock(productId, { email }),
         ...options,
       }),
   };

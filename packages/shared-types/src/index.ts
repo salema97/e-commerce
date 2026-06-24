@@ -17,5 +17,6 @@ export * from './audit-log.js';
 export * from './supplier.js';
 export * from './conversation.js';
 export * from './whatsapp.js';
+export * from './email.js';
 export * from './finance.js';
 export * from './dto.js';

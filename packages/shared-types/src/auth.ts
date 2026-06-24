@@ -6,6 +6,9 @@ export interface AuthUser {
   name: string | null;
   role: Role;
   phone: string | null;
+  emailOptOut: boolean;
+  marketingEmailOptOut: boolean;
+  whatsappOptOut: boolean;
 }
 
 export interface AuthTokens {

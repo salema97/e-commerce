@@ -10,6 +10,7 @@ import {
   InventoryReservationService,
   ReservationItem,
 } from './inventory-reservation.service.js';
+import { BackInStockAlertsService } from '../notifications/back-in-stock-alerts.service.js';
 
 const inventoryInclude = {
   product: { select: { id: true, name: true, slug: true } },
@@ -21,6 +22,7 @@ export class InventoryService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly reservationService: InventoryReservationService,
+    private readonly backInStockAlerts: BackInStockAlertsService,
   ) {}
 
   create(data: CreateInventoryDto) {
@@ -55,12 +57,21 @@ export class InventoryService {
   }
 
   async update(id: string, data: UpdateInventoryDto) {
-    await this.findOne(id);
-    return this.prisma.inventory.update({
+    const before = await this.findOne(id);
+    const beforeAvailable = before.quantity - before.reservedQuantity;
+
+    const updated = await this.prisma.inventory.update({
       where: { id },
       data,
       include: inventoryInclude,
     });
+
+    const afterAvailable = updated.quantity - updated.reservedQuantity;
+    if (beforeAvailable <= 0 && afterAvailable > 0) {
+      await this.backInStockAlerts.notifyRestocked(updated.productId).catch(() => undefined);
+    }
+
+    return updated;
   }
 
   async remove(id: string) {

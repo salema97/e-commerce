@@ -34,7 +34,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 | Phase 6 — WhatsApp Integration | ✅ Yes | Webhooks, signatures, human/bot handoff. |
 | Phase 7 — SRI Direct Integration | ✅ Yes | Legal/compliance; XML/XSD/SOAP/firm digital exact behavior. |
 | Phase 8 — Financial Module | ✅ Yes | Incomes, expenses, cash-flow, admin UI merged. |
-| Phase 9 — Email/Push/Marketing | ❌ | Standard integrations behind abstractions. |
+| Phase 9 — Email/Push/Marketing | ✅ | Resend/Loops, push Expo/OneSignal, marketing automation, consent UI. |
 | Phase 10 — AI & Conversational | ✅ Yes | Guardrails, RAG, human escalation. |
 | Phase 11 — Advanced Analytics | ❌ | Standard event tracking. |
 | Phase 12 — Shipping/Fulfillment | ⚠️ Partial | SDD for WMS/3PL integration if implemented. |
@@ -374,42 +374,42 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 ### 9.1 Email Infrastructure
 
-- [ ] Choose email provider: Resend (transactional default), Loops (marketing default), or SendGrid.
-- [ ] Add provider env vars (`RESEND_API_KEY`, `LOOPS_API_KEY`, etc.).
-- [ ] Build `EmailProvider` abstraction in `apps/api`.
-- [ ] Implement provider-specific transport with template support.
-- [ ] Shared email templates in `@repo/shared-utils` or a new `shared-email-templates` package.
+- [x] Choose email provider: Resend (transactional default), Loops (marketing default), or SendGrid.
+- [x] Add provider env vars (`RESEND_API_KEY`, `LOOPS_API_KEY`, etc.).
+- [x] Build `EmailProvider` abstraction in `apps/api`.
+- [x] Implement provider-specific transport with template support.
+- [x] Shared email templates in `@repo/shared-utils` or a new `shared-email-templates` package.
 
 ### 9.2 Transactional Emails
 
-- [ ] Order confirmation with invoice PDF attachment.
-- [ ] Shipping confirmation with tracking link.
-- [ ] Delivery confirmation.
-- [ ] Payment failure / retry.
-- [ ] Refund confirmation.
-- [ ] Password reset and account verification (via Clerk or custom).
-- [ ] Abandoned-cart reminder.
-- [ ] Back-in-stock alert emails for subscribed customers.
+- [x] Order confirmation with invoice PDF attachment (order summary PDF; SRI RIDE se envía aparte).
+- [x] Shipping confirmation with tracking link.
+- [x] Delivery confirmation.
+- [x] Payment failure / retry.
+- [x] Refund confirmation.
+- [x] Password reset and account verification (via Clerk or custom).
+- [x] Abandoned-cart reminder.
+- [x] Back-in-stock alert emails for subscribed customers.
 
 ### 9.3 Push Notifications
 
-- [ ] Evaluate Expo Notifications (MVP) vs OneSignal / FCM (scale).
-- [ ] Build `PushNotificationProvider` abstraction.
-- [ ] Implement mobile token registration and storage in Prisma.
-- [ ] Send push for order status updates, shipping, promotions.
-- [ ] Segmentation by user role, purchase history, cart status.
-- [ ] Rich push support (images, deep links).
-- [ ] Back-in-stock alert pushes.
+- [x] Evaluate Expo Notifications (MVP) vs OneSignal / FCM (scale).
+- [x] Build `PushNotificationProvider` abstraction.
+- [x] Implement mobile token registration and storage in Prisma.
+- [x] Send push for order status updates, shipping, promotions.
+- [x] Segmentation by user role, purchase history, cart status.
+- [x] Rich push support (images, deep links).
+- [x] Back-in-stock alert pushes.
 
 ### 9.4 Marketing Automation
 
-- [ ] Klaviyo or Mailchimp integration for campaigns and flows.
-- [ ] Build `MarketingEmailProvider` abstraction.
-- [ ] Sync customer segments and purchase events.
-- [ ] Abandoned-cart and win-back flows.
-- [ ] Promo code distribution and tracking.
-- [ ] Promotional email segmentation by purchase history, cart status, and cohort.
-- [ ] Consent and unsubscribe handling.
+- [x] Klaviyo or Mailchimp integration for campaigns and flows (Loops provider + console stub; extensible port).
+- [x] Build `MarketingEmailProvider` abstraction.
+- [x] Sync customer segments and purchase events.
+- [x] Abandoned-cart and win-back flows.
+- [x] Promo code distribution and tracking.
+- [x] Promotional email segmentation by purchase history, cart status, and cohort.
+- [x] Consent and unsubscribe handling.
 
 ## Phase 10 — AI & Conversational Experiences
 

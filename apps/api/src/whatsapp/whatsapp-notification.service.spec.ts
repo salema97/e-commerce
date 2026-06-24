@@ -22,7 +22,7 @@ describe('WhatsAppNotificationService', () => {
     };
   };
   let configService: { get: ReturnType<typeof vi.fn> };
-  let idempotency: { claim: ReturnType<typeof vi.fn> };
+  let idempotency: { claim: ReturnType<typeof vi.fn>; release: ReturnType<typeof vi.fn> };
 
   function mockOrder(overrides: Partial<{
     id: string;
@@ -54,7 +54,7 @@ describe('WhatsAppNotificationService', () => {
       order: { findUnique: vi.fn() },
     };
     configService = { get: vi.fn(() => 'true') };
-    idempotency = { claim: vi.fn().mockResolvedValue(true) };
+    idempotency = { claim: vi.fn().mockResolvedValue(true), release: vi.fn().mockResolvedValue(undefined) };
 
     const module = await Test.createTestingModule({
       providers: [
@@ -122,6 +122,7 @@ describe('WhatsAppNotificationService', () => {
   });
 
   it('skips duplicate sends for the same order and template', async () => {
+    prisma.order.findUnique.mockResolvedValue(mockOrder());
     idempotency.claim.mockResolvedValue(false);
 
     await service.notify('o1', 'ORDER_CONFIRMED', '+593991234567', {
@@ -130,7 +131,7 @@ describe('WhatsAppNotificationService', () => {
       total: 'USD 45.98',
     });
 
-    expect(prisma.order.findUnique).not.toHaveBeenCalled();
+    expect(idempotency.claim).toHaveBeenCalled();
     expect(provider.sendText).not.toHaveBeenCalled();
   });
 
@@ -181,6 +182,7 @@ describe('WhatsAppNotificationService', () => {
       }),
     ).resolves.toBeUndefined();
 
+    expect(idempotency.release).toHaveBeenCalledWith('wa:notification:o1:PAYMENT_FAILED');
     expect(messageService.persistOutbound).toHaveBeenCalledWith(
       expect.objectContaining({
         status: 'FAILED',

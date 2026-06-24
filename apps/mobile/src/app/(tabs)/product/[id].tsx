@@ -12,6 +12,8 @@ import { NeoStaggeredItem } from '../../../components/neo-animated.js';
 import { api } from '../../../lib/api.js';
 import { useCart } from '../../../lib/cart.js';
 import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
+import { getProductAvailableQuantity } from '../../../lib/product-stock.js';
+import { BackInStockForm } from '../../../components/product/BackInStockForm.js';
 import type { ProductVariant } from '@repo/shared-types';
 
 export default function ProductDetailScreen(): React.ReactElement {
@@ -50,6 +52,8 @@ export default function ProductDetailScreen(): React.ReactElement {
   }
 
   const effectivePrice = selectedVariant?.price ?? product.price;
+  const availableQuantity = getProductAvailableQuantity(product.inventory);
+  const isOutOfStock = availableQuantity <= 0;
 
   return (
     <NeoScreen style={styles.container}>
@@ -71,7 +75,7 @@ export default function ProductDetailScreen(): React.ReactElement {
               <NeoStaggeredItem index={1}>
                 <View style={styles.badgeRow}>
                   {product.isFeatured ? <Badge variant="secondary">Destacado</Badge> : null}
-                  <Badge variant="primary">En stock</Badge>
+                  <Badge variant="primary">{isOutOfStock ? 'Sin stock' : 'En stock'}</Badge>
                 </View>
               </NeoStaggeredItem>
 
@@ -129,6 +133,12 @@ export default function ProductDetailScreen(): React.ReactElement {
                   </View>
                 </View>
               </NeoStaggeredItem>
+
+              {isOutOfStock ? (
+                <NeoStaggeredItem index={5}>
+                  <BackInStockForm productId={product.id} />
+                </NeoStaggeredItem>
+              ) : null}
             </View>
           </Card>
         </NeoStaggeredItem>
@@ -140,8 +150,8 @@ export default function ProductDetailScreen(): React.ReactElement {
             {itemCount} en el carrito
           </Badge>
         ) : null}
-        <Button onPress={handleAddToCart} size="lg">
-          Agregar al carrito
+        <Button onPress={handleAddToCart} size="lg" disabled={isOutOfStock}>
+          {isOutOfStock ? 'Sin stock' : 'Agregar al carrito'}
         </Button>
       </View>
     </NeoScreen>

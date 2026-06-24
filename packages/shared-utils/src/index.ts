@@ -5,3 +5,4 @@ export * from './schemas/index.js';
 export * from './slug.js';
 export * from './product-image.js';
 export * from './neo-motion.js';
+export * from './email-templates.js';

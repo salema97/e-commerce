@@ -12,8 +12,8 @@ import type { Role } from '@repo/shared-types';
 import { cn } from '@/lib/utils';
 
 const ROLE_LABELS: Partial<Record<Role, string>> = {
-  SUPER_ADMIN: 'Super admin',
-  ADMIN: 'Admin',
+  SUPER_ADMIN: 'Super administrador',
+  ADMIN: 'Administrador',
   FINANCE: 'Finanzas',
   INVENTORY: 'Inventario',
   SUPPORT: 'Soporte',
@@ -82,7 +82,7 @@ export function AdminTopBar({ role }: AdminTopBarProps) {
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="w-[min(100vw-2rem,320px)] border-[3px] border-neo-onyx bg-neo-lace p-0">
           <SheetHeader className="border-b-[3px] border-neo-onyx bg-neo-gold p-6 text-left">
-            <SheetTitle className="font-anton text-3xl uppercase">Admin</SheetTitle>
+            <SheetTitle className="font-anton text-3xl uppercase">Administración</SheetTitle>
           </SheetHeader>
           <nav className="flex flex-col gap-1 p-4">
             {navItems.map((item) => {

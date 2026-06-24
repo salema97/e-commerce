@@ -18,11 +18,21 @@ import { InvoicesModule } from '../invoices/invoices.module.js';
 import { InventoryModule } from '../inventory/inventory.module.js';
 import { AuditModule } from '../audit/audit.module.js';
 import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
+import { NotificationsModule } from '../notifications/notifications.module.js';
+import { ReceiptsModule } from '../receipts/receipts.module.js';
 import { SriQueueModule } from '../invoices/sri/sri-queue.module.js';
 import { isNonProduction } from '../common/is-non-production.js';
 
 @Module({
-  imports: [InvoicesModule, SriQueueModule, InventoryModule, AuditModule, WhatsAppNotificationModule],
+  imports: [
+    InvoicesModule,
+    SriQueueModule,
+    InventoryModule,
+    AuditModule,
+    WhatsAppNotificationModule,
+    NotificationsModule,
+    ReceiptsModule,
+  ],
   controllers: [
     StripeWebhookController,
     PaymentWebhookController,

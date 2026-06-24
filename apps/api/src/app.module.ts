@@ -27,6 +27,7 @@ import { MessageModule } from './messages/message.module.js';
 import { WebhooksModule } from './webhooks/webhooks.module.js';
 import { RedisModule } from './common/redis/redis.module.js';
 import { FinanceModule } from './finance/finance.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { FinanceModule } from './finance/finance.module.js';
     WebhooksModule,
     RedisModule,
     FinanceModule,
+    NotificationsModule,
   ],
   providers: [
     {

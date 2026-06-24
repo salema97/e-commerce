@@ -52,6 +52,23 @@ const envSchema = z.object({
   EVOLUTION_WEBHOOK_SECRET: z.string().min(1),
   EVOLUTION_INSTANCE_NAME: z.string().min(1),
   WHATSAPP_NOTIFICATIONS_ENABLED: z.enum(['true', 'false']).default('true'),
+  EMAIL_PROVIDER: z.enum(['console', 'resend']).default('console'),
+  RESEND_API_KEY: z.string().optional(),
+  TRANSACTIONAL_EMAIL_FROM: z.string().optional(),
+  EMAIL_NOTIFICATIONS_ENABLED: z.enum(['true', 'false']).default('true'),
+  PUSH_PROVIDER: z.enum(['console', 'expo', 'onesignal']).default('console'),
+  EXPO_ACCESS_TOKEN: z.string().optional(),
+  ONESIGNAL_APP_ID: z.string().optional(),
+  ONESIGNAL_API_KEY: z.string().optional(),
+  PUSH_NOTIFICATIONS_ENABLED: z.enum(['true', 'false']).default('true'),
+  MARKETING_EMAIL_PROVIDER: z.enum(['console', 'loops']).default('console'),
+  LOOPS_API_KEY: z.string().optional(),
+  STOREFRONT_URL: z.string().optional(),
+  API_PUBLIC_URL: z.string().optional(),
+  NOTIFICATION_UNSUBSCRIBE_SECRET: z.string().optional(),
+  ABANDONED_CART_ENABLED: z.enum(['true', 'false']).default('true'),
+  ABANDONED_CART_REMINDER_HOURS: z.coerce.number().int().positive().default(24),
+  WIN_BACK_ENABLED: z.enum(['true', 'false']).default('true'),
 });
 
 export type Env = z.infer<typeof envSchema>;

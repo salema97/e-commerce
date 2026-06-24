@@ -6,7 +6,11 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { PaymentProviderFactory } from './payment-provider.factory.js';
 import { ProviderPaymentResult } from './payment-provider.interface.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
+import { EmailNotificationService } from '../notifications/email-notification.service.js';
+import { PushNotificationService } from '../notifications/push-notification.service.js';
+import { MarketingAutomationService } from '../notifications/marketing-automation.service.js';
 import { InvoicesService } from '../invoices/invoices.service.js';
+import { OrderSummaryPdfService } from '../receipts/order-summary-pdf.service.js';
 
 @Injectable()
 export class PaymentWebhookService {
@@ -17,7 +21,11 @@ export class PaymentWebhookService {
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
     private readonly notificationService: WhatsAppNotificationService,
+    private readonly emailNotificationService: EmailNotificationService,
+    private readonly pushNotificationService: PushNotificationService,
     private readonly invoicesService: InvoicesService,
+    private readonly marketingAutomation: MarketingAutomationService,
+    private readonly orderSummaryPdf: OrderSummaryPdfService,
   ) {}
 
   async handle(
@@ -135,10 +143,10 @@ export class PaymentWebhookService {
   ): Promise<void> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      include: { user: { select: { whatsappOptOut: true } } },
+      include: { user: { select: { whatsappOptOut: true, emailOptOut: true } } },
     });
 
-    if (!order || !order.customerPhone) {
+    if (!order) {
       return;
     }
 
@@ -148,17 +156,57 @@ export class PaymentWebhookService {
 
     try {
       if (orderStatus === OrderStatus.PROCESSING) {
-        await this.notificationService.notify(orderId, 'ORDER_CONFIRMED', phone, {
+        const context = {
           customerName,
           orderNumber: order.orderNumber,
           total,
-        });
+        };
+        if (phone) {
+          await this.notificationService.notify(orderId, 'ORDER_CONFIRMED', phone, context);
+        }
+        if (order.customerEmail) {
+          const attachment = await this.orderSummaryPdf.buildEmailAttachment(
+            orderId,
+            order.orderNumber,
+          );
+          await this.emailNotificationService.notify(
+            orderId,
+            'ORDER_CONFIRMED',
+            order.customerEmail,
+            context,
+            { attachments: attachment ? [attachment] : undefined },
+          );
+        }
+        await this.pushNotificationService.notifyForOrder(
+          orderId,
+          order.userId,
+          'ORDER_CONFIRMED',
+          context,
+        );
+        await this.marketingAutomation.trackPurchaseEvent(orderId);
       } else if (orderStatus === OrderStatus.PAYMENT_FAILED) {
-        await this.notificationService.notify(orderId, 'PAYMENT_FAILED', phone, {
+        const context = {
           customerName,
           orderNumber: order.orderNumber,
           total,
-        });
+        };
+        if (phone) {
+          await this.notificationService.notify(orderId, 'PAYMENT_FAILED', phone, context);
+        }
+        if (order.customerEmail) {
+          await this.emailNotificationService.notify(
+            orderId,
+            'PAYMENT_FAILED',
+            order.customerEmail,
+            context,
+          );
+        }
+        await this.pushNotificationService.notifyForOrder(
+          orderId,
+          order.userId,
+          'PAYMENT_FAILED',
+          context,
+        );
       }
     } catch {
       // Notifications are best-effort and must not fail webhook handling.

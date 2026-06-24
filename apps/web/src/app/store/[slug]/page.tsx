@@ -6,8 +6,14 @@ import { Separator } from '@/components/ui/separator';
 import { ProductImage } from '@/components/store/product-image';
 import { AddToCartButton } from '@/components/cart/add-to-cart-button';
 import { WishlistButton } from '@/components/wishlist/wishlist-button';
+import { BackInStockForm } from '@/components/product/back-in-stock-form';
 import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
-import { formatPrice, getProductPrimaryImageAlt, getProductPrimaryImageUrl } from '@repo/shared-utils';
+import {
+  formatPrice,
+  getProductPrimaryImageAlt,
+  getProductPrimaryImageUrl,
+} from '@repo/shared-utils';
+import { getProductAvailableQuantity } from '@/lib/product-stock';
 import type { Product } from '@repo/shared-types';
 
 interface ProductPageProps {
@@ -41,6 +47,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const imageUrl = getProductPrimaryImageUrl(product);
   const variants = product.variants ?? [];
+  const availableQuantity = getProductAvailableQuantity(product.inventory);
+  const isOutOfStock = availableQuantity <= 0;
 
   return (
     <AnimatedPageShell
@@ -59,71 +67,72 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <NeoReveal>
         <div className="grid gap-8 border-[3px] border-neo-onyx bg-white shadow-[10px_10px_0_0_#111111] lg:grid-cols-12">
           <div className="relative lg:col-span-7">
-          <ProductImage
-            url={imageUrl}
-            alt={getProductPrimaryImageAlt(product)}
-            variant="detail"
-            sizes="(max-width: 1024px) 100vw, 50vw"
-            priority
-          />
-          <div className="absolute top-4 right-4 rotate-[-2deg] border-[3px] border-neo-onyx bg-neo-scarlet px-4 py-2 font-anton text-2xl text-white shadow-[4px_4px_0_#111]">
-            {formatPrice(product.price)}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-6 p-6 lg:col-span-5 lg:p-10">
-          <div className="flex flex-wrap gap-2">
-            {product.isFeatured ? <Badge variant="secondary">Destacado</Badge> : null}
-            {product.compareAtPrice ? <Badge variant="destructive">Oferta</Badge> : null}
-            <Badge variant="outline">En stock</Badge>
-          </div>
-
-          <h1 className="font-anton text-4xl uppercase leading-[0.9] md:text-5xl">{product.name}</h1>
-
-          <div className="flex items-end gap-3 border-b-4 border-neo-onyx pb-4">
-            <span className="font-anton text-5xl">{formatPrice(product.price)}</span>
-            {product.compareAtPrice ? (
-              <span className="text-lg font-bold text-muted-foreground line-through">
-                {formatPrice(product.compareAtPrice)}
-              </span>
-            ) : null}
-          </div>
-
-          {product.description ? (
-            <p className="text-base font-bold leading-relaxed text-muted-foreground">
-              {product.description}
-            </p>
-          ) : null}
-
-          {variants.length > 0 ? (
-            <div>
-              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                Variantes
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {variants.map((variant) => (
-                  <Badge key={variant.id} variant="outline">
-                    {variant.name}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          <Separator className="border-neo-onyx" />
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-            <div className="flex-1">
-              <AddToCartButton product={product} />
-            </div>
-            <WishlistButton
-              productId={product.id}
-              name={product.name}
-              slug={product.slug}
-              imageUrl={getProductPrimaryImageUrl(product)}
+            <ProductImage
+              url={imageUrl}
+              alt={getProductPrimaryImageAlt(product)}
+              variant="detail"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              priority
             />
+            <div className="absolute top-4 right-4 rotate-[-2deg] border-[3px] border-neo-onyx bg-neo-scarlet px-4 py-2 font-anton text-2xl text-white shadow-[4px_4px_0_#111]">
+              {formatPrice(product.price)}
+            </div>
           </div>
 
+          <div className="flex flex-col gap-6 p-6 lg:col-span-5 lg:p-10">
+            <div className="flex flex-wrap gap-2">
+              {product.isFeatured ? <Badge variant="secondary">Destacado</Badge> : null}
+              {product.compareAtPrice ? <Badge variant="destructive">Oferta</Badge> : null}
+              <Badge variant="outline">{isOutOfStock ? 'Sin stock' : 'En stock'}</Badge>
+            </div>
+
+            <h1 className="font-anton text-4xl uppercase leading-[0.9] md:text-5xl">{product.name}</h1>
+
+            <div className="flex items-end gap-3 border-b-4 border-neo-onyx pb-4">
+              <span className="font-anton text-5xl">{formatPrice(product.price)}</span>
+              {product.compareAtPrice ? (
+                <span className="text-lg font-bold text-muted-foreground line-through">
+                  {formatPrice(product.compareAtPrice)}
+                </span>
+              ) : null}
+            </div>
+
+            {product.description ? (
+              <p className="text-base font-bold leading-relaxed text-muted-foreground">
+                {product.description}
+              </p>
+            ) : null}
+
+            {variants.length > 0 ? (
+              <div>
+                <p className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                  Variantes
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {variants.map((variant) => (
+                    <Badge key={variant.id} variant="outline">
+                      {variant.name}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <Separator className="border-neo-onyx" />
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+              <div className="flex-1">
+                <AddToCartButton product={product} disabled={isOutOfStock} />
+              </div>
+              <WishlistButton
+                productId={product.id}
+                name={product.name}
+                slug={product.slug}
+                imageUrl={getProductPrimaryImageUrl(product)}
+              />
+            </div>
+
+            {isOutOfStock ? <BackInStockForm productId={product.id} /> : null}
           </div>
         </div>
       </NeoReveal>

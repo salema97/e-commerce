@@ -38,7 +38,7 @@ export function SuppliersView({ initialSuppliers }: { initialSuppliers: Supplier
           <TableRow>
             <TableHead>Nombre</TableHead>
             <TableHead>Contacto</TableHead>
-            <TableHead>Email</TableHead>
+            <TableHead>Correo</TableHead>
             <TableHead>Teléfono</TableHead>
           </TableRow>
         </TableHeader>

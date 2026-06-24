@@ -4,6 +4,10 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { InventoryReservationService } from '../inventory/inventory-reservation.service.js';
 import { PromotionService } from '../promotions/promotion.service.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
+import { EmailNotificationService } from '../notifications/email-notification.service.js';
+import { PushNotificationService } from '../notifications/push-notification.service.js';
+import { MarketingAutomationService } from '../notifications/marketing-automation.service.js';
+import { OrderSummaryPdfService } from '../receipts/order-summary-pdf.service.js';
 import { CreateOrderDto, CreateOrderItemDto } from './dto/create-order.dto.js';
 import { ListOrdersQueryDto } from './dto/list-orders.query.dto.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
@@ -30,6 +34,10 @@ export class OrdersService {
     private readonly reservationService: InventoryReservationService,
     private readonly promotionService: PromotionService,
     private readonly notificationService: WhatsAppNotificationService,
+    private readonly emailNotificationService: EmailNotificationService,
+    private readonly pushNotificationService: PushNotificationService,
+    private readonly marketingAutomation: MarketingAutomationService,
+    private readonly orderSummaryPdf: OrderSummaryPdfService,
   ) {}
 
   async createOrder(userId: string | undefined, dto: CreateOrderDto): Promise<CreatedOrderResult> {
@@ -329,10 +337,10 @@ export class OrdersService {
   private async notifyStatusChange(id: string, status: OrderStatus): Promise<void> {
     const order = await this.prisma.order.findUnique({
       where: { id },
-      include: { user: { select: { whatsappOptOut: true } } },
+      include: { user: { select: { whatsappOptOut: true, emailOptOut: true } } },
     });
 
-    if (!order || !order.customerPhone) {
+    if (!order) {
       return;
     }
 
@@ -342,23 +350,80 @@ export class OrdersService {
 
     try {
       if (status === OrderStatus.PROCESSING) {
-        await this.notificationService.notify(id, 'ORDER_CONFIRMED', phone, {
+        const context = {
           customerName,
           orderNumber: order.orderNumber,
           total,
-        });
+        };
+        if (phone) {
+          await this.notificationService.notify(id, 'ORDER_CONFIRMED', phone, context);
+        }
+        if (order.customerEmail) {
+          const attachment = await this.orderSummaryPdf.buildEmailAttachment(
+            id,
+            order.orderNumber,
+          );
+          await this.emailNotificationService.notify(
+            id,
+            'ORDER_CONFIRMED',
+            order.customerEmail,
+            context,
+            { attachments: attachment ? [attachment] : undefined },
+          );
+        }
+        await this.pushNotificationService.notifyForOrder(
+          id,
+          order.userId,
+          'ORDER_CONFIRMED',
+          context,
+        );
+        await this.marketingAutomation.trackPurchaseEvent(id);
       } else if (status === OrderStatus.SHIPPED) {
-        await this.notificationService.notify(id, 'ORDER_SHIPPED', phone, {
+        const context = {
           customerName,
           orderNumber: order.orderNumber,
           carrier: 'Transportista asignado',
           trackingNumber: 'Pendiente',
-        });
+        };
+        if (phone) {
+          await this.notificationService.notify(id, 'ORDER_SHIPPED', phone, context);
+        }
+        if (order.customerEmail) {
+          await this.emailNotificationService.notify(
+            id,
+            'ORDER_SHIPPED',
+            order.customerEmail,
+            context,
+          );
+        }
+        await this.pushNotificationService.notifyForOrder(
+          id,
+          order.userId,
+          'ORDER_SHIPPED',
+          context,
+        );
       } else if (status === OrderStatus.DELIVERED) {
-        await this.notificationService.notify(id, 'ORDER_DELIVERED', phone, {
+        const context = {
           customerName,
           orderNumber: order.orderNumber,
-        });
+        };
+        if (phone) {
+          await this.notificationService.notify(id, 'ORDER_DELIVERED', phone, context);
+        }
+        if (order.customerEmail) {
+          await this.emailNotificationService.notify(
+            id,
+            'ORDER_DELIVERED',
+            order.customerEmail,
+            context,
+          );
+        }
+        await this.pushNotificationService.notifyForOrder(
+          id,
+          order.userId,
+          'ORDER_DELIVERED',
+          context,
+        );
       }
     } catch {
       // Notifications are best-effort and must not fail the status update.

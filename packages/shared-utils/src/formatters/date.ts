@@ -33,7 +33,10 @@ export function formatDate(
     dateStyle,
     timeStyle,
     timeZone: timezone,
-  }).format(date);
+  })
+    .format(date)
+    .replace(/\u202f/g, ' ')
+    .replace(/\u00a0/g, ' ');
 }
 
 export function formatDateTime(

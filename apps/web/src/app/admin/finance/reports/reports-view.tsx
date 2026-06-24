@@ -16,8 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { formatDateTime } from '@repo/shared-utils';
-import type { AdminStoreCredit, CashFlowReport } from '@repo/shared-types';
+import { formatDateTime, incomeSourceLabel } from '@repo/shared-utils';
+import type { AdminStoreCredit, CashFlowReport, IncomeSource } from '@repo/shared-types';
 
 function formatMoney(amount: number, currency = 'USD'): string {
   return new Intl.NumberFormat('es-EC', {
@@ -136,7 +136,7 @@ export function ReportsView({
             <CardContent className="space-y-2 text-sm">
               {Object.entries(report.incomeBySource).map(([source, value]) => (
                 <div key={source} className="flex justify-between">
-                  <span>{source}</span>
+                  <span>{incomeSourceLabel(source as IncomeSource)}</span>
                   <span>{formatMoney(Number(value))}</span>
                 </div>
               ))}

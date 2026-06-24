@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { formatDateTime } from '@repo/shared-utils';
+import { formatDateTime, incomeSourceLabel } from '@repo/shared-utils';
 import type { Income, IncomeSource } from '@repo/shared-types';
 
 function formatMoney(amount: number): string {
@@ -79,7 +79,10 @@ export function IncomesView({ initialIncomes }: { initialIncomes: Income[] }) {
             id="source"
             value={source}
             onValueChange={(value) => setSource(value as IncomeSource)}
-            options={SOURCES.map((item) => ({ value: item, label: item }))}
+            options={SOURCES.map((item) => ({
+              value: item,
+              label: incomeSourceLabel(item),
+            }))}
           />
         </div>
         <div className="space-y-2">
@@ -123,7 +126,7 @@ export function IncomesView({ initialIncomes }: { initialIncomes: Income[] }) {
             {(incomesQuery.data ?? []).map((income: Income) => (
               <TableRow key={income.id}>
                 <TableCell>{formatDateTime(income.date)}</TableCell>
-                <TableCell>{income.source}</TableCell>
+                <TableCell>{incomeSourceLabel(income.source)}</TableCell>
                 <TableCell>{formatMoney(income.amount)}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {income.notes ?? '—'}

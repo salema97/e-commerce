@@ -8,18 +8,24 @@ import {
   Param,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { ProductsService } from './products.service.js';
 import { CreateProductDto } from './dto/create-product.dto.js';
 import { UpdateProductDto } from './dto/update-product.dto.js';
+import { CreateBackInStockAlertDto } from './dto/create-back-in-stock-alert.dto.js';
 import { Audit } from '../audit/audit.decorator.js';
 import { Roles } from '../auth/roles.decorator.js';
 import { Public } from '../auth/public.decorator.js';
 import { Role } from '../auth/role.enum.js';
+import { BackInStockAlertsService } from '../notifications/back-in-stock-alerts.service.js';
 
 @ApiTags('Products')
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(
+    private readonly productsService: ProductsService,
+    private readonly backInStockAlertsService: BackInStockAlertsService,
+  ) {}
 
   @Post()
   @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.INVENTORY)
@@ -55,6 +61,18 @@ export class ProductsController {
   @ApiResponse({ status: 404, description: 'Product not found' })
   findOne(@Param('id') id: string) {
     return this.productsService.findOne(id);
+  }
+
+  @Post(':id/back-in-stock-alerts')
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @ApiOperation({ summary: 'Subscribe to back-in-stock email alerts for a product' })
+  @ApiResponse({ status: 201, description: 'Alert subscription created' })
+  subscribeBackInStock(
+    @Param('id') id: string,
+    @Body() dto: CreateBackInStockAlertDto,
+  ) {
+    return this.backInStockAlertsService.subscribe(id, dto.email);
   }
 
   @Patch(':id')

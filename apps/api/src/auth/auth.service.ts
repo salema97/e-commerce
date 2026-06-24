@@ -25,6 +25,9 @@ export interface AuthUserResponse {
   name: string | null;
   role: Role;
   phone: string | null;
+  emailOptOut: boolean;
+  marketingEmailOptOut: boolean;
+  whatsappOptOut: boolean;
 }
 
 @Injectable()
@@ -127,6 +130,9 @@ export class AuthService {
     name: string | null;
     role: { toString(): string };
     phone: string | null;
+    emailOptOut: boolean;
+    marketingEmailOptOut: boolean;
+    whatsappOptOut: boolean;
   }) {
     return {
       id: user.id,
@@ -134,6 +140,9 @@ export class AuthService {
       name: user.name,
       role: String(user.role),
       phone: user.phone,
+      emailOptOut: user.emailOptOut,
+      marketingEmailOptOut: user.marketingEmailOptOut,
+      whatsappOptOut: user.whatsappOptOut,
     };
   }
 
@@ -174,6 +183,9 @@ export class AuthService {
     name: string | null;
     role: string;
     phone: string | null;
+    emailOptOut: boolean;
+    marketingEmailOptOut: boolean;
+    whatsappOptOut: boolean;
   }): AuthUserResponse {
     return {
       id: user.id,
@@ -181,6 +193,9 @@ export class AuthService {
       name: user.name,
       role: user.role as Role,
       phone: user.phone,
+      emailOptOut: user.emailOptOut,
+      marketingEmailOptOut: user.marketingEmailOptOut,
+      whatsappOptOut: user.whatsappOptOut,
     };
   }
 }

@@ -35,6 +35,10 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
     return { pathname: '/(tabs)/account', params: { orderId: id } };
   }
 
+  if (first === 'cart') {
+    return { pathname: '/(tabs)/cart' };
+  }
+
   if (first === 'password-reset') {
     return { pathname: '/sign-in', params: Object.fromEntries(searchParams.entries()) };
   }

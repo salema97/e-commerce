@@ -1,4 +1,12 @@
-import type { OrderStatus, PaymentStatus, RefundStatus, ReturnStatus, RefundMethod } from '@repo/shared-types';
+import type {
+  OrderStatus,
+  PaymentStatus,
+  RefundStatus,
+  ReturnStatus,
+  RefundMethod,
+  IncomeSource,
+  ExpenseStatus,
+} from '@repo/shared-types';
 
 const DEFAULT_CURRENCY = 'USD';
 const DEFAULT_LOCALE = 'es-EC';
@@ -101,4 +109,22 @@ export function refundMethodLabel(method: RefundMethod): string {
     EXCHANGE: 'Cambio',
   };
   return labels[method] ?? method;
+}
+
+export function incomeSourceLabel(source: IncomeSource): string {
+  const labels: Record<IncomeSource, string> = {
+    ORDER: 'Pedido',
+    INVESTMENT: 'Inversión',
+    OTHER: 'Otro',
+  };
+  return labels[source] ?? source;
+}
+
+export function expenseStatusLabel(status: ExpenseStatus): string {
+  const labels: Record<ExpenseStatus, string> = {
+    PENDING: 'Pendiente',
+    PAID: 'Pagado',
+    CANCELLED: 'Cancelado',
+  };
+  return labels[status] ?? status;
 }

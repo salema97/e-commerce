@@ -176,6 +176,8 @@ model User {
   role             Role      @default(CUSTOMER)
   phone            String?
   whatsappOptOut   Boolean   @default(false)
+  emailOptOut      Boolean   @default(false)
+  marketingEmailOptOut Boolean @default(false)
   stripeCustomerId String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
@@ -189,6 +191,7 @@ model User {
   returns       ReturnRequest[]
   storeCredits  StoreCredit[]
   authSessions  AuthSession[]
+  pushDeviceTokens PushDeviceToken[]
 
   @@index([role])
   @@index([email])
@@ -329,11 +332,12 @@ model Inventory {
 }
 
 model Cart {
-  id        String   @id @default(uuid())
-  userId    String?  @unique
-  sessionId String?  @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                     String    @id @default(uuid())
+  userId                 String?   @unique
+  sessionId              String?   @unique
+  abandonedReminderSentAt DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
   user  User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   items CartItem[]
@@ -626,6 +630,7 @@ model BackInStockAlert {
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
+  @@unique([productId, email])
   @@index([productId])
   @@index([email])
   @@index([createdAt])
@@ -901,4 +906,17 @@ model StoreCredit {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model PushDeviceToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  platform  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
