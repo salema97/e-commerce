@@ -540,7 +540,7 @@ El monorepo tiene un **núcleo coherente y alineado** tras Sprints A–D (jun 20
 
 - API modular NestJS con guards JWT/RBAC, `@Audit` en mutaciones críticas, abstracciones por proveedor y Swagger documentado  
 - Web con SSR, shell admin unificado, hooks `api-client` en finance/analytics, diseño neo-brutalist  
-- Mobile con paridad comercial (help, tracking con consent, deep links, env unificado)  
+- Mobile con paridad comercial completa (help, wishlist, legal CMS, tracking con consent, deep links)  
 
 **Gaps residuales:** ninguno bloqueante tras cierre jun 2026. Cosmético opcional: gráficos avanzados en analytics admin.
 
@@ -551,7 +551,9 @@ El monorepo tiene un **núcleo coherente y alineado** tras Sprints A–D (jun 20
 | Web React Doctor (LazyMotion + forwardRef) | ✅ `NeoMotionProvider` + `m` + UI React 19 |
 | Web `AnimatedPageShell` marketing/knowledge | ✅ |
 | Analytics export CSV | ✅ |
-| Docs JWT (TODO.md) | ✅ Clerk referencias actualizadas | `AppModule`, JWT, migraciones, nav admin, providers, consent en E2E. Usar las checklists de §8 antes de cada merge a `main`.
+| Docs JWT (TODO.md) | ✅ Clerk referencias actualizadas |
+
+La **mayor fuente de bugs en merge** sigue siendo **cableado olvidado**: `AppModule`, JWT, migraciones, nav admin, providers, consent en E2E. Usar las checklists de §8 antes de cada merge a `main`.
 
 ---
 
