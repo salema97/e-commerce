@@ -85,7 +85,7 @@ describe('InvoicesController', () => {
         pdfUrl: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-        order: { id: 'order_1', orderNumber: 'ORD-1', user: { clerkUserId: 'user_1' } },
+        order: { id: 'order_1', orderNumber: 'ORD-1', user: { id: 'user_1' } },
       };
       service.findById.mockResolvedValue(invoice);
 
@@ -96,7 +96,7 @@ describe('InvoicesController', () => {
 
       expect(service.findById).toHaveBeenCalledWith('inv_1');
       expect(service.assertInvoiceAccess).toHaveBeenCalledWith(invoice, {
-        clerkUserId: 'user_1',
+        userId: 'user_1',
         role: Role.CUSTOMER,
       });
       expect(result.id).toBe('inv_1');
@@ -125,7 +125,7 @@ describe('InvoicesController', () => {
         pdfUrl: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-        order: { id: 'order_1', orderNumber: 'ORD-1', user: { clerkUserId: 'user_1' } },
+        order: { id: 'order_1', orderNumber: 'ORD-1', user: { id: 'user_1' } },
       };
       service.findById.mockResolvedValue(invoice);
       const res = buildResponse();
@@ -150,7 +150,7 @@ describe('InvoicesController', () => {
         pdfUrl: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-        order: { id: 'order_1', orderNumber: 'ORD-1', user: { clerkUserId: 'user_1' } },
+        order: { id: 'order_1', orderNumber: 'ORD-1', user: { id: 'user_1' } },
       };
       service.findById.mockResolvedValue(invoice);
       const res = buildResponse();
@@ -193,8 +193,8 @@ describe('InvoicesService.assertInvoiceAccess', () => {
     );
     expect(() =>
       service.assertInvoiceAccess(
-        { order: { user: { clerkUserId: 'user_1' } } },
-        { clerkUserId: 'admin_1', role: Role.ADMIN },
+        { order: { user: { id: 'user_1' } } },
+        { userId: 'admin_1', role: Role.ADMIN },
       ),
     ).not.toThrow();
   });
@@ -208,8 +208,8 @@ describe('InvoicesService.assertInvoiceAccess', () => {
     );
     expect(() =>
       service.assertInvoiceAccess(
-        { order: { user: { clerkUserId: 'user_1' } } },
-        { clerkUserId: 'user_1', role: Role.CUSTOMER },
+        { order: { user: { id: 'user_1' } } },
+        { userId: 'user_1', role: Role.CUSTOMER },
       ),
     ).not.toThrow();
   });
@@ -223,8 +223,8 @@ describe('InvoicesService.assertInvoiceAccess', () => {
     );
     expect(() =>
       service.assertInvoiceAccess(
-        { order: { user: { clerkUserId: 'user_1' } } },
-        { clerkUserId: 'user_2', role: Role.CUSTOMER },
+        { order: { user: { id: 'user_1' } } },
+        { userId: 'user_2', role: Role.CUSTOMER },
       ),
     ).toThrow(ForbiddenException);
   });

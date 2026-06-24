@@ -18,11 +18,11 @@ export class StripeCustomerService {
   }
 
   async createOrUpdateCustomer(
-    clerkUserId: string,
+    userId: string,
     email: string,
     name?: string,
   ): Promise<string | undefined> {
-    const user = await this.prisma.user.findUnique({ where: { clerkUserId } });
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
     if (user?.stripeCustomerId) {
       try {
@@ -30,11 +30,11 @@ export class StripeCustomerService {
           email,
           name,
         });
-        this.logger.debug(`Updated Stripe customer ${user.stripeCustomerId} for ${clerkUserId}`);
+        this.logger.debug(`Updated Stripe customer ${user.stripeCustomerId} for ${userId}`);
         return user.stripeCustomerId;
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
-        this.logger.warn({ error: message, clerkUserId }, 'Failed to update Stripe customer');
+        this.logger.warn({ error: message, userId }, 'Failed to update Stripe customer');
         return user.stripeCustomerId;
       }
     }
@@ -43,19 +43,19 @@ export class StripeCustomerService {
       const customer = await this.stripe.customers.create({
         email,
         name,
-        metadata: { clerkUserId },
+        metadata: { userId },
       });
 
       await this.prisma.user.update({
-        where: { clerkUserId },
+        where: { id: userId },
         data: { stripeCustomerId: customer.id },
       });
 
-      this.logger.log(`Created Stripe customer ${customer.id} for ${clerkUserId}`);
+      this.logger.log(`Created Stripe customer ${customer.id} for ${userId}`);
       return customer.id;
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      this.logger.error({ error: message, clerkUserId }, 'Failed to create Stripe customer');
+      this.logger.error({ error: message, userId }, 'Failed to create Stripe customer');
       return undefined;
     }
   }

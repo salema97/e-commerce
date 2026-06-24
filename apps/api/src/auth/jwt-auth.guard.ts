@@ -3,14 +3,11 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
-  Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ConfigService } from '@nestjs/config';
-import { verifyToken } from '@clerk/backend';
 import { IS_PUBLIC_KEY } from './public.decorator.js';
 import { Role } from './role.enum.js';
-import { PrismaService } from '../prisma/prisma.service.js';
+import { AppJwtService } from './jwt.service.js';
 import { getTestAuthSession, isTestAuthEnabled } from './test-auth.js';
 
 export interface AuthenticatedRequest {
@@ -24,16 +21,13 @@ export interface AuthenticatedRequest {
 }
 
 @Injectable()
-export class ClerkJwtGuard implements CanActivate {
-  private readonly logger = new Logger(ClerkJwtGuard.name);
-
+export class JwtAuthGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
-    private configService: ConfigService,
-    private prisma: PrismaService,
+    private jwt: AppJwtService,
   ) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  canActivate(context: ExecutionContext): boolean {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -65,46 +59,14 @@ export class ClerkJwtGuard implements CanActivate {
     }
 
     try {
-      const payload = await verifyToken(authHeader.slice(7), {
-        secretKey: this.configService.getOrThrow('CLERK_SECRET_KEY'),
-      });
-      const jwtRole =
-        ((payload.public_metadata as Record<string, unknown>)?.role as Role) ??
-        Role.CUSTOMER;
-
-      await this.reconcileRoleIfNeeded(payload.sub as string, jwtRole);
-
-      request.user = { userId: payload.sub as string, role: jwtRole };
+      const payload = this.jwt.verifyAccessToken(authHeader.slice(7));
+      if (payload.type !== 'access') {
+        throw new UnauthorizedException('Invalid token type');
+      }
+      request.user = { userId: payload.sub, role: payload.role };
       return true;
     } catch {
-      throw new UnauthorizedException('Invalid Clerk token');
-    }
-  }
-
-  private async reconcileRoleIfNeeded(
-    clerkUserId: string,
-    jwtRole: Role,
-  ): Promise<void> {
-    try {
-      const dbUser = await this.prisma.user.findUnique({
-        where: { clerkUserId },
-      });
-
-      if (dbUser && dbUser.role !== jwtRole) {
-        await this.prisma.user.update({
-          where: { clerkUserId },
-          data: { role: jwtRole },
-        });
-        this.logger.debug(
-          { clerkUserId, oldRole: dbUser.role, newRole: jwtRole },
-          'Reconciled stale DB role from Clerk JWT',
-        );
-      }
-    } catch (error) {
-      this.logger.warn(
-        { error, clerkUserId },
-        'Failed to reconcile DB role; continuing with JWT role',
-      );
+      throw new UnauthorizedException('Invalid or expired token');
     }
   }
 }

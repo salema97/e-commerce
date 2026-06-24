@@ -14,12 +14,11 @@ import { UsersModule } from './users/users.module.js';
 import { CartModule } from './cart/cart.module.js';
 import { OrdersModule } from './orders/orders.module.js';
 import { AuthModule } from './auth/auth.module.js';
-import { ClerkModule } from './clerk/clerk.module.js';
 import { AuditModule } from './audit/audit.module.js';
 import { PaymentsModule } from './payments/payments.module.js';
 import { InvoicesModule } from './invoices/invoices.module.js';
 import { ReturnsModule } from './returns/returns.module.js';
-import { ClerkJwtGuard } from './auth/clerk-jwt.guard.js';
+import { JwtAuthGuard } from './auth/jwt-auth.guard.js';
 import { RolesGuard } from './auth/roles.guard.js';
 import { AuditInterceptor } from './audit/audit.interceptor.js';
 import { WhatsAppModule } from './whatsapp/whatsapp.module.js';
@@ -51,7 +50,6 @@ import { RedisModule } from './common/redis/redis.module.js';
       ],
     }),
     AuthModule,
-    ClerkModule,
     AuditModule,
     PrismaModule,
     HealthModule,
@@ -78,7 +76,7 @@ import { RedisModule } from './common/redis/redis.module.js';
     },
     {
       provide: APP_GUARD,
-      useClass: ClerkJwtGuard,
+      useClass: JwtAuthGuard,
     },
     {
       provide: APP_GUARD,

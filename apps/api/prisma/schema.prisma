@@ -169,8 +169,8 @@ enum SriDocumentJobStatus {
 
 model User {
   id               String    @id @default(uuid())
-  clerkUserId      String    @unique
   email            String    @unique
+  passwordHash     String?
   name             String?
   identification   String?
   role             Role      @default(CUSTOMER)
@@ -188,12 +188,28 @@ model User {
   auditLogs     AuditLog[]
   returns       ReturnRequest[]
   storeCredits  StoreCredit[]
+  authSessions  AuthSession[]
 
-  @@index([clerkUserId])
   @@index([role])
   @@index([email])
   @@index([stripeCustomerId])
   @@index([createdAt])
+}
+
+model AuthSession {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  userAgent String?
+  ipAddress String?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Category {
@@ -615,20 +631,18 @@ model BackInStockAlert {
 }
 
 model AuditLog {
-  id               String   @id @default(uuid())
-  actorId          String?
-  actorClerkUserId String?
-  resource         String
-  action           String
-  resourceId       String?
-  diff             Json?
-  metadata         Json?
-  createdAt        DateTime @default(now())
+  id         String   @id @default(uuid())
+  actorId    String?
+  resource   String
+  action     String
+  resourceId String?
+  diff       Json?
+  metadata   Json?
+  createdAt  DateTime @default(now())
 
   actor User? @relation(fields: [actorId], references: [id])
 
   @@index([actorId])
-  @@index([actorClerkUserId])
   @@index([resource])
   @@index([action])
   @@index([createdAt])

@@ -33,6 +33,18 @@ async function bootstrap() {
 
   app.useGlobalFilters(new AllExceptionsFilter(app.get(HttpAdapterHost)));
 
+  const configService = app.get(ConfigService);
+
+  const corsOrigins = (configService.get<string>('CORS_ORIGINS') ?? 'http://localhost:3000')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  app.enableCors({
+    origin: corsOrigins,
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Test-Auth'],
+  });
+
   const swaggerConfig = new DocumentBuilder()
     .setTitle('E-commerce API')
     .setDescription('REST API for the e-commerce platform')
@@ -49,7 +61,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, document);
 
-  const configService = app.get(ConfigService);
   const port = parseInt(configService.get('PORT', '3001'), 10);
 
   await app.listen(port);

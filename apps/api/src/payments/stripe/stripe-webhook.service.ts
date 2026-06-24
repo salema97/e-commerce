@@ -326,7 +326,7 @@ export class StripeWebhookService {
     outcome: string,
   ): Promise<void> {
     await this.auditLogService.log({
-      actorClerkUserId: 'system',
+      actorId: 'system',
       resource: 'stripe-webhook',
       action: 'processed',
       resourceId: eventId,
@@ -341,7 +341,7 @@ export class StripeWebhookService {
     metadata: Record<string, unknown>,
   ): Promise<void> {
     await this.auditLogService.log({
-      actorClerkUserId: 'system',
+      actorId: 'system',
       resource: 'payment',
       action,
       resourceId: paymentId,

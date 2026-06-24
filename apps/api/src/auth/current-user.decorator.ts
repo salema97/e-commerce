@@ -1,5 +1,5 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { AuthenticatedRequest } from './clerk-jwt.guard.js';
+import { AuthenticatedRequest } from './jwt-auth.guard.js';
 
 export const CurrentUser = createParamDecorator(
   (data: keyof AuthenticatedRequest['user'] | undefined, ctx: ExecutionContext) => {

@@ -9,7 +9,7 @@ import { Observable } from 'rxjs';
 import { concatMap } from 'rxjs/operators';
 import { AuditLogService } from './audit-log.service.js';
 import { AUDIT_KEY, AuditMetadata } from './audit.decorator.js';
-import { AuthenticatedRequest } from '../auth/clerk-jwt.guard.js';
+import { AuthenticatedRequest } from '../auth/jwt-auth.guard.js';
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
@@ -42,7 +42,7 @@ export class AuditInterceptor implements NestInterceptor {
         const resourceId = this.extractResourceId(id, response);
 
         await this.auditLogService.log({
-          actorClerkUserId: request.user?.userId ?? 'system',
+          actorId: request.user?.userId ?? null,
           resource: metadata.resource,
           action: metadata.action,
           resourceId,

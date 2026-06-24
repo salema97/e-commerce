@@ -3,8 +3,8 @@
  *
  * This module is a no-op unless the `ENABLE_TEST_AUTH` environment variable is
  * set to `"true"`. When enabled, the API can accept an `X-Test-Auth` header that
- * carries a mock Clerk user id and role, allowing Playwright tests to exercise
- * authenticated flows without real Clerk credentials.
+ * carries a mock user id and role, allowing E2E tests to exercise authenticated
+ * authenticated flows in E2E without issuing real JWTs (dev/test only).
  *
  * Never enable this in production.
  */

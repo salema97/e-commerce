@@ -71,7 +71,7 @@ export class InvoicesController {
   ): Promise<InvoiceResponseDto> {
     const invoice = await this.invoicesService.findById(id);
     this.invoicesService.assertInvoiceAccess(invoice, {
-      clerkUserId: user.userId,
+      userId: user.userId,
       role: user.role,
     });
     return invoice;
@@ -96,7 +96,7 @@ export class InvoicesController {
   ): Promise<void> {
     const invoice = await this.invoicesService.findById(id);
     this.invoicesService.assertInvoiceAccess(invoice, {
-      clerkUserId: user.userId,
+      userId: user.userId,
       role: user.role,
     });
     const url = await this.invoicesService.getSignedXmlUrl(id);
@@ -114,7 +114,7 @@ export class InvoicesController {
   ): Promise<void> {
     const invoice = await this.invoicesService.findById(id);
     this.invoicesService.assertInvoiceAccess(invoice, {
-      clerkUserId: user.userId,
+      userId: user.userId,
       role: user.role,
     });
     const url = await this.invoicesService.getSignedPdfUrl(id);
@@ -128,9 +128,9 @@ export class InvoicesController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async issueInvoice(
     @Body() dto: IssueInvoiceDto,
-    @CurrentUser('userId') clerkUserId: string,
+    @CurrentUser('userId') userId: string,
   ): Promise<InvoiceResponseDto> {
-    return this.invoicesService.issueInvoice(dto, clerkUserId);
+    return this.invoicesService.issueInvoice(dto, userId);
   }
 
   @Post('credit-notes')
@@ -141,8 +141,8 @@ export class InvoicesController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async issueCreditNote(
     @Body() dto: IssueCreditNoteDto,
-    @CurrentUser('userId') clerkUserId: string,
+    @CurrentUser('userId') userId: string,
   ): Promise<CreditNoteResponseDto> {
-    return this.invoicesService.issueCreditNote(dto, clerkUserId);
+    return this.invoicesService.issueCreditNote(dto, userId);
   }
 }

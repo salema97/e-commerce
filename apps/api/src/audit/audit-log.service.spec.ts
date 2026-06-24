@@ -20,7 +20,7 @@ describe('AuditLogService', () => {
 
   it('creates an audit log for a create event', async () => {
     await service.log({
-      actorClerkUserId: 'user_123',
+      actorId: 'user_123',
       resource: 'category',
       action: 'create',
       resourceId: 'cat_1',
@@ -30,7 +30,7 @@ describe('AuditLogService', () => {
     expect(prisma.auditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          actorClerkUserId: 'user_123',
+          actorId: 'user_123',
           resource: 'category',
           action: 'create',
           resourceId: 'cat_1',
@@ -46,7 +46,7 @@ describe('AuditLogService', () => {
 
   it('creates an audit log for an update event with changed fields', async () => {
     await service.log({
-      actorClerkUserId: 'user_123',
+      actorId: 'user_123',
       resource: 'product',
       action: 'update',
       resourceId: 'prod_1',
@@ -69,7 +69,7 @@ describe('AuditLogService', () => {
 
   it('creates an audit log for a delete event', async () => {
     await service.log({
-      actorClerkUserId: 'user_123',
+      actorId: 'user_123',
       resource: 'supplier',
       action: 'delete',
       resourceId: 'sup_1',
@@ -91,7 +91,7 @@ describe('AuditLogService', () => {
 
   it('uses system actor when no user is provided', async () => {
     await service.log({
-      actorClerkUserId: 'system',
+      actorId: 'system',
       resource: 'user',
       action: 'create',
       resourceId: 'user_1',
@@ -101,7 +101,7 @@ describe('AuditLogService', () => {
     expect(prisma.auditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          actorClerkUserId: 'system',
+          actorId: 'system',
         }),
       }),
     );
@@ -112,7 +112,7 @@ describe('AuditLogService', () => {
 
     await expect(
       service.log({
-        actorClerkUserId: 'user_123',
+        actorId: 'user_123',
         resource: 'category',
         action: 'create',
         resourceId: 'cat_1',

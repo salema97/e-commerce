@@ -6,7 +6,7 @@ import 'reflect-metadata';
 import { AuditInterceptor } from './audit.interceptor.js';
 import { AuditLogService } from './audit-log.service.js';
 import { AUDIT_KEY } from './audit.decorator.js';
-import { AuthenticatedRequest } from '../auth/clerk-jwt.guard.js';
+import { AuthenticatedRequest } from '../auth/jwt-auth.guard.js';
 
 interface MockController {
   categoriesService: { findOne: ReturnType<typeof vi.fn> };
@@ -87,7 +87,7 @@ describe('AuditInterceptor', () => {
 
     expect(auditLogService.log).toHaveBeenCalledWith(
       expect.objectContaining({
-        actorClerkUserId: 'user_123',
+        actorId: 'user_123',
         resource: 'category',
         action: 'create',
         resourceId: 'cat_1',
@@ -123,7 +123,7 @@ describe('AuditInterceptor', () => {
     expect(controller.categoriesService.findOne).toHaveBeenCalledWith('cat_1');
     expect(auditLogService.log).toHaveBeenCalledWith(
       expect.objectContaining({
-        actorClerkUserId: 'user_123',
+        actorId: 'user_123',
         resource: 'category',
         action: 'update',
         resourceId: 'cat_1',
@@ -158,7 +158,7 @@ describe('AuditInterceptor', () => {
 
     expect(auditLogService.log).toHaveBeenCalledWith(
       expect.objectContaining({
-        actorClerkUserId: 'user_123',
+        actorId: 'user_123',
         resource: 'category',
         action: 'delete',
         resourceId: 'cat_1',
@@ -188,7 +188,7 @@ describe('AuditInterceptor', () => {
 
     expect(auditLogService.log).toHaveBeenCalledWith(
       expect.objectContaining({
-        actorClerkUserId: 'system',
+        actorId: null,
         metadata: expect.objectContaining({ actorType: 'system' }),
       }),
     );
