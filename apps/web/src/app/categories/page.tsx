@@ -3,7 +3,7 @@ import { getServerApiClient } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default async function CategoriesPage() {
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
   let categories = await api.categories.findAll().catch(() => []);
 
   return (

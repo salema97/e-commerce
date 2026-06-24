@@ -17,7 +17,7 @@ export default async function AdminReturnsPage({
 }: {
   searchParams: Promise<{ status?: string; customerEmail?: string }>;
 }) {
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
   const { status, customerEmail } = await searchParams;
   const returns = await api.returns.findAll({
     status,

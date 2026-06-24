@@ -8,7 +8,7 @@ interface EditInventoryPageProps {
 
 export default async function EditInventoryPage({ params }: EditInventoryPageProps) {
   const { id } = await params;
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
 
   try {
     const item = await api.inventory.findOne(id);

@@ -1,39 +1,31 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useAuth } from '@clerk/nextjs';
 import { createApiClient } from '@repo/api-client';
+import { useAuth } from '@/contexts/auth-context';
 
 function getBaseURL(): string {
-  return (
-    process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001/v1'
-  );
+  return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001/v1';
 }
 
-function getTestAuthHeader(): Record<string, string> {
-  if (typeof document === 'undefined') return {};
-  if (process.env.NEXT_PUBLIC_ENABLE_TEST_AUTH !== 'true') return {};
-
-  const match = document.cookie.match(/(?:^|; )__test_auth=([^;]*)/);
-  if (!match) return {};
-
-  return { 'X-Test-Auth': decodeURIComponent(match[1]) };
+export function useAuthApiReady(): boolean {
+  const { accessToken, loading } = useAuth();
+  return !loading && Boolean(accessToken);
 }
 
 export function useApiClient() {
-  const { getToken } = useAuth();
+  const { accessToken } = useAuth();
 
   return useMemo(
     () =>
       createApiClient({
         baseURL: getBaseURL(),
-        getToken,
+        getToken: () => accessToken,
         onError: (error) => {
           // eslint-disable-next-line no-console
           console.error('API error:', error.message);
         },
-        getHeaders: () => getTestAuthHeader(),
       }),
-    [getToken],
+    [accessToken],
   );
 }

@@ -8,7 +8,7 @@ import { formatPrice } from '@repo/shared-utils';
 import type { Product, Category } from '@repo/shared-types';
 
 export default async function HomePage() {
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
   let featuredProducts: Product[] = [];
   let categories: Category[] = [];
 

@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import type { User } from '@repo/shared-types';
 
 export default async function AdminCustomersPage() {
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
   const users = await api.users.findAll().catch(() => []);
 
   return (

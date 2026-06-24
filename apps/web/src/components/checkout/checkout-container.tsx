@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCartStore } from '@/lib/cart-store';
 import type { CartItem } from '@/lib/cart-store';
 import { useApiClient } from '@/lib/client-api';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from '@/contexts/auth-context';
 import {
   AddressForm,
   EMPTY_ADDRESS,
@@ -31,7 +31,7 @@ const FREE_SHIPPING_THRESHOLD = 50;
 
 export function CheckoutContainer() {
   const router = useRouter();
-  const { userId } = useAuth();
+  const { user } = useAuth();
   const api = useApiClient();
   const { items } = useCartStore();
   const [mounted, setMounted] = React.useState(false);
@@ -188,7 +188,7 @@ export function CheckoutContainer() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                {userId
+                {user
                   ? 'Click continue to create your order and load the secure Stripe payment form.'
                   : 'You are checking out as a guest. You can create an account after purchase.'}
               </p>

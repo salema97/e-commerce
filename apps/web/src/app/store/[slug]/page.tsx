@@ -16,7 +16,7 @@ interface ProductPageProps {
 
 export async function generateMetadata({ params }: ProductPageProps) {
   const { slug } = await params;
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
   try {
     const product = await api.products.findBySlug(slug);
     return {
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: ProductPageProps) {
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
 
   let product: Product;
   try {

@@ -1,26 +1,24 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { auth } from '@clerk/nextjs/server';
 import { getServerApiClient } from '@/lib/api';
-import { getTestAuthSession } from '@/lib/test-auth';
+import { getSession } from '@/lib/session';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatPrice, orderStatusLabel } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
 
 export default async function OrdersPage() {
-  const { userId } = await auth();
-  const testSession = await getTestAuthSession();
-  if (!userId && !testSession) {
+  const session = await getSession();
+  if (!session) {
     redirect('/sign-in?redirect_url=/orders');
   }
 
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
   let orders: Order[] = [];
   try {
-  const result = await api.orders.findAll({ limit: 50 });
-  orders = result.data ?? [];
+    const result = await api.orders.findAll({ limit: 50 });
+    orders = result.data ?? [];
   } catch {
     orders = [];
   }

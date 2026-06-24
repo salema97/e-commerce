@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatPrice } from '@repo/shared-utils';
 
 export default async function AdminDashboardPage() {
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
 
   const [products, orders, users] = await Promise.allSettled([
     api.products.findAll(),

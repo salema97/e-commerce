@@ -8,7 +8,7 @@ interface EditProductPageProps {
 
 export default async function EditProductPage({ params }: EditProductPageProps) {
   const { id } = await params;
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
 
   try {
     const product = await api.products.findOne(id);

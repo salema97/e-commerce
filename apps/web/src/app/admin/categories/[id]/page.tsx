@@ -8,7 +8,7 @@ interface EditCategoryPageProps {
 
 export default async function EditCategoryPage({ params }: EditCategoryPageProps) {
   const { id } = await params;
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
 
   try {
     const category = await api.categories.findOne(id);

@@ -12,7 +12,7 @@ export default async function AdminCustomerDetailPage({
   params,
 }: AdminCustomerDetailPageProps) {
   const { id } = await params;
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
 
   let user: User;
   try {

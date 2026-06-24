@@ -22,7 +22,7 @@ interface StorePageProps {
 
 export default async function StorePage({ searchParams }: StorePageProps) {
   const params = await searchParams;
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
 
   const categorySlug = params.category;
   const search = params.search;

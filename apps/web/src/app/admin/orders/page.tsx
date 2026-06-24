@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { formatPrice, orderStatusLabel } from '@repo/shared-utils';
 
 export default async function AdminOrdersPage() {
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
   const result = await api.orders.findAll({ limit: 50 }).catch(() => ({
     data: [],
     meta: { total: 0, page: 1, limit: 50, totalPages: 0 },

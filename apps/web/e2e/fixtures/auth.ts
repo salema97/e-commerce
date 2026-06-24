@@ -20,15 +20,30 @@ export const TEST_ADMIN: TestUser = {
   role: 'ADMIN',
 };
 
+const SEED_PASSWORD = process.env.E2E_USER_PASSWORD ?? 'SeedDemo123!';
+
+const SEED_EMAIL_BY_ROLE: Record<TestUser['role'], string> = {
+  SUPER_ADMIN: 'superadmin@example.com',
+  ADMIN: 'store-admin@example.com',
+  FINANCE: 'finance@example.com',
+  INVENTORY: 'inventory@example.com',
+  SUPPORT: 'support@example.com',
+  CUSTOMER: 'cliente@example.com',
+};
+
 export async function authenticatePage(page: Page, user: TestUser): Promise<void> {
-  await page.request.post('/api/test/auth', {
-    data: { userId: user.userId, role: user.role },
+  const email = SEED_EMAIL_BY_ROLE[user.role];
+  const res = await page.request.post('/api/auth/login', {
+    data: { email, password: SEED_PASSWORD },
   });
+  if (!res.ok()) {
+    throw new Error(`Login failed for ${email}: ${await res.text()}`);
+  }
   await page.goto('/');
 }
 
 export async function clearAuth(page: Page): Promise<void> {
-  await page.request.delete('/api/test/auth');
+  await page.request.post('/api/auth/logout');
 }
 
 export async function createTestOrder(

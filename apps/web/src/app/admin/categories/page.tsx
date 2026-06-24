@@ -12,7 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 
 export default async function AdminCategoriesPage() {
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
   const categories = await api.categories.findAll().catch(() => []);
 
   return (

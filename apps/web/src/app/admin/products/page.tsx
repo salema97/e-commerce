@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@repo/shared-utils';
 
 export default async function AdminProductsPage() {
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
   const products = await api.products.findAll().catch(() => []);
 
   return (

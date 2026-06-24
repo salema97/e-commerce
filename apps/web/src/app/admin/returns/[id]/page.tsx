@@ -8,7 +8,7 @@ interface AdminReturnDetailPageProps {
 
 export default async function AdminReturnDetailPage({ params }: AdminReturnDetailPageProps) {
   const { id } = await params;
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
 
   try {
     const returnRequest = await api.returns.findOne(id);

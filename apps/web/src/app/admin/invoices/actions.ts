@@ -1,18 +1,15 @@
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { InvoiceResponseDto } from '@repo/shared-types';
+import { ACCESS_TOKEN_COOKIE } from '@/lib/auth-cookies';
 
 const API_BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:3001/v1';
 
-async function getAuthToken(): Promise<string | null> {
-  const { getToken } = await auth();
-  return getToken();
-}
-
 async function authHeaders(): Promise<Record<string, string>> {
-  const token = await getAuthToken();
+  const cookieStore = await cookies();
+  const token = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
@@ -68,8 +65,6 @@ export async function getInvoiceDownloadUrl(
     return location;
   }
 
-  // Fallback: if the endpoint did not redirect, treat as a route that should
-  // be opened directly (e.g. test environments without signed URLs).
   return `${API_BASE_URL}/invoices/${id}/${type}`;
 }
 

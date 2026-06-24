@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table';
 
 export default async function AdminInventoryPage() {
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
   const inventory = await api.inventory.findAll().catch(() => []);
 
   return (

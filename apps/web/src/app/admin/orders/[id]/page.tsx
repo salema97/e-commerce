@@ -10,7 +10,7 @@ export default async function AdminOrderDetailPage({
   params,
 }: AdminOrderDetailPageProps) {
   const { id } = await params;
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
 
   try {
     const order = await api.orders.findOne(id);

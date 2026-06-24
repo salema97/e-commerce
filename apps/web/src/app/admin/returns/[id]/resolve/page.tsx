@@ -8,7 +8,7 @@ interface ResolveReturnPageProps {
 
 export default async function ResolveReturnPage({ params }: ResolveReturnPageProps) {
   const { id } = await params;
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
 
   try {
     const returnRequest = await api.returns.findOne(id);
