@@ -9,6 +9,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Input, Badge, PressableCard, ProductImage, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen.js';
+import { StoreChatWidget } from '../../components/store/StoreChatWidget.js';
 import { api } from '../../lib/api.js';
 import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
 import type { Product, Category } from '@repo/shared-types';
@@ -19,6 +20,8 @@ export default function StoreScreen(): React.ReactElement {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
+  const trimmedSearch = search.trim();
+
   const {
     data: products,
     error: productsError,
@@ -26,17 +29,31 @@ export default function StoreScreen(): React.ReactElement {
 
   const { data: categories } = api.hooks.useCategories();
 
+  const { data: searchHits } = api.hooks.useProductSearch(trimmedSearch, {
+    enabled: trimmedSearch.length >= 2,
+  });
+
   const filteredProducts = useMemo(() => {
     if (!products) return [];
 
-    return products.filter((product) => {
-      const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase());
-      const matchesCategory = selectedCategory
-        ? product.categoryId === selectedCategory
-        : true;
-      return matchesSearch && matchesCategory;
-    });
-  }, [products, search, selectedCategory]);
+    let result = products;
+
+    if (trimmedSearch.length >= 2 && searchHits) {
+      const scoreById = new Map(searchHits.map((hit) => [hit.id, hit.score]));
+      result = result
+        .filter((product) => scoreById.has(product.id))
+        .sort((left, right) => (scoreById.get(right.id) ?? 0) - (scoreById.get(left.id) ?? 0));
+    } else if (trimmedSearch) {
+      const q = trimmedSearch.toLowerCase();
+      result = result.filter((product) => product.name.toLowerCase().includes(q));
+    }
+
+    if (selectedCategory) {
+      result = result.filter((product) => product.categoryId === selectedCategory);
+    }
+
+    return result;
+  }, [products, trimmedSearch, searchHits, selectedCategory]);
 
   const renderCategory = ({ item }: { item: Category }) => (
     <Pressable
@@ -118,6 +135,7 @@ export default function StoreScreen(): React.ReactElement {
           }
         />
       )}
+      <StoreChatWidget />
     </NeoScreen>
   );
 }

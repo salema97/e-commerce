@@ -2,6 +2,25 @@ import { test, expect } from '@playwright/test';
 import { authenticatePage, TEST_ADMIN, TEST_FINANCE, TEST_SUPPORT } from './fixtures/auth.js';
 import { createConversationViaWebhook } from './fixtures/support.js';
 
+async function openConversation(
+  page: import('@playwright/test').Page,
+  contactName: string,
+): Promise<void> {
+  const row = page.getByRole('button', { name: contactName });
+  await expect(row).toBeVisible({ timeout: 15000 });
+  await row.click();
+}
+
+async function selectConversationStatus(
+  page: import('@playwright/test').Page,
+  label: string,
+): Promise<void> {
+  const combobox = page.getByRole('combobox', { name: 'Estado de la conversación' });
+  await expect(combobox).toBeVisible({ timeout: 10000 });
+  await combobox.click();
+  await page.getByRole('option', { name: label, exact: true }).click();
+}
+
 test.describe('admin support inbox e2e', () => {
   test('support agent views conversation list and sends a reply', async ({ page, request }) => {
     const contactName = `Cliente de prueba ${Date.now()}`;
@@ -13,10 +32,10 @@ test.describe('admin support inbox e2e', () => {
     await authenticatePage(page, TEST_SUPPORT);
     await page.goto('/admin/support');
 
-    await expect(page.locator('body')).toContainText('Bandeja de soporte');
+    await expect(page.locator('body')).toContainText('Bandeja de conversaciones WhatsApp');
     await expect(page.locator('body')).toContainText(contactName);
 
-    await page.getByText(contactName).click();
+    await openConversation(page, contactName);
     await expect(page.locator('body')).toContainText('Hola, tengo una duda');
 
     const reply = 'Gracias por contactarnos. ¿En qué podemos ayudarte?';
@@ -37,9 +56,9 @@ test.describe('admin support inbox e2e', () => {
     await page.goto('/admin/support');
 
     await expect(page.locator('body')).toContainText(contactName);
-    await page.getByText(contactName).click();
+    await openConversation(page, contactName);
 
-    await page.locator('select[aria-label="Estado de la conversación"]').selectOption('PENDING');
+    await selectConversationStatus(page, 'Pendiente');
     await expect(page.locator('body')).toContainText('Pendiente');
 
     await page.getByRole('button', { name: 'Asignarme' }).click();
@@ -57,9 +76,9 @@ test.describe('admin support inbox e2e', () => {
     await page.goto('/admin/support');
 
     await expect(page.locator('body')).toContainText(contactName);
-    await page.getByText(contactName).click();
+    await openConversation(page, contactName);
 
-    await page.locator('select[aria-label="Estado de la conversación"]').selectOption('RESOLVED');
+    await selectConversationStatus(page, 'Resuelto');
     await expect(page.locator('body')).toContainText('Resuelto');
 
     await page.goto('/admin/support');

@@ -10,7 +10,7 @@ import { FormSelect } from '@/components/ui/form-select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useApiClient } from '@/lib/client-api';
+import { useApiClient, useApiQueryHooks } from '@/lib/client-api';
 import { formatPrice, refundStatusLabel } from '@repo/shared-utils';
 import type { Order, Refund, RefundStatus } from '@repo/shared-types';
 
@@ -32,6 +32,10 @@ function refundStatusVariant(status: RefundStatus): 'default' | 'secondary' | 'd
 export function RefundPanel({ order }: RefundPanelProps) {
   const router = useRouter();
   const api = useApiClient();
+  const hooks = useApiQueryHooks();
+  const approveRefund = hooks.useApproveRefund({
+    onSuccess: () => router.refresh(),
+  });
   const [type, setType] = React.useState<'full' | 'partial'>('full');
   const [amount, setAmount] = React.useState<string>('');
   const [reason, setReason] = React.useState('');
@@ -87,6 +91,17 @@ export function RefundPanel({ order }: RefundPanelProps) {
                 </div>
                 {refund.reason ? (
                   <span className="text-muted-foreground">{refund.reason}</span>
+                ) : null}
+                {refund.status === 'PENDING' ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={approveRefund.isPending}
+                    onClick={() => approveRefund.mutate(refund.id)}
+                  >
+                    {approveRefund.isPending ? 'Aprobando…' : 'Aprobar reembolso'}
+                  </Button>
                 ) : null}
                 <span className="text-xs text-muted-foreground">
                   {new Date(refund.createdAt).toLocaleString('es-EC')}

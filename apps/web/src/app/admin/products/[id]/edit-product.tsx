@@ -9,16 +9,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { FormSelect } from '@/components/ui/form-select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { useApiClient, useApiQueryHooks } from '@/lib/client-api';
-import type { Product, ProductStatus } from '@repo/shared-types';
+import type { Product, ProductContentDraft, ProductStatus } from '@repo/shared-types';
 
-export default function EditProductPage({ product }: { product: Product }) {
+interface EditProductProps {
+  product: Product;
+  initialDraft: ProductContentDraft | null;
+}
+
+export default function EditProductPage({ product, initialDraft }: EditProductProps) {
   const router = useRouter();
   const api = useApiClient();
   const hooks = useApiQueryHooks();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const { data: draft, refetch: refetchDraft } = hooks.useProductContentDraft(product.id);
+  const { data: draft, refetch: refetchDraft } = hooks.useProductContentDraft(product.id, {
+    initialData: initialDraft,
+  });
   const generateContent = hooks.useGenerateProductContent({
     onSuccess: () => void refetchDraft(),
   });
@@ -56,14 +63,17 @@ export default function EditProductPage({ product }: { product: Product }) {
   }
 
   return (
-    <AnimatedPageShell
-      className="flex flex-col gap-6"
-      header={<h1 className="text-2xl font-bold">Editar producto</h1>}
-    >
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
+      <AdminPageHeader
+        title="Editar producto"
+        subtitle={product.name}
+        showNetworkStatus={false}
+      />
+
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>{product.name}</CardTitle>
+            <CardTitle>Detalles</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
@@ -144,7 +154,9 @@ export default function EditProductPage({ product }: { product: Product }) {
                 name="isFeatured"
                 defaultChecked={product.isFeatured}
               />
-              <Label htmlFor="isFeatured" className="normal-case">Producto destacado</Label>
+              <Label htmlFor="isFeatured" className="normal-case">
+                Producto destacado
+              </Label>
             </div>
           </CardContent>
         </Card>
@@ -163,11 +175,23 @@ export default function EditProductPage({ product }: { product: Product }) {
               {generateContent.isPending ? 'Generando...' : 'Generar con IA'}
             </Button>
             {draft ? (
-              <div className="rounded-md border p-4 text-sm">
-                <p className="font-medium">Borrador pendiente de revisión</p>
-                {draft.metaTitle ? <p className="mt-2"><strong>Meta título:</strong> {draft.metaTitle}</p> : null}
-                {draft.metaDescription ? <p className="mt-1"><strong>Meta descripción:</strong> {draft.metaDescription}</p> : null}
-                {draft.description ? <p className="mt-1 whitespace-pre-wrap"><strong>Descripción:</strong> {draft.description}</p> : null}
+              <div className="rounded-md border-[3px] border-neo-onyx p-4 text-sm shadow-[3px_3px_0_#111]">
+                <p className="font-bold uppercase">Borrador pendiente de revisión</p>
+                {draft.metaTitle ? (
+                  <p className="mt-2">
+                    <strong>Meta título:</strong> {draft.metaTitle}
+                  </p>
+                ) : null}
+                {draft.metaDescription ? (
+                  <p className="mt-1">
+                    <strong>Meta descripción:</strong> {draft.metaDescription}
+                  </p>
+                ) : null}
+                {draft.description ? (
+                  <p className="mt-1 whitespace-pre-wrap">
+                    <strong>Descripción:</strong> {draft.description}
+                  </p>
+                ) : null}
                 <div className="mt-3 flex gap-2">
                   <Button
                     type="button"
@@ -201,6 +225,6 @@ export default function EditProductPage({ product }: { product: Product }) {
           </Button>
         </div>
       </form>
-    </AnimatedPageShell>
+    </div>
   );
 }

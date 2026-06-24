@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Next.js web app for the e-commerce platform",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

@@ -60,6 +60,11 @@ import type {
   AdminStoreCredit,
   SearchResultItem,
   Faq,
+  CreateFaqDto,
+  UpdateFaqDto,
+  CmsPage,
+  CreateCmsPageDto,
+  UpdateCmsPageDto,
   ProductContentDraft,
   ChatSession,
   Promotion,
@@ -398,6 +403,18 @@ export function createApiClient(options: ApiClientOptions) {
     ai: {
       faqs: {
         findPublished: () => request<Faq[]>('GET', '/ai/faqs'),
+        findAllAdmin: () => request<Faq[]>('GET', '/ai/faqs/admin'),
+        create: (data: CreateFaqDto) => request<Faq>('POST', '/ai/faqs', data),
+        update: (id: string, data: UpdateFaqDto) => request<Faq>('PATCH', `/ai/faqs/${id}`, data),
+        remove: (id: string) => request<{ success: boolean }>('DELETE', `/ai/faqs/${id}`),
+      },
+      cmsPages: {
+        findBySlug: (slug: string) => request<CmsPage>('GET', `/ai/cms-pages/${slug}`),
+        findAllAdmin: () => request<CmsPage[]>('GET', '/ai/cms-pages/admin/list'),
+        create: (data: CreateCmsPageDto) => request<CmsPage>('POST', '/ai/cms-pages', data),
+        update: (id: string, data: UpdateCmsPageDto) =>
+          request<CmsPage>('PATCH', `/ai/cms-pages/${id}`, data),
+        remove: (id: string) => request<{ success: boolean }>('DELETE', `/ai/cms-pages/${id}`),
       },
       products: {
         generateContent: (productId: string) =>

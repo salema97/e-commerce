@@ -58,7 +58,8 @@ test.describe('admin invoice UI e2e', () => {
     await authenticatePage(page, TEST_FINANCE_USER);
     await page.goto('/admin/invoices');
 
-    await page.getByLabel('Filtrar por estado').first().selectOption('FAILED');
+    await page.getByRole('combobox', { name: 'Filtrar por estado' }).click();
+    await page.getByRole('option', { name: 'Fallida' }).click();
     await page.getByRole('button', { name: 'Filtrar' }).click();
 
     await expect(page.locator('body')).toContainText('Fallida');

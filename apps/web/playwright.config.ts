@@ -1,4 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
+import { E2E_EVOLUTION_WEBHOOK_SECRET } from './e2e/fixtures/webhook-secret.js';
+
+process.env.EVOLUTION_WEBHOOK_SECRET ??= E2E_EVOLUTION_WEBHOOK_SECRET;
 
 export default defineConfig({
   testDir: './e2e',

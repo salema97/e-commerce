@@ -1,15 +1,12 @@
 import { notFound } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
+import { MarkdownContent } from '@/components/content/markdown-content';
+import { getServerApiClient } from '@/lib/api';
 
 interface BlogPageProps {
   params: Promise<{ slug: string }>;
 }
-
-const BLOG_TITLES: Record<string, string> = {
-  'guia-compras-online': 'Guía de compras online',
-  'cuidado-productos': 'Cómo cuidar tus productos',
-};
 
 function formatSlugTitle(slug: string): string {
   return slug
@@ -20,31 +17,35 @@ function formatSlugTitle(slug: string): string {
 
 export async function generateMetadata({ params }: BlogPageProps) {
   const { slug } = await params;
-  const title = BLOG_TITLES[slug] ?? formatSlugTitle(slug);
+  const api = await getServerApiClient();
+  const page = await api.ai.cmsPages.findBySlug(slug).catch(() => null);
+  const title = page?.title ?? formatSlugTitle(slug);
   return { title: `Artículo: ${title}` };
 }
 
 export default async function BlogPostPage({ params }: BlogPageProps) {
   const { slug } = await params;
-  const title = BLOG_TITLES[slug] ?? formatSlugTitle(slug);
 
   if (!slug) {
+    notFound();
+  }
+
+  const api = await getServerApiClient();
+  const page = await api.ai.cmsPages.findBySlug(slug).catch(() => null);
+
+  if (!page) {
     notFound();
   }
 
   return (
     <AnimatedPageShell
       className="container mx-auto max-w-3xl px-4 py-8"
-      header={<h1 className="text-3xl font-bold">{title}</h1>}
+      header={<h1 className="text-3xl font-bold">{page.title}</h1>}
     >
       <NeoReveal>
-        <Card className="mt-6">
+        <Card className="mt-6 brutalist-card">
           <CardContent className="pt-6">
-            <p className="text-muted-foreground">
-              Artículo del blog gestionado por CMS (placeholder). El contenido de esta
-              publicación se cargará desde el panel de administración cuando la
-              integración CMS esté disponible.
-            </p>
+            <MarkdownContent markdown={page.bodyMarkdown} />
           </CardContent>
         </Card>
       </NeoReveal>

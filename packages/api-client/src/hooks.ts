@@ -61,6 +61,11 @@ import type {
   AdminStoreCredit,
   SearchResultItem,
   Faq,
+  CreateFaqDto,
+  UpdateFaqDto,
+  CmsPage,
+  CreateCmsPageDto,
+  UpdateCmsPageDto,
   ProductContentDraft,
   ChatSession,
   Promotion,
@@ -109,6 +114,8 @@ export const queryKeys = {
   chatMessages: (sessionId: string) => ['chat', sessionId, 'messages'] as const,
   productContentDraft: (productId: string) => ['ai', 'products', productId, 'draft'] as const,
   faqs: ['ai', 'faqs'] as const,
+  adminFaqs: ['ai', 'faqs', 'admin'] as const,
+  adminCmsPages: ['ai', 'cms-pages', 'admin'] as const,
   marketingPromotions: ['marketing', 'promotions'] as const,
 };
 
@@ -481,6 +488,17 @@ export function createQueryHooks(client: ApiClient) {
           queryClient.invalidateQueries({ queryKey: queryKeys.orders() });
           queryClient.invalidateQueries({ queryKey: queryKeys.order(orderId) });
           queryClient.invalidateQueries({ queryKey: ['orders', orderId, 'refunds'] });
+        },
+        ...options,
+      });
+    },
+
+    useApproveRefund: (options?: UseMutationOptions<Refund, Error, string>) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (refundId) => client.refunds.approve(refundId),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.orders() });
         },
         ...options,
       });
@@ -919,6 +937,99 @@ export function createQueryHooks(client: ApiClient) {
         queryFn: () => client.ai.faqs.findPublished(),
         ...options,
       }),
+
+    useAdminFaqs: (
+      options?: Omit<UseQueryOptions<Faq[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.adminFaqs,
+        queryFn: () => client.ai.faqs.findAllAdmin(),
+        ...options,
+      }),
+
+    useCreateFaq: (options?: UseMutationOptions<Faq, Error, CreateFaqDto>) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.ai.faqs.create(data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminFaqs });
+          queryClient.invalidateQueries({ queryKey: queryKeys.faqs });
+        },
+        ...options,
+      });
+    },
+
+    useUpdateFaq: (
+      options?: UseMutationOptions<Faq, Error, { id: string; data: UpdateFaqDto }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, data }) => client.ai.faqs.update(id, data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminFaqs });
+          queryClient.invalidateQueries({ queryKey: queryKeys.faqs });
+        },
+        ...options,
+      });
+    },
+
+    useDeleteFaq: (options?: UseMutationOptions<{ success: boolean }, Error, string>) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (id) => client.ai.faqs.remove(id),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminFaqs });
+          queryClient.invalidateQueries({ queryKey: queryKeys.faqs });
+        },
+        ...options,
+      });
+    },
+
+    useAdminCmsPages: (
+      options?: Omit<UseQueryOptions<CmsPage[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.adminCmsPages,
+        queryFn: () => client.ai.cmsPages.findAllAdmin(),
+        ...options,
+      }),
+
+    useCreateCmsPage: (options?: UseMutationOptions<CmsPage, Error, CreateCmsPageDto>) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.ai.cmsPages.create(data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminCmsPages });
+        },
+        ...options,
+      });
+    },
+
+    useUpdateCmsPage: (
+      options?: UseMutationOptions<CmsPage, Error, { id: string; data: UpdateCmsPageDto }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, data }) => client.ai.cmsPages.update(id, data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminCmsPages });
+        },
+        ...options,
+      });
+    },
+
+    useDeleteCmsPage: (
+      options?: UseMutationOptions<{ success: boolean }, Error, string>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (id) => client.ai.cmsPages.remove(id),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminCmsPages });
+        },
+        ...options,
+      });
+    },
 
     useMarketingPromotions: (
       options?: Omit<

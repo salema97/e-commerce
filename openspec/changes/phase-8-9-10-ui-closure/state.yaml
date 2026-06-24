@@ -1,11 +1,11 @@
 change: phase-8-9-10-ui-closure
-status: applying
+status: verifying
 phases:
   explore: skipped
   propose: complete
   spec: complete
   design: complete
   tasks: complete
-  apply: in_progress
-  verify: pending
+  apply: complete
+  verify: in_progress
   archive: pending
