@@ -63,7 +63,7 @@ export class ReturnsController {
 
   @Post('guest/request')
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 3600_000 } })
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a return request as a guest using order id + email' })
   @ApiResponse({ status: 201, description: 'Return request created' })
