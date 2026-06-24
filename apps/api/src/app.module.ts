@@ -35,6 +35,10 @@ import { ShippingModule } from './shipping/shipping.module.js';
 import { TaxModule } from './tax/tax.module.js';
 import { FulfillmentModule } from './fulfillment/fulfillment.module.js';
 import { CatalogModule } from './catalog/catalog.module.js';
+import { ReviewsModule } from './reviews/reviews.module.js';
+import { ReferralsModule } from './referrals/referrals.module.js';
+import { LoyaltyModule } from './loyalty/loyalty.module.js';
+import { EngagementModule } from './engagement/engagement.module.js';
 
 @Module({
   imports: [
@@ -86,6 +90,10 @@ import { CatalogModule } from './catalog/catalog.module.js';
     TaxModule,
     FulfillmentModule,
     CatalogModule,
+    ReviewsModule,
+    ReferralsModule,
+    LoyaltyModule,
+    EngagementModule,
   ],
   providers: [
     {

@@ -11,6 +11,8 @@ export const productIndexSelect = {
   compareAtPrice: true,
   isFeatured: true,
   createdAt: true,
+  averageRating: true,
+  reviewCount: true,
   category: { select: { id: true, slug: true, name: true } },
   supplier: { select: { name: true } },
   attributes: { select: { name: true, value: true } },
@@ -59,5 +61,7 @@ export function mapProductToMeiliDocument(product: ProductForIndex): MeiliProduc
     attributeFacets,
     imageUrl: product.images[0]?.url ?? null,
     createdAt: product.createdAt.getTime(),
+    averageRating: product.averageRating ? Number(product.averageRating) : null,
+    reviewCount: product.reviewCount,
   };
 }

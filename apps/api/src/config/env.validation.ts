@@ -117,6 +117,20 @@ const envSchema = z.object({
   KAFKA_PASSWORD: z.string().optional(),
   KAFKA_DOMAIN_EVENTS_TOPIC: z.string().default('domain-events'),
   ENABLE_TEST_AUTH: z.enum(['true', 'false']).default('false'),
+  LOYALTY_SIGNUP_POINTS: z.coerce.number().int().min(0).default(25),
+  LOYALTY_REVIEW_POINTS: z.coerce.number().int().min(0).default(50),
+  LOYALTY_REFERRAL_POINTS: z.coerce.number().int().min(0).default(100),
+  LOYALTY_PURCHASE_POINTS_PER_DOLLAR: z.coerce.number().min(0).default(1),
+  LOYALTY_POINT_VALUE: z.coerce.number().min(0).default(0.01),
+  LOYALTY_POINTS_EXPIRATION_DAYS: z.coerce.number().int().positive().default(365),
+  REFERRAL_COMMISSION_RATE: z.coerce.number().min(0).max(1).default(0.05),
+  EXTERNAL_REVIEW_PROVIDER: z.enum(['console', 'google', 'trustpilot']).default('console'),
+  GOOGLE_REVIEWS_RATING: z.coerce.number().min(0).max(5).optional(),
+  GOOGLE_REVIEWS_COUNT: z.coerce.number().int().min(0).optional(),
+  GOOGLE_REVIEWS_URL: z.string().optional(),
+  TRUSTPILOT_RATING: z.coerce.number().min(0).max(5).optional(),
+  TRUSTPILOT_REVIEW_COUNT: z.coerce.number().int().min(0).optional(),
+  TRUSTPILOT_PROFILE_URL: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

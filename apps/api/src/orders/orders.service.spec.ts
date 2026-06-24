@@ -13,6 +13,7 @@ import { EmailNotificationService } from '../notifications/email-notification.se
 import { PushNotificationService } from '../notifications/push-notification.service.js';
 import { EventBus } from '../event-bus/event-bus.interface.js';
 import { BackorderService } from './backorder.service.js';
+import { LoyaltyService } from '../loyalty/loyalty.service.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
 
 describe('OrdersService', () => {
@@ -30,6 +31,7 @@ describe('OrdersService', () => {
   let emailNotificationService: { notify: ReturnType<typeof vi.fn> };
   let pushNotificationService: { notifyForOrder: ReturnType<typeof vi.fn> };
   let backorder: { isEnabled: ReturnType<typeof vi.fn>; allocateItems: ReturnType<typeof vi.fn> };
+  let loyalty: { quoteRedemption: ReturnType<typeof vi.fn>; redeem: ReturnType<typeof vi.fn> };
   let eventBus: { publish: ReturnType<typeof vi.fn>; registerHandler: ReturnType<typeof vi.fn> };
 
   function mockPrisma() {
@@ -70,6 +72,12 @@ describe('OrdersService', () => {
       }),
     };
     backorder = { isEnabled: vi.fn(() => false), allocateItems: vi.fn() };
+    loyalty = {
+      quoteRedemption: vi.fn().mockResolvedValue({ points: 0, discountAmount: 0, maxRedeemablePoints: 0 }),
+      redeem: vi.fn().mockResolvedValue(undefined),
+      getOrCreateAccount: vi.fn().mockResolvedValue({ points: 0, tier: 'BRONZE', pointsValue: 0 }),
+      hasFreeShippingBenefit: vi.fn(() => false),
+    };
     notificationService = { notify: vi.fn().mockResolvedValue(undefined) };
     emailNotificationService = { notify: vi.fn().mockResolvedValue(undefined) };
     pushNotificationService = { notifyForOrder: vi.fn().mockResolvedValue(undefined) };
@@ -83,6 +91,7 @@ describe('OrdersService', () => {
         { provide: ShippingService, useValue: shipping },
         { provide: TaxService, useValue: tax },
         { provide: BackorderService, useValue: backorder },
+        { provide: LoyaltyService, useValue: loyalty },
         { provide: WhatsAppNotificationService, useValue: notificationService },
         { provide: EmailNotificationService, useValue: emailNotificationService },
         { provide: PushNotificationService, useValue: pushNotificationService },

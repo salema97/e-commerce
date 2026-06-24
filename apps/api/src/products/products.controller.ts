@@ -53,6 +53,13 @@ export class ProductsController {
     return this.productsService.findAll();
   }
 
+  @Get('slug/:slug')
+  @Public()
+  @ApiOperation({ summary: 'Get a product by slug' })
+  findBySlug(@Param('slug') slug: string) {
+    return this.productsService.findBySlug(slug);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a product by id' })
   @ApiResponse({ status: 200, description: 'Product found' })

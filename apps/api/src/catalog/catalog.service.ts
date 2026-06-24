@@ -55,6 +55,7 @@ export class CatalogService {
       brand: query.brand,
       minPrice: query.minPrice,
       maxPrice: query.maxPrice,
+      minRating: query.minRating,
       inStock: query.inStock,
       sort: query.sort,
       page: query.page,
@@ -95,6 +96,8 @@ export class CatalogService {
       inStock: hit.inStock,
       brand: hit.brand,
       imageUrl: hit.imageUrl,
+      averageRating: hit.averageRating,
+      reviewCount: hit.reviewCount,
     };
   }
 
@@ -145,6 +148,9 @@ export class CatalogService {
         { description: { contains: query.q, mode: 'insensitive' } },
       ];
     }
+    if (query.minRating !== undefined) {
+      where.averageRating = { gte: query.minRating };
+    }
 
     const orderBy = this.prismaOrderBy(query.sort);
 
@@ -162,6 +168,8 @@ export class CatalogService {
           price: true,
           compareAtPrice: true,
           isFeatured: true,
+          averageRating: true,
+          reviewCount: true,
           category: { select: { id: true, slug: true, name: true } },
           attributes: { select: { name: true, value: true } },
           images: { take: 1, orderBy: { sortOrder: 'asc' }, select: { url: true } },
@@ -192,6 +200,8 @@ export class CatalogService {
         inStock: available > 0,
         brand: brandAttr?.value ?? null,
         imageUrl: row.images[0]?.url ?? null,
+        averageRating: row.averageRating ? Number(row.averageRating) : null,
+        reviewCount: row.reviewCount,
       } satisfies CatalogProductSummary;
     });
 

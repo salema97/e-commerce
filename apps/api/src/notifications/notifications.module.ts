@@ -5,6 +5,7 @@ import { UsersModule } from '../users/users.module.js';
 import { RedisModule } from '../common/redis/redis.module.js';
 import { ReceiptsModule } from '../receipts/receipts.module.js';
 import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
+import { WhatsAppModule } from '../whatsapp/whatsapp.module.js';
 import { EmailModule } from './email.module.js';
 import { EmailNotificationService } from './email-notification.service.js';
 import { CampaignEmailService } from './campaign-email.service.js';
@@ -29,7 +30,7 @@ import { OrderConfirmationService } from './order-confirmation.service.js';
 import { OrderPaidDomainConsumer } from './order-paid-domain.consumer.js';
 
 @Module({
-  imports: [ConfigModule, EmailModule, PrismaModule, RedisModule, UsersModule, ReceiptsModule, WhatsAppNotificationModule],
+  imports: [ConfigModule, EmailModule, PrismaModule, RedisModule, UsersModule, ReceiptsModule, WhatsAppNotificationModule, WhatsAppModule],
   controllers: [
     PushTokensController,
     NotificationPreferencesController,

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CampaignEmailService } from './campaign-email.service.js';
 import { PushNotificationService } from './push-notification.service.js';
+import { WhatsAppProvider } from '../whatsapp/whatsapp-provider.interface.js';
 
 @Injectable()
 export class BackInStockAlertsService {
@@ -12,6 +13,7 @@ export class BackInStockAlertsService {
     private readonly prisma: PrismaService,
     private readonly campaignEmail: CampaignEmailService,
     private readonly pushNotifications: PushNotificationService,
+    private readonly whatsappProvider: WhatsAppProvider,
     private readonly configService: ConfigService,
   ) {}
 
@@ -77,7 +79,7 @@ export class BackInStockAlertsService {
 
           const user = await this.prisma.user.findFirst({
             where: { email: alert.email },
-            select: { id: true },
+            select: { id: true, phone: true, name: true },
           });
 
           if (user) {
@@ -92,6 +94,17 @@ export class BackInStockAlertsService {
               },
               `ecommerce://product/${product.slug}`,
             );
+
+            if (user.phone) {
+              try {
+                await this.whatsappProvider.sendText(
+                  user.phone,
+                  `¡Buenas noticias! ${product.name} ya está disponible: ${productUrl}`,
+                );
+              } catch (error) {
+                this.logger.error({ error, alertId: alert.id }, 'Back-in-stock WhatsApp failed');
+              }
+            }
           }
         }
       } catch (error) {
