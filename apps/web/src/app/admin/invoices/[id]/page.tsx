@@ -17,16 +17,11 @@ export default async function AdminInvoiceDetailPage({ params }: AdminInvoiceDet
   }
 
   const api = await getServerApiClient();
-  let invoice: InvoiceResponseDto | null = null;
+  let invoice: InvoiceResponseDto | null = await api.invoices.findOne(id).catch(() => null);
   let order: Order | null = null;
 
-  try {
-    invoice = await api.invoices.findOne(id);
-    if (invoice?.orderId) {
-      order = await api.orders.findOne(invoice.orderId).catch(() => null);
-    }
-  } catch {
-    notFound();
+  if (invoice?.orderId) {
+    order = await api.orders.findOne(invoice.orderId).catch(() => null);
   }
 
   if (!invoice) {

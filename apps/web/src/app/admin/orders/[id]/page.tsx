@@ -9,13 +9,12 @@ interface AdminOrderDetailPageProps {
 export default async function AdminOrderDetailPage({
   params,
 }: AdminOrderDetailPageProps) {
-  const { id } = await params;
-  const api = await getServerApiClient();
+  const [{ id }, api] = await Promise.all([params, getServerApiClient()]);
+  const order = await api.orders.findOne(id).catch(() => null);
 
-  try {
-    const order = await api.orders.findOne(id);
-    return <OrderDetail order={order} />;
-  } catch {
+  if (!order) {
     notFound();
   }
+
+  return <OrderDetail order={order} />;
 }

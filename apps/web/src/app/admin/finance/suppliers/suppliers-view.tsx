@@ -18,7 +18,7 @@ export function SuppliersView({ initialSuppliers }: { initialSuppliers: Supplier
   const api = useApiClient();
   const authReady = useAuthApiReady();
 
-  const suppliersQuery = useQuery({
+  const { data: suppliers } = useQuery({
     queryKey: ['suppliers'],
     queryFn: () => api.suppliers.findAll(),
     initialData: initialSuppliers,
@@ -43,7 +43,7 @@ export function SuppliersView({ initialSuppliers }: { initialSuppliers: Supplier
           </TableRow>
         </TableHeader>
         <TableBody>
-          {(suppliersQuery.data ?? []).map((supplier) => (
+          {(suppliers ?? []).map((supplier) => (
             <TableRow key={supplier.id}>
               <TableCell className="font-medium">{supplier.name}</TableCell>
               <TableCell>{supplier.contactName ?? '—'}</TableCell>

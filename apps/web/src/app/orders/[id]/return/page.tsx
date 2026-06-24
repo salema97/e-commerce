@@ -8,16 +8,16 @@ interface ReturnRequestPageProps {
 }
 
 export default async function ReturnRequestPage({ params }: ReturnRequestPageProps) {
-  const session = await getSession();
+  const [session, { id }, api] = await Promise.all([
+    getSession(),
+    params,
+    getServerApiClient(),
+  ]);
   const isAuthenticated = Boolean(session);
 
-  const { id } = await params;
-  const api = await getServerApiClient();
+  const order = await api.orders.findOne(id).catch(() => null);
 
-  let order;
-  try {
-    order = await api.orders.findOne(id);
-  } catch {
+  if (!order) {
     notFound();
   }
 

@@ -15,34 +15,30 @@ import {
   getProductPrimaryImageUrl,
 } from '@repo/shared-utils';
 import { getProductAvailableQuantity } from '@/lib/product-stock';
-import type { Product } from '@repo/shared-types';
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: ProductPageProps) {
-  const { slug } = await params;
-  const api = await getServerApiClient();
-  try {
-    const product = await api.products.findBySlug(slug);
-    return {
-      title: product.name,
-      description: product.description ?? `Comprar ${product.name}`,
-    };
-  } catch {
+  const [{ slug }, api] = await Promise.all([params, getServerApiClient()]);
+  const product = await api.products.findBySlug(slug).catch(() => null);
+
+  if (!product) {
     return { title: 'Producto no encontrado' };
   }
+
+  return {
+    title: product.name,
+    description: product.description ?? `Comprar ${product.name}`,
+  };
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const { slug } = await params;
-  const api = await getServerApiClient();
+  const [{ slug }, api] = await Promise.all([params, getServerApiClient()]);
+  const product = await api.products.findBySlug(slug).catch(() => null);
 
-  let product: Product;
-  try {
-    product = await api.products.findBySlug(slug);
-  } catch {
+  if (!product) {
     notFound();
   }
 

@@ -6,6 +6,7 @@ import { PaymentWebhookService } from './payment-webhook.service.js';
 import { PaymentWebhookController } from './webhook.controller.js';
 import { PaymentsController } from './payments.controller.js';
 import { TestPaymentsController } from './test-payments.controller.js';
+import { TestPaymentsService } from './test-payments.service.js';
 import { StripeProvider } from './stripe/stripe.provider.js';
 import { StripeWebhookController } from './stripe/stripe-webhook.controller.js';
 import { StripeWebhookService } from './stripe/stripe-webhook.service.js';
@@ -39,6 +40,7 @@ import { isNonProduction } from '../common/is-non-production.js';
   ],
   providers: [
     PaymentsService,
+    TestPaymentsService,
     RefundService,
     PaymentProviderFactory,
     PaymentWebhookService,

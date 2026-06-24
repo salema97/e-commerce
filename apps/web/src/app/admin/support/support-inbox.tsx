@@ -29,7 +29,7 @@ export function SupportInbox({ currentUserId, initialConversations }: SupportInb
     assignedToMe: false,
   });
 
-  const conversationsQuery = useQuery({
+  const { data: conversations, isError: conversationsError } = useQuery({
     queryKey: ['conversations', filters],
     queryFn: () => api.conversations.findAll({
       status: filters.status || undefined,
@@ -44,25 +44,25 @@ export function SupportInbox({ currentUserId, initialConversations }: SupportInb
     refetchInterval: 10_000,
   });
 
-  const selectedConversation = conversationsQuery.data?.data.find(
+  const selectedConversation = conversations?.data.find(
     (c) => c.id === selectedId,
   );
 
-  const conversationDetailQuery = useQuery({
+  const { data: conversationDetail } = useQuery({
     queryKey: ['conversations', selectedId],
     queryFn: () => api.conversations.findOne(selectedId!),
     enabled: authReady && Boolean(selectedId),
     refetchInterval: 10_000,
   });
 
-  const messagesQuery = useQuery({
+  const { data: messages } = useQuery({
     queryKey: ['conversations', selectedId, 'messages'],
     queryFn: () => api.messages.findAll(selectedId!),
     enabled: authReady && Boolean(selectedId),
     refetchInterval: 10_000,
   });
 
-  const quickRepliesQuery = useQuery({
+  const { data: quickReplies } = useQuery({
     queryKey: ['whatsapp', 'quick-replies'],
     queryFn: () => api.whatsapp.getQuickReplies(),
     enabled: authReady,
@@ -92,7 +92,7 @@ export function SupportInbox({ currentUserId, initialConversations }: SupportInb
     },
   });
 
-  const activeConversation = conversationDetailQuery.data ?? selectedConversation;
+  const activeConversation = conversationDetail ?? selectedConversation;
 
   function handleSelect(conversation: Conversation) {
     setSelectedId(conversation.id);
@@ -122,14 +122,14 @@ export function SupportInbox({ currentUserId, initialConversations }: SupportInb
         />
       }
     >
-      {conversationsQuery.isError ? (
+      {conversationsError ? (
         <p className="text-sm text-destructive">
           No se pudieron cargar las conversaciones. Recarga la página o vuelve a iniciar sesión.
         </p>
       ) : null}
       <div className="neo-panel grid min-h-[min(70vh,720px)] flex-1 overflow-hidden lg:grid-cols-[360px_1fr]">
         <ConversationList
-          conversations={conversationsQuery.data?.data ?? []}
+          conversations={conversations?.data ?? []}
           selectedId={selectedId}
           filter={filters}
           onFilterChange={(changes) => setFilters((prev) => ({ ...prev, ...changes }))}
@@ -138,8 +138,8 @@ export function SupportInbox({ currentUserId, initialConversations }: SupportInb
         {activeConversation ? (
           <ConversationDetail
             conversation={activeConversation}
-            messages={messagesQuery.data?.data ?? []}
-            quickReplies={quickRepliesQuery.data ?? []}
+            messages={messages?.data ?? []}
+            quickReplies={quickReplies ?? []}
             currentUserId={currentUserId}
             onSendMessage={handleSendMessage}
             onUpdateConversation={handleUpdateConversation}

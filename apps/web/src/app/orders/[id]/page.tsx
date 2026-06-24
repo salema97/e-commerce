@@ -23,18 +23,19 @@ function isReturnable(order: Order): boolean {
 }
 
 export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
-  const session = await getSession();
+  const [session, { id }, api] = await Promise.all([
+    getSession(),
+    params,
+    getServerApiClient(),
+  ]);
+
   if (!session) {
     redirect('/sign-in?redirect_url=/orders');
   }
 
-  const { id } = await params;
-  const api = await getServerApiClient();
+  const order = await api.orders.findOne(id).catch(() => null);
 
-  let order: Order;
-  try {
-    order = await api.orders.findOne(id);
-  } catch {
+  if (!order) {
     notFound();
   }
 

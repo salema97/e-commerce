@@ -27,6 +27,25 @@ export function filterAdminNav(role: Role): AdminNavItem[] {
   return adminNavItems.filter((item) => item.roles.includes(role));
 }
 
+/** RBAC compartido con middleware.ts — misma matriz que admin-nav.ts */
+export function canAccessAdminPath(role: Role, pathname: string): boolean {
+  const normalized = pathname.replace(/\/$/, '') || '/admin';
+
+  if (normalized === '/admin') {
+    return filterAdminNav(role).length > 0;
+  }
+
+  const match = [...adminNavItems]
+    .filter((item) => normalized === item.href || normalized.startsWith(`${item.href}/`))
+    .sort((left, right) => right.href.length - left.href.length)[0];
+
+  if (!match) {
+    return role === 'SUPER_ADMIN' || role === 'ADMIN';
+  }
+
+  return match.roles.includes(role);
+}
+
 export function adminNavLabelForPath(pathname: string): string {
   const match = adminNavItems.find(
     (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),

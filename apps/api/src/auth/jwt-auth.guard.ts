@@ -22,8 +22,8 @@ export interface AuthenticatedRequest {
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(
-    private reflector: Reflector,
-    private jwt: AppJwtService,
+    private readonly reflector: Reflector,
+    private readonly jwt: AppJwtService,
   ) {}
 
   canActivate(context: ExecutionContext): boolean {

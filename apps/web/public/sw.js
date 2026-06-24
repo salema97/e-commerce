@@ -12,7 +12,7 @@ self.addEventListener('install', (event) => {
       return cache.addAll([OFFLINE_URL, '/', '/store', '/cart']);
     }),
   );
-  (self as unknown as ServiceWorkerGlobalScope).skipWaiting();
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -23,14 +23,15 @@ self.addEventListener('activate', (event) => {
       );
     }),
   );
-  (self as unknown as ServiceWorkerGlobalScope).clients.claim();
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
-  const request = (event as FetchEvent).request;
+  const fetchEvent = /** @type {FetchEvent} */ (event);
+  const request = fetchEvent.request;
   if (request.method !== 'GET') return;
 
-  (event as FetchEvent).respondWith(
+  fetchEvent.respondWith(
     fetch(request)
       .then((response) => {
         const clone = response.clone();
@@ -41,7 +42,7 @@ self.addEventListener('fetch', (event) => {
         return caches.match(request).then((cached) => {
           if (cached) return cached;
           if (request.mode === 'navigate') {
-            return caches.match(OFFLINE_URL) as Promise<Response>;
+            return caches.match(OFFLINE_URL);
           }
           throw new Error('Network error');
         });

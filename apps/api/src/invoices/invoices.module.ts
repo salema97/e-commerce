@@ -3,6 +3,7 @@ import { InvoicesService } from './invoices.service.js';
 import { InvoicesController } from './invoices.controller.js';
 import { CreditNotesController } from './credit-notes.controller.js';
 import { TestInvoicesController } from './test-invoices.controller.js';
+import { TestInvoicesService } from './test-invoices.service.js';
 import { InvoiceProviderFactory } from './invoice-provider.factory.js';
 import { DirectSriInvoiceProvider } from './sri/sri-invoice.provider.js';
 import { SriAccessKeyBuilder } from './sri/sri-access-key.builder.js';
@@ -37,6 +38,7 @@ import { isNonProduction } from '../common/is-non-production.js';
   ],
   providers: [
     InvoicesService,
+    TestInvoicesService,
     InvoiceProviderFactory,
     DirectSriInvoiceProvider,
     SriAccessKeyBuilder,

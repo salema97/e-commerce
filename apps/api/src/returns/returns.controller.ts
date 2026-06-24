@@ -121,13 +121,7 @@ export class ReturnsController {
     @Param('id') id: string,
     @CurrentUser() user?: { userId: string; role: Role },
   ) {
-    const record = await this.returnsService.getReturn(id);
-    if (user && user.role === Role.CUSTOMER) {
-      if (!record.userId || record.userId !== user.userId) {
-        throw new ForbiddenException('Cannot access another customer return');
-      }
-    }
-    return record;
+    return this.returnsService.getReturnForActor(id, user);
   }
 
   @Patch(':id/status')

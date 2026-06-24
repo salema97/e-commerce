@@ -10,13 +10,19 @@ import {
   type ConsentPreferences,
 } from '@/lib/analytics/consent';
 
-export function CookieConsentBanner({ onConsent }: { onConsent: () => void }) {
-  const [visible, setVisible] = React.useState(false);
-  const [prefs, setPrefs] = React.useState<ConsentPreferences>(DEFAULT_CONSENT);
+function subscribeConsentStorage() {
+  return () => {};
+}
 
-  React.useEffect(() => {
-    setVisible(getStoredConsent() === null);
-  }, []);
+export function CookieConsentBanner({ onConsent }: { onConsent: () => void }) {
+  const needsConsent = React.useSyncExternalStore(
+    subscribeConsentStorage,
+    () => getStoredConsent() === null,
+    () => false,
+  );
+  const [dismissed, setDismissed] = React.useState(false);
+  const visible = needsConsent && !dismissed;
+  const [prefs, setPrefs] = React.useState<ConsentPreferences>(DEFAULT_CONSENT);
 
   if (!visible) {
     return null;
@@ -25,19 +31,19 @@ export function CookieConsentBanner({ onConsent }: { onConsent: () => void }) {
   function acceptAll() {
     const all: ConsentPreferences = { necessary: true, analytics: true, recording: true };
     saveConsent(all);
-    setVisible(false);
+    setDismissed(true);
     onConsent();
   }
 
   function acceptSelected() {
     saveConsent(prefs);
-    setVisible(false);
+    setDismissed(true);
     onConsent();
   }
 
   function rejectOptional() {
     saveConsent(DEFAULT_CONSENT);
-    setVisible(false);
+    setDismissed(true);
   }
 
   return (
@@ -52,7 +58,7 @@ export function CookieConsentBanner({ onConsent }: { onConsent: () => void }) {
             (PostHog) y grabación de sesiones (Microsoft Clarity) para mejorar la experiencia.
           </p>
           <label className="flex items-center gap-2">
-            <input type="checkbox" checked disabled />
+            <input type="checkbox" checked disabled readOnly aria-readonly />
             <span>Necesarias (siempre activas)</span>
           </label>
           <label className="flex items-center gap-2">

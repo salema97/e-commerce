@@ -15,10 +15,8 @@ export default async function AdminCustomerDetailPage({
   const { id } = await params;
   const api = await getServerApiClient();
 
-  let user: User;
-  try {
-    user = await api.users.findOne(id);
-  } catch {
+  const user = await api.users.findOne(id).catch(() => null);
+  if (!user) {
     notFound();
   }
 

@@ -60,7 +60,7 @@ export function InvoiceListView({ initialInvoices }: { initialInvoices: InvoiceR
     return result;
   }, [appliedFilters, offset]);
 
-  const invoicesQuery = useQuery({
+  const { data: invoices, isError: invoicesError } = useQuery({
     queryKey: ['invoices', queryFilters],
     queryFn: () =>
       api.invoices.findAll(queryFilters as {
@@ -79,12 +79,12 @@ export function InvoiceListView({ initialInvoices }: { initialInvoices: InvoiceR
   });
 
   const filteredInvoices = React.useMemo(() => {
-    const invoices = invoicesQuery.data ?? [];
+    const list = invoices ?? [];
     if (!appliedFilters.search || appliedFilters.search.startsWith('ord_')) {
-      return invoices;
+      return list;
     }
-    return invoices.filter((invoice) => matchesSearch(invoice, appliedFilters.search));
-  }, [invoicesQuery.data, appliedFilters.search]);
+    return list.filter((invoice) => matchesSearch(invoice, appliedFilters.search));
+  }, [invoices, appliedFilters.search]);
 
   function handleApplyFilters() {
     setOffset(0);
@@ -130,7 +130,7 @@ export function InvoiceListView({ initialInvoices }: { initialInvoices: InvoiceR
             </TableRow>
           </TableHeader>
           <TableBody>
-            {invoicesQuery.isError ? (
+            {invoicesError ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-destructive">
                   No se pudieron cargar las facturas. Recarga la página o vuelve a iniciar sesión.

@@ -1,10 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { createHash } from 'crypto';
+import { ZodError } from 'zod';
 import { MessageStatus, Prisma } from '@prisma/client';
-import { ecuadorPhoneSchema } from '@repo/shared-utils';
+import { ecuadorPhoneSchema, webhookPayloadSchema } from '@repo/shared-utils';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ConversationService } from '../conversations/conversation.service.js';
 import { MessageService } from '../messages/message.service.js';
 import { ConversationOrchestrator } from '../ai/orchestrator/conversation-orchestrator.interface.js';
+import { WhatsAppProvider } from '../whatsapp/whatsapp-provider.interface.js';
+import { RedisIdempotencyService } from '../common/redis/idempotency.service.js';
 
 export interface EvolutionWebhookPayload {
   event?: string;
@@ -39,7 +43,45 @@ export class WebhookService {
     private readonly messageService: MessageService,
     private readonly prisma: PrismaService,
     private readonly orchestrator: ConversationOrchestrator,
+    private readonly whatsappProvider: WhatsAppProvider,
+    private readonly idempotency: RedisIdempotencyService,
   ) {}
+
+  async receiveEvolutionWebhook(
+    event: string,
+    rawBody: Buffer | undefined,
+    signature: string | undefined,
+  ): Promise<void> {
+    if (!rawBody || !signature) {
+      throw new UnauthorizedException('Missing webhook body or signature');
+    }
+
+    const valid = this.whatsappProvider.verifyWebhookSignature(rawBody, signature);
+    if (!valid) {
+      throw new UnauthorizedException('Invalid webhook signature');
+    }
+
+    let payload: EvolutionWebhookPayload;
+    try {
+      payload = webhookPayloadSchema.parse(
+        JSON.parse(rawBody.toString('utf8')),
+      ) as EvolutionWebhookPayload;
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw new BadRequestException(error.flatten());
+      }
+      throw new UnauthorizedException('Invalid JSON payload');
+    }
+
+    const hash = createHash('sha256').update(rawBody).digest('hex');
+    const idempotencyKey = `evolution:${event}:${hash}`;
+    const isFirst = await this.idempotency.claim(idempotencyKey);
+    if (!isFirst) {
+      return;
+    }
+
+    await this.handleEvent(event, payload);
+  }
 
   async handleEvent(event: string, payload: EvolutionWebhookPayload): Promise<void> {
     switch (event) {

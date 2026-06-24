@@ -32,7 +32,7 @@ export function CmsView({ initialPages }: CmsViewProps) {
   const [bodyMarkdown, setBodyMarkdown] = React.useState('');
   const [isPublished, setIsPublished] = React.useState(false);
 
-  const pagesQuery = useQuery({
+  const { data: pages } = useQuery({
     queryKey: ['ai', 'cms-pages', 'admin'],
     queryFn: () => api.ai.cmsPages.findAllAdmin(),
     initialData: initialPages,
@@ -145,7 +145,7 @@ export function CmsView({ initialPages }: CmsViewProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(pagesQuery.data ?? []).map((page) => (
+            {(pages ?? []).map((page) => (
               <TableRow key={page.id}>
                 <TableCell className="font-mono text-sm">{page.slug}</TableCell>
                 <TableCell>{page.title}</TableCell>

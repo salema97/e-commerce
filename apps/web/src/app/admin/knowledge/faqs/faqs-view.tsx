@@ -33,7 +33,7 @@ export function FaqsView({ initialFaqs, canEdit }: FaqsViewProps) {
   const [isPublished, setIsPublished] = React.useState(true);
   const [sortOrder, setSortOrder] = React.useState('0');
 
-  const faqsQuery = useQuery({
+  const { data: faqs } = useQuery({
     queryKey: ['ai', 'faqs', 'admin'],
     queryFn: () => api.ai.faqs.findAllAdmin(),
     initialData: initialFaqs,
@@ -151,7 +151,7 @@ export function FaqsView({ initialFaqs, canEdit }: FaqsViewProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(faqsQuery.data ?? []).map((faq) => (
+            {(faqs ?? []).map((faq) => (
               <TableRow key={faq.id}>
                 <TableCell>{faq.sortOrder}</TableCell>
                 <TableCell>

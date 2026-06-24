@@ -28,7 +28,7 @@ export function CategoriesView({
   const [name, setName] = React.useState('');
   const [description, setDescription] = React.useState('');
 
-  const categoriesQuery = useQuery({
+  const { data: categories = initialCategories } = useQuery({
     queryKey: ['finance', 'expense-categories'],
     queryFn: () => api.finance.expenseCategories.findAll(),
     initialData: initialCategories,
@@ -96,7 +96,7 @@ export function CategoriesView({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {(categoriesQuery.data ?? []).map((category: ExpenseCategory) => (
+          {categories.map((category: ExpenseCategory) => (
             <TableRow key={category.id}>
               <TableCell className="font-medium">{category.name}</TableCell>
               <TableCell className="text-muted-foreground">

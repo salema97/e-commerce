@@ -10,10 +10,9 @@ export default async function EditCategoryPage({ params }: EditCategoryPageProps
   const { id } = await params;
   const api = await getServerApiClient();
 
-  try {
-    const category = await api.categories.findOne(id);
-    return <EditCategory category={category} />;
-  } catch {
+  const categories = await api.categories.findOne(id).catch(() => null);
+  if (!categories) {
     notFound();
   }
+  return <EditCategory category={categories} />;
 }

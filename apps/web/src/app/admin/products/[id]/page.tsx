@@ -8,16 +8,16 @@ interface EditProductPageProps {
 }
 
 export default async function EditProductPage({ params }: EditProductPageProps) {
-  const { id } = await params;
-  const api = await getServerApiClient();
+  const [{ id }, api] = await Promise.all([params, getServerApiClient()]);
 
-  try {
-    const [product, initialDraft] = await Promise.all([
-      api.products.findOne(id),
-      api.ai.products.getDraft(id).catch((): ProductContentDraft | null => null),
-    ]);
-    return <EditProduct product={product} initialDraft={initialDraft} />;
-  } catch {
+  const [product, initialDraft] = await Promise.all([
+    api.products.findOne(id).catch(() => null),
+    api.ai.products.getDraft(id).catch((): ProductContentDraft | null => null),
+  ]);
+
+  if (!product) {
     notFound();
   }
+
+  return <EditProduct product={product} initialDraft={initialDraft} />;
 }

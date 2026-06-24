@@ -42,14 +42,14 @@ export function ExpensesView({
   const [categoryId, setCategoryId] = React.useState<string>('');
   const [status, setStatus] = React.useState<ExpenseStatus>('PENDING');
 
-  const categoriesQuery = useQuery({
+  const { data: categories } = useQuery({
     queryKey: ['finance', 'expense-categories'],
     queryFn: () => api.finance.expenseCategories.findAll(),
     initialData: initialCategories,
     enabled: authReady,
   });
 
-  const expensesQuery = useQuery({
+  const { data: expenses } = useQuery({
     queryKey: ['finance', 'expenses'],
     queryFn: () => api.finance.expenses.findAll({ limit: 50 }),
     initialData: initialExpenses,
@@ -92,11 +92,11 @@ export function ExpensesView({
 
   const categoryMap = React.useMemo(() => {
     const map = new Map<string, string>();
-    for (const category of categoriesQuery.data ?? []) {
+    for (const category of categories ?? []) {
       map.set(category.id, category.name);
     }
     return map;
-  }, [categoriesQuery.data]);
+  }, [categories]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6">
@@ -135,7 +135,7 @@ export function ExpensesView({
             placeholder="Opcional"
             options={[
               { value: '', label: 'Opcional' },
-              ...(categoriesQuery.data ?? []).map((category: ExpenseCategory) => ({
+              ...(categories ?? []).map((category: ExpenseCategory) => ({
                 value: category.id,
                 label: category.name,
               })),
@@ -183,7 +183,7 @@ export function ExpensesView({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {(expensesQuery.data ?? []).map((expense: Expense) => (
+          {(expenses ?? []).map((expense: Expense) => (
             <TableRow key={expense.id}>
               <TableCell>{formatDateTime(expense.date)}</TableCell>
               <TableCell>

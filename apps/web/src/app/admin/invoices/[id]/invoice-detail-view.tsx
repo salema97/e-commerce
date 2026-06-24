@@ -24,7 +24,7 @@ export function InvoiceDetailView({ id, initialInvoice, initialOrder }: InvoiceD
   const authReady = useAuthApiReady();
   const queryClient = useQueryClient();
 
-  const invoiceQuery = useQuery({
+  const { data: invoice } = useQuery({
     queryKey: ['invoices', id],
     queryFn: () => api.invoices.findOne(id),
     initialData: initialInvoice,
@@ -32,15 +32,12 @@ export function InvoiceDetailView({ id, initialInvoice, initialOrder }: InvoiceD
     refetchInterval: 15_000,
   });
 
-  const orderQuery = useQuery({
-    queryKey: ['orders', invoiceQuery.data?.orderId],
-    queryFn: () => api.orders.findOne(invoiceQuery.data!.orderId),
+  const { data: order } = useQuery({
+    queryKey: ['orders', invoice?.orderId],
+    queryFn: () => api.orders.findOne(invoice!.orderId),
     initialData: initialOrder ?? undefined,
-    enabled: authReady && Boolean(invoiceQuery.data?.orderId),
+    enabled: authReady && Boolean(invoice?.orderId),
   });
-
-  const invoice = invoiceQuery.data;
-  const order = orderQuery.data;
 
   function handleRetry() {
     queryClient.invalidateQueries({ queryKey: ['invoices'] });

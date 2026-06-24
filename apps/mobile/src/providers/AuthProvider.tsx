@@ -8,8 +8,9 @@ import {
   saveAuthSession,
   type StoredAuthUser,
 } from '../lib/auth-storage.js';
+import { getApiBaseUrl } from '../lib/env.js';
 
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:3001/v1';
+const API_BASE = getApiBaseUrl();
 
 interface AuthContextValue {
   user: StoredAuthUser | null;

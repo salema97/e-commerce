@@ -1,15 +1,23 @@
 import * as argon2 from 'argon2';
 import { ARGON2_HASH_OPTIONS } from '../../src/auth/argon2-options.js';
 
-const DEFAULT_SEED_PASSWORD = 'SeedDemo123!';
+export function getSeedPassword(): string {
+  const password = process.env.SEED_USER_PASSWORD;
+  if (!password) {
+    throw new Error(
+      'SEED_USER_PASSWORD is required to run prisma seed. Set it in apps/api/.env (see .env.example).',
+    );
+  }
+  return password;
+}
 
-export async function hashSeedPassword(password?: string): Promise<string> {
-  const plain = password ?? process.env.SEED_USER_PASSWORD ?? DEFAULT_SEED_PASSWORD;
+export function hashSeedPassword(password?: string): Promise<string> {
+  const plain = password ?? getSeedPassword();
   return argon2.hash(plain, ARGON2_HASH_OPTIONS);
 }
 
 export function logSeedCredentials(): void {
-  const password = process.env.SEED_USER_PASSWORD ?? DEFAULT_SEED_PASSWORD;
+  const password = getSeedPassword();
   // eslint-disable-next-line no-console
   console.log('\n--- Seed accounts (dev only) ---');
   // eslint-disable-next-line no-console

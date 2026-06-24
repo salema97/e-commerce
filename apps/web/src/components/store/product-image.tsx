@@ -58,11 +58,8 @@ export function ProductImage({
   grayscaleHover = false,
 }: ProductImageProps) {
   const normalizedUrl = React.useMemo(() => normalizeProductImageUrl(url), [url]);
-  const [loadError, setLoadError] = React.useState(false);
-
-  React.useEffect(() => {
-    setLoadError(false);
-  }, [normalizedUrl]);
+  const [failedUrl, setFailedUrl] = React.useState<string | null>(null);
+  const loadError = failedUrl !== null && failedUrl === normalizedUrl;
 
   const showImage = Boolean(normalizedUrl) && !loadError;
 
@@ -77,7 +74,7 @@ export function ProductImage({
           height={height}
           priority={priority}
           sizes={sizes}
-          onError={() => setLoadError(true)}
+          onError={() => setFailedUrl(normalizedUrl ?? null)}
           className={cn(
             'object-cover',
             grayscaleHover && 'grayscale transition-all duration-500 group-hover:grayscale-0',

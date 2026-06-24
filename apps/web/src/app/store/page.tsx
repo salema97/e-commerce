@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { getServerApiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -77,7 +78,9 @@ export default async function StorePage({ searchParams }: StorePageProps) {
         </header>
       }
     >
-      <StoreAnalyticsTracker />
+      <Suspense fallback={null}>
+        <StoreAnalyticsTracker />
+      </Suspense>
       <div className="mt-6 flex flex-col gap-8 lg:flex-row">
         <aside className="w-full lg:w-72">
           <StoreFilters

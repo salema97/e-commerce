@@ -60,7 +60,7 @@ export class AuthService {
       },
     });
 
-    this.stripeCustomerService
+    void this.stripeCustomerService
       .createOrUpdateCustomer(user.id, user.email, user.name ?? undefined)
       .catch(() => undefined);
 

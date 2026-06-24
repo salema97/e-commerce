@@ -36,7 +36,7 @@ export function IncomesView({ initialIncomes }: { initialIncomes: Income[] }) {
   const [amount, setAmount] = React.useState('');
   const [notes, setNotes] = React.useState('');
 
-  const incomesQuery = useQuery({
+  const { data: incomes } = useQuery({
     queryKey: ['finance', 'incomes'],
     queryFn: () => api.finance.incomes.findAll({ limit: 50 }),
     initialData: initialIncomes,
@@ -123,7 +123,7 @@ export function IncomesView({ initialIncomes }: { initialIncomes: Income[] }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(incomesQuery.data ?? []).map((income: Income) => (
+            {(incomes ?? []).map((income: Income) => (
               <TableRow key={income.id}>
                 <TableCell>{formatDateTime(income.date)}</TableCell>
                 <TableCell>{incomeSourceLabel(income.source)}</TableCell>

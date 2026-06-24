@@ -46,8 +46,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAccessToken(null);
   }, []);
 
+  const value = React.useMemo(
+    () => ({ user, accessToken, loading, setSession, refresh, signOut }),
+    [user, accessToken, loading, setSession, refresh, signOut],
+  );
+
   return (
-    <AuthContext.Provider value={{ user, accessToken, loading, setSession, refresh, signOut }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

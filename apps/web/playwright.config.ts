@@ -1,5 +1,17 @@
 import { defineConfig, devices } from '@playwright/test';
+import { config as loadEnv } from 'dotenv';
+import { resolve } from 'node:path';
 import { E2E_EVOLUTION_WEBHOOK_SECRET } from './e2e/fixtures/webhook-secret.js';
+
+loadEnv({ path: resolve(__dirname, '../api/.env') });
+loadEnv({ path: resolve(__dirname, '.env.local'), override: true });
+
+const authJwtSecret = process.env.AUTH_JWT_ACCESS_SECRET;
+if (!authJwtSecret) {
+  throw new Error(
+    'AUTH_JWT_ACCESS_SECRET is required for Playwright E2E. Set it in apps/api/.env (must match apps/web/.env.local).',
+  );
+}
 
 process.env.EVOLUTION_WEBHOOK_SECRET ??= E2E_EVOLUTION_WEBHOOK_SECRET;
 
@@ -25,8 +37,7 @@ export default defineConfig({
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     env: {
-      AUTH_JWT_ACCESS_SECRET:
-        process.env.AUTH_JWT_ACCESS_SECRET ?? 'dev-access-secret-change-me-32chars-min',
+      AUTH_JWT_ACCESS_SECRET: authJwtSecret,
     },
   },
 });

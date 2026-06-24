@@ -41,7 +41,7 @@ export function ReportsView({
   const [to, setTo] = React.useState(initialRange.to);
   const [applied, setApplied] = React.useState(initialRange);
 
-  const cashFlowQuery = useQuery({
+  const { data: report } = useQuery({
     queryKey: ['finance', 'cash-flow', applied.from, applied.to],
     queryFn: () => api.finance.reports.cashFlow(applied.from, applied.to),
     enabled: authReady && Boolean(applied.from && applied.to),
@@ -51,14 +51,12 @@ export function ReportsView({
         : undefined,
   });
 
-  const storeCreditsQuery = useQuery({
+  const { data: storeCredits } = useQuery({
     queryKey: ['finance', 'store-credits'],
     queryFn: () => api.finance.storeCredits.findAll(),
     initialData: initialStoreCredits,
     enabled: authReady,
   });
-
-  const report = cashFlowQuery.data;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6">
@@ -173,7 +171,7 @@ export function ReportsView({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(storeCreditsQuery.data ?? []).map((credit: AdminStoreCredit) => (
+            {(storeCredits ?? []).map((credit: AdminStoreCredit) => (
               <TableRow key={credit.id}>
                 <TableCell>{credit.userEmail ?? credit.userId}</TableCell>
                 <TableCell>{formatMoney(credit.balance, credit.currency)}</TableCell>

@@ -16,21 +16,19 @@ function formatSlugTitle(slug: string): string {
 }
 
 export async function generateMetadata({ params }: BlogPageProps) {
-  const { slug } = await params;
-  const api = await getServerApiClient();
+  const [{ slug }, api] = await Promise.all([params, getServerApiClient()]);
   const page = await api.ai.cmsPages.findBySlug(slug).catch(() => null);
   const title = page?.title ?? formatSlugTitle(slug);
   return { title: `Artículo: ${title}` };
 }
 
 export default async function BlogPostPage({ params }: BlogPageProps) {
-  const { slug } = await params;
+  const [{ slug }, api] = await Promise.all([params, getServerApiClient()]);
 
   if (!slug) {
     notFound();
   }
 
-  const api = await getServerApiClient();
   const page = await api.ai.cmsPages.findBySlug(slug).catch(() => null);
 
   if (!page) {

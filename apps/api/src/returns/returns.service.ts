@@ -21,6 +21,7 @@ import { CreateReturnDto } from './dto/create-return.dto.js';
 import { CreateGuestReturnRequestDto } from './dto/create-guest-return-request.dto.js';
 import { UpdateReturnStatusDto } from './dto/update-return-status.dto.js';
 import { ResolveReturnDto } from './dto/resolve-return.dto.js';
+import { Role } from '../auth/role.enum.js';
 
 /**
  * Allowed transitions for the ReturnRequest state machine.
@@ -247,6 +248,19 @@ export class ReturnsService {
     });
     if (!record) {
       throw new NotFoundException(`Return request ${id} not found`);
+    }
+    return record;
+  }
+
+  async getReturnForActor(
+    id: string,
+    user?: { userId: string; role: Role },
+  ) {
+    const record = await this.getReturn(id);
+    if (user?.role === Role.CUSTOMER) {
+      if (!record.userId || record.userId !== user.userId) {
+        throw new ForbiddenException('Cannot access another customer return');
+      }
     }
     return record;
   }

@@ -2,7 +2,7 @@
 
 ## Decisions Log (defaults assumed)
 
-- **Auth**: Clerk (fastest secure setup, MFA/SSO ready).
+- **Auth**: Native JWT (email/password, access + refresh tokens). Clerk is not used at runtime.
 - **Admin panel**: inside the web app under `/admin`.
 - **Mobile**: Expo development build (required for Stripe/push notifications).
 - **API style**: REST + OpenAPI, client generated for web/mobile.

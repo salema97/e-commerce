@@ -27,15 +27,13 @@ export function CreditNotesView({
   const api = useApiClient();
   const authReady = useAuthApiReady();
 
-  const creditNotesQuery = useQuery({
+  const { data: creditNotes = [], refetch: refetchCreditNotes } = useQuery({
     queryKey: ['credit-notes', { limit: 20, offset: 0 }],
     queryFn: () => api.creditNotes.findAll({ limit: 20, offset: 0 }),
     initialData: initialCreditNotes,
     enabled: authReady,
     refetchInterval: 15_000,
   });
-
-  const creditNotes = creditNotesQuery.data ?? [];
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6">
@@ -79,7 +77,7 @@ export function CreditNotesView({
                     id={note.id}
                     documentType="credit-note"
                     status={note.status}
-                    onRetry={() => void creditNotesQuery.refetch()}
+                    onRetry={() => void refetchCreditNotes()}
                   />
                 </TableCell>
               </TableRow>
