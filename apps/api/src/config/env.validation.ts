@@ -90,6 +90,18 @@ const envSchema = z.object({
   DIFY_API_URL: z.string().optional(),
   DIFY_API_KEY: z.string().optional(),
   TYPEBOT_API_URL: z.string().optional(),
+  PRODUCT_ANALYTICS_PROVIDER: z.enum(['console', 'posthog', 'plausible']).default('console'),
+  POSTHOG_KEY: z.string().optional(),
+  POSTHOG_HOST: z.string().optional(),
+  SENTRY_DSN: z.string().optional(),
+  SENTRY_RELEASE: z.string().optional(),
+  SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0.1),
+  EVENT_BUS_ENABLED: z.enum(['true', 'false']).default('true'),
+  EVENT_BUS_BACKEND: z.enum(['redis', 'kafka']).default('redis'),
+  KAFKA_URL: z.string().optional(),
+  KAFKA_USERNAME: z.string().optional(),
+  KAFKA_PASSWORD: z.string().optional(),
+  KAFKA_DOMAIN_EVENTS_TOPIC: z.string().default('domain-events'),
   ENABLE_TEST_AUTH: z.enum(['true', 'false']).default('false'),
 });
 

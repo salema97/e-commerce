@@ -62,7 +62,7 @@ async function waitUntilReady(queue: Queue, timeoutMs: number): Promise<void> {
           console.error('SRI queue Redis error:', error.message);
         });
 
-        if (enabled) {
+        if (enabled && config.get<string>('NODE_ENV') !== 'test') {
           await waitUntilReady(queue, 5_000);
         }
 

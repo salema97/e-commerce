@@ -40,6 +40,7 @@ import { SearchController } from './search/search.controller.js';
 import { ProductContentAiService } from './product-content/product-content-ai.service.js';
 import { ProductContentAiController } from './product-content/product-content-ai.controller.js';
 import { ProductSearchSyncService } from './search/product-search-sync.service.js';
+import { SearchDomainEventConsumer } from './search/search-domain-event.consumer.js';
 
 @Module({
   imports: [ConfigModule, PrismaModule, ConversationModule, MessageModule, WhatsAppModule],
@@ -141,6 +142,7 @@ import { ProductSearchSyncService } from './search/product-search-sync.service.j
     HybridSearchService,
     ProductSearchSyncService,
     ProductContentAiService,
+    SearchDomainEventConsumer,
   ],
   exports: [
     LlmProvider,

@@ -8,9 +8,8 @@ import { InventoryReservationService } from '../inventory/inventory-reservation.
 import { PromotionService } from '../promotions/promotion.service.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
 import { EmailNotificationService } from '../notifications/email-notification.service.js';
-import { MarketingAutomationService } from '../notifications/marketing-automation.service.js';
-import { OrderSummaryPdfService } from '../receipts/order-summary-pdf.service.js';
 import { PushNotificationService } from '../notifications/push-notification.service.js';
+import { EventBus } from '../event-bus/event-bus.interface.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
 
 describe('OrdersService', () => {
@@ -25,8 +24,7 @@ describe('OrdersService', () => {
   let notificationService: { notify: ReturnType<typeof vi.fn> };
   let emailNotificationService: { notify: ReturnType<typeof vi.fn> };
   let pushNotificationService: { notifyForOrder: ReturnType<typeof vi.fn> };
-  let marketingAutomation: { trackPurchaseEvent: ReturnType<typeof vi.fn> };
-  let orderSummaryPdf: { buildEmailAttachment: ReturnType<typeof vi.fn> };
+  let eventBus: { publish: ReturnType<typeof vi.fn>; registerHandler: ReturnType<typeof vi.fn> };
 
   function mockPrisma() {
     return {
@@ -47,8 +45,7 @@ describe('OrdersService', () => {
     notificationService = { notify: vi.fn().mockResolvedValue(undefined) };
     emailNotificationService = { notify: vi.fn().mockResolvedValue(undefined) };
     pushNotificationService = { notifyForOrder: vi.fn().mockResolvedValue(undefined) };
-    marketingAutomation = { trackPurchaseEvent: vi.fn().mockResolvedValue(undefined) };
-    orderSummaryPdf = { buildEmailAttachment: vi.fn().mockResolvedValue(undefined) };
+    eventBus = { publish: vi.fn(), registerHandler: vi.fn() };
     const module = await Test.createTestingModule({
       providers: [
         OrdersService,
@@ -58,8 +55,7 @@ describe('OrdersService', () => {
         { provide: WhatsAppNotificationService, useValue: notificationService },
         { provide: EmailNotificationService, useValue: emailNotificationService },
         { provide: PushNotificationService, useValue: pushNotificationService },
-        { provide: MarketingAutomationService, useValue: marketingAutomation },
-        { provide: OrderSummaryPdfService, useValue: orderSummaryPdf },
+        { provide: EventBus, useValue: eventBus },
       ],
     }).compile();
     service = module.get(OrdersService);
@@ -130,7 +126,7 @@ describe('OrdersService', () => {
     expect(prisma.order.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: OrderStatus.PROCESSING }) }));
   });
 
-  it('sends a WhatsApp confirmation when order moves to PROCESSING', async () => {
+  it('publishes order.paid when order moves to PROCESSING', async () => {
     prisma.order.findUnique.mockResolvedValue({
       id: 'o1',
       status: OrderStatus.PAYMENT_PENDING,
@@ -143,15 +139,13 @@ describe('OrdersService', () => {
 
     await service.updateOrderStatus('o1', OrderStatus.PROCESSING);
 
-    expect(notificationService.notify).toHaveBeenCalledWith(
-      'o1',
-      'ORDER_CONFIRMED',
-      '+593991234567',
-      expect.objectContaining({ orderNumber: 'ORD-1', total: 'USD 45.98' }),
-    );
+    expect(eventBus.publish).toHaveBeenCalledWith({
+      name: 'order.paid',
+      payload: { orderId: 'o1' },
+    });
   });
 
-  it('completes status update even if WhatsApp notification rejects', async () => {
+  it('completes status update even if event bus publish rejects', async () => {
     prisma.order.findUnique.mockResolvedValue({
       id: 'o1',
       status: OrderStatus.PAYMENT_PENDING,
@@ -161,7 +155,6 @@ describe('OrdersService', () => {
       user: { whatsappOptOut: false },
     });
     prisma.order.update.mockResolvedValue({ id: 'o1', status: OrderStatus.PROCESSING });
-    notificationService.notify.mockRejectedValue(new Error('WhatsApp down'));
 
     const result = await service.updateOrderStatus('o1', OrderStatus.PROCESSING);
 

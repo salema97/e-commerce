@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, Logger, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { OrderStatus, PaymentProvider as PaymentProviderEnum, PaymentStatus } from '@prisma/client';
@@ -8,9 +8,8 @@ import { ProviderPaymentResult } from './payment-provider.interface.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
 import { EmailNotificationService } from '../notifications/email-notification.service.js';
 import { PushNotificationService } from '../notifications/push-notification.service.js';
-import { MarketingAutomationService } from '../notifications/marketing-automation.service.js';
 import { InvoicesService } from '../invoices/invoices.service.js';
-import { OrderSummaryPdfService } from '../receipts/order-summary-pdf.service.js';
+import { EventBus } from '../event-bus/event-bus.interface.js';
 
 @Injectable()
 export class PaymentWebhookService {
@@ -24,8 +23,7 @@ export class PaymentWebhookService {
     private readonly emailNotificationService: EmailNotificationService,
     private readonly pushNotificationService: PushNotificationService,
     private readonly invoicesService: InvoicesService,
-    private readonly marketingAutomation: MarketingAutomationService,
-    private readonly orderSummaryPdf: OrderSummaryPdfService,
+    @Inject(EventBus) private readonly eventBus: EventBus,
   ) {}
 
   async handle(
@@ -156,34 +154,7 @@ export class PaymentWebhookService {
 
     try {
       if (orderStatus === OrderStatus.PROCESSING) {
-        const context = {
-          customerName,
-          orderNumber: order.orderNumber,
-          total,
-        };
-        if (phone) {
-          await this.notificationService.notify(orderId, 'ORDER_CONFIRMED', phone, context);
-        }
-        if (order.customerEmail) {
-          const attachment = await this.orderSummaryPdf.buildEmailAttachment(
-            orderId,
-            order.orderNumber,
-          );
-          await this.emailNotificationService.notify(
-            orderId,
-            'ORDER_CONFIRMED',
-            order.customerEmail,
-            context,
-            { attachments: attachment ? [attachment] : undefined },
-          );
-        }
-        await this.pushNotificationService.notifyForOrder(
-          orderId,
-          order.userId,
-          'ORDER_CONFIRMED',
-          context,
-        );
-        await this.marketingAutomation.trackPurchaseEvent(orderId);
+        void this.eventBus.publish({ name: 'order.paid', payload: { orderId } });
       } else if (orderStatus === OrderStatus.PAYMENT_FAILED) {
         const context = {
           customerName,

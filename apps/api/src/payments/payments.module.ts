@@ -19,7 +19,6 @@ import { InventoryModule } from '../inventory/inventory.module.js';
 import { AuditModule } from '../audit/audit.module.js';
 import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
 import { NotificationsModule } from '../notifications/notifications.module.js';
-import { ReceiptsModule } from '../receipts/receipts.module.js';
 import { SriQueueModule } from '../invoices/sri/sri-queue.module.js';
 import { isNonProduction } from '../common/is-non-production.js';
 
@@ -31,7 +30,6 @@ import { isNonProduction } from '../common/is-non-production.js';
     AuditModule,
     WhatsAppNotificationModule,
     NotificationsModule,
-    ReceiptsModule,
   ],
   controllers: [
     StripeWebhookController,

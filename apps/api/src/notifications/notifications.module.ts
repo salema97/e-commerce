@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from '../prisma/prisma.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { RedisModule } from '../common/redis/redis.module.js';
+import { ReceiptsModule } from '../receipts/receipts.module.js';
+import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
 import { EmailModule } from './email.module.js';
 import { EmailNotificationService } from './email-notification.service.js';
 import { CampaignEmailService } from './campaign-email.service.js';
@@ -23,9 +25,11 @@ import { OneSignalPushNotificationProvider } from './providers/onesignal-push.pr
 import { MarketingEmailProvider } from './marketing-email-provider.interface.js';
 import { ConsoleMarketingEmailProvider } from './providers/console-marketing-email.provider.js';
 import { LoopsMarketingEmailProvider } from './providers/loops-marketing-email.provider.js';
+import { OrderConfirmationService } from './order-confirmation.service.js';
+import { OrderPaidDomainConsumer } from './order-paid-domain.consumer.js';
 
 @Module({
-  imports: [ConfigModule, EmailModule, PrismaModule, RedisModule, UsersModule],
+  imports: [ConfigModule, EmailModule, PrismaModule, RedisModule, UsersModule, ReceiptsModule, WhatsAppNotificationModule],
   controllers: [
     PushTokensController,
     NotificationPreferencesController,
@@ -41,6 +45,8 @@ import { LoopsMarketingEmailProvider } from './providers/loops-marketing-email.p
     NotificationPreferencesService,
     NotificationSegmentService,
     MarketingAutomationService,
+    OrderConfirmationService,
+    OrderPaidDomainConsumer,
     ConsolePushNotificationProvider,
     ExpoPushNotificationProvider,
     OneSignalPushNotificationProvider,
@@ -86,6 +92,7 @@ import { LoopsMarketingEmailProvider } from './providers/loops-marketing-email.p
     PushNotificationService,
     MarketingEmailProvider,
     MarketingAutomationService,
+    OrderConfirmationService,
     NotificationPreferencesService,
     NotificationSegmentService,
   ],

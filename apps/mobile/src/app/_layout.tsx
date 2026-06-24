@@ -11,6 +11,9 @@ import { AuthProvider } from '../providers/AuthProvider.js';
 import { AuthTokenBridge } from '../providers/AuthTokenBridge.js';
 import { PushNotificationManager } from '../providers/PushNotificationManager.js';
 import { DeepLinkManager } from '../providers/DeepLinkManager.js';
+import { initMobileSentry } from '../lib/sentry.js';
+
+initMobileSentry();
 
 const queryClient = new QueryClient({
   defaultOptions: {

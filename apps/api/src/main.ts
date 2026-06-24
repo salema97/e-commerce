@@ -8,6 +8,7 @@ import { Logger } from 'nestjs-pino';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module.js';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter.js';
+import { ErrorTracker } from './analytics/error-tracker.interface.js';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -31,7 +32,9 @@ async function bootstrap() {
     }),
   );
 
-  app.useGlobalFilters(new AllExceptionsFilter(app.get(HttpAdapterHost)));
+  app.useGlobalFilters(
+    new AllExceptionsFilter(app.get(HttpAdapterHost), app.get(ErrorTracker)),
+  );
 
   const configService = app.get(ConfigService);
 

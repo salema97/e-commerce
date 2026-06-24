@@ -392,6 +392,11 @@ export function createApiClient(options: ApiClientOptions) {
       products: (query: string, limit?: number) =>
         request<SearchResultItem[]>('GET', '/search', undefined, { q: query, limit }),
     },
+    analytics: {
+      getOverview: (days: number) => request<any>('GET', '/analytics/overview', undefined, { days }),
+      getFunnel: (days: number) => request<any>('GET', '/analytics/funnel', undefined, { days }),
+      getCohorts: (weeks: number) => request<any>('GET', '/analytics/cohorts', undefined, { weeks }),
+    },
     chat: {
       createSession: (data?: { contactName?: string }) =>
         request<ChatSession>('POST', '/chat/sessions', data ?? {}),

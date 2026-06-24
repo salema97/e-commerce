@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ProductSearchSyncService } from '../ai/search/product-search-sync.service.js';
+import { EventBus } from '../event-bus/event-bus.interface.js';
 import { CreateProductDto } from './dto/create-product.dto.js';
 import { UpdateProductDto } from './dto/update-product.dto.js';
 
@@ -18,6 +19,7 @@ export class ProductsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly searchSync: ProductSearchSyncService,
+    @Inject(EventBus) private readonly eventBus: EventBus,
   ) {}
 
   async create(data: CreateProductDto) {
@@ -35,6 +37,7 @@ export class ProductsService {
     });
 
     void this.searchSync.syncProduct(product.id);
+    void this.eventBus.publish({ name: 'product.updated', payload: { productId: product.id } });
     return product;
   }
 
@@ -83,6 +86,7 @@ export class ProductsService {
     });
 
     void this.searchSync.syncProduct(product.id);
+    void this.eventBus.publish({ name: 'product.updated', payload: { productId: product.id } });
     return product;
   }
 
