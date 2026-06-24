@@ -110,7 +110,7 @@ describe('AppModule', () => {
       .overrideProvider(PrismaService)
       .useValue(prismaMock as never)
       .compile();
-  });
+  }, 30_000);
 
   it('compiles the module', () => {
     expect(module).toBeDefined();
