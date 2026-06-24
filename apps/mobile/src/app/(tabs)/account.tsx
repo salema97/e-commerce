@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth, useUser } from '@clerk/clerk-expo';
+import { useAuth } from '../../providers/AuthProvider.js';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card, Badge } from '@repo/shared-ui';
 import { api } from '../../lib/api.js';
@@ -16,8 +16,7 @@ import type { Order } from '@repo/shared-types';
 
 export default function AccountScreen(): React.ReactElement {
   const router = useRouter();
-  const { isSignedIn, signOut } = useAuth();
-  const { user } = useUser();
+  const { user, loading, signOut } = useAuth();
   const { data: orders, isLoading } = api.hooks.useOrders({ limit: 10 });
 
   const handleSignOut = async (): Promise<void> => {
@@ -36,7 +35,7 @@ export default function AccountScreen(): React.ReactElement {
     </Card>
   );
 
-  if (!isSignedIn) {
+  if (!user) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
@@ -63,7 +62,7 @@ export default function AccountScreen(): React.ReactElement {
 
       <Card style={styles.profileCard}>
         <Text style={styles.label}>Correo</Text>
-        <Text style={styles.value}>{user?.primaryEmailAddress?.emailAddress ?? 'No disponible'}</Text>
+        <Text style={styles.value}>{user?.email ?? 'No disponible'}</Text>
       </Card>
 
       <Text style={styles.sectionTitle}>Pedidos recientes</Text>

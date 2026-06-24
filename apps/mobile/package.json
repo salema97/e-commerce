@@ -16,7 +16,6 @@
     "clean": "rm -rf dist .turbo node_modules/.cache"
   },
   "dependencies": {
-    "@clerk/clerk-expo": "^2.19.31",
     "@repo/api-client": "workspace:^",
     "@repo/shared-config": "workspace:^",
     "@repo/shared-types": "workspace:^",
