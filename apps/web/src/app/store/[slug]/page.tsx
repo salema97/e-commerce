@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { AddToCartButton } from '@/components/cart/add-to-cart-button';
 import { WishlistButton } from '@/components/wishlist/wishlist-button';
 import { BackInStockForm } from '@/components/product/back-in-stock-form';
+import { ProductReviews } from '@/components/product/product-reviews';
 import { ProductViewTracker } from '@/components/analytics/product-view-tracker';
 import { formatPrice } from '@repo/shared-utils';
 import { getProductAvailableQuantity } from '@/lib/product-stock';
@@ -46,9 +47,50 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const variants = product.variants ?? [];
   const availableQuantity = getProductAvailableQuantity(product.inventory);
   const isOutOfStock = availableQuantity <= 0;
+  const isPreOrder =
+    product.isPreOrder &&
+    product.preOrderReleaseDate &&
+    new Date(product.preOrderReleaseDate) > new Date();
+
+  let reviewSummary = { averageRating: 0, reviewCount: 0 };
+  try {
+    reviewSummary = await api.reviews.summary(product.id);
+  } catch {
+    // Reviews may be unavailable before migration.
+  }
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description ?? undefined,
+    image: product.images?.map((img) => img.url),
+    sku: product.sku ?? undefined,
+    offers: {
+      '@type': 'Offer',
+      price: product.price,
+      priceCurrency: 'USD',
+      availability: isOutOfStock && !isPreOrder
+        ? 'https://schema.org/OutOfStock'
+        : 'https://schema.org/InStock',
+    },
+    ...(reviewSummary.reviewCount > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: reviewSummary.averageRating,
+            reviewCount: reviewSummary.reviewCount,
+          },
+        }
+      : {}),
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <ProductViewTracker productId={product.id} productName={product.name} />
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="relative aspect-square overflow-hidden rounded-xl border bg-muted">
@@ -72,9 +114,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <div className="flex flex-wrap gap-2">
             {product.isFeatured ? <Badge>Featured</Badge> : null}
             {product.compareAtPrice ? <Badge variant="secondary">Sale</Badge> : null}
+            {isPreOrder ? <Badge variant="outline">Pre-orden</Badge> : null}
           </div>
 
           <h1 className="text-3xl font-bold">{product.name}</h1>
+
+          {reviewSummary.reviewCount > 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {reviewSummary.averageRating.toFixed(1)} ★ ({reviewSummary.reviewCount} reseñas)
+            </p>
+          ) : null}
 
           <div className="flex items-baseline gap-3">
             <span className="text-2xl font-semibold">{formatPrice(product.price)}</span>
@@ -89,7 +138,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {product.description ?? 'No description available.'}
           </p>
 
-          <AddToCartButton product={product} disabled={isOutOfStock} />
+          {isPreOrder && product.preOrderReleaseDate ? (
+            <p className="text-sm text-muted-foreground">
+              Disponible a partir del{' '}
+              {new Date(product.preOrderReleaseDate).toLocaleDateString('es-EC')}
+              {product.preOrderChargeTiming === 'AT_SHIPPING'
+                ? ' · Cobro al enviar'
+                : ' · Cobro al confirmar'}
+            </p>
+          ) : null}
+
+          <AddToCartButton product={product} disabled={isOutOfStock && !isPreOrder} />
           {isOutOfStock ? <BackInStockForm productId={product.id} /> : null}
           <WishlistButton productId={product.id} name={product.name} slug={product.slug} />
         </div>
@@ -115,6 +174,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </div>
         </section>
       ) : null}
+
+      <Separator className="my-10" />
+      <ProductReviews productId={product.id} />
     </div>
   );
 }

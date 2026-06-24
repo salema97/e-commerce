@@ -17,6 +17,7 @@ import {
   type AddressFormValues,
 } from './address-form';
 import { CouponInput } from './coupon-input';
+import { EngagementInputs } from './engagement-inputs';
 import { OrderSummary } from './order-summary';
 import { PaymentForm } from './payment-element';
 import { trackEvent } from '@/lib/analytics/track';
@@ -40,6 +41,8 @@ export function CheckoutContainer() {
 
   const [address, setAddress] = React.useState<AddressFormValues>(EMPTY_ADDRESS);
   const [couponCode, setCouponCode] = React.useState('');
+  const [referralCode, setReferralCode] = React.useState('');
+  const [loyaltyPoints, setLoyaltyPoints] = React.useState(0);
   const [shippingQuote, setShippingQuote] = React.useState<ShippingQuote | null>(null);
 
   const [order, setOrder] = React.useState<CreatedOrderResult | null>(null);
@@ -120,6 +123,8 @@ export function CheckoutContainer() {
         })),
         channel: 'WEB',
         couponCode: couponCode.trim() || undefined,
+        referralCode: referralCode.trim() || undefined,
+        loyaltyPointsToRedeem: loyaltyPoints > 0 ? loyaltyPoints : undefined,
         customerEmail: address.email,
         customerPhone: address.phone || undefined,
         shippingAddress: toOrderAddress(address),
@@ -210,6 +215,21 @@ export function CheckoutContainer() {
               <CouponInput
                 couponCode={couponCode}
                 onCouponCodeChange={setCouponCode}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Referidos y puntos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <EngagementInputs
+                subtotal={subtotal}
+                referralCode={referralCode}
+                onReferralCodeChange={setReferralCode}
+                loyaltyPoints={loyaltyPoints}
+                onLoyaltyPointsChange={setLoyaltyPoints}
               />
             </CardContent>
           </Card>

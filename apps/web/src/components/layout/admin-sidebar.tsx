@@ -14,6 +14,8 @@ import {
   BarChart3,
   FileText,
   TrendingUp,
+  Star,
+  Gift,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Role } from '@repo/shared-types';
@@ -34,6 +36,8 @@ const adminNav: NavItem[] = [
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag, roles: ['SUPER_ADMIN', 'ADMIN'] },
   { href: '/admin/returns', label: 'Returns', icon: RotateCcw, roles: ['SUPER_ADMIN', 'ADMIN'] },
   { href: '/admin/customers', label: 'Customers', icon: Users, roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { href: '/admin/reviews', label: 'Reseñas', icon: Star, roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { href: '/admin/referrals', label: 'Referidos', icon: Gift, roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] },
   { href: '/admin/support', label: 'Support', icon: MessageSquare, roles: ['SUPER_ADMIN', 'ADMIN', 'SUPPORT'] },
   { href: '/admin/invoices', label: 'Facturación', icon: FileText, roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] },
   { href: '/admin/finance', label: 'Finance', icon: BarChart3, roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] },

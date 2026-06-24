@@ -21,6 +21,7 @@ interface StorePageProps {
     brand?: string;
     minPrice?: string;
     maxPrice?: string;
+    minRating?: string;
     inStock?: string;
     attr?: string | string[];
   }>;
@@ -37,6 +38,7 @@ export default async function StorePage({ searchParams }: StorePageProps) {
     brand: params.brand,
     minPrice: params.minPrice ? Number(params.minPrice) : undefined,
     maxPrice: params.maxPrice ? Number(params.maxPrice) : undefined,
+    minRating: params.minRating ? Number(params.minRating) : undefined,
     inStock: params.inStock === 'true' ? true : undefined,
     sort: (params.sort as CatalogQuery['sort']) ?? 'newest',
     page,
@@ -123,6 +125,18 @@ export default async function StorePage({ searchParams }: StorePageProps) {
                   defaultValue={params.maxPrice}
                 />
               </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="minRating" className="text-sm font-medium">
+                Valoración mínima
+              </label>
+              <Select id="minRating" name="minRating" defaultValue={params.minRating ?? ''}>
+                <option value="">Cualquiera</option>
+                <option value="4">4+ estrellas</option>
+                <option value="3">3+ estrellas</option>
+                <option value="2">2+ estrellas</option>
+              </Select>
             </div>
 
             {brandFacets.length > 0 ? (
@@ -262,6 +276,11 @@ function ProductCard({ product }: { product: CatalogProductSummary }) {
         </div>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">{product.name}</CardTitle>
+          {product.reviewCount && product.reviewCount > 0 ? (
+            <p className="text-xs text-muted-foreground">
+              {(product.averageRating ?? 0).toFixed(1)} ★ ({product.reviewCount})
+            </p>
+          ) : null}
         </CardHeader>
         <CardContent className="flex items-center justify-between">
           <span className="font-semibold">{formatPrice(product.price)}</span>
