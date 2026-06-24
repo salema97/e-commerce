@@ -10,13 +10,27 @@ import { FormSelect } from '@/components/ui/form-select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
-import { useApiClient } from '@/lib/client-api';
+import { useApiClient, useApiQueryHooks } from '@/lib/client-api';
 import type { Product, ProductStatus } from '@repo/shared-types';
 
 export default function EditProductPage({ product }: { product: Product }) {
   const router = useRouter();
   const api = useApiClient();
+  const hooks = useApiQueryHooks();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const { data: draft, refetch: refetchDraft } = hooks.useProductContentDraft(product.id);
+  const generateContent = hooks.useGenerateProductContent({
+    onSuccess: () => void refetchDraft(),
+  });
+  const approveDraft = hooks.useApproveProductContent({
+    onSuccess: () => {
+      router.refresh();
+      void refetchDraft();
+    },
+  });
+  const rejectDraft = hooks.useRejectProductContent({
+    onSuccess: () => void refetchDraft(),
+  });
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -132,6 +146,49 @@ export default function EditProductPage({ product }: { product: Product }) {
               />
               <Label htmlFor="isFeatured" className="normal-case">Producto destacado</Label>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Contenido con IA</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={generateContent.isPending}
+              onClick={() => generateContent.mutate(product.id)}
+            >
+              {generateContent.isPending ? 'Generando...' : 'Generar con IA'}
+            </Button>
+            {draft ? (
+              <div className="rounded-md border p-4 text-sm">
+                <p className="font-medium">Borrador pendiente de revisión</p>
+                {draft.metaTitle ? <p className="mt-2"><strong>Meta título:</strong> {draft.metaTitle}</p> : null}
+                {draft.metaDescription ? <p className="mt-1"><strong>Meta descripción:</strong> {draft.metaDescription}</p> : null}
+                {draft.description ? <p className="mt-1 whitespace-pre-wrap"><strong>Descripción:</strong> {draft.description}</p> : null}
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={approveDraft.isPending}
+                    onClick={() => approveDraft.mutate(product.id)}
+                  >
+                    Aprobar y publicar
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={rejectDraft.isPending}
+                    onClick={() => rejectDraft.mutate(product.id)}
+                  >
+                    Rechazar
+                  </Button>
+                </div>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 

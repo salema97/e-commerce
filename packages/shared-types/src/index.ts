@@ -20,3 +20,4 @@ export * from './whatsapp.js';
 export * from './email.js';
 export * from './finance.js';
 export * from './dto.js';
+export * from './ai.js';

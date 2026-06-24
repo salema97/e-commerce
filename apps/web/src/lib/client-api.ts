@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { createApiClient } from '@repo/api-client';
+import { createApiClient, createQueryHooks } from '@repo/api-client';
 import { useAuth } from '@/contexts/auth-context';
 
 function getBaseURL(): string {
@@ -28,4 +28,9 @@ export function useApiClient() {
       }),
     [accessToken],
   );
+}
+
+export function useApiQueryHooks() {
+  const client = useApiClient();
+  return useMemo(() => createQueryHooks(client), [client]);
 }

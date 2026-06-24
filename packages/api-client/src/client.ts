@@ -58,6 +58,10 @@ import type {
   UploadExpenseReceiptDto,
   CashFlowReport,
   AdminStoreCredit,
+  SearchResultItem,
+  Faq,
+  ProductContentDraft,
+  ChatSession,
 } from '@repo/shared-types';
 
 export interface ApiClientOptions {
@@ -373,6 +377,33 @@ export function createApiClient(options: ApiClientOptions) {
     marketing: {
       distributePromo: (data: { segment: string; promotionId: string }) =>
         request<{ sent: number }>('POST', '/marketing/campaigns/promo', data),
+    },
+    search: {
+      products: (query: string, limit?: number) =>
+        request<SearchResultItem[]>('GET', '/search', undefined, { q: query, limit }),
+    },
+    chat: {
+      createSession: (data?: { contactName?: string }) =>
+        request<ChatSession>('POST', '/chat/sessions', data ?? {}),
+      sendMessage: (sessionId: string, content: string) =>
+        request<Message[]>('POST', `/chat/sessions/${sessionId}/messages`, { content }),
+      listMessages: (sessionId: string) =>
+        request<Message[]>('GET', `/chat/sessions/${sessionId}/messages`),
+    },
+    ai: {
+      faqs: {
+        findPublished: () => request<Faq[]>('GET', '/ai/faqs'),
+      },
+      products: {
+        generateContent: (productId: string) =>
+          request<ProductContentDraft>('POST', `/ai/products/${productId}/generate-content`),
+        getDraft: (productId: string) =>
+          request<ProductContentDraft | null>('GET', `/ai/products/${productId}/content-draft`),
+        approveDraft: (productId: string) =>
+          request<Product>('POST', `/ai/products/${productId}/content-draft/approve`),
+        rejectDraft: (productId: string) =>
+          request<{ success: boolean }>('POST', `/ai/products/${productId}/content-draft/reject`),
+      },
     },
   };
 }

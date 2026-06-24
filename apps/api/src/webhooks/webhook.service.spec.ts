@@ -5,6 +5,7 @@ import { WebhookService, EvolutionWebhookPayload } from './webhook.service.js';
 import { ConversationService } from '../conversations/conversation.service.js';
 import { MessageService } from '../messages/message.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { ConversationOrchestrator } from '../ai/orchestrator/conversation-orchestrator.interface.js';
 
 describe('WebhookService', () => {
   let service: WebhookService;
@@ -83,6 +84,10 @@ describe('WebhookService', () => {
         { provide: ConversationService, useValue: conversationService },
         { provide: MessageService, useValue: messageService },
         { provide: PrismaService, useValue: prisma },
+        {
+          provide: ConversationOrchestrator,
+          useValue: { handleInbound: vi.fn().mockResolvedValue(undefined) },
+        },
       ],
     }).compile();
 

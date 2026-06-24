@@ -814,12 +814,49 @@ export async function seedDatabase(prisma: PrismaClient): Promise<void> {
     create: {
       id: IDS.auditLogSeed,
       actorId: IDS.userAdmin,
-      actorId: IDS.userAdmin,
       resource: 'product',
       action: 'update',
       resourceId: productLaptop.id,
       diff: { status: { from: 'DRAFT', to: 'ACTIVE' } },
       metadata: { source: 'seed' },
+    },
+  });
+
+  await prisma.faq.upsert({
+    where: { id: IDS.faqReturns },
+    update: {},
+    create: {
+      id: IDS.faqReturns,
+      question: '¿Cuál es la política de devoluciones?',
+      answer:
+        'Aceptamos devoluciones dentro de los 30 días posteriores a la entrega, siempre que el producto esté en su estado original.',
+      isPublished: true,
+      sortOrder: 1,
+    },
+  });
+
+  await prisma.faq.upsert({
+    where: { id: IDS.faqShipping },
+    update: {},
+    create: {
+      id: IDS.faqShipping,
+      question: '¿Cuánto tarda el envío?',
+      answer:
+        'Los envíos dentro de Ecuador suelen tardar entre 2 y 5 días hábiles según la ciudad.',
+      isPublished: true,
+      sortOrder: 2,
+    },
+  });
+
+  await prisma.cmsPage.upsert({
+    where: { slug: 'politica-devoluciones' },
+    update: {},
+    create: {
+      title: 'Política de devoluciones',
+      slug: 'politica-devoluciones',
+      bodyMarkdown:
+        'Puedes solicitar una devolución dentro de los 30 días. Contáctanos por WhatsApp o chat web.',
+      isPublished: true,
     },
   });
 

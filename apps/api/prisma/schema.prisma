@@ -86,6 +86,24 @@ enum ConversationStatus {
   CLOSED
 }
 
+enum ConversationChannel {
+  WHATSAPP
+  WEB
+}
+
+enum MessageSenderType {
+  CUSTOMER
+  AGENT
+  BOT
+  SYSTEM
+}
+
+enum KnowledgeSourceType {
+  PRODUCT
+  FAQ
+  CMS_PAGE
+}
+
 enum MessageDirection {
   INBOUND
   OUTBOUND
@@ -240,6 +258,8 @@ model Product {
   name           String
   slug           String        @unique
   description    String?
+  metaTitle      String?
+  metaDescription String?
   sku            String?       @unique
   status         ProductStatus @default(DRAFT)
   price          Decimal       @db.Decimal(12, 2)
@@ -262,6 +282,7 @@ model Product {
   wishlists         Wishlist[]
   backInStockAlerts BackInStockAlert[]
   returnItems       ReturnItem[]
+  contentDraft      ProductContentDraft?
 
   @@index([slug])
   @@index([categoryId])
@@ -679,20 +700,26 @@ model Conversation {
   userId          String?
   remoteJid       String
   instance        String             @default("ecommerce")
+  channel         ConversationChannel @default(WHATSAPP)
+  webSessionId    String?            @unique
   contactName     String?
   status          ConversationStatus @default(OPEN)
+  botEnabled      Boolean            @default(true)
   assignedAgentId String?
   lastMessageAt   DateTime?
   unreadCount     Int                @default(0)
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 
-  user     User?     @relation(fields: [userId], references: [id])
-  messages Message[]
+  user            User?            @relation(fields: [userId], references: [id])
+  messages        Message[]
+  botInteractions BotInteraction[]
 
   @@unique([remoteJid, instance])
   @@index([remoteJid])
   @@index([status])
+  @@index([channel])
+  @@index([webSessionId])
   @@index([createdAt])
 }
 
@@ -702,6 +729,7 @@ model Message {
   remoteJid         String
   instance          String            @default("ecommerce")
   direction         MessageDirection
+  senderType        MessageSenderType   @default(CUSTOMER)
   contentType       MessageContentType @default(TEXT)
   content           String            @db.Text
   mediaUrl          String?
@@ -718,6 +746,72 @@ model Message {
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId, createdAt])
+}
+
+model Faq {
+  id          String   @id @default(uuid())
+  question    String
+  answer      String   @db.Text
+  isPublished Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isPublished])
+}
+
+model CmsPage {
+  id           String   @id @default(uuid())
+  slug         String   @unique
+  title        String
+  bodyMarkdown String   @db.Text
+  isPublished  Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isPublished])
+}
+
+model KnowledgeChunk {
+  id         String              @id @default(uuid())
+  sourceType KnowledgeSourceType
+  sourceId   String
+  content    String              @db.Text
+  embedding  Json?
+  /// pgvector column managed via raw SQL (1536 dims, OpenAI-compatible)
+  embeddingVector Unsupported("vector(1536)")?
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  @@index([sourceType, sourceId])
+}
+
+model ProductContentDraft {
+  id              String   @id @default(uuid())
+  productId       String   @unique
+  description     String?  @db.Text
+  metaTitle       String?
+  metaDescription String?
+  imageAlts       Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model BotInteraction {
+  id             String   @id @default(uuid())
+  conversationId String
+  confidence     Float
+  escalated      Boolean  @default(false)
+  chunkIds       String[]
+  promptHash     String?
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([createdAt])
 }
 
 model Supplier {

@@ -10,6 +10,7 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isOutbound = message.direction === 'OUTBOUND';
+  const isBot = message.senderType === 'BOT';
 
   function statusIcon() {
     if (message.status === 'FAILED') {
@@ -32,10 +33,15 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       <div
         className={`max-w-[80%] border-[3px] border-neo-onyx px-4 py-2 text-sm shadow-[4px_4px_0_0_#111111] ${
           isOutbound
-            ? 'bg-neo-onyx text-white'
+            ? isBot
+              ? 'bg-violet-600 text-white'
+              : 'bg-neo-onyx text-white'
             : 'bg-white text-neo-onyx'
         }`}
       >
+        {isBot ? (
+          <p className="mb-1 text-[10px] font-bold uppercase opacity-80">Bot</p>
+        ) : null}
         <p className="whitespace-pre-wrap font-medium">{message.content}</p>
         <div
           className={`mt-1 flex items-center justify-end gap-1 text-[10px] font-bold uppercase ${
