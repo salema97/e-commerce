@@ -30,6 +30,7 @@ import { FinanceModule } from './finance/finance.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { AiModule } from './ai/ai.module.js';
 import { AnalyticsModule } from './analytics/analytics.module.js';
+import { EventBusModule } from './event-bus/event-bus.module.js';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { AnalyticsModule } from './analytics/analytics.module.js';
     NotificationsModule,
     AiModule,
     AnalyticsModule,
+    EventBusModule,
   ],
   providers: [
     {

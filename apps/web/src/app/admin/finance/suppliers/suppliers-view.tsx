@@ -1,8 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useApiClient, useAuthApiReady } from '@/lib/client-api';
+import { useApiQueryHooks, useAuthApiReady } from '@/lib/client-api';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import {
   Table,
@@ -15,12 +14,10 @@ import {
 import type { Supplier } from '@repo/shared-types';
 
 export function SuppliersView({ initialSuppliers }: { initialSuppliers: Supplier[] }) {
-  const api = useApiClient();
+  const hooks = useApiQueryHooks();
   const authReady = useAuthApiReady();
 
-  const { data: suppliers } = useQuery({
-    queryKey: ['suppliers'],
-    queryFn: () => api.suppliers.findAll(),
+  const { data: suppliers } = hooks.useSuppliers({
     initialData: initialSuppliers,
     enabled: authReady,
   });

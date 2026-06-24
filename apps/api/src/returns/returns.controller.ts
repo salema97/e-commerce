@@ -18,6 +18,7 @@ import { Role } from '../auth/role.enum.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import { ReturnsService } from './returns.service.js';
 import { StoreCreditService } from './store-credit.service.js';
+import { Audit } from '../audit/audit.decorator.js';
 import { CreateReturnDto } from './dto/create-return.dto.js';
 import { CreateGuestReturnRequestDto } from './dto/create-guest-return-request.dto.js';
 import { UpdateReturnStatusDto } from './dto/update-return-status.dto.js';
@@ -37,6 +38,7 @@ export class OrderReturnsController {
 
   @Post(':id/returns')
   @Roles(Role.CUSTOMER, Role.ADMIN, Role.SUPER_ADMIN)
+  @Audit({ resource: 'return', action: 'create' })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a return request for an order (customer)' })
   @ApiResponse({ status: 201, description: 'Return request created' })
@@ -126,6 +128,7 @@ export class ReturnsController {
 
   @Patch(':id/status')
   @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE)
+  @Audit({ resource: 'return', action: 'update_status' })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update return request status (admin)' })
   @ApiResponse({ status: 200, description: 'Status updated' })
@@ -142,6 +145,7 @@ export class ReturnsController {
 
   @Post(':id/resolve')
   @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE)
+  @Audit({ resource: 'return', action: 'resolve' })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Resolve a return request (admin)' })
   @ApiResponse({ status: 200, description: 'Return resolved' })

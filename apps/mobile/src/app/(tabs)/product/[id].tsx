@@ -15,6 +15,7 @@ import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } fro
 import { getProductAvailableQuantity } from '../../../lib/product-stock.js';
 import { trackMobileEvent } from '../../../lib/analytics.js';
 import { useAuth } from '../../../providers/AuthProvider.js';
+import { useWishlist } from '../../../lib/wishlist.js';
 import { BackInStockForm } from '../../../components/product/BackInStockForm.js';
 import type { ProductVariant } from '@repo/shared-types';
 
@@ -23,6 +24,7 @@ export default function ProductDetailScreen(): React.ReactElement {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: product, error } = api.hooks.useProduct(id ?? '');
   const { user } = useAuth();
+  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const { addItem, itemCount } = useCart();
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>();
   const [quantity, setQuantity] = useState(1);
@@ -76,6 +78,20 @@ export default function ProductDetailScreen(): React.ReactElement {
   const effectivePrice = selectedVariant?.price ?? product.price;
   const availableQuantity = getProductAvailableQuantity(product.inventory);
   const isOutOfStock = availableQuantity <= 0;
+  const savedToWishlist = isInWishlist(product.id);
+
+  const handleToggleWishlist = (): void => {
+    if (savedToWishlist) {
+      void removeFromWishlist(product.id);
+      return;
+    }
+    void addToWishlist({
+      productId: product.id,
+      name: product.name,
+      slug: product.slug,
+      imageUrl: getProductPrimaryImageUrl(product),
+    });
+  };
 
   return (
     <NeoScreen style={styles.container}>
@@ -172,6 +188,9 @@ export default function ProductDetailScreen(): React.ReactElement {
             {itemCount} en el carrito
           </Badge>
         ) : null}
+        <Button variant="outline" onPress={handleToggleWishlist} size="lg">
+          {savedToWishlist ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+        </Button>
         <Button onPress={handleAddToCart} size="lg" disabled={isOutOfStock}>
           {isOutOfStock ? 'Sin stock' : 'Agregar al carrito'}
         </Button>

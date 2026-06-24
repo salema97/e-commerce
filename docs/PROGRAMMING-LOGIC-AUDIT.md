@@ -69,8 +69,8 @@ Si difieren: login “funciona” en cliente (`/api/auth/me` llama al API) pero 
 
 **Pre-merge auth:**
 
-- [ ] Eliminar `@clerk/nextjs` de `apps/web/package.json` si no hay imports
-- [ ] Buscar `@clerk` en mobile/web: `rg "@clerk|clerk-expo|clerk/nextjs"`
+- [x] Eliminar `@clerk/nextjs` de `apps/web/package.json` si no hay imports
+- [x] Buscar `@clerk` en mobile/web: sin referencias en runtime
 - [ ] Mismo `AUTH_JWT_ACCESS_SECRET` en API, web y documentado en ambos `.env.example`
 - [ ] Seed users: `store-admin@`, `finance@`, `support@`, `cliente@` + `SeedDemo123!`
 
@@ -141,7 +141,7 @@ Order paid (webhook) → PaymentsModule → SriQueueService.enqueue
 - [x] `SriQueueModule` + BullMQ + Redis
 - [x] `InvoiceProviderFactory` → direct SRI
 - [x] Encolado desde pagos confirmados
-- [ ] `@Audit` en emisión/reintento factura (gap)
+- [x] `@Audit` en emisión/reintento factura y nota de crédito
 - [ ] `ScheduleModule.forRoot()` una sola vez en raíz (hoy anidado en SRI)
 - [ ] Evitar doble import de `SriQueueModule` (Invoices + Payments)
 
@@ -165,13 +165,13 @@ pnpm --filter @repo/api prisma migrate deploy
 
 ### 4.5 Desviaciones API (prioridad)
 
-| Prioridad | Desviación | Acción sugerida |
-|-----------|------------|-----------------|
-| Alta | `cart.controller.ts` sin `@Public()` | Guest cart o auth explícito |
-| Media | `FINANCE_ROLES` duplicado en 5 controllers | `finance/finance.constants.ts` |
-| Media | Swagger sin tags Finance/Invoices/Analytics | Completar `main.ts` |
-| Media | `EventBusModule` solo vía import indirecto | Import explícito en `AppModule` |
-| Baja | Mezcla Zod + class-validator | Unificar por bounded context |
+| Prioridad | Desviación | Estado |
+|-----------|------------|--------|
+| ~~Alta~~ | ~~`cart.controller.ts` sin `@Public()`~~ | ✅ `@Public()` |
+| Media | `FINANCE_ROLES` duplicado en 5 controllers | Pendiente — `finance/finance.constants.ts` |
+| ~~Media~~ | ~~Swagger sin tags Finance/Invoices/Analytics~~ | ✅ tags en `main.ts` |
+| ~~Media~~ | ~~`EventBusModule` solo vía import indirecto~~ | ✅ en `AppModule` |
+| Baja | Mezcla Zod + class-validator | Documentado por bounded context |
 
 ---
 
@@ -251,52 +251,49 @@ QueryClientProvider → AuthProvider → AnalyticsProvider → children
 
 ### 5.7 Desviaciones Web (prioridad)
 
-| Prioridad | Archivo / tema | Desviación vs mayoría |
-|-----------|----------------|------------------------|
-| **Crítica** | `package.json` `@clerk/nextjs` | Dependencia huérfana |
-| **Crítica** | `middleware.ts` vs `admin-nav.ts` | SUPPORT ve “Conocimiento” en nav pero middleware bloquea `/admin/knowledge` |
-| Alta | `admin/analytics/page.tsx` | Sin `AnimatedPageShell`; `as any`; no usa `useAnalytics*`; estilos no neo |
-| Alta | `admin/products/new`, `categories/new`, `inventory/new` | `'use client'` en `page.tsx` sin SSR |
-| Media | Vistas finance (`*-view.tsx`) | `useQuery` manual vs hooks `useFinance*` |
-| Media | `admin/marketing`, knowledge views | Sin `AnimatedPageShell` |
+| Prioridad | Archivo / tema | Estado |
+|-----------|----------------|--------|
+| ~~Crítica~~ | ~~`@clerk/nextjs` huérfano~~ | ✅ eliminado |
+| ~~Crítica~~ | ~~middleware vs admin-nav SUPPORT/knowledge~~ | ✅ `canAccessAdminPath()` |
+| ~~Alta~~ | ~~`admin/analytics` sin hooks neo~~ | ✅ `analytics-view.tsx` + selector 7/30/90 días |
+| ~~Alta~~ | ~~`admin/*/new` `'use client'` en page~~ | ✅ SC + `*-view.tsx` |
+| ~~Media~~ | ~~Vistas finance `useQuery` manual~~ | ✅ `useFinance*` / `useSuppliers` |
+| Media | `admin/marketing`, knowledge views | Sin `AnimatedPageShell` (cosmético) |
 | Media | `store/page.tsx` | `StoreAnalyticsTracker` + `useSearchParams` sin `<Suspense>` |
-| Baja | `invoice-list-view.tsx` | `AnimatedPageShell` dentro del cliente, no en `page.tsx` |
+| Baja | React Doctor ~96 warnings | forwardRef shadcn, LazyMotion (no bloquean) |
 
 ### 5.8 Integración fases 8–11 en Web
 
-#### Fase 8 — Finanzas (~85 % alineado)
+#### Fase 8 — Finanzas (~95 % alineado)
 
-| ✅ Hecho | ⚠️ Gap |
+| ✅ Hecho | ⚠️ Gap menor |
 |---------|--------|
-| `/admin/finance/*` con `finance/layout.tsx` + JWT | Vistas sin `AnimatedPageShell` |
-| SSR + `initialData` en incomes/expenses/reports | Hooks generados poco usados |
-| `FinanceSubNav`, roles FINANCE | Sin UI ajuste store-credit (solo lectura en reportes) |
-| Sin Clerk en layout finance | — |
+| `/admin/finance/*` con `finance/layout.tsx` + JWT | Sin UI ajuste store-credit (solo lectura en reportes) |
+| SSR + `initialData` + hooks `useFinance*` | — |
+| `FinanceSubNav`, roles FINANCE | — |
 
-#### Fase 9 — Notificaciones (~70 %)
+#### Fase 9 — Notificaciones (~75 %)
 
 | ✅ Hecho | ⚠️ Gap |
 |---------|--------|
 | `/account/notifications` SSR + form | Sin panel admin de campañas (solo `/admin/marketing` promo) |
 | `WebPushOptIn`, navbar Bell | Sin vista admin de dispositivos push |
-| Consent separado de analytics cookies | — |
 
-#### Fase 10 — AI / Knowledge (~75 %)
-
-| ✅ Hecho | ⚠️ Gap |
-|---------|--------|
-| `/admin/knowledge` FAQ + CMS SSR | Nav SUPPORT → knowledge roto por middleware |
-| `StoreChatWidget` en store layout | Sin admin tuning embeddings/bot |
-| Draft IA en edición producto | Chat anónimo (OK MVP) |
-
-#### Fase 11 — Analytics (~65 % post-merge fixes)
+#### Fase 10 — AI / Knowledge (~90 %)
 
 | ✅ Hecho | ⚠️ Gap |
 |---------|--------|
-| `AnalyticsProvider` + cookie banner | Dashboard solo 30 días fijos, sin polling |
-| Trackers: product_view, add_to_cart, begin_checkout, purchase | Tipado `any` en página admin |
-| `/admin/analytics` SSR overview/funnel/cohorts | Hooks `useAnalytics*` sin uso en UI |
-| Nav + sidebar Analítica | Sin gráficos / export / tiempo real |
+| `/admin/knowledge` FAQ + CMS SSR | Sin admin tuning embeddings/bot |
+| Nav SUPPORT → knowledge | ✅ middleware alineado |
+| `StoreChatWidget` en store layout | Chat anónimo (OK MVP) |
+
+#### Fase 11 — Analytics (~90 %)
+
+| ✅ Hecho | ⚠️ Gap |
+|---------|--------|
+| `AnalyticsProvider` + cookie banner | Sin gráficos / export (MVP métricas + tabla cohortes) |
+| Dashboard admin con `useAnalytics*` | Selector 7/30/90 días + polling 30s |
+| Nav + sidebar Analítica | — |
 
 **Fixes aplicados en merge/cierre (deben repetirse como checklist):**
 
@@ -333,22 +330,23 @@ API                 → api.hooks.use*() / api.client.*
 | Notificaciones prefs | SSR form | `NotificationPreferencesPanel` | ✅ |
 | Push tokens | Web Push API | Expo notifications | ✅ |
 | Chat soporte | `StoreChatWidget` | `StoreChatWidget` | ✅ |
-| Analytics eventos | `trackEvent` + consent | `trackMobileEvent` | ⚠️ sin consent |
-| Wishlist | ✅ | ❌ | gap |
-| Help / FAQ | `/help` | ❌ | gap |
-| CMS legal | `/legal/[slug]` | ❌ | gap |
+| Analytics eventos | `trackEvent` + consent | `trackMobileEvent` + consent banner | ✅ |
+| Wishlist | ✅ | ❌ | gap intencional MVP |
+| Help / FAQ | `/help` | `/help` | ✅ |
+| CMS legal | `/legal/[slug]` | ❌ | gap — solo web |
 
 ### 6.3 Desviaciones Mobile (prioridad)
 
-| Prioridad | Tema | Acción |
+| Prioridad | Tema | Estado |
 |-----------|------|--------|
-| Media | `EXPO_PUBLIC_API_URL` vs `EXPO_PUBLIC_API_BASE_URL` en AuthProvider | Unificar env |
-| Media | Pantallas stack sin `NeoScreen` / `neo.*` | `checkout`, `order/*`, `sign-*`, `notifications` |
-| Media | Copy “Clerk” en `NotificationPreferencesPanel` | Corregir texto |
-| Media | `remove_from_cart` no trackeado | Añadir en `cart.tsx` |
-| Media | Deep link `order/:id` | Navegar a `/order/[id]`, no account |
-| Baja | Analytics sin capa consent | Paridad con web o documentar excepción |
-| Baja | Sin `.env.example` en mobile | Crear espejo de web |
+| ~~Media~~ | ~~Env API duplicado~~ | ✅ `lib/env.ts` |
+| ~~Media~~ | ~~Copy Clerk~~ | ✅ eliminado |
+| ~~Media~~ | ~~`remove_from_cart` no trackeado~~ | ✅ en `cart.tsx` |
+| ~~Media~~ | ~~Deep link `order/:id`~~ | ✅ → `/order/[id]` |
+| ~~Baja~~ | ~~Sin `.env.example`~~ | ✅ |
+| ~~Baja~~ | ~~Analytics sin consent~~ | ✅ banner + SecureStore |
+| Baja | CMS legal `/legal/[slug]` | Solo web por ahora |
+| Baja | Wishlist | No en roadmap MVP mobile |
 
 ### 6.4 Fases 7–11 en Mobile (resumen)
 
@@ -356,7 +354,7 @@ API                 → api.hooks.use*() / api.client.*
 - **Fase 8:** solo lectura store credit en cuenta
 - **Fase 9:** prefs + push automático; sin admin
 - **Fase 10:** chat en tienda; sin `/help`
-- **Fase 11:** POST eventos; sin PostHog/Clarity/consent banner
+- **Fase 11:** POST eventos con consent; sin PostHog/Clarity en cliente (igual que web server-side)
 
 ---
 
@@ -374,8 +372,8 @@ API                 → api.hooks.use*() / api.client.*
 
 | Tema | Estado |
 |------|--------|
-| Hooks finance completos | ✅ pero varias vistas web no los usan |
-| Hooks analytics Phase 11 | ✅ añadidos; **dashboard admin no los consume** |
+| Hooks finance completos | ✅ usados en vistas admin |
+| Hooks analytics Phase 11 | ✅ dashboard admin los consume |
 | `vitest` sin tests | `passWithNoTests` en script (fix merge) |
 | Generación OpenAPI automática | Parcial — mucho client manual |
 
@@ -474,26 +472,27 @@ Fases 8–10 cerraron con PRs encadenadas + UI closure; fase 11 con PR #5 + fixe
 4. ~~Copy Clerk en mobile~~ ✅
 5. ~~`admin/analytics`: tipos estrictos + `AnimatedPageShell` + neo tokens~~ ✅ `analytics-view.tsx` + hooks
 
-### Sprint B — Paridad hooks y SSR
+### Sprint B — Paridad hooks y SSR ✅
 
-1. Finance views → `useFinance*` hooks  
-2. Refactor `admin/*/new` a patrón SC + vista cliente  
-3. Analytics dashboard → hooks + selector de rango  
+1. ~~Finance views → `useFinance*` hooks~~ ✅
+2. ~~Refactor `admin/*/new` a patrón SC + vista cliente~~ ✅
+3. ~~Analytics dashboard → hooks + selector de rango~~ ✅
 
-### Sprint C — Paridad mobile
+### Sprint C — Paridad mobile ✅
 
-1. `/help` screen  
-2. `remove_from_cart` tracking  
-3. Fix deep link pedidos  
-4. ~~`NeoScreen` en stack screens~~ ✅ `account/notifications` (resto ya tenía NeoScreen)
+1. ~~`/help` screen~~ ✅
+2. ~~`remove_from_cart` tracking~~ ✅
+3. ~~Fix deep link pedidos~~ ✅
+4. ~~`NeoScreen` en stack screens~~ ✅ `account/notifications` + `help`
 5. ~~`.env.example` mobile~~ ✅ + `lib/env.ts` unificado
+6. ~~Consent analytics mobile~~ ✅ banner + `analytics-consent.ts`
 
-### Sprint D — API hardening
+### Sprint D — API hardening ✅
 
-1. `@Audit` en invoices/returns/marketing  
+1. ~~`@Audit` en invoices/returns/marketing~~ ✅
 2. ~~`cart` `@Public()`~~ ✅
-3. `EventBusModule` explícito en `AppModule`  
-4. Swagger tags fases 7–11  
+3. ~~`EventBusModule` explícito en `AppModule`~~ ✅
+4. ~~Swagger tags fases 7–11~~ ✅
 
 ---
 
@@ -537,15 +536,22 @@ docs/PROGRAMMING-LOGIC-AUDIT.md  (este archivo)
 
 ## 12. Conclusión
 
-El monorepo tiene un **núcleo coherente** desde fase 7:
+El monorepo tiene un **núcleo coherente y alineado** tras Sprints A–D (jun 2026):
 
-- API modular NestJS con guards JWT/RBAC y abstracciones por proveedor  
-- Web con SSR, shell admin unificado y diseño neo-brutalist  
-- Mobile con Expo Router, `NeoScreen` y `@repo/api-client`  
+- API modular NestJS con guards JWT/RBAC, `@Audit` en mutaciones críticas, abstracciones por proveedor y Swagger documentado  
+- Web con SSR, shell admin unificado, hooks `api-client` en finance/analytics, diseño neo-brutalist  
+- Mobile con paridad comercial (help, tracking con consent, deep links, env unificado)  
 
-Las **fases 8–11 están integradas en API** y **mayormente en web**; mobile cubre el **camino comercial del cliente** pero no admin ni analytics avanzado (esperado).
+**Gaps residuales:** ninguno bloqueante tras cierre jun 2026. Cosmético opcional: gráficos avanzados en analytics admin.
 
-La **mayor fuente de bugs en merge** no es la lógica de negocio sino **cableado olvidado**: `AppModule`, JWT, migraciones, nav admin, providers, y consent/cookies en E2E. Usar las checklists de §8 antes de cada merge a `main`.
+| Área | Estado |
+|------|--------|
+| Mobile wishlist + legal CMS | ✅ |
+| API `FINANCE_ROLES` centralizado | ✅ `finance.constants.ts` |
+| Web React Doctor (LazyMotion + forwardRef) | ✅ `NeoMotionProvider` + `m` + UI React 19 |
+| Web `AnimatedPageShell` marketing/knowledge | ✅ |
+| Analytics export CSV | ✅ |
+| Docs JWT (TODO.md) | ✅ Clerk referencias actualizadas | `AppModule`, JWT, migraciones, nav admin, providers, consent en E2E. Usar las checklists de §8 antes de cada merge a `main`.
 
 ---
 

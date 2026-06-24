@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useApiClient, useApiQueryHooks, useAuthApiReady } from '@/lib/client-api';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -67,7 +68,7 @@ export function FaqsView({ initialFaqs, canEdit }: FaqsViewProps) {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6">
+    <AnimatedPageShell className="flex min-h-0 flex-1 flex-col gap-6">
       <AdminPageHeader
         title="FAQ"
         subtitle="Conocimiento / Preguntas frecuentes"
@@ -186,6 +187,6 @@ export function FaqsView({ initialFaqs, canEdit }: FaqsViewProps) {
           </TableBody>
         </Table>
       </div>
-    </div>
+    </AnimatedPageShell>
   );
 }

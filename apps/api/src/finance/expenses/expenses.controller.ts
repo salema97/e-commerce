@@ -29,8 +29,7 @@ import {
 import { Roles } from '../../auth/roles.decorator.js';
 import { Role } from '../../auth/role.enum.js';
 import { Audit } from '../../audit/audit.decorator.js';
-
-const FINANCE_ROLES = [Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE] as const;
+import { FINANCE_ROLES } from '../finance.constants.js';
 
 @ApiTags('Finance — Expenses')
 @ApiBearerAuth()

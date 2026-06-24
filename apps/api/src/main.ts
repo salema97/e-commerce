@@ -60,6 +60,17 @@ async function bootstrap() {
     .addTag('Users')
     .addTag('Cart')
     .addTag('Orders')
+    .addTag('Payments')
+    .addTag('Invoices')
+    .addTag('Returns')
+    .addTag('Finance')
+    .addTag('Notifications')
+    .addTag('Marketing')
+    .addTag('Analytics')
+    .addTag('AI')
+    .addTag('WhatsApp')
+    .addTag('Webhooks')
+    .addTag('Auth')
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, document);

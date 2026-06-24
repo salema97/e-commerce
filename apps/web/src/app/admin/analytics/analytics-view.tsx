@@ -5,37 +5,52 @@ import { useApiQueryHooks, useAuthApiReady } from '@/lib/client-api';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { formatPrice } from '@repo/shared-utils';
+import { FormSelect } from '@/components/ui/form-select';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import type {
   AnalyticsOverviewReport,
   CohortRetentionReport,
 } from '@repo/shared-types';
 
-const OVERVIEW_DAYS = 30;
+const DEFAULT_OVERVIEW_DAYS = 30;
 const COHORT_WEEKS = 8;
+const OVERVIEW_RANGE_OPTIONS = [
+  { value: '7', label: 'Últimos 7 días' },
+  { value: '30', label: 'Últimos 30 días' },
+  { value: '90', label: 'Últimos 90 días' },
+] as const;
 
 interface AnalyticsViewProps {
   initialOverview: AnalyticsOverviewReport | null;
   initialFunnel: Record<string, number> | null;
   initialCohorts: CohortRetentionReport | null;
+  initialOverviewDays?: number;
 }
 
 export function AnalyticsView({
   initialOverview,
   initialFunnel,
   initialCohorts,
+  initialOverviewDays = DEFAULT_OVERVIEW_DAYS,
 }: AnalyticsViewProps) {
   const hooks = useApiQueryHooks();
   const authReady = useAuthApiReady();
+  const [overviewDays, setOverviewDays] = React.useState(initialOverviewDays);
+  const useInitialOverview =
+    overviewDays === initialOverviewDays ? (initialOverview ?? undefined) : undefined;
+  const useInitialFunnel =
+    overviewDays === initialOverviewDays ? (initialFunnel ?? undefined) : undefined;
 
-  const { data: metrics } = hooks.useAnalyticsOverview(OVERVIEW_DAYS, {
+  const { data: metrics } = hooks.useAnalyticsOverview(overviewDays, {
     enabled: authReady,
-    initialData: initialOverview ?? undefined,
+    initialData: useInitialOverview,
     refetchInterval: 30_000,
   });
 
-  const { data: funnelSteps } = hooks.useAnalyticsFunnel(OVERVIEW_DAYS, {
+  const { data: funnelSteps } = hooks.useAnalyticsFunnel(overviewDays, {
     enabled: authReady,
-    initialData: initialFunnel ?? undefined,
+    initialData: useInitialFunnel,
     refetchInterval: 30_000,
   });
 
@@ -45,12 +60,62 @@ export function AnalyticsView({
     refetchInterval: 60_000,
   });
 
+  function handleExportCsv(): void {
+    const lines: string[] = ['seccion,metrica,valor'];
+    if (metrics) {
+      lines.push(`overview,ingresos,${metrics.revenue}`);
+      lines.push(`overview,pedidos_pagados,${metrics.paidOrders}`);
+      lines.push(`overview,tasa_conversion,${metrics.conversionRate}`);
+    }
+    if (funnelSteps) {
+      for (const [step, value] of Object.entries(funnelSteps)) {
+        lines.push(`funnel,${step},${value}`);
+      }
+    }
+    if (cohortReport) {
+      for (const cohort of cohortReport.cohorts) {
+        lines.push(`cohort,${cohort.cohortWeek}_size,${cohort.cohortSize}`);
+        cohort.retentionByWeek.forEach((rate, weekIndex) => {
+          lines.push(`cohort,${cohort.cohortWeek}_week_${weekIndex},${rate}`);
+        });
+      }
+    }
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `analytics-${overviewDays}d.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <AnimatedPageShell className="flex flex-col gap-6">
       <AdminPageHeader
         title="Analítica avanzada"
-        subtitle="Métricas de los últimos 30 días, embudo de conversión y retención por cohorte."
+        subtitle={`Métricas de los últimos ${overviewDays} días, embudo de conversión y retención por cohorte.`}
         showNetworkStatus
+        actions={
+          <div className="flex items-end gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="overview-range" className="text-xs uppercase">
+                Período
+              </Label>
+              <FormSelect
+                id="overview-range"
+                value={String(overviewDays)}
+                onValueChange={(value) => setOverviewDays(Number(value))}
+                options={OVERVIEW_RANGE_OPTIONS.map((option) => ({
+                  value: option.value,
+                  label: option.label,
+                }))}
+              />
+            </div>
+            <Button type="button" variant="outline" onClick={handleExportCsv}>
+              Exportar CSV
+            </Button>
+          </div>
+        }
       />
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

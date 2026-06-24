@@ -1,8 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useApiClient, useAuthApiReady } from '@/lib/client-api';
+import { useApiQueryHooks, useAuthApiReady } from '@/lib/client-api';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,15 +34,13 @@ export function ReportsView({
   initialStoreCredits: AdminStoreCredit[];
   initialCashFlow: CashFlowReport | null;
 }) {
-  const api = useApiClient();
+  const hooks = useApiQueryHooks();
   const authReady = useAuthApiReady();
   const [from, setFrom] = React.useState(initialRange.from);
   const [to, setTo] = React.useState(initialRange.to);
   const [applied, setApplied] = React.useState(initialRange);
 
-  const { data: report } = useQuery({
-    queryKey: ['finance', 'cash-flow', applied.from, applied.to],
-    queryFn: () => api.finance.reports.cashFlow(applied.from, applied.to),
+  const { data: report } = hooks.useFinanceCashFlow(applied.from, applied.to, {
     enabled: authReady && Boolean(applied.from && applied.to),
     initialData:
       applied.from === initialRange.from && applied.to === initialRange.to
@@ -51,9 +48,7 @@ export function ReportsView({
         : undefined,
   });
 
-  const { data: storeCredits } = useQuery({
-    queryKey: ['finance', 'store-credits'],
-    queryFn: () => api.finance.storeCredits.findAll(),
+  const { data: storeCredits } = hooks.useFinanceStoreCredits({
     initialData: initialStoreCredits,
     enabled: authReady,
   });

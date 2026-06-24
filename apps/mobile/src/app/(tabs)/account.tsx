@@ -98,6 +98,15 @@ export default function AccountScreen(): React.ReactElement {
         <Button variant="outline" onPress={() => router.push('/account/notifications')}>
           Preferencias de notificaciones
         </Button>
+        <Button variant="outline" onPress={() => router.push('/help')}>
+          Ayuda y preguntas frecuentes
+        </Button>
+        <Button variant="outline" onPress={() => router.push('/wishlist')}>
+          Lista de deseos
+        </Button>
+        <Button variant="outline" onPress={() => router.push('/legal')}>
+          Información legal
+        </Button>
       </View>
 
       <Text style={styles.sectionTitle}>Pedidos recientes</Text>
@@ -187,6 +196,7 @@ const styles = StyleSheet.create({
   actions: {
     marginHorizontal: 16,
     marginBottom: 20,
+    gap: 10,
   },
   label: {
     fontSize: 11,

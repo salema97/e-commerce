@@ -1,8 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useApiClient, useAuthApiReady } from '@/lib/client-api';
+import { useApiQueryHooks, useAuthApiReady } from '@/lib/client-api';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,27 +21,18 @@ export function CategoriesView({
 }: {
   initialCategories: ExpenseCategory[];
 }) {
-  const api = useApiClient();
+  const hooks = useApiQueryHooks();
   const authReady = useAuthApiReady();
-  const queryClient = useQueryClient();
   const [name, setName] = React.useState('');
   const [description, setDescription] = React.useState('');
 
-  const { data: categories = initialCategories } = useQuery({
-    queryKey: ['finance', 'expense-categories'],
-    queryFn: () => api.finance.expenseCategories.findAll(),
+  const { data: categories = initialCategories } = hooks.useFinanceExpenseCategories({
     initialData: initialCategories,
     enabled: authReady,
   });
 
-  const createMutation = useMutation({
-    mutationFn: () =>
-      api.finance.expenseCategories.create({
-        name,
-        description: description || undefined,
-      }),
+  const createMutation = hooks.useCreateFinanceExpenseCategory({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['finance', 'expense-categories'] });
       setName('');
       setDescription('');
     },
@@ -61,7 +51,10 @@ export function CategoriesView({
         onSubmit={(event) => {
           event.preventDefault();
           if (!name.trim()) return;
-          createMutation.mutate();
+          createMutation.mutate({
+            name,
+            description: description || undefined,
+          });
         }}
       >
         <div className="space-y-2">

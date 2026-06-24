@@ -118,6 +118,7 @@ export const queryKeys = {
   faqs: ['ai', 'faqs'] as const,
   adminFaqs: ['ai', 'faqs', 'admin'] as const,
   adminCmsPages: ['ai', 'cms-pages', 'admin'] as const,
+  cmsPageBySlug: (slug: string) => ['ai', 'cms-page', slug] as const,
   marketingPromotions: ['marketing', 'promotions'] as const,
   analyticsOverview: (days: number) => ['analytics', 'overview', days] as const,
   analyticsFunnel: (days: number) => ['analytics', 'funnel', days] as const,
@@ -989,6 +990,17 @@ export function createQueryHooks(client: ApiClient) {
         ...options,
       });
     },
+
+    useCmsPageBySlug: (
+      slug: string,
+      options?: Omit<UseQueryOptions<CmsPage, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.cmsPageBySlug(slug),
+        queryFn: () => client.ai.cmsPages.findBySlug(slug),
+        enabled: Boolean(slug),
+        ...options,
+      }),
 
     useAdminCmsPages: (
       options?: Omit<UseQueryOptions<CmsPage[], Error>, 'queryKey' | 'queryFn'>,

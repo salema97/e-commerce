@@ -5,7 +5,7 @@ import { AdminStoreCreditDto } from './dto/admin-store-credit.dto.js';
 import { Roles } from '../../auth/roles.decorator.js';
 import { Role } from '../../auth/role.enum.js';
 
-const FINANCE_ROLES = [Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE] as const;
+import { FINANCE_ROLES } from '../finance.constants.js';
 
 @ApiTags('Finance — Store Credits')
 @ApiBearerAuth()

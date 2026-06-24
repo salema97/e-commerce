@@ -11,10 +11,44 @@ import { NeoScreen } from '../../components/neo-screen.js';
 import { NeoStaggeredItem } from '../../components/neo-animated.js';
 import { useCart } from '../../lib/cart.js';
 import { formatPrice } from '@repo/shared-utils';
+import { trackMobileEvent } from '../../lib/analytics.js';
+import { useAuth } from '../../providers/AuthProvider.js';
 
 export default function CartScreen(): React.ReactElement {
   const router = useRouter();
+  const { user } = useAuth();
   const { items, updateQuantity, removeItem, total, itemCount } = useCart();
+
+  function handleRemoveItem(productId: string, variantId?: string): void {
+    const item = items.find(
+      (entry) => entry.productId === productId && entry.variantId === variantId,
+    );
+    removeItem(productId, variantId);
+    if (item) {
+      void trackMobileEvent(
+        'remove_from_cart',
+        {
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          price: item.price,
+        },
+        user?.id,
+      );
+    }
+  }
+
+  function handleUpdateQuantity(
+    productId: string,
+    quantity: number,
+    variantId?: string,
+  ): void {
+    if (quantity <= 0) {
+      handleRemoveItem(productId, variantId);
+      return;
+    }
+    updateQuantity(productId, quantity, variantId);
+  }
 
   const renderItem = ({
     item,
@@ -33,7 +67,7 @@ export default function CartScreen(): React.ReactElement {
           </Text>
           <Text style={styles.price}>{formatPrice(item.price)}</Text>
         </View>
-        <Button variant="ghost" size="sm" onPress={() => removeItem(item.productId, item.variantId)}>
+        <Button variant="ghost" size="sm" onPress={() => handleRemoveItem(item.productId, item.variantId)}>
           Eliminar
         </Button>
       </View>
@@ -42,7 +76,7 @@ export default function CartScreen(): React.ReactElement {
         <Button
           variant="outline"
           size="sm"
-          onPress={() => updateQuantity(item.productId, item.quantity - 1, item.variantId)}
+          onPress={() => handleUpdateQuantity(item.productId, item.quantity - 1, item.variantId)}
         >
           -
         </Button>
@@ -50,7 +84,7 @@ export default function CartScreen(): React.ReactElement {
         <Button
           variant="outline"
           size="sm"
-          onPress={() => updateQuantity(item.productId, item.quantity + 1, item.variantId)}
+          onPress={() => handleUpdateQuantity(item.productId, item.quantity + 1, item.variantId)}
         >
           +
         </Button>

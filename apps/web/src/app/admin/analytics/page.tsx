@@ -28,6 +28,7 @@ export default async function AdminAnalyticsPage() {
       initialOverview={initialOverview}
       initialFunnel={initialFunnel}
       initialCohorts={initialCohorts}
+      initialOverviewDays={30}
     />
   );
 }

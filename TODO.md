@@ -68,7 +68,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [ ] Bootstrap NestJS 11 app inside `apps/api` (Node 20+).
 - [ ] Configure Prisma with PostgreSQL.
 - [ ] Define initial schema:
-  - [ ] `User` (with `clerkUserId`, email, `role`, phone)
+  - [ ] `User` (with native auth fields: email, `role`, phone, password hash)
   - [ ] `Category`
   - [ ] `Product`, `ProductVariant`, `ProductImage`, `ProductAttribute`
   - [ ] `Inventory`
@@ -82,12 +82,12 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
   - [ ] `Conversation`, `Message` (for WhatsApp support inbox)
   - [ ] `Supplier`
   - [ ] `Income`, `Expense`, `ExpenseCategory` (financial module)
-- [ ] Add indexes on `slug`, `categoryId`, `status`, `userId`, `clerkUserId`, `createdAt`, `customerPhone`.
+- [ ] Add indexes on `slug`, `categoryId`, `status`, `userId`, `createdAt`, `customerPhone`.
 - [ ] Run initial migration and seed script with sample data.
 - [ ] Implement feature modules:
-  - [ ] Auth (Clerk JWT guard, public route decorator, role guard)
-  - [ ] RBAC: `@Roles()` decorator + global RolesGuard reading `public_metadata.role` from Clerk JWT
-  - [ ] Users (sync via Clerk webhooks, including `role` field)
+  - [ ] Auth (native JWT guard, public route decorator, role guard)
+  - [ ] RBAC: `@Roles()` decorator + global RolesGuard reading `role` from JWT
+  - [ ] Users (register/login, refresh tokens, `role` field in Prisma)
   - [ ] Categories (CRUD)
   - [ ] Products (CRUD with variants, attributes, images)
   - [ ] Inventory (stock levels, reservations, oversell prevention)
@@ -122,7 +122,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 ## Phase 3 — Web App (`apps/web`)
 
 - [ ] Bootstrap Next.js 15 with App Router, Tailwind, shadcn/ui.
-- [ ] Setup Clerk auth provider; configure `middleware.ts` route protection.
+- [ ] Setup native JWT auth provider; configure `middleware.ts` route protection.
 - [ ] Landing page (`/`).
 - [ ] Customer store:
   - [ ] Catalog page (`/store`) with filters, sorting, and Meilisearch integration.
@@ -152,7 +152,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 - [ ] Bootstrap Expo SDK 52 with development build.
 - [ ] Setup Expo Router with tab navigation.
-- [ ] Setup Clerk auth (`@clerk/expo` compatible with SDK 52).
+- [ ] Setup native JWT auth (`expo-secure-store` for tokens).
 - [ ] Screens:
   - [ ] Home / landing
   - [ ] Catalog with search and filters
@@ -387,7 +387,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] Delivery confirmation.
 - [x] Payment failure / retry.
 - [x] Refund confirmation.
-- [x] Password reset and account verification (via Clerk or custom).
+- [x] Password reset and account verification (native JWT flow).
 - [x] Abandoned-cart reminder.
 - [x] Back-in-stock alert emails for subscribed customers.
 
@@ -607,7 +607,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [ ] Privacy policy, Terms of Service, Refund/Return policies.
 - [ ] GDPR data-subject rights workflow (export/delete user data).
 - [ ] CCPA opt-out workflow.
-- [ ] DPAs with Clerk, Stripe, Vercel, Cloudflare, Evolution API, email, push, and analytics vendors.
+- [ ] DPAs with Stripe, Vercel, Cloudflare, Evolution API, email, push, and analytics vendors.
 - [ ] WCAG 2.1 AA audit and fixes.
 - [ ] Cookie consent banner with granular preferences.
 
@@ -688,7 +688,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 |------|---------------|
 | PCI DSS scope reduction | Card data must never touch your servers; use Stripe tokenization. |
 | Stripe webhook signature verification | Missing verification lets attackers fake payment events. |
-| Clerk JWT validation in API + Server Actions | Prevents auth bypass and data leaks. |
+| JWT validation in API + Server Actions | Prevents auth bypass and data leaks. |
 | Granular rate limiting on login/register/checkout/webhooks | Prevents credential stuffing, carding, and abuse. |
 | Evolution API webhook signature verification | Prevents fake inbound messages. |
 | **SRI Ecuador e-invoicing (for Ecuador orders)** | Ecuadorian law requires authorized electronic invoices for every paid order; missing this blocks legal fulfillment. |
@@ -713,7 +713,7 @@ The minimum set of capabilities required to launch the Ecuador e-commerce operat
 - SRI electronic invoicing for every paid Ecuador order (Phase 7).
 - Basic admin panel: products, categories, orders, invoices (Phases 1, 3, 7).
 - Transactional WhatsApp and email notifications (Phases 6, 8).
-- Clerk authentication with role-based admin access (Phases 1, 3).
+- Native JWT authentication with role-based admin access (Phases 1, 3).
 - Security baseline: HTTPS, JWT validation, webhook signature verification, granular rate limiting (Phases 1 and 16).
 
 Stripe is the MVP payment method. Local Ecuador payment methods (Kushki, PayPhone, MercadoPago, PlaceToPay) should be added before full public launch if the primary target market is Ecuador.

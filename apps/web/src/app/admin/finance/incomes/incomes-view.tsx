@@ -1,8 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useApiClient, useAuthApiReady } from '@/lib/client-api';
+import { useApiQueryHooks, useAuthApiReady } from '@/lib/client-api';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,29 +28,22 @@ function formatMoney(amount: number): string {
 const SOURCES: IncomeSource[] = ['ORDER', 'INVESTMENT', 'OTHER'];
 
 export function IncomesView({ initialIncomes }: { initialIncomes: Income[] }) {
-  const api = useApiClient();
+  const hooks = useApiQueryHooks();
   const authReady = useAuthApiReady();
-  const queryClient = useQueryClient();
   const [source, setSource] = React.useState<IncomeSource>('OTHER');
   const [amount, setAmount] = React.useState('');
   const [notes, setNotes] = React.useState('');
 
-  const { data: incomes } = useQuery({
-    queryKey: ['finance', 'incomes'],
-    queryFn: () => api.finance.incomes.findAll({ limit: 50 }),
-    initialData: initialIncomes,
-    enabled: authReady,
-  });
+  const { data: incomes } = hooks.useFinanceIncomes(
+    { limit: 50 },
+    {
+      initialData: initialIncomes,
+      enabled: authReady,
+    },
+  );
 
-  const createMutation = useMutation({
-    mutationFn: () =>
-      api.finance.incomes.create({
-        source,
-        amount: Number(amount),
-        notes: notes || undefined,
-      }),
+  const createMutation = hooks.useCreateFinanceIncome({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['finance', 'incomes'] });
       setAmount('');
       setNotes('');
     },
@@ -70,7 +62,11 @@ export function IncomesView({ initialIncomes }: { initialIncomes: Income[] }) {
         onSubmit={(event) => {
           event.preventDefault();
           if (!amount || Number(amount) <= 0) return;
-          createMutation.mutate();
+          createMutation.mutate({
+            source,
+            amount: Number(amount),
+            notes: notes || undefined,
+          });
         }}
       >
         <div className="space-y-2">

@@ -4,6 +4,7 @@ import { Roles } from '../auth/roles.decorator.js';
 import { Role } from '../auth/role.enum.js';
 import { MarketingAutomationService } from './marketing-automation.service.js';
 import { DistributePromoDto } from './dto/distribute-promo.dto.js';
+import { Audit } from '../audit/audit.decorator.js';
 import type { MarketingSegment } from './notification-segment.service.js';
 
 @ApiTags('Marketing')
@@ -24,6 +25,7 @@ export class MarketingController {
   @Post('campaigns/promo')
   @HttpCode(202)
   @Roles(Role.SUPER_ADMIN, Role.ADMIN)
+  @Audit({ resource: 'marketing_campaign', action: 'distribute_promo' })
   @ApiOperation({ summary: 'Distribute promo codes to a customer segment' })
   distributePromo(@Body() dto: DistributePromoDto) {
     void this.marketingAutomation

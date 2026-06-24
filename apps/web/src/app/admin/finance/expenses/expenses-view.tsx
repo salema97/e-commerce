@@ -1,8 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useApiClient, useAuthApiReady, useApiQueryHooks } from '@/lib/client-api';
+import { useApiQueryHooks, useAuthApiReady } from '@/lib/client-api';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,39 +32,28 @@ export function ExpensesView({
   initialExpenses: Expense[];
   initialCategories: ExpenseCategory[];
 }) {
-  const api = useApiClient();
   const hooks = useApiQueryHooks();
   const authReady = useAuthApiReady();
-  const queryClient = useQueryClient();
   const [amount, setAmount] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [categoryId, setCategoryId] = React.useState<string>('');
   const [status, setStatus] = React.useState<ExpenseStatus>('PENDING');
 
-  const { data: categories } = useQuery({
-    queryKey: ['finance', 'expense-categories'],
-    queryFn: () => api.finance.expenseCategories.findAll(),
+  const { data: categories } = hooks.useFinanceExpenseCategories({
     initialData: initialCategories,
     enabled: authReady,
   });
 
-  const { data: expenses } = useQuery({
-    queryKey: ['finance', 'expenses'],
-    queryFn: () => api.finance.expenses.findAll({ limit: 50 }),
-    initialData: initialExpenses,
-    enabled: authReady,
-  });
+  const { data: expenses } = hooks.useFinanceExpenses(
+    { limit: 50 },
+    {
+      initialData: initialExpenses,
+      enabled: authReady,
+    },
+  );
 
-  const createMutation = useMutation({
-    mutationFn: () =>
-      api.finance.expenses.create({
-        amount: Number(amount),
-        description: description || undefined,
-        categoryId: categoryId || undefined,
-        status,
-      }),
+  const createMutation = hooks.useCreateFinanceExpense({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['finance', 'expenses'] });
       setAmount('');
       setDescription('');
     },
@@ -111,7 +99,12 @@ export function ExpensesView({
         onSubmit={(event) => {
           event.preventDefault();
           if (!amount || Number(amount) <= 0) return;
-          createMutation.mutate();
+          createMutation.mutate({
+            amount: Number(amount),
+            description: description || undefined,
+            categoryId: categoryId || undefined,
+            status,
+          });
         }}
       >
         <div className="space-y-2">

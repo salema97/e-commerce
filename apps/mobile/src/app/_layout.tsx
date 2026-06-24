@@ -7,10 +7,12 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 import { CartProvider } from '../lib/cart.js';
+import { WishlistProvider } from '../lib/wishlist.js';
 import { AuthProvider } from '../providers/AuthProvider.js';
 import { AuthTokenBridge } from '../providers/AuthTokenBridge.js';
 import { PushNotificationManager } from '../providers/PushNotificationManager.js';
 import { DeepLinkManager } from '../providers/DeepLinkManager.js';
+import { AnalyticsConsentBanner } from '../components/AnalyticsConsentBanner.js';
 import { initMobileSentry } from '../lib/sentry.js';
 
 initMobileSentry();
@@ -36,11 +38,14 @@ export default function RootLayout(): React.ReactElement {
         <QueryClientProvider client={queryClient}>
           <StripeProvider publishableKey={stripePublishableKey}>
             <CartProvider>
+              <WishlistProvider>
               <AuthTokenBridge />
               <PushNotificationManager />
               <DeepLinkManager />
+              <AnalyticsConsentBanner />
               <Stack screenOptions={{ headerShown: false }} />
               <StatusBar style="auto" />
+              </WishlistProvider>
             </CartProvider>
           </StripeProvider>
         </QueryClientProvider>

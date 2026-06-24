@@ -32,7 +32,7 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
   }
 
   if (first === 'order' && id) {
-    return { pathname: '/(tabs)/account', params: { orderId: id } };
+    return { pathname: '/order/[id]', params: { id } };
   }
 
   if (first === 'cart') {

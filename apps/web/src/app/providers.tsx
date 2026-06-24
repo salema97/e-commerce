@@ -4,6 +4,7 @@ import * as React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/auth-context';
 import { AnalyticsProvider } from '@/components/analytics/analytics-provider';
+import { NeoMotionProvider } from '@/components/motion/neo-motion-provider';
 
 function makeQueryClient() {
   return new QueryClient({
@@ -34,7 +35,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AnalyticsProvider>{children}</AnalyticsProvider>
+        <NeoMotionProvider>
+          <AnalyticsProvider>{children}</AnalyticsProvider>
+        </NeoMotionProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

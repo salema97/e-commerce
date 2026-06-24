@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useApiQueryHooks, useAuthApiReady } from '@/lib/client-api';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { FormSelect } from '@/components/ui/form-select';
@@ -41,7 +42,7 @@ export function MarketingCampaignsView({
   }, [promotionId, promotions]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6">
+    <AnimatedPageShell className="flex min-h-0 flex-1 flex-col gap-6">
       <AdminPageHeader
         title="Marketing"
         subtitle="Campañas / Distribución de promociones"
@@ -99,6 +100,6 @@ export function MarketingCampaignsView({
           </p>
         ) : null}
       </form>
-    </div>
+    </AnimatedPageShell>
   );
 }

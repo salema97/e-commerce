@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { usePathname } from 'next/navigation';
-import { motion, useReducedMotion } from 'motion/react';
+import { m, useReducedMotion } from 'motion/react';
 import { fadeUpVariants, reducedMotionTransition } from '@/lib/neo-motion';
 import { neoMotionDurations, neoMotionEasings } from '@repo/shared-utils';
 
@@ -20,14 +20,14 @@ export function NeoPageTransition({ children }: NeoPageTransitionProps) {
   }
 
   return (
-    <motion.div
+    <m.div
       key={pathname}
       initial="hidden"
       animate="visible"
       variants={fadeUpVariants}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -48,14 +48,14 @@ export function NeoPage({
   return (
     <div className={className}>
       {header ? (
-        <motion.div
+        <m.div
           variants={fadeUpVariants}
           initial={prefersReducedMotion ? false : 'hidden'}
           animate={prefersReducedMotion ? undefined : 'visible'}
           transition={prefersReducedMotion ? reducedMotionTransition : undefined}
         >
           {header}
-        </motion.div>
+        </m.div>
       ) : null}
       {staggerBody ? (
         <NeoStagger className={header ? 'mt-8' : undefined}>{children}</NeoStagger>
@@ -100,7 +100,7 @@ export function NeoStagger({
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <motion.div
+    <m.div
       className={className}
       variants={{
         hidden: {},
@@ -111,7 +111,7 @@ export function NeoStagger({
       viewport={{ once, amount: 0.05 }}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -127,7 +127,7 @@ export function NeoReveal({
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <motion.div
+    <m.div
       className={className}
       variants={fadeUpVariants}
       initial={prefersReducedMotion ? false : 'hidden'}
@@ -140,7 +140,7 @@ export function NeoReveal({
       }
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -154,13 +154,13 @@ export function NeoItem({
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <motion.div
+    <m.div
       className={className}
       variants={fadeUpVariants}
       transition={prefersReducedMotion ? reducedMotionTransition : undefined}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -188,16 +188,16 @@ export function AnimatedPageShell({
   return (
     <div className={className}>
       {header ? (
-        <motion.div
+        <m.div
           variants={fadeUpVariants}
           initial="hidden"
           animate="visible"
           transition={{ duration: neoMotionDurations.slow, ease: neoMotionEasings.backOut }}
         >
           {header}
-        </motion.div>
+        </m.div>
       ) : null}
-      <motion.div
+      <m.div
         variants={fadeUpVariants}
         initial="hidden"
         animate="visible"
@@ -208,7 +208,7 @@ export function AnimatedPageShell({
         }}
       >
         {children}
-      </motion.div>
+      </m.div>
     </div>
   );
 }
