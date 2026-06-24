@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import { api } from '../../../lib/api.js';
 import { useCart } from '../../../lib/cart.js';
 import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
 import { getProductAvailableQuantity } from '../../../lib/product-stock.js';
+import { trackMobileEvent } from '../../../lib/analytics.js';
+import { useAuth } from '../../../providers/AuthProvider.js';
 import { BackInStockForm } from '../../../components/product/BackInStockForm.js';
 import type { ProductVariant } from '@repo/shared-types';
 
@@ -20,9 +22,19 @@ export default function ProductDetailScreen(): React.ReactElement {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: product, error } = api.hooks.useProduct(id ?? '');
+  const { user } = useAuth();
   const { addItem, itemCount } = useCart();
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>();
   const [quantity, setQuantity] = useState(1);
+
+  useEffect(() => {
+    if (!product) return;
+    void trackMobileEvent(
+      'product_view',
+      { productId: product.id, productName: product.name },
+      user?.id,
+    );
+  }, [product?.id, product?.name, user?.id]);
 
   const handleAddToCart = (): void => {
     if (!product) return;
@@ -38,6 +50,16 @@ export default function ProductDetailScreen(): React.ReactElement {
         imageUrl: getProductPrimaryImageUrl(product),
       },
       quantity,
+    );
+
+    void trackMobileEvent(
+      'add_to_cart',
+      {
+        productId: product.id,
+        quantity,
+        price: selectedVariant?.price ?? product.price,
+      },
+      user?.id,
     );
 
     router.push('/(tabs)/cart');

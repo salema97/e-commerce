@@ -70,6 +70,8 @@ import type {
   Promotion,
   DistributePromoDto,
   DistributePromoResponse,
+  AnalyticsOverviewReport,
+  CohortRetentionReport,
 } from '@repo/shared-types';
 
 export interface ApiClientOptions {
@@ -391,6 +393,14 @@ export function createApiClient(options: ApiClientOptions) {
     search: {
       products: (query: string, limit?: number) =>
         request<SearchResultItem[]>('GET', '/search', undefined, { q: query, limit }),
+    },
+    analytics: {
+      getOverview: (days: number) =>
+        request<AnalyticsOverviewReport>('GET', '/analytics/overview', undefined, { days }),
+      getFunnel: (days: number) =>
+        request<Record<string, number>>('GET', '/analytics/funnel', undefined, { days }),
+      getCohorts: (weeks: number) =>
+        request<CohortRetentionReport>('GET', '/analytics/cohorts', undefined, { weeks }),
     },
     chat: {
       createSession: (data?: { contactName?: string }) =>

@@ -1014,3 +1014,16 @@ model PushDeviceToken {
 
   @@index([userId])
 }
+
+model AnalyticsEventRecord {
+  id         String   @id @default(uuid())
+  event      String
+  source     String   @default("api")
+  userId     String?
+  sessionId  String?
+  properties Json?
+  createdAt  DateTime @default(now())
+
+  @@index([event, createdAt])
+  @@index([sessionId])
+}

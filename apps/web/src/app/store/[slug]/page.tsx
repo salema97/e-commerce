@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ProductImage } from '@/components/store/product-image';
 import { AddToCartButton } from '@/components/cart/add-to-cart-button';
+import { ProductViewTracker } from '@/components/analytics/product-view-tracker';
 import { WishlistButton } from '@/components/wishlist/wishlist-button';
 import { BackInStockForm } from '@/components/product/back-in-stock-form';
 import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
@@ -64,6 +65,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </header>
       }
     >
+      <ProductViewTracker productId={product.id} productName={product.name} />
       <NeoReveal>
         <div className="grid gap-8 border-[3px] border-neo-onyx bg-white shadow-[10px_10px_0_0_#111111] lg:grid-cols-12">
           <div className="relative lg:col-span-7">

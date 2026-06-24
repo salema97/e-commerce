@@ -19,6 +19,7 @@ import {
 import { CouponInput } from './coupon-input';
 import { OrderSummary } from './order-summary';
 import { PaymentForm } from './payment-element';
+import { trackEvent } from '@/lib/analytics/track';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import type {
   CreateOrderDto,
@@ -43,6 +44,16 @@ export function CheckoutContainer() {
   const [paymentIntent, setPaymentIntent] = React.useState<PaymentIntentResult | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (items.length === 0) {
+      return;
+    }
+    void trackEvent('begin_checkout', {
+      cartTotal: items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+      itemsCount: items.reduce((sum, item) => sum + item.quantity, 0),
+    });
+  }, [items]);
 
   // Client-side estimate for the summary.
   // (subtotal, discount, IVA, shipping) authoritatively on order creation.

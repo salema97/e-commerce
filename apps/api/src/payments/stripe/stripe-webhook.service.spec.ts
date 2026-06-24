@@ -10,6 +10,7 @@ import { OrderStatus } from '@prisma/client';
 import { SriQueueService } from '../../invoices/sri/sri-queue.service.js';
 import { InventoryReservationService } from '../../inventory/inventory-reservation.service.js';
 import { AuditLogService } from '../../audit/audit-log.service.js';
+import { EventBus } from '../../event-bus/event-bus.interface.js';
 
 describe('StripeWebhookService', () => {
   let service: StripeWebhookService;
@@ -76,6 +77,7 @@ describe('StripeWebhookService', () => {
         { provide: SriQueueService, useValue: sriQueue },
         { provide: InventoryReservationService, useValue: reservationService },
         { provide: AuditLogService, useValue: auditLogService },
+        { provide: EventBus, useValue: { publish: vi.fn(), registerHandler: vi.fn() } },
       ],
     }).compile();
 

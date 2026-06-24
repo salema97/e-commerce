@@ -16,6 +16,7 @@ export const adminNavItems: AdminNavItem[] = [
   { href: '/admin/returns', label: 'Devoluciones', roles: ['SUPER_ADMIN', 'ADMIN'], group: 'sales' },
   { href: '/admin/customers', label: 'Clientes', roles: ['SUPER_ADMIN', 'ADMIN'], group: 'sales' },
   { href: '/admin/marketing', label: 'Marketing', roles: ['SUPER_ADMIN', 'ADMIN'], group: 'sales' },
+  { href: '/admin/analytics', label: 'Analítica', roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'], group: 'sales' },
   { href: '/admin/support', label: 'Soporte', roles: ['SUPER_ADMIN', 'ADMIN', 'SUPPORT'], group: 'support' },
   { href: '/admin/knowledge', label: 'Conocimiento', roles: ['SUPER_ADMIN', 'ADMIN', 'SUPPORT'], group: 'knowledge' },
   { href: '/admin/invoices', label: 'Facturación', roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'], group: 'finance' },

@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Inject,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateInventoryDto } from './dto/create-inventory.dto.js';
@@ -11,6 +12,7 @@ import {
   ReservationItem,
 } from './inventory-reservation.service.js';
 import { BackInStockAlertsService } from '../notifications/back-in-stock-alerts.service.js';
+import { EventBus } from '../event-bus/event-bus.interface.js';
 
 const inventoryInclude = {
   product: { select: { id: true, name: true, slug: true } },
@@ -23,6 +25,7 @@ export class InventoryService {
     private readonly prisma: PrismaService,
     private readonly reservationService: InventoryReservationService,
     private readonly backInStockAlerts: BackInStockAlertsService,
+    @Inject(EventBus) private readonly eventBus: EventBus,
   ) {}
 
   create(data: CreateInventoryDto) {
@@ -70,6 +73,11 @@ export class InventoryService {
     if (beforeAvailable <= 0 && afterAvailable > 0) {
       await this.backInStockAlerts.notifyRestocked(updated.productId).catch(() => undefined);
     }
+
+    void this.eventBus.publish({
+      name: 'inventory.changed',
+      payload: { inventoryId: id, productId: updated.productId, quantity: updated.quantity },
+    });
 
     return updated;
   }

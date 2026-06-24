@@ -1,17 +1,16 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
-import { useAuth, useUser } from '@clerk/clerk-expo';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@repo/shared-ui';
+import { useAuth } from '../../providers/AuthProvider.js';
 import { NotificationPreferencesPanel } from '../../components/account/NotificationPreferencesPanel.js';
 
 export default function NotificationPreferencesScreen(): React.ReactElement {
   const router = useRouter();
-  const { isSignedIn } = useAuth();
-  const { user } = useUser();
+  const { user } = useAuth();
 
-  if (!isSignedIn) {
+  if (!user) {
     return (
       <SafeAreaView style={styles.center}>
         <Text style={styles.message}>Inicia sesión para gestionar tus notificaciones.</Text>
@@ -27,9 +26,7 @@ export default function NotificationPreferencesScreen(): React.ReactElement {
           Volver
         </Button>
         <Text style={styles.title}>Notificaciones</Text>
-        <Text style={styles.subtitle}>
-          {user?.primaryEmailAddress?.emailAddress ?? 'Cuenta activa'}
-        </Text>
+        <Text style={styles.subtitle}>{user.email}</Text>
       </View>
 
       <View style={styles.content}>

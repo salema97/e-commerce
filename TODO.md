@@ -36,7 +36,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 | Phase 8 — Financial Module | ✅ Yes | Incomes, expenses, cash-flow, admin UI merged. |
 | Phase 9 — Email/Push/Marketing | ✅ | Resend/Loops, push Expo/OneSignal, marketing automation, consent UI. |
 | Phase 10 — AI & Conversational | ✅ Yes | Guardrails, RAG, human escalation. |
-| Phase 11 — Advanced Analytics | ❌ | Standard event tracking. |
+| Phase 11 — Advanced Analytics | ✅ | Merged `12427aa`; UI wiring verified post-merge. |
 | Phase 12 — Shipping/Fulfillment | ⚠️ Partial | SDD for WMS/3PL integration if implemented. |
 | Phase 13 — Search/Filters | ❌ | Standard Meilisearch usage. |
 | Phase 14 — Reviews/Referrals/Loyalty | ❌ | Common low-risk features. |
@@ -454,35 +454,35 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 ### 11.1 Product Analytics
 
-- [ ] Integrate PostHog (default) or Plausible / GA4 with consent-aware loading.
-- [ ] Track events: product_view, add_to_cart, remove_from_cart, begin_checkout, purchase, search, filter.
-- [ ] Build funnels: catalog → product → cart → checkout → purchase.
-- [ ] Feature flags for gradual rollouts.
+- [x] Integrate PostHog (default) or Plausible / GA4 with consent-aware loading.
+- [x] Track events: product_view, add_to_cart, remove_from_cart, begin_checkout, purchase, search, filter.
+- [x] Build funnels: catalog → product → cart → checkout → purchase.
+- [x] Feature flags for gradual rollouts.
 
 ### 11.2 Error Tracking
 
-- [ ] Integrate Sentry for web, mobile, and API.
-- [ ] Capture unhandled exceptions, API errors, and performance transactions.
-- [ ] Source maps and release tagging.
+- [x] Integrate Sentry for web, mobile, and API.
+- [x] Capture unhandled exceptions, API errors, and performance transactions.
+- [x] Source maps and release tagging.
 
 ### 11.3 Session Recording & Heatmaps
 
-- [ ] Integrate Hotjar or Microsoft Clarity.
-- [ ] Record sessions and generate heatmaps for key flows.
-- [ ] Respect cookie-consent preferences.
+- [x] Integrate Hotjar or Microsoft Clarity.
+- [x] Record sessions and generate heatmaps for key flows.
+- [x] Respect cookie-consent preferences.
 
 ### 11.4 Real-time Event Analytics
 
-- [ ] Choose event store: Tinybird (managed default), ClickHouse (self-hosted), or Supabase Analytics.
-- [ ] Build `AnalyticsEventStore` abstraction.
-- [ ] Stream e-commerce events via Upstash Kafka or Redis Streams.
-- [ ] Dashboard queries: revenue, orders, conversion rate, top products, cohort retention.
+- [x] Choose event store: Tinybird (managed default), ClickHouse (self-hosted), or Supabase Analytics.
+- [x] Build `AnalyticsEventStore` abstraction.
+- [x] Stream e-commerce events via Upstash Kafka or Redis Streams.
+- [x] Dashboard queries: revenue, orders, conversion rate, top products, cohort retention.
 
 ### 11.5 Event Bus
 
-- [ ] Implement `EventBus` abstraction backed by Redis Streams (local) or Upstash Kafka (production).
-- [ ] Publish events: `order.paid`, `order.shipped`, `product.updated`, `inventory.changed`.
-- [ ] Consumers: Meilisearch sync, SRI invoice, email, push, analytics.
+- [x] Implement `EventBus` abstraction backed by Redis Streams (local) or Upstash Kafka (production).
+- [x] Publish events: `order.paid`, `order.shipped`, `product.updated`, `inventory.changed`.
+- [x] Consumers: Meilisearch sync, SRI invoice, email, push, analytics.
 
 ## Phase 12 — Shipping, Taxes, Fulfillment & WMS/3PL
 

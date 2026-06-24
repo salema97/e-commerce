@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
-import { useUser } from '@clerk/clerk-expo';
 import { Button, Card } from '@repo/shared-ui';
+import { useAuth } from '../../providers/AuthProvider.js';
 import { api } from '../../lib/api.js';
 
 interface BackInStockFormProps {
@@ -9,8 +9,8 @@ interface BackInStockFormProps {
 }
 
 export function BackInStockForm({ productId }: BackInStockFormProps): React.ReactElement {
-  const { user } = useUser();
-  const [email, setEmail] = useState(user?.primaryEmailAddress?.emailAddress ?? '');
+  const { user } = useAuth();
+  const [email, setEmail] = useState(user?.email ?? '');
   const [message, setMessage] = useState('');
   const subscribe = api.hooks.useSubscribeBackInStock();
 
