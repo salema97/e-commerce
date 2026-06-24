@@ -62,6 +62,9 @@ import type {
   Faq,
   ProductContentDraft,
   ChatSession,
+  Promotion,
+  DistributePromoDto,
+  DistributePromoResponse,
 } from '@repo/shared-types';
 
 export interface ApiClientOptions {
@@ -375,8 +378,10 @@ export function createApiClient(options: ApiClientOptions) {
       },
     },
     marketing: {
-      distributePromo: (data: { segment: string; promotionId: string }) =>
-        request<{ sent: number }>('POST', '/marketing/campaigns/promo', data),
+      listPromotions: () =>
+        request<Array<Pick<Promotion, 'id' | 'name'>>>('GET', '/marketing/promotions'),
+      distributePromo: (data: DistributePromoDto) =>
+        request<DistributePromoResponse>('POST', '/marketing/campaigns/promo', data),
     },
     search: {
       products: (query: string, limit?: number) =>

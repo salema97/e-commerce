@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
-import { useAuth } from '@clerk/clerk-expo';
 import * as Notifications from 'expo-notifications';
 import {
   registerForPushNotificationsAsync,
@@ -9,6 +8,8 @@ import {
   removeNotificationSubscription,
 } from '../lib/notifications.js';
 import { api } from '../lib/api.js';
+import { useAuth } from '../providers/AuthProvider.js';
+import { setRegisteredPushToken } from '../lib/push-token-registry.js';
 
 export interface UsePushNotificationsResult {
   pushToken: string | null;
@@ -24,7 +25,7 @@ export function usePushNotifications(
   const [error, setError] = useState<string | null>(null);
   const isRegisteredRef = useRef(false);
   const syncedTokenRef = useRef<string | null>(null);
-  const { isSignedIn } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (isRegisteredRef.current) {
@@ -59,7 +60,7 @@ export function usePushNotifications(
   }, [onNotificationResponse]);
 
   useEffect(() => {
-    if (!isSignedIn || !pushToken || syncedTokenRef.current === pushToken) {
+    if (!user || !pushToken || syncedTokenRef.current === pushToken) {
       return;
     }
 
@@ -70,13 +71,14 @@ export function usePushNotifications(
       .register({ token: pushToken, platform })
       .then(() => {
         syncedTokenRef.current = pushToken;
+        setRegisteredPushToken(pushToken);
       })
       .catch((syncError: unknown) => {
         const message =
           syncError instanceof Error ? syncError.message : 'Failed to sync push token';
         setError(message);
       });
-  }, [isSignedIn, pushToken]);
+  }, [user, pushToken]);
 
   return { pushToken, notification, error };
 }

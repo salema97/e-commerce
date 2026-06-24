@@ -28,6 +28,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/account/notifications" className="hover:text-neo-gold">
+                  Preferencias
+                </Link>
+              </li>
+              <li>
                 <Link href="/wishlist" className="hover:text-neo-gold">
                   Lista de deseos
                 </Link>

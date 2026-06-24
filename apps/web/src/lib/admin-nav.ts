@@ -4,7 +4,7 @@ export interface AdminNavItem {
   href: string;
   label: string;
   roles: Role[];
-  group: 'catalog' | 'sales' | 'support' | 'finance';
+  group: 'catalog' | 'sales' | 'support' | 'finance' | 'knowledge';
 }
 
 export const adminNavItems: AdminNavItem[] = [
@@ -15,7 +15,9 @@ export const adminNavItems: AdminNavItem[] = [
   { href: '/admin/orders', label: 'Pedidos', roles: ['SUPER_ADMIN', 'ADMIN'], group: 'sales' },
   { href: '/admin/returns', label: 'Devoluciones', roles: ['SUPER_ADMIN', 'ADMIN'], group: 'sales' },
   { href: '/admin/customers', label: 'Clientes', roles: ['SUPER_ADMIN', 'ADMIN'], group: 'sales' },
+  { href: '/admin/marketing', label: 'Marketing', roles: ['SUPER_ADMIN', 'ADMIN'], group: 'sales' },
   { href: '/admin/support', label: 'Soporte', roles: ['SUPER_ADMIN', 'ADMIN', 'SUPPORT'], group: 'support' },
+  { href: '/admin/knowledge', label: 'Conocimiento', roles: ['SUPER_ADMIN', 'ADMIN', 'SUPPORT'], group: 'knowledge' },
   { href: '/admin/invoices', label: 'Facturación', roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'], group: 'finance' },
   { href: '/admin/finance', label: 'Finanzas', roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'], group: 'finance' },
 ];

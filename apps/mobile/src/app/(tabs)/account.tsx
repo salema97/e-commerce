@@ -3,6 +3,7 @@ import {
   View,
   Text,
   FlatList,
+  Pressable,
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -11,6 +12,7 @@ import { Button, Card, Badge, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen.js';
 import { NeoStaggeredItem } from '../../components/neo-animated.js';
 import { api } from '../../lib/api.js';
+import { getRegisteredPushToken } from '../../lib/push-token-registry.js';
 import { formatPrice, formatDate, orderStatusLabel } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
 
@@ -18,22 +20,31 @@ export default function AccountScreen(): React.ReactElement {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { data: orders } = api.hooks.useOrders({ limit: 10 });
+  const { data: storeCredit } = api.hooks.useMyStoreCredit({
+    enabled: Boolean(user),
+  });
 
   const handleSignOut = async (): Promise<void> => {
+    const pushToken = getRegisteredPushToken();
+    if (pushToken) {
+      await api.client.notifications.pushTokens.remove(pushToken).catch(() => undefined);
+    }
     await signOut();
     router.replace('/(tabs)');
   };
 
   const renderOrder = ({ item, index }: { item: Order; index: number }) => (
     <NeoStaggeredItem index={index}>
-      <Card style={styles.orderCard}>
-      <View style={styles.orderHeader}>
-        <Text style={styles.orderNumber}>#{item.orderNumber}</Text>
-        <Badge variant="secondary">{orderStatusLabel(item.status)}</Badge>
-      </View>
-      <Text style={styles.orderDate}>{formatDate(item.createdAt)}</Text>
-      <Text style={styles.orderTotal}>{formatPrice(item.total)}</Text>
-      </Card>
+      <Pressable onPress={() => router.push(`/order/${item.id}`)}>
+        <Card style={styles.orderCard}>
+        <View style={styles.orderHeader}>
+          <Text style={styles.orderNumber}>#{item.orderNumber}</Text>
+          <Badge variant="secondary">{orderStatusLabel(item.status)}</Badge>
+        </View>
+        <Text style={styles.orderDate}>{formatDate(item.createdAt)}</Text>
+        <Text style={styles.orderTotal}>{formatPrice(item.total)}</Text>
+        </Card>
+      </Pressable>
     </NeoStaggeredItem>
   );
 
@@ -70,6 +81,18 @@ export default function AccountScreen(): React.ReactElement {
         <Text style={styles.label}>Correo</Text>
         <Text style={styles.value}>{user?.email ?? 'No disponible'}</Text>
       </Card>
+
+      {storeCredit && storeCredit.balance > 0 ? (
+        <Card style={styles.creditCard}>
+          <Text style={styles.label}>Crédito en tienda</Text>
+          <Text style={styles.creditValue}>{formatPrice(storeCredit.balance)}</Text>
+          {storeCredit.expiresAt ? (
+            <Text style={styles.creditExpiry}>
+              Vence el {formatDate(storeCredit.expiresAt)}
+            </Text>
+          ) : null}
+        </Card>
+      ) : null}
 
       <View style={styles.actions}>
         <Button variant="outline" onPress={() => router.push('/account/notifications')}>
@@ -143,6 +166,23 @@ const styles = StyleSheet.create({
   profileCard: {
     marginHorizontal: 16,
     marginBottom: 12,
+  },
+  creditCard: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderWidth: 3,
+    borderColor: neo.gold,
+  },
+  creditValue: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: neo.onyx,
+  },
+  creditExpiry: {
+    fontSize: 12,
+    color: neo.muted,
+    marginTop: 4,
+    fontWeight: '600',
   },
   actions: {
     marginHorizontal: 16,

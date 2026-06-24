@@ -56,12 +56,16 @@ import type {
   Expense,
   CreateExpenseDto,
   UpdateExpenseDto,
+  UploadExpenseReceiptDto,
   CashFlowReport,
   AdminStoreCredit,
   SearchResultItem,
   Faq,
   ProductContentDraft,
   ChatSession,
+  Promotion,
+  DistributePromoDto,
+  DistributePromoResponse,
 } from '@repo/shared-types';
 import type { ApiClient } from './client.js';
 
@@ -105,6 +109,7 @@ export const queryKeys = {
   chatMessages: (sessionId: string) => ['chat', sessionId, 'messages'] as const,
   productContentDraft: (productId: string) => ['ai', 'products', productId, 'draft'] as const,
   faqs: ['ai', 'faqs'] as const,
+  marketingPromotions: ['marketing', 'promotions'] as const,
 };
 
 export function createQueryHooks(client: ApiClient) {
@@ -915,6 +920,26 @@ export function createQueryHooks(client: ApiClient) {
         ...options,
       }),
 
+    useMarketingPromotions: (
+      options?: Omit<
+        UseQueryOptions<Array<Pick<Promotion, 'id' | 'name'>>, Error>,
+        'queryKey' | 'queryFn'
+      >,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.marketingPromotions,
+        queryFn: () => client.marketing.listPromotions(),
+        ...options,
+      }),
+
+    useDistributePromo: (
+      options?: UseMutationOptions<DistributePromoResponse, Error, DistributePromoDto>,
+    ) =>
+      useMutation({
+        mutationFn: (data) => client.marketing.distributePromo(data),
+        ...options,
+      }),
+
     useUploadExpenseReceipt: (
       options?: UseMutationOptions<
         { key: string },
@@ -932,6 +957,26 @@ export function createQueryHooks(client: ApiClient) {
         ...options,
       });
     },
+
+    useRegisterPushToken: (
+      options?: UseMutationOptions<
+        { id: string; token: string; platform: string },
+        Error,
+        { token: string; platform: 'ios' | 'android' | 'web' }
+      >,
+    ) =>
+      useMutation({
+        mutationFn: (data) => client.notifications.pushTokens.register(data),
+        ...options,
+      }),
+
+    useRemovePushToken: (
+      options?: UseMutationOptions<void, Error, string>,
+    ) =>
+      useMutation({
+        mutationFn: (token) => client.notifications.pushTokens.remove(token),
+        ...options,
+      }),
   };
 }
 

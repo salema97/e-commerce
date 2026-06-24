@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, Logger, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Logger, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/roles.decorator.js';
 import { Role } from '../auth/role.enum.js';
@@ -13,6 +13,13 @@ export class MarketingController {
   private readonly logger = new Logger(MarketingController.name);
 
   constructor(private readonly marketingAutomation: MarketingAutomationService) {}
+
+  @Get('promotions')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN)
+  @ApiOperation({ summary: 'List active promotions for campaign targeting' })
+  listPromotions() {
+    return this.marketingAutomation.listActivePromotions();
+  }
 
   @Post('campaigns/promo')
   @HttpCode(202)
