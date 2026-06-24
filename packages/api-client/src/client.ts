@@ -41,10 +41,23 @@ import type {
   Message,
   PaginatedConversations,
   PaginatedMessages,
+  QuickReply,
   AuthResponse,
   LoginDto,
   RegisterDto,
   AuthUser,
+  Income,
+  CreateIncomeDto,
+  UpdateIncomeDto,
+  ExpenseCategory,
+  CreateExpenseCategoryDto,
+  UpdateExpenseCategoryDto,
+  Expense,
+  CreateExpenseDto,
+  UpdateExpenseDto,
+  UploadExpenseReceiptDto,
+  CashFlowReport,
+  AdminStoreCredit,
 } from '@repo/shared-types';
 
 export interface ApiClientOptions {
@@ -265,6 +278,61 @@ export function createApiClient(options: ApiClientOptions) {
     },
     whatsapp: {
       getQuickReplies: () => request<QuickReply[]>('GET', '/whatsapp/quick-replies'),
+    },
+    finance: {
+      incomes: {
+        findAll: (query?: {
+          source?: string;
+          from?: string;
+          to?: string;
+          relatedOrderId?: string;
+          limit?: number;
+          offset?: number;
+        }) => request<Income[]>('GET', '/finance/incomes', undefined, query),
+        findOne: (id: string) => request<Income>('GET', `/finance/incomes/${id}`),
+        create: (data: CreateIncomeDto) => request<Income>('POST', '/finance/incomes', data),
+        update: (id: string, data: UpdateIncomeDto) =>
+          request<Income>('PATCH', `/finance/incomes/${id}`, data),
+        remove: (id: string) => request<Income>('DELETE', `/finance/incomes/${id}`),
+      },
+      expenseCategories: {
+        findAll: () => request<ExpenseCategory[]>('GET', '/finance/expense-categories'),
+        findOne: (id: string) =>
+          request<ExpenseCategory>('GET', `/finance/expense-categories/${id}`),
+        create: (data: CreateExpenseCategoryDto) =>
+          request<ExpenseCategory>('POST', '/finance/expense-categories', data),
+        update: (id: string, data: UpdateExpenseCategoryDto) =>
+          request<ExpenseCategory>('PATCH', `/finance/expense-categories/${id}`, data),
+        remove: (id: string) =>
+          request<ExpenseCategory>('DELETE', `/finance/expense-categories/${id}`),
+      },
+      expenses: {
+        findAll: (query?: {
+          categoryId?: string;
+          supplierId?: string;
+          status?: string;
+          from?: string;
+          to?: string;
+          limit?: number;
+          offset?: number;
+        }) => request<Expense[]>('GET', '/finance/expenses', undefined, query),
+        findOne: (id: string) => request<Expense>('GET', `/finance/expenses/${id}`),
+        create: (data: CreateExpenseDto) => request<Expense>('POST', '/finance/expenses', data),
+        update: (id: string, data: UpdateExpenseDto) =>
+          request<Expense>('PATCH', `/finance/expenses/${id}`, data),
+        remove: (id: string) => request<Expense>('DELETE', `/finance/expenses/${id}`),
+        uploadReceipt: (id: string, data: UploadExpenseReceiptDto) =>
+          request<{ key: string }>('POST', `/finance/expenses/${id}/receipts`, data),
+        receiptDownloadUrl: (id: string, key: string) =>
+          buildURL(baseURL, `/finance/expenses/${id}/receipts/download`, { key }),
+      },
+      reports: {
+        cashFlow: (from: string, to: string) =>
+          request<CashFlowReport>('GET', '/finance/reports/cash-flow', undefined, { from, to }),
+      },
+      storeCredits: {
+        findAll: () => request<AdminStoreCredit[]>('GET', '/finance/store-credits'),
+      },
     },
   };
 }

@@ -22,6 +22,7 @@ import type {
   AddCartItemDto,
   UpdateCartItemDto,
   User,
+  AuthUser,
   Supplier,
   CreateSupplierDto,
   UpdateSupplierDto,
@@ -46,6 +47,17 @@ import type {
   PaginatedConversations,
   PaginatedMessages,
   QuickReply,
+  Income,
+  CreateIncomeDto,
+  UpdateIncomeDto,
+  ExpenseCategory,
+  CreateExpenseCategoryDto,
+  UpdateExpenseCategoryDto,
+  Expense,
+  CreateExpenseDto,
+  UpdateExpenseDto,
+  CashFlowReport,
+  AdminStoreCredit,
 } from '@repo/shared-types';
 import type { ApiClient } from './client.js';
 
@@ -76,11 +88,19 @@ export const queryKeys = {
   invoice: (id: string) => ['invoices', id] as const,
   creditNotes: (filters?: Record<string, string | number | undefined>) => ['credit-notes', filters ?? {}] as const,
   creditNote: (id: string) => ['credit-notes', id] as const,
+  financeIncomes: (filters?: Record<string, string | number | undefined>) =>
+    ['finance', 'incomes', filters ?? {}] as const,
+  financeIncome: (id: string) => ['finance', 'incomes', id] as const,
+  financeExpenseCategories: ['finance', 'expense-categories'] as const,
+  financeExpenses: (filters?: Record<string, string | number | undefined>) =>
+    ['finance', 'expenses', filters ?? {}] as const,
+  financeCashFlow: (from: string, to: string) => ['finance', 'cash-flow', from, to] as const,
+  financeStoreCredits: ['finance', 'store-credits'] as const,
 };
 
 export function createQueryHooks(client: ApiClient) {
   return {
-    useMe: (options?: Omit<UseQueryOptions<User, Error>, 'queryKey' | 'queryFn'>) =>
+    useMe: (options?: Omit<UseQueryOptions<AuthUser, Error>, 'queryKey' | 'queryFn'>) =>
       useQuery({
         queryKey: queryKeys.me,
         queryFn: () => client.auth.getMe(),
@@ -641,6 +661,95 @@ export function createQueryHooks(client: ApiClient) {
       useQuery({
         queryKey: queryKeys.quickReplies,
         queryFn: () => client.whatsapp.getQuickReplies(),
+        ...options,
+      }),
+
+    useFinanceIncomes: (
+      filters?: Record<string, string | number | undefined>,
+      options?: Omit<UseQueryOptions<Income[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.financeIncomes(filters),
+        queryFn: () => client.finance.incomes.findAll(filters),
+        ...options,
+      }),
+
+    useCreateFinanceIncome: (
+      options?: UseMutationOptions<Income, Error, CreateIncomeDto>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.finance.incomes.create(data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['finance', 'incomes'] });
+        },
+        ...options,
+      });
+    },
+
+    useFinanceExpenseCategories: (
+      options?: Omit<UseQueryOptions<ExpenseCategory[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.financeExpenseCategories,
+        queryFn: () => client.finance.expenseCategories.findAll(),
+        ...options,
+      }),
+
+    useCreateFinanceExpenseCategory: (
+      options?: UseMutationOptions<ExpenseCategory, Error, CreateExpenseCategoryDto>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.finance.expenseCategories.create(data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.financeExpenseCategories });
+        },
+        ...options,
+      });
+    },
+
+    useFinanceExpenses: (
+      filters?: Record<string, string | number | undefined>,
+      options?: Omit<UseQueryOptions<Expense[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.financeExpenses(filters),
+        queryFn: () => client.finance.expenses.findAll(filters),
+        ...options,
+      }),
+
+    useCreateFinanceExpense: (
+      options?: UseMutationOptions<Expense, Error, CreateExpenseDto>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.finance.expenses.create(data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['finance', 'expenses'] });
+        },
+        ...options,
+      });
+    },
+
+    useFinanceCashFlow: (
+      from: string,
+      to: string,
+      options?: Omit<UseQueryOptions<CashFlowReport, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.financeCashFlow(from, to),
+        queryFn: () => client.finance.reports.cashFlow(from, to),
+        enabled: Boolean(from && to),
+        ...options,
+      }),
+
+    useFinanceStoreCredits: (
+      options?: Omit<UseQueryOptions<AdminStoreCredit[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.financeStoreCredits,
+        queryFn: () => client.finance.storeCredits.findAll(),
         ...options,
       }),
   };

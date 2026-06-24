@@ -33,7 +33,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 | Phase 5.5 — Returns, Warranties & RMA | ✅ Yes | Linked to SRI credit notes; complex business flow. |
 | Phase 6 — WhatsApp Integration | ✅ Yes | Webhooks, signatures, human/bot handoff. |
 | Phase 7 — SRI Direct Integration | ✅ Yes | Legal/compliance; XML/XSD/SOAP/firm digital exact behavior. |
-| Phase 8 — Financial Module | ✅ Yes | Accounting impact, audit trails, cash flow. |
+| Phase 8 — Financial Module | ✅ Yes | Incomes, expenses, cash-flow, admin UI merged. |
 | Phase 9 — Email/Push/Marketing | ❌ | Standard integrations behind abstractions. |
 | Phase 10 — AI & Conversational | ✅ Yes | Guardrails, RAG, human escalation. |
 | Phase 11 — Advanced Analytics | ❌ | Standard event tracking. |
@@ -337,39 +337,38 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 ## Phase 8 — Financial Module
 
-> **SDD phase**: required. Accounting impact, audit trails, and cash-flow logic must be specified before implementation.
+> **SDD phase**: completed (merged to `main`). Accounting impact, audit trails, and cash-flow logic implemented for MVP scope.
 > Accessible by **Super Admin**, **Admin**, and **Finance** roles only.
 
 ### 8.1 Domain Model
 
-- [ ] Refine Prisma schema:
-  - [ ] `Supplier` (name, RUC/ID, contact, address, payment terms)
-  - [ ] `Income` (source, amount, date, related order, notes)
-  - [ ] `Expense` (category, supplier, amount, date, status, attachments)
-  - [ ] `ExpenseCategory` (name, description)
-  - [ ] `PurchaseOrder` (optional: link to supplier and inventory)
-  - [ ] `GiftCard` / `StoreCredit` (code, balance, expiry, owner, status)
-- [ ] Add indexes for date ranges and status.
+- [x] Prisma schema (existing models used): `Supplier`, `Income`, `Expense`, `ExpenseCategory`
+- [x] `Income.relatedOrderId` FK → `Order` (migration `20260629000000_phase8_income_order_fk`)
+- [ ] `PurchaseOrder` (optional — deferred)
+- [x] `StoreCredit` read-only listing in finance reports (existing returns module)
+- [ ] `GiftCard` CRUD (deferred)
 
 ### 8.2 Backend (NestJS)
 
-- [ ] `FinanceModule` with services and controllers.
-- [ ] CRUD endpoints for suppliers, incomes, expenses.
-- [ ] Basic cash-flow report (income vs expenses by period).
-- [ ] Attachments stored in Cloudflare R2.
-- [ ] RBAC protection: only `finance`, `admin`, `super_admin` can access.
-- [ ] Gift card / store credit CRUD and balance management.
-- [ ] Bulk import/export for products, orders, customers, and suppliers via CSV/Excel with validation and row-level error reporting.
+- [x] `FinanceModule` with incomes, expense categories, expenses, reports, store credits
+- [x] CRUD endpoints for incomes, expenses, expense categories
+- [x] Cash-flow report `GET /v1/finance/reports/cash-flow`
+- [x] Expense receipt upload to R2 (base64)
+- [x] RBAC: `SUPER_ADMIN`, `ADMIN`, `FINANCE`; suppliers GET restricted
+- [x] Audit logging on finance mutations
+- [ ] Gift card / store credit CRUD (deferred — read-only list only)
+- [ ] Bulk import/export CSV (deferred)
 
 ### 8.3 Admin Panel (Next.js)
 
-- [ ] `/admin/finance/incomes` — income CRUD and listing.
-- [ ] `/admin/finance/expenses` — expense CRUD and listing.
-- [ ] `/admin/finance/suppliers` — supplier CRUD.
-- [ ] `/admin/finance/reports` — cash-flow dashboard with charts.
-- [ ] `/admin/finance/categories` — expense categories.
-- [ ] Route-level role checks in middleware and page-level auth.
-- [ ] Hide finance menu items for non-finance roles.
+- [x] `/admin/finance` — hub with section cards (neo admin shell)
+- [x] `/admin/finance/incomes` — income CRUD and listing (SSR + `initialData`)
+- [x] `/admin/finance/expenses` — expense CRUD and listing
+- [x] `/admin/finance/suppliers` — supplier listing (read)
+- [x] `/admin/finance/reports` — cash-flow + store credit table
+- [x] `/admin/finance/categories` — expense categories
+- [x] Route-level RBAC via `finance/layout.tsx` + native JWT auth
+- [x] Finance menu in `admin-nav.ts` (sidebar icon: Finanzas)
 
 ## Phase 9 — Email, Push Notifications & Marketing Automation
 

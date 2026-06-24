@@ -30,6 +30,13 @@ export interface ExpenseCategory {
   expenses?: unknown[];
 }
 
+export interface CreateExpenseCategoryDto {
+  name: string;
+  description?: string;
+}
+
+export type UpdateExpenseCategoryDto = Partial<CreateExpenseCategoryDto>;
+
 export interface Expense {
   id: string;
   categoryId?: string | null;
@@ -38,7 +45,7 @@ export interface Expense {
   date: string;
   status: ExpenseStatus;
   description?: string | null;
-  attachments?: Record<string, unknown> | null;
+  attachmentKeys?: string[];
   createdAt: string;
   updatedAt: string;
   category?: unknown;
@@ -52,10 +59,26 @@ export interface CreateExpenseDto {
   date?: string;
   status?: ExpenseStatus;
   description?: string;
-  attachments?: Record<string, unknown>;
 }
 
 export type UpdateExpenseDto = Partial<CreateExpenseDto>;
+
+export interface UploadExpenseReceiptDto {
+  fileName: string;
+  contentBase64: string;
+  contentType?: string;
+}
+
+export interface AdminStoreCredit {
+  id: string;
+  userId: string;
+  userEmail?: string | null;
+  balance: number;
+  currency: string;
+  expiresAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface CashFlowReport {
   periodStart: string;

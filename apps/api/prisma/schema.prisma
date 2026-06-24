@@ -394,6 +394,7 @@ model Order {
   receipt        Receipt?
   returns        ReturnRequest[]
   exchangeFor    ReturnRequest?       @relation("ExchangeOrder")
+  incomes        Income[]
 
   @@index([userId])
   @@index([status])
@@ -745,9 +746,12 @@ model Income {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
+  order Order? @relation(fields: [relatedOrderId], references: [id], onDelete: SetNull)
+
   @@index([source])
   @@index([date])
   @@index([createdAt])
+  @@index([relatedOrderId])
 }
 
 model Expense {
