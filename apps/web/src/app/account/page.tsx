@@ -7,6 +7,7 @@ const ACCOUNT_LINKS = [
   { href: '/account/loyalty', label: 'Programa de lealtad' },
   { href: '/account/referrals', label: 'Invita y gana' },
   { href: '/account/quotes', label: 'Mis cotizaciones' },
+  { href: '/account/privacy', label: 'Privacidad y datos' },
   { href: '/account/notifications', label: 'Preferencias de notificaciones' },
 ] as const;
 

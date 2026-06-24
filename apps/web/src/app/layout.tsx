@@ -26,12 +26,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="es" className={inter.variable}>
       <body className="min-h-screen flex flex-col font-sans antialiased">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded focus:bg-background focus:px-3 focus:py-2 focus:ring-2 focus:ring-primary"
+        >
+          Saltar al contenido
+        </a>
         <Providers>
           <AnalyticsProvider>
             <Navbar />
-            <main className="flex-1">{children}</main>
+            <main id="main-content" className="flex-1">
+              {children}
+            </main>
             <Footer />
             <ServiceWorkerRegistration />
           </AnalyticsProvider>

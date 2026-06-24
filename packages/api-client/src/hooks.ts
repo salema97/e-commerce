@@ -77,6 +77,9 @@ import type {
   UpdateQuoteStatusDto,
   ConvertQuoteResult,
   MarketplaceImportOrderDto,
+  PrivacyExportBundle,
+  PrivacyDeletionResult,
+  CcpaOptOutResult,
 } from '@repo/shared-types';
 import type { ApiClient } from './client.js';
 
@@ -131,6 +134,7 @@ export const queryKeys = {
   accountingProviders: ['accounting', 'providers'] as const,
   accountingSyncRecords: ['accounting', 'sync-records'] as const,
   marketplaceFeeReconciliations: ['accounting', 'marketplace-fees'] as const,
+  privacyExport: ['privacy', 'export'] as const,
 };
 
 export function createQueryHooks(client: ApiClient) {
@@ -1154,6 +1158,24 @@ export function createQueryHooks(client: ApiClient) {
         ...options,
       });
     },
+
+    usePrivacyExport: (
+      options?: Omit<UseQueryOptions<PrivacyExportBundle, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.privacyExport,
+        queryFn: () => client.privacy.exportMine(),
+        enabled: false,
+        ...options,
+      }),
+
+    usePrivacyDelete: (
+      options?: UseMutationOptions<PrivacyDeletionResult, Error, void>,
+    ) => useMutation({ mutationFn: () => client.privacy.deleteMine(), ...options }),
+
+    useCcpaOptOut: (
+      options?: UseMutationOptions<CcpaOptOutResult, Error, boolean>,
+    ) => useMutation({ mutationFn: (optOut) => client.privacy.ccpaOptOut(optOut), ...options }),
   };
 }
 
