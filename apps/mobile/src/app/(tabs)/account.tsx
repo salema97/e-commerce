@@ -67,7 +67,13 @@ export default function AccountScreen(): React.ReactElement {
       </Card>
 
       <View style={styles.actions}>
-        <Button variant="outline" onPress={() => router.push('/account/notifications')}>
+        <Button variant="outline" onPress={() => router.push('/account/loyalty')}>
+          Programa de lealtad
+        </Button>
+        <Button variant="outline" onPress={() => router.push('/account/referrals')} style={styles.actionGap}>
+          Invita y gana
+        </Button>
+        <Button variant="outline" onPress={() => router.push('/account/notifications')} style={styles.actionGap}>
           Preferencias de notificaciones
         </Button>
       </View>
@@ -132,6 +138,10 @@ const styles = StyleSheet.create({
   actions: {
     marginHorizontal: 16,
     marginBottom: 20,
+    gap: 8,
+  },
+  actionGap: {
+    marginTop: 8,
   },
   label: {
     fontSize: 13,

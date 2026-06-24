@@ -18,16 +18,18 @@ export default function StoreScreen(): React.ReactElement {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
+  const [minRating, setMinRating] = useState<number | undefined>();
 
   const catalogQuery = useMemo(
     () => ({
       q: search.trim() || undefined,
       category: selectedCategory,
+      minRating,
       page: 1,
       limit: 48,
       sort: 'newest' as const,
     }),
-    [search, selectedCategory],
+    [search, selectedCategory, minRating],
   );
 
   const {
@@ -63,6 +65,11 @@ export default function StoreScreen(): React.ReactElement {
     >
       <Card>
         <Text style={styles.productName}>{item.name}</Text>
+        {item.reviewCount && item.reviewCount > 0 ? (
+          <Text style={styles.productRating}>
+            {(item.averageRating ?? 0).toFixed(1)} ★ ({item.reviewCount})
+          </Text>
+        ) : null}
         <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
         {!item.inStock ? <Badge variant="outline">Agotado</Badge> : null}
       </Card>
@@ -102,6 +109,19 @@ export default function StoreScreen(): React.ReactElement {
         showsHorizontalScrollIndicator={false}
         style={styles.categoryList}
       />
+      <View style={styles.ratingRow}>
+        {[undefined, 4, 3].map((value) => (
+          <TouchableOpacity
+            key={value ?? 'all'}
+            onPress={() => setMinRating(value)}
+            style={styles.chip}
+          >
+            <Badge variant={minRating === value ? 'default' : 'secondary'}>
+              {value ? `${value}+ ★` : 'Todas'}
+            </Badge>
+          </TouchableOpacity>
+        ))}
+      </View>
       <FlatList
         data={products}
         keyExtractor={(item) => item.id}
@@ -120,9 +140,11 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: '700', marginBottom: 12 },
   search: { marginBottom: 12 },
   categoryList: { marginBottom: 12, maxHeight: 44 },
+  ratingRow: { flexDirection: 'row', marginBottom: 12 },
   chip: { marginRight: 8 },
   productCard: { flex: 1, margin: 4 },
   productName: { fontWeight: '600' },
+  productRating: { fontSize: 12, color: '#737373', marginTop: 2 },
   productPrice: { marginTop: 4 },
   row: { justifyContent: 'space-between' },
   empty: { textAlign: 'center', marginTop: 40, color: '#666' },

@@ -13,6 +13,7 @@ import { api } from '../../../lib/api.js';
 import { useCart } from '../../../lib/cart.js';
 import { getProductAvailableQuantity } from '../../../lib/product-stock.js';
 import { BackInStockForm } from '../../../components/product/BackInStockForm.js';
+import { ProductReviews } from '../../../components/product/ProductReviews.js';
 import { formatPrice } from '@repo/shared-utils';
 import { trackMobileEvent } from '../../../lib/analytics.js';
 import { captureMobileException } from '../../../lib/sentry.js';
@@ -81,6 +82,10 @@ export default function ProductDetailScreen(): React.ReactElement {
   const effectivePrice = selectedVariant?.price ?? product.price;
   const availableQuantity = getProductAvailableQuantity(product.inventory);
   const isOutOfStock = availableQuantity <= 0;
+  const isPreOrder =
+    product.isPreOrder &&
+    product.preOrderReleaseDate &&
+    new Date(product.preOrderReleaseDate) > new Date();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -91,6 +96,7 @@ export default function ProductDetailScreen(): React.ReactElement {
 
         <View style={styles.header}>
           <Text style={styles.name}>{product.name}</Text>
+          {isPreOrder ? <Badge variant="outline">Pre-orden</Badge> : null}
           <Text style={styles.price}>{formatPrice(effectivePrice)}</Text>
         </View>
 
@@ -141,6 +147,7 @@ export default function ProductDetailScreen(): React.ReactElement {
         </View>
 
         {isOutOfStock ? <BackInStockForm productId={product.id} /> : null}
+        <ProductReviews productId={product.id} />
       </ScrollView>
 
       <View style={styles.footer}>
@@ -149,8 +156,8 @@ export default function ProductDetailScreen(): React.ReactElement {
             {itemCount} en el carrito
           </Badge>
         ) : null}
-        <Button onPress={handleAddToCart} size="lg" disabled={isOutOfStock}>
-          {isOutOfStock ? 'Sin stock' : 'Agregar al carrito'}
+        <Button onPress={handleAddToCart} size="lg" disabled={isOutOfStock && !isPreOrder}>
+          {isOutOfStock && !isPreOrder ? 'Sin stock' : 'Agregar al carrito'}
         </Button>
       </View>
     </SafeAreaView>
