@@ -119,6 +119,8 @@ const envSchema = z.object({
   KAFKA_PASSWORD: z.string().optional(),
   KAFKA_DOMAIN_EVENTS_TOPIC: z.string().default('domain-events'),
   ENABLE_TEST_AUTH: z.enum(['true', 'false']).default('false'),
+  CAPTCHA_PROVIDER: z.enum(['none', 'hcaptcha']).default('none'),
+  HCAPTCHA_SECRET_KEY: z.string().optional(),
   LOYALTY_SIGNUP_POINTS: z.coerce.number().int().min(0).default(25),
   LOYALTY_REVIEW_POINTS: z.coerce.number().int().min(0).default(50),
   LOYALTY_REFERRAL_POINTS: z.coerce.number().int().min(0).default(100),

@@ -14,6 +14,7 @@ import { OrderChannel, OrderStatus } from '@prisma/client';
 import { BackorderService, type ItemAllocation } from './backorder.service.js';
 import { EventBus } from '../event-bus/event-bus.interface.js';
 import { LoyaltyService } from '../loyalty/loyalty.service.js';
+import { CaptchaService } from '../common/captcha/captcha.service.js';
 
 export interface CreatedOrderResult {
   id: string;
@@ -43,6 +44,7 @@ export class OrdersService {
     private readonly emailNotificationService: EmailNotificationService,
     private readonly pushNotificationService: PushNotificationService,
     private readonly loyaltyService: LoyaltyService,
+    private readonly captchaService: CaptchaService,
     @Inject(EventBus) private readonly eventBus: EventBus,
   ) {}
 
@@ -51,6 +53,8 @@ export class OrdersService {
     const customerProfile = await this.resolveCustomerProfile(userId, dto);
     if (!customerProfile.email) throw new BadRequestException('customerEmail required for guest orders');
     if (!dto.items?.length) throw new BadRequestException('Order must contain at least one item');
+
+    await this.captchaService.verifyOrSkip(dto.captchaToken);
 
     if (dto.shippingAddress) {
       const addressErrors = validateAddress(dto.shippingAddress);

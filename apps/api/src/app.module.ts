@@ -44,6 +44,7 @@ import { QuotesModule } from './quotes/quotes.module.js';
 import { MarketplaceModule } from './marketplace/marketplace.module.js';
 import { AccountingModule } from './accounting/accounting.module.js';
 import { PrivacyModule } from './privacy/privacy.module.js';
+import { CaptchaModule } from './common/captcha/captcha.module.js';
 
 @Module({
   imports: [
@@ -104,6 +105,7 @@ import { PrivacyModule } from './privacy/privacy.module.js';
     MarketplaceModule,
     AccountingModule,
     PrivacyModule,
+    CaptchaModule,
   ],
   providers: [
     {
