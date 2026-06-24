@@ -1,0 +1,29 @@
+name: Smoke E2E
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'feat/**']
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright browsers
+        working-directory: apps/web
+        run: pnpm exec playwright install chromium --with-deps
+      - name: Run smoke tests
+        working-directory: apps/web
+        run: pnpm exec playwright test e2e/smoke.spec.ts
+        env:
+          CI: true

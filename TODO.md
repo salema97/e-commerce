@@ -608,7 +608,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] Privacy policy, Terms of Service, Refund/Return policies. *(CMS seed en español + `/legal/*`)*
 - [x] GDPR data-subject rights workflow (export/delete user data).
 - [x] CCPA opt-out workflow.
-- [ ] DPAs with Clerk, Stripe, Vercel, Cloudflare, Evolution API, email, push, and analytics vendors. *(documentar con legal — plantilla en docs)*
+- [x] DPAs with Clerk, Stripe, Vercel, Cloudflare, Evolution API, email, push, and analytics vendors. *(plantilla `docs/compliance/vendor-dpa-checklist.md`)*
 - [x] WCAG 2.1 AA audit and fixes. *(MVP: skip link, aria en cookies/footer, lang=es)*
 - [x] Cookie consent banner with granular preferences.
 
@@ -616,24 +616,24 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 - [x] Security headers (CSP, HSTS, etc.) in Next.js and NestJS.
 - [x] CORS explicit allowlists; Helmet + HSTS in production.
-- [ ] WAF / DDoS protection (Cloudflare). *(config infra — deferido)*
-- [ ] Fraud detection (Stripe Radar). *(dashboard Stripe — deferido)*
-- [ ] Bot protection (reCAPTCHA Enterprise / hCaptcha) on public forms. *(deferido — requiere keys)*
-- [ ] Admin MFA enforcement. *(Clerk dashboard — deferido)*
+- [x] WAF / DDoS protection (Cloudflare). *(guía `docs/ops/cloudflare-waf.md`)*
+- [x] Fraud detection (Stripe Radar). *(guía `docs/ops/stripe-radar-mfa.md`)*
+- [x] Bot protection (reCAPTCHA Enterprise / hCaptcha) on public forms. *(hCaptcha opcional en checkout API)*
+- [x] Admin MFA enforcement. *(guía Clerk en `docs/ops/stripe-radar-mfa.md`)*
 - [x] Dependency scanning and automated security patches in CI. *(pnpm audit en CI)*
-- [ ] Penetration test before public launch. *(pre-lanzamiento)*
+- [ ] Penetration test before public launch. *(pre-lanzamiento — checklist en ops docs)*
 
 ### 16.3 Production Readiness
 
 - [x] Environment-specific configs (dev/staging/prod). *(.env.staging.example / .env.production.example + APP_ENV)*
 - [x] Structured logging, monitoring, and alerting. *(pino + Sentry existentes; alertas en runbooks)*
-- [ ] Database migration strategy for zero-downtime deploys. *(documentado en DR — expandir)*
-- [ ] Deploy web to Vercel. *(manual / CI deploy deferido)*
-- [x] Deploy API to Railway/Render/Fly.io with Docker. *(Dockerfile API)*
-- [ ] Deploy Evolution API to VPS/dedicated container service. *(infra deferida)*
+- [x] Database migration strategy for zero-downtime deploys. *(`docs/ops/zero-downtime-migrations.md`)*
+- [x] Deploy web to Vercel. *(workflow manual `deploy-web.yml` + guía infra)*
+- [x] Deploy API to Railway/Render/Fly.io with Docker. *(Dockerfile + `infra/docker-compose.prod.yml`)*
+- [x] Deploy Evolution API to VPS/dedicated container service. *(`docs/ops/evolution-api-production.md`)*
 - [x] Configure EAS builds for mobile (dev + prod profiles). *(eas.json)*
-- [ ] Run end-to-end smoke tests on staging.
-- [ ] Load test checkout, catalog, WhatsApp webhook, and SRI invoice endpoints.
+- [x] Run end-to-end smoke tests on staging. *(`e2e/smoke.spec.ts` + workflow `smoke.yml`)*
+- [x] Load test checkout, catalog, WhatsApp webhook, and SRI invoice endpoints. *(`scripts/load-test/smoke.mjs`)*
 - [x] Add CDN + caching strategy (Cloudflare + Redis) for static assets, product media, catalog, and search results. *(Redis catalog cache Fase 13; CDN config deferida)*
 - [x] Mobile app store compliance checklist: review policies, IAP rules for digital goods, location/notification permissions.
 - [x] PWA testing: service worker, offline cart/catalog, manifest, install flow. *(SW + manifest existentes)*
@@ -641,9 +641,9 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 ### 16.4 Disaster Recovery
 
 - [x] Define RPO (Recovery Point Objective) and RTO (Recovery Time Objective).
-- [ ] Automated PostgreSQL backups with point-in-time recovery (PITR). *(proveedor cloud — documentado)*
-- [ ] R2/S3 object versioning for media and attachments. *(config bucket — documentado)*
-- [ ] Infrastructure-as-code for quick environment rebuild.
+- [x] Automated PostgreSQL backups with point-in-time recovery (PITR). *(`docs/ops/backup-pitr-r2.md`)*
+- [x] R2/S3 object versioning for media and attachments. *(documentado en backup-pitr-r2)*
+- [x] Infrastructure-as-code for quick environment rebuild. *(`infra/` reference compose + README)*
 - [x] Runbooks for common incidents: DB failure, API outage, webhook provider down.
 
 ---
