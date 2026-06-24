@@ -52,6 +52,17 @@ import type {
   ChatSession,
   CatalogResponse,
   CatalogQuery,
+  ProductReview,
+  ProductReviewSummary,
+  CreateProductReviewDto,
+  UpdateReviewStatusDto,
+  LoyaltyAccount,
+  LoyaltyTransaction,
+  LoyaltyRedemptionQuote,
+  ReferralCode,
+  ReferralPerformanceReport,
+  PayoutReferralDto,
+  ExternalReviewSummary,
 } from '@repo/shared-types';
 import type { ApiClient } from './client.js';
 
@@ -89,6 +100,13 @@ export const queryKeys = {
   chatMessages: (sessionId: string) => ['chat', sessionId, 'messages'] as const,
   productContentDraft: (productId: string) => ['ai', 'products', productId, 'draft'] as const,
   faqs: ['ai', 'faqs'] as const,
+  productReviews: (productId: string) => ['reviews', productId] as const,
+  productReviewSummary: (productId: string) => ['reviews', productId, 'summary'] as const,
+  pendingReviews: ['reviews', 'pending'] as const,
+  loyaltyAccount: ['loyalty', 'me'] as const,
+  loyaltyTransactions: ['loyalty', 'transactions'] as const,
+  referralCode: ['referrals', 'code'] as const,
+  referralPerformance: (scope: 'me' | 'admin') => ['referrals', 'performance', scope] as const,
 };
 
 export function createQueryHooks(client: ApiClient) {
@@ -817,6 +835,122 @@ export function createQueryHooks(client: ApiClient) {
       useQuery({
         queryKey: queryKeys.faqs,
         queryFn: () => client.ai.faqs.findPublished(),
+        ...options,
+      }),
+
+    useProductReviews: (
+      productId: string,
+      options?: Omit<UseQueryOptions<ProductReview[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.productReviews(productId),
+        queryFn: () => client.reviews.listByProduct(productId),
+        enabled: Boolean(productId),
+        ...options,
+      }),
+
+    useProductReviewSummary: (
+      productId: string,
+      options?: Omit<UseQueryOptions<ProductReviewSummary, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.productReviewSummary(productId),
+        queryFn: () => client.reviews.summary(productId),
+        enabled: Boolean(productId),
+        ...options,
+      }),
+
+    useCreateProductReview: (
+      options?: UseMutationOptions<
+        ProductReview,
+        Error,
+        { productId: string; data: CreateProductReviewDto }
+      >,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ productId, data }) => client.reviews.create(productId, data),
+        onSuccess: (_, { productId }) => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.productReviews(productId) });
+          queryClient.invalidateQueries({ queryKey: queryKeys.productReviewSummary(productId) });
+        },
+        ...options,
+      });
+    },
+
+    usePendingReviews: (
+      options?: Omit<UseQueryOptions<ProductReview[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.pendingReviews,
+        queryFn: () => client.reviews.listPending(),
+        ...options,
+      }),
+
+    useModerateReview: (
+      options?: UseMutationOptions<
+        ProductReview,
+        Error,
+        { id: string; data: UpdateReviewStatusDto }
+      >,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, data }) => client.reviews.moderate(id, data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.pendingReviews });
+        },
+        ...options,
+      });
+    },
+
+    useLoyaltyAccount: (
+      options?: Omit<UseQueryOptions<LoyaltyAccount, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.loyaltyAccount,
+        queryFn: () => client.loyalty.me(),
+        ...options,
+      }),
+
+    useLoyaltyTransactions: (
+      options?: Omit<UseQueryOptions<LoyaltyTransaction[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.loyaltyTransactions,
+        queryFn: () => client.loyalty.transactions(),
+        ...options,
+      }),
+
+    useLoyaltyRedemptionQuote: (
+      subtotal: number,
+      points?: number,
+      options?: Omit<UseQueryOptions<LoyaltyRedemptionQuote, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: ['loyalty', 'quote', subtotal, points] as const,
+        queryFn: () => client.loyalty.quoteRedemption(subtotal, points),
+        enabled: subtotal > 0,
+        ...options,
+      }),
+
+    useReferralCode: (
+      options?: Omit<UseQueryOptions<ReferralCode, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.referralCode,
+        queryFn: () => client.referrals.myCode(),
+        ...options,
+      }),
+
+    useReferralPerformance: (
+      scope: 'me' | 'admin' = 'me',
+      options?: Omit<UseQueryOptions<ReferralPerformanceReport, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.referralPerformance(scope),
+        queryFn: () =>
+          scope === 'admin' ? client.referrals.adminPerformance() : client.referrals.myPerformance(),
         ...options,
       }),
   };
