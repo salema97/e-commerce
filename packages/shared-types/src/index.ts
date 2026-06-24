@@ -25,3 +25,7 @@ export * from './analytics.js';
 export * from './shipping.js';
 export * from './catalog.js';
 export * from './engagement.js';
+export * from './b2b.js';
+export * from './quotes.js';
+export * from './marketplace.js';
+export * from './accounting.js';

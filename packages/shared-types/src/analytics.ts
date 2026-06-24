@@ -16,6 +16,7 @@ export const DOMAIN_EVENT_NAMES = [
   'product.updated',
   'product.deleted',
   'inventory.changed',
+  'invoice.authorized',
 ] as const;
 
 export type DomainEventName = (typeof DOMAIN_EVENT_NAMES)[number];
@@ -32,6 +33,7 @@ export interface DomainEventPayload {
   orderId?: string;
   productId?: string;
   inventoryId?: string;
+  invoiceId?: string;
   [key: string]: unknown;
 }
 

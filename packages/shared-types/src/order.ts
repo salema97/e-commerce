@@ -81,6 +81,9 @@ export interface CreateOrderDto {
   cartId?: string;
   referralCode?: string;
   loyaltyPointsToRedeem?: number;
+  companyId?: string;
+  purchaseOrderNumber?: string;
+  netPaymentTerms?: 'NET_0' | 'NET_15' | 'NET_30' | 'NET_60';
 }
 
 export interface CreatedOrderResult {

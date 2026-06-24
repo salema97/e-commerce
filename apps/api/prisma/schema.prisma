@@ -26,6 +26,8 @@ enum OrderChannel {
   WEB
   MOBILE
   POS
+  B2B
+  MARKETPLACE
 }
 
 enum OrderStatus {
@@ -140,6 +142,59 @@ enum LoyaltyTransactionType {
   REDEEM
   EXPIRE
   ADJUST
+}
+
+enum CompanyUserRole {
+  OWNER
+  BUYER
+  APPROVER
+  VIEWER
+}
+
+enum NetPaymentTerms {
+  NET_0
+  NET_15
+  NET_30
+  NET_60
+}
+
+enum QuoteStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  EXPIRED
+  CONVERTED
+}
+
+enum MarketplaceChannel {
+  CONSOLE
+  MERCADO_LIBRE
+}
+
+enum MarketplaceListingStatus {
+  DRAFT
+  PUBLISHED
+  ERROR
+  UNPUBLISHED
+}
+
+enum MarketplaceImportStatus {
+  PENDING
+  IMPORTED
+  FAILED
+}
+
+enum AccountingProviderType {
+  CONSOLE
+  SIIGO
+  ALEGRA
+}
+
+enum AccountingSyncStatus {
+  PENDING
+  SYNCED
+  FAILED
 }
 
 enum PreOrderChargeTiming {
@@ -280,6 +335,8 @@ model User {
   productReviews ProductReview[]
   referralCode   ReferralCode?
   loyaltyAccount LoyaltyAccount?
+  companyUsers   CompanyUser[]
+  quotes         Quote[]
 
   @@index([clerkUserId])
   @@index([role])
@@ -346,6 +403,8 @@ model Product {
   returnItems       ReturnItem[]
   contentDraft      ProductContentDraft?
   reviews           ProductReview[]
+  companyPriceLists CompanyPriceList[]
+  marketplaceListings MarketplaceListing[]
 
   @@index([slug])
   @@index([averageRating])
@@ -369,6 +428,7 @@ model ProductVariant {
   orderItems OrderItem[]
   cartItems  CartItem[]
   returnItems ReturnItem[]
+  companyPriceLists CompanyPriceList[]
 
   @@index([productId])
   @@index([sku])
@@ -473,10 +533,17 @@ model Order {
   shippingAddress         Json?
   billingAddress          Json?
   notes                   String?
+  companyId               String?
+  purchaseOrderNumber     String?
+  netPaymentTerms         NetPaymentTerms?
+  marketplaceChannel      MarketplaceChannel?
+  marketplaceExternalId   String?
+  marketplaceFees         Decimal?    @db.Decimal(12, 2)
   createdAt               DateTime    @default(now())
   updatedAt               DateTime    @updatedAt
 
   user           User?                @relation(fields: [userId], references: [id])
+  company        Company?             @relation(fields: [companyId], references: [id], onDelete: SetNull)
   items          OrderItem[]
   statusHistory  OrderStatusHistory[]
   payments       Payment[]
@@ -488,8 +555,13 @@ model Order {
   shipments      Shipment[]
   productReviews ProductReview[]
   referralConversion ReferralConversion?
+  convertedQuote     Quote?
+  marketplaceImport  MarketplaceOrderImport?
 
   @@index([userId])
+  @@index([companyId])
+  @@index([marketplaceChannel])
+  @@index([marketplaceExternalId])
   @@index([status])
   @@index([customerPhone])
   @@index([channel])
@@ -1239,4 +1311,150 @@ model LoyaltyTransaction {
   @@index([type])
   @@index([expiresAt])
   @@index([createdAt])
+}
+
+model Company {
+  id               String          @id @default(uuid())
+  name             String
+  taxId            String          @unique
+  creditLimit      Decimal         @db.Decimal(12, 2) @default(0)
+  creditUsed       Decimal         @db.Decimal(12, 2) @default(0)
+  netPaymentTerms  NetPaymentTerms @default(NET_30)
+  isActive         Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  users      CompanyUser[]
+  priceLists CompanyPriceList[]
+  quotes     Quote[]
+  orders     Order[]
+
+  @@index([isActive])
+}
+
+model CompanyUser {
+  id        String          @id @default(uuid())
+  companyId String
+  userId    String
+  role      CompanyUserRole @default(BUYER)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, userId])
+  @@index([userId])
+}
+
+model CompanyPriceList {
+  id          String   @id @default(uuid())
+  companyId   String
+  productId   String
+  variantId   String?
+  unitPrice   Decimal  @db.Decimal(12, 2)
+  minQuantity Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@unique([companyId, productId, variantId])
+  @@index([companyId])
+  @@index([productId])
+}
+
+model Quote {
+  id                  String      @id @default(uuid())
+  quoteNumber         String      @unique
+  companyId           String?
+  requestedByUserId   String?
+  status              QuoteStatus @default(DRAFT)
+  expiresAt           DateTime
+  purchaseOrderNumber String?
+  subtotal            Decimal     @db.Decimal(12, 2) @default(0)
+  taxAmount           Decimal     @db.Decimal(12, 2) @default(0)
+  total               Decimal     @db.Decimal(12, 2) @default(0)
+  notes               String?
+  convertedOrderId    String?     @unique
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  company       Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  requestedBy   User?       @relation(fields: [requestedByUserId], references: [id], onDelete: SetNull)
+  items         QuoteLine[]
+  convertedOrder Order?     @relation(fields: [convertedOrderId], references: [id], onDelete: SetNull)
+
+  @@index([companyId])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+model QuoteLine {
+  id        String  @id @default(uuid())
+  quoteId   String
+  productId String
+  variantId String?
+  name      String
+  sku       String
+  quantity  Int
+  unitPrice Decimal @db.Decimal(12, 2)
+
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
+}
+
+model MarketplaceListing {
+  id           String                   @id @default(uuid())
+  productId    String
+  channel      MarketplaceChannel
+  externalId   String?
+  status       MarketplaceListingStatus @default(DRAFT)
+  lastSyncedAt DateTime?
+  lastError    String?
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, channel])
+  @@index([channel])
+  @@index([status])
+}
+
+model MarketplaceOrderImport {
+  id              String                  @id @default(uuid())
+  channel         MarketplaceChannel
+  externalOrderId String
+  orderId         String?                 @unique
+  status          MarketplaceImportStatus @default(PENDING)
+  fees            Decimal?                @db.Decimal(12, 2)
+  payload         Json
+  error           String?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  order Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@unique([channel, externalOrderId])
+  @@index([status])
+}
+
+model AccountingSyncRecord {
+  id           String                 @id @default(uuid())
+  provider     AccountingProviderType
+  resourceType String
+  resourceId   String
+  externalId   String?
+  status       AccountingSyncStatus   @default(PENDING)
+  lastError    String?
+  syncedAt     DateTime?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@unique([provider, resourceType, resourceId])
+  @@index([status])
 }
