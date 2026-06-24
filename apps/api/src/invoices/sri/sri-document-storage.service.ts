@@ -8,7 +8,7 @@ export interface SignedDocumentUrls {
 }
 
 /**
- * Uploads signed XML and RIDE PDF for SRI documents to R2 and persists only
+ * Uploads signed XML and RIDE PDF for SRI documents to S3 and persists only
  * the object keys in Prisma. Signed URLs are generated on demand and expire
  * quickly; public URLs are never stored.
  */

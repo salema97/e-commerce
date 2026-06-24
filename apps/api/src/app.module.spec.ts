@@ -22,11 +22,13 @@ const TEST_CONFIG = {
   PLACETOPAY_LOGIN: 'ptp_login_test',
   PLACETOPAY_SECRET_KEY: 'ptp_secret_test',
   PLACETOPAY_BASE_URL: 'https://ptp.test',
-  R2_ACCOUNT_ID: 'r2_account_test',
-  R2_ACCESS_KEY_ID: 'r2_access_key_test',
-  R2_SECRET_ACCESS_KEY: 'r2_secret_access_test',
-  R2_BUCKET_NAME: 'r2_bucket_test',
-  R2_PUBLIC_URL: 'https://r2.test',
+  AWS_REGION: 'us-east-1',
+  AWS_ACCESS_KEY_ID: 'aws_access_key_test',
+  AWS_SECRET_ACCESS_KEY: 'aws_secret_access_test',
+  AWS_S3_BUCKET: 'e-commerce-test',
+  AWS_S3_ENDPOINT: 'https://s3.test',
+  AWS_S3_FORCE_PATH_STYLE: 'true',
+  AWS_S3_PUBLIC_URL: 'https://s3.test/e-commerce-test',
   SRI_MODE: 'direct',
   SRI_RUC: '1792146739001',
   SRI_SOL_KEY: 'test',
@@ -69,11 +71,13 @@ describe('AppModule', () => {
     vi.stubEnv('PLACETOPAY_LOGIN', TEST_CONFIG.PLACETOPAY_LOGIN);
     vi.stubEnv('PLACETOPAY_SECRET_KEY', TEST_CONFIG.PLACETOPAY_SECRET_KEY);
     vi.stubEnv('PLACETOPAY_BASE_URL', TEST_CONFIG.PLACETOPAY_BASE_URL);
-    vi.stubEnv('R2_ACCOUNT_ID', TEST_CONFIG.R2_ACCOUNT_ID);
-    vi.stubEnv('R2_ACCESS_KEY_ID', TEST_CONFIG.R2_ACCESS_KEY_ID);
-    vi.stubEnv('R2_SECRET_ACCESS_KEY', TEST_CONFIG.R2_SECRET_ACCESS_KEY);
-    vi.stubEnv('R2_BUCKET_NAME', TEST_CONFIG.R2_BUCKET_NAME);
-    vi.stubEnv('R2_PUBLIC_URL', TEST_CONFIG.R2_PUBLIC_URL);
+    vi.stubEnv('AWS_REGION', TEST_CONFIG.AWS_REGION);
+    vi.stubEnv('AWS_ACCESS_KEY_ID', TEST_CONFIG.AWS_ACCESS_KEY_ID);
+    vi.stubEnv('AWS_SECRET_ACCESS_KEY', TEST_CONFIG.AWS_SECRET_ACCESS_KEY);
+    vi.stubEnv('AWS_S3_BUCKET', TEST_CONFIG.AWS_S3_BUCKET);
+    vi.stubEnv('AWS_S3_ENDPOINT', TEST_CONFIG.AWS_S3_ENDPOINT);
+    vi.stubEnv('AWS_S3_FORCE_PATH_STYLE', TEST_CONFIG.AWS_S3_FORCE_PATH_STYLE);
+    vi.stubEnv('AWS_S3_PUBLIC_URL', TEST_CONFIG.AWS_S3_PUBLIC_URL);
     vi.stubEnv('SRI_RUC', TEST_CONFIG.SRI_RUC);
     vi.stubEnv('SRI_SOL_KEY', TEST_CONFIG.SRI_SOL_KEY);
     vi.stubEnv('SRI_DIGITAL_CERTIFICATE_PATH', TEST_CONFIG.SRI_DIGITAL_CERTIFICATE_PATH);

@@ -23,9 +23,9 @@ const remotePatterns: NonNullable<NextConfig['images']>['remotePatterns'] = [
   },
 ];
 
-const r2Pattern = remotePatternFromEnvUrl(process.env.R2_PUBLIC_URL);
-if (r2Pattern) {
-  remotePatterns.push(r2Pattern);
+const storagePattern = remotePatternFromEnvUrl(process.env.AWS_S3_PUBLIC_URL);
+if (storagePattern) {
+  remotePatterns.push(storagePattern);
 }
 
 const nextConfig: NextConfig = {

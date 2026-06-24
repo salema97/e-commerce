@@ -131,7 +131,7 @@ feature/
 ```text
 Order paid (webhook) → PaymentsModule → SriQueueService.enqueue
   → SriQueueWorker → XML builder → SriSigner (.p12) → SOAP
-  → SriDocumentStorage (R2) → Email/WhatsApp delivery
+  → SriDocumentStorage (S3) → Email/WhatsApp delivery
   → Admin: GET /invoices, retry, credit-notes
 ```
 

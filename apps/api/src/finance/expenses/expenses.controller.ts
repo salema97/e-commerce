@@ -94,7 +94,7 @@ export class ExpensesController {
   @Post(':id/receipts')
   @Roles(...FINANCE_ROLES)
   @Audit({ resource: 'expense', action: 'upload_receipt' })
-  @ApiOperation({ summary: 'Upload an expense receipt to R2' })
+  @ApiOperation({ summary: 'Upload an expense receipt to S3' })
   async uploadReceipt(
     @Param('id') id: string,
     @Body() dto: UploadExpenseReceiptDto,

@@ -97,7 +97,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [ ] Add Swagger/OpenAPI documentation and publish public versioned docs at `/v1/docs`.
 - [ ] Add API versioning prefix (`/v1`) to the NestJS global route prefix.
 - [ ] Version the generated `@repo/api-client` with API versions and publish change log / migration guides.
-- [ ] Add Cloudflare R2 image upload endpoint (signed URLs).
+- [ ] Add S3 image upload endpoint (signed URLs).
 - [ ] Add global exception filter, validation pipes, and health check endpoint.
 - [ ] Implement granular rate limiting:
   - [ ] Per endpoint, per IP, per user, and per API key.
@@ -353,7 +353,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] `FinanceModule` with incomes, expense categories, expenses, reports, store credits
 - [x] CRUD endpoints for incomes, expenses, expense categories
 - [x] Cash-flow report `GET /v1/finance/reports/cash-flow`
-- [x] Expense receipt upload to R2 (base64)
+- [x] Expense receipt upload to S3 (base64)
 - [x] RBAC: `SUPER_ADMIN`, `ADMIN`, `FINANCE`; suppliers GET restricted
 - [x] Audit logging on finance mutations
 - [ ] Gift card / store credit CRUD (deferred — read-only list only)
@@ -641,7 +641,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 - [ ] Define RPO (Recovery Point Objective) and RTO (Recovery Time Objective).
 - [ ] Automated PostgreSQL backups with point-in-time recovery (PITR).
-- [ ] R2/S3 object versioning for media and attachments.
+- [ ] S3 object versioning for media and attachments.
 - [ ] Infrastructure-as-code for quick environment rebuild.
 - [ ] Runbooks for common incidents: DB failure, API outage, webhook provider down.
 

@@ -31,13 +31,20 @@ describe('StorageService', () => {
         {
           provide: ConfigService,
           useValue: {
+            get: (key: string) => {
+              const values: Record<string, string> = {
+                AWS_S3_ENDPOINT: 'https://s3.example.com',
+                AWS_S3_FORCE_PATH_STYLE: 'true',
+              };
+              return values[key];
+            },
             getOrThrow: (key: string) => {
               const values: Record<string, string> = {
-                R2_ACCOUNT_ID: 'account',
-                R2_ACCESS_KEY_ID: 'access',
-                R2_SECRET_ACCESS_KEY: 'secret',
-                R2_BUCKET_NAME: 'bucket',
-                R2_PUBLIC_URL: 'https://public.example.com',
+                AWS_REGION: 'us-east-1',
+                AWS_ACCESS_KEY_ID: 'access',
+                AWS_SECRET_ACCESS_KEY: 'secret',
+                AWS_S3_BUCKET: 'bucket',
+                AWS_S3_ENDPOINT: 'https://s3.example.com',
               };
               return values[key] ?? '';
             },
@@ -49,7 +56,7 @@ describe('StorageService', () => {
     service = module.get(StorageService);
   });
 
-  it('uploads a buffer and returns the public URL', async () => {
+  it('uploads a buffer and returns the object key', async () => {
     const result = await service.uploadBuffer(
       'sri/invoices/1/ride.pdf',
       Buffer.from('pdf'),
@@ -86,11 +93,12 @@ describe('StorageService', () => {
     expect(url).toBe('https://signed.example.com/doc');
   });
 
-  it('configures the S3 client with the R2 endpoint', () => {
+  it('configures the S3 client with the MinIO endpoint', () => {
     expect(S3Client).toHaveBeenCalledWith(
       expect.objectContaining({
-        region: 'auto',
-        endpoint: 'https://account.r2.cloudflarestorage.com',
+        region: 'us-east-1',
+        endpoint: 'https://s3.example.com',
+        forcePathStyle: true,
         credentials: {
           accessKeyId: 'access',
           secretAccessKey: 'secret',

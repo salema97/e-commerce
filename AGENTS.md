@@ -27,7 +27,7 @@ Full-stack e-commerce platform built as a TypeScript monorepo with integrated fi
 | Local payments (Ecuador) | Kushki / PayPhone / MercadoPago / PlaceToPay | Used for local bank cards, mobile money, and cash networks |
 | E-invoicing (Ecuador) | Direct SRI integration via SOAP/XML | Self-hosted signing with `.p12` certificate; no intermediary fees |
 | Search | Meilisearch | Engine 1.47+ |
-| Storage | Cloudflare R2 | S3-compatible, signed URLs |
+| Storage | AWS S3 / MinIO | S3-compatible, signed URLs |
 | Messaging | Evolution API + WhatsApp | Baileys provider (MVP) → WhatsApp Cloud API (scale) |
 | Email | Resend / Loops / SendGrid | Transactional + marketing templates |
 | Push notifications | Expo Notifications / OneSignal / Firebase Cloud Messaging | Segmentation and rich push |
@@ -66,7 +66,7 @@ Full-stack e-commerce platform built as a TypeScript monorepo with integrated fi
 - **Multi-currency**: conditional feature; only required if selling outside Ecuador. Plan for currency formatting, conversion strategy, and rounding rules from the start. The platform UI and copy remain Spanish-only.
 - **Granular rate limiting**: apply per endpoint, per IP, per user, and per API key using a sliding window or token bucket strategy. Public endpoints (login, register, forgot password, checkout, webhooks) get stricter limits than authenticated endpoints. Redis-backed counters with fallback to in-memory for local dev.
 - **Public API documentation**: publish a versioned OpenAPI/Swagger spec at `/v1/docs`. Align generated `@repo/api-client` versions with API versions. Maintain a public change log and migration guides for API consumers.
-- **Disaster recovery**: define RPO and RTO targets. Use automated PostgreSQL backups with point-in-time recovery (PITR), R2/S3 object versioning for media, infrastructure-as-code for rebuilds, and documented runbooks for DB failure, API outage, and webhook provider downtime.
+- **Disaster recovery**: define RPO and RTO targets. Use automated PostgreSQL backups with point-in-time recovery (PITR), S3 object versioning for media, infrastructure-as-code for rebuilds, and documented runbooks for DB failure, API outage, and webhook provider downtime.
 - **POS / BOPIS**: future omnichannel capability. Build a POS app/module for in-store sales with unified online/POS inventory, BOPIS checkout option, in-store pickup notifications, and receipt printing integration.
 - **Pre-orders and back-in-stock**: support pre-order reservations before a product release date with configurable charge timing (at shipping or upfront). Back-in-stock alerts notify customers when out-of-stock items return.
 - **Subscriptions / recurring billing**: integrate Stripe Billing. Support subscription products, plans, billing cycles, and customer self-service pause/cancel/upgrade. Generate invoices for recurring payments.
@@ -330,7 +330,7 @@ Introduce an `InvoiceProvider` port so the core e-commerce code does not depend 
 | Mobile | Jest + React Native Testing Library | Component behavior |
 
 - Use a separate test database for API E2E; reset between runs.
-- Mock external services (Stripe, R2, Evolution API) in unit tests.
+- Mock external services (Stripe, S3, Evolution API) in unit tests.
 - Run E2E after build; disable Turborepo cache for E2E tasks.
 
 ## Deployment Notes
@@ -361,12 +361,14 @@ AUTH_JWT_ACCESS_SECRET=change-me-to-a-long-random-secret-32chars
 STRIPE_SECRET_KEY=sk_test_xxx
 STRIPE_WEBHOOK_SECRET=whsec_xxx
 
-# Storage
-R2_ACCOUNT_ID=xxx
-R2_ACCESS_KEY_ID=xxx
-R2_SECRET_ACCESS_KEY=xxx
-R2_BUCKET_NAME=xxx
-R2_PUBLIC_URL=https://xxx.r2.dev
+# Storage (AWS S3 / MinIO)
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=xxx
+AWS_SECRET_ACCESS_KEY=xxx
+AWS_S3_BUCKET=e-commerce
+AWS_S3_ENDPOINT=https://s3.example.com
+AWS_S3_FORCE_PATH_STYLE=true
+AWS_S3_PUBLIC_URL=https://s3.example.com/e-commerce
 
 # Messaging (Evolution API)
 EVOLUTION_API_URL=http://localhost:8080
