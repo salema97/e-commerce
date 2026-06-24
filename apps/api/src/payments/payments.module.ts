@@ -19,7 +19,7 @@ import { InventoryModule } from '../inventory/inventory.module.js';
 import { AuditModule } from '../audit/audit.module.js';
 import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
 import { SriQueueModule } from '../invoices/sri/sri-queue.module.js';
-import { isTestAuthEnabled } from '../auth/test-auth.js';
+import { isNonProduction } from '../common/is-non-production.js';
 
 @Module({
   imports: [InvoicesModule, SriQueueModule, InventoryModule, AuditModule, WhatsAppNotificationModule],
@@ -27,7 +27,7 @@ import { isTestAuthEnabled } from '../auth/test-auth.js';
     StripeWebhookController,
     PaymentWebhookController,
     PaymentsController,
-    ...(isTestAuthEnabled() ? [TestPaymentsController] : []),
+    ...(isNonProduction() ? [TestPaymentsController] : []),
   ],
   providers: [
     PaymentsService,

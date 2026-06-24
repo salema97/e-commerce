@@ -25,7 +25,7 @@ export async function createConversationViaWebhook(
     contactName?: string;
   } = {},
 ): Promise<CreateConversationResult> {
-  const remoteJid = overrides.remoteJid ?? '+593991234567@s.whatsapp.net';
+  const remoteJid = overrides.remoteJid ?? `+5939${String(Date.now()).slice(-8)}@s.whatsapp.net`;
   const externalMessageId = overrides.externalMessageId ?? `msg-${Date.now()}`;
   const content = overrides.content ?? 'Hola, necesito ayuda';
   const contactName = overrides.contactName ?? 'Test Customer';

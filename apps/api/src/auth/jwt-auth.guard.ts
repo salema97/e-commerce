@@ -8,7 +8,6 @@ import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from './public.decorator.js';
 import { Role } from './role.enum.js';
 import { AppJwtService } from './jwt.service.js';
-import { getTestAuthSession, isTestAuthEnabled } from './test-auth.js';
 
 export interface AuthenticatedRequest {
   headers: Record<string, string | string[] | undefined>;
@@ -35,23 +34,6 @@ export class JwtAuthGuard implements CanActivate {
     if (isPublic) return true;
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-
-    if (isTestAuthEnabled() && process.env.NODE_ENV !== 'production') {
-      const headers = new Headers(
-        Object.entries(request.headers).reduce(
-          (acc, [key, value]) => {
-            if (typeof value === 'string') acc[key] = value;
-            return acc;
-          },
-          {} as Record<string, string>,
-        ),
-      );
-      const testSession = getTestAuthSession(headers);
-      if (testSession) {
-        request.user = { userId: testSession.userId, role: testSession.role as Role };
-        return true;
-      }
-    }
 
     const authHeader = request.headers.authorization;
     if (typeof authHeader !== 'string' || !authHeader.startsWith('Bearer ')) {

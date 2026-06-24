@@ -1,28 +1,26 @@
 import { Page, APIRequestContext } from '@playwright/test';
 
+export type TestRole =
+  | 'SUPER_ADMIN'
+  | 'ADMIN'
+  | 'FINANCE'
+  | 'INVENTORY'
+  | 'SUPPORT'
+  | 'CUSTOMER';
+
 export interface TestUser {
-  userId: string;
-  role: 'SUPER_ADMIN' | 'ADMIN' | 'FINANCE' | 'INVENTORY' | 'SUPPORT' | 'CUSTOMER';
+  role: TestRole;
 }
 
-export const TEST_SUPPORT: TestUser = {
-  userId: 'test_support_user',
-  role: 'SUPPORT',
-};
+export const TEST_SUPPORT: TestUser = { role: 'SUPPORT' };
+export const TEST_CUSTOMER: TestUser = { role: 'CUSTOMER' };
+export const TEST_ADMIN: TestUser = { role: 'ADMIN' };
+export const TEST_FINANCE: TestUser = { role: 'FINANCE' };
 
-export const TEST_CUSTOMER: TestUser = {
-  userId: 'test_customer_user',
-  role: 'CUSTOMER',
-};
-
-export const TEST_ADMIN: TestUser = {
-  userId: 'test_admin_user',
-  role: 'ADMIN',
-};
-
+const API_BASE = 'http://localhost:3001/v1';
 const SEED_PASSWORD = process.env.E2E_USER_PASSWORD ?? 'SeedDemo123!';
 
-const SEED_EMAIL_BY_ROLE: Record<TestUser['role'], string> = {
+const SEED_EMAIL_BY_ROLE: Record<TestRole, string> = {
   SUPER_ADMIN: 'superadmin@example.com',
   ADMIN: 'store-admin@example.com',
   FINANCE: 'finance@example.com',
@@ -30,6 +28,31 @@ const SEED_EMAIL_BY_ROLE: Record<TestUser['role'], string> = {
   SUPPORT: 'support@example.com',
   CUSTOMER: 'cliente@example.com',
 };
+
+const apiTokenCache = new Map<TestRole, string>();
+
+export async function getApiAuthHeaders(
+  request: APIRequestContext,
+  role: TestRole,
+): Promise<Record<string, string>> {
+  const cached = apiTokenCache.get(role);
+  if (cached) {
+    return { Authorization: `Bearer ${cached}` };
+  }
+
+  const email = SEED_EMAIL_BY_ROLE[role];
+  const res = await request.post(`${API_BASE}/auth/login`, {
+    data: { email, password: SEED_PASSWORD },
+  });
+
+  if (!res.ok()) {
+    throw new Error(`API login failed for ${email}: ${await res.text()}`);
+  }
+
+  const body = (await res.json()) as { tokens: { accessToken: string } };
+  apiTokenCache.set(role, body.tokens.accessToken);
+  return { Authorization: `Bearer ${body.tokens.accessToken}` };
+}
 
 export async function authenticatePage(page: Page, user: TestUser): Promise<void> {
   const email = SEED_EMAIL_BY_ROLE[user.role];
@@ -54,8 +77,9 @@ export async function createTestOrder(
     createdAt?: string;
   } = {},
 ): Promise<{ id: string; orderNumber: string }> {
+  const adminHeaders = await getApiAuthHeaders(request, 'ADMIN');
   const now = new Date();
-  const productRes = await request.post('http://localhost:3001/v1/products', {
+  const productRes = await request.post(`${API_BASE}/products`, {
     data: {
       name: `Test Product ${now.getTime()}`,
       slug: `test-product-${now.getTime()}`,
@@ -64,7 +88,7 @@ export async function createTestOrder(
       price: 49.99,
       variants: [{ sku: `TEST-${now.getTime()}-BLK`, name: 'Black', price: 49.99 }],
     },
-    headers: { 'X-Test-Auth': encodeTestAuth(TEST_ADMIN) },
+    headers: adminHeaders,
   });
 
   if (!productRes.ok()) {
@@ -73,7 +97,7 @@ export async function createTestOrder(
 
   const product = (await productRes.json()) as { id: string; variants: Array<{ id: string }> };
 
-  const inventoryRes = await request.post('http://localhost:3001/v1/inventory', {
+  const inventoryRes = await request.post(`${API_BASE}/inventory`, {
     data: {
       productId: product.id,
       variantId: product.variants[0]?.id,
@@ -81,21 +105,21 @@ export async function createTestOrder(
       reservedQuantity: 0,
       lowStockThreshold: 10,
     },
-    headers: { 'X-Test-Auth': encodeTestAuth(TEST_ADMIN) },
+    headers: adminHeaders,
   });
 
   if (!inventoryRes.ok()) {
     throw new Error(`Failed to create test inventory: ${await inventoryRes.text()}`);
   }
 
-  const orderRes = await request.post('http://localhost:3001/v1/orders', {
+  const orderRes = await request.post(`${API_BASE}/orders`, {
     data: {
       items: [{ productId: product.id, variantId: product.variants[0]?.id, quantity: 1, price: 49.99 }],
       customerEmail: overrides.customerEmail ?? 'customer@example.com',
       customerPhone: '+593999999999',
       channel: 'WEB',
     },
-    headers: { 'X-Test-Auth': encodeTestAuth(TEST_ADMIN) },
+    headers: adminHeaders,
   });
 
   if (!orderRes.ok()) {
@@ -105,9 +129,9 @@ export async function createTestOrder(
   const order = (await orderRes.json()) as { id: string; orderNumber: string };
 
   const targetStatus = overrides.status ?? 'DELIVERED';
-  const statusRes = await request.patch(`http://localhost:3001/v1/orders/${order.id}/status`, {
+  const statusRes = await request.patch(`${API_BASE}/orders/${order.id}/status`, {
     data: { status: targetStatus },
-    headers: { 'X-Test-Auth': encodeTestAuth(TEST_ADMIN) },
+    headers: adminHeaders,
   });
 
   if (!statusRes.ok()) {
@@ -121,9 +145,9 @@ export async function createCompletedPayment(
   request: APIRequestContext,
   orderId: string,
 ): Promise<void> {
-  const res = await request.post('http://localhost:3001/v1/test/payments', {
+  const res = await request.post(`${API_BASE}/test/payments`, {
     data: { orderId },
-    headers: { 'X-Test-Auth': encodeTestAuth(TEST_ADMIN) },
+    headers: await getApiAuthHeaders(request, 'ADMIN'),
   });
 
   if (!res.ok()) {
@@ -136,8 +160,10 @@ export async function createReturnRequest(
   orderId: string,
   user: TestUser = TEST_CUSTOMER,
 ): Promise<{ id: string }> {
-  const orderRes = await request.get(`http://localhost:3001/v1/orders/${orderId}`, {
-    headers: { 'X-Test-Auth': encodeTestAuth(user) },
+  const userHeaders = await getApiAuthHeaders(request, user.role);
+
+  const orderRes = await request.get(`${API_BASE}/orders/${orderId}`, {
+    headers: userHeaders,
   });
 
   if (!orderRes.ok()) {
@@ -146,16 +172,16 @@ export async function createReturnRequest(
 
   const order = (await orderRes.json()) as { items: Array<{ productId: string; variantId?: string | null; quantity: number }> };
 
-  const res = await request.post(`http://localhost:3001/v1/orders/${orderId}/returns`, {
+  const res = await request.post(`${API_BASE}/orders/${orderId}/returns`, {
     data: {
       items: order.items.map((item) => ({
         productId: item.productId,
-        variantId: item.variantId ?? undefined,
+        productVariantId: item.variantId ?? undefined,
         quantity: item.quantity,
       })),
       reason: 'Defective item',
     },
-    headers: { 'X-Test-Auth': encodeTestAuth(user) },
+    headers: userHeaders,
   });
 
   if (!res.ok()) {
@@ -170,16 +196,12 @@ export async function transitionReturnStatus(
   returnId: string,
   status: string,
 ): Promise<void> {
-  const res = await request.patch(`http://localhost:3001/v1/returns/${returnId}/status`, {
+  const res = await request.patch(`${API_BASE}/returns/${returnId}/status`, {
     data: { status },
-    headers: { 'X-Test-Auth': encodeTestAuth(TEST_ADMIN) },
+    headers: await getApiAuthHeaders(request, 'ADMIN'),
   });
 
   if (!res.ok()) {
     throw new Error(`Failed to update return status: ${await res.text()}`);
   }
-}
-
-export function encodeTestAuth(user: TestUser): string {
-  return Buffer.from(JSON.stringify(user)).toString('base64url');
 }

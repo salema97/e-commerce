@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useApiClient } from '@/lib/client-api';
+import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import {
   formatPrice,
   returnStatusLabel,
@@ -18,6 +18,7 @@ const METHODS: RefundMethod[] = ['ORIGINAL_PAYMENT', 'STORE_CREDIT', 'EXCHANGE']
 export default function ResolveReturnPage({ returnRequest }: { returnRequest: ReturnRequest }) {
   const router = useRouter();
   const api = useApiClient();
+  const authReady = useAuthApiReady();
   const [method, setMethod] = React.useState<RefundMethod>('ORIGINAL_PAYMENT');
   const [notes, setNotes] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -195,7 +196,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
                 />
               </div>
 
-              <Button type="submit" disabled={isSubmitting || returnRequest.status !== 'INSPECTION' || (method === 'EXCHANGE' && !exchangeProductId)}>
+              <Button type="submit" disabled={isSubmitting || !authReady || returnRequest.status !== 'INSPECTION' || (method === 'EXCHANGE' && !exchangeProductId)}>
                 {isSubmitting ? 'Resolving...' : 'Confirm resolution'}
               </Button>
             </form>

@@ -1,5 +1,5 @@
 import { APIRequestContext } from '@playwright/test';
-import { encodeTestAuth, TEST_ADMIN } from './auth.js';
+import { getApiAuthHeaders } from './auth.js';
 
 export async function createTestInvoice(
   request: APIRequestContext,
@@ -13,11 +13,11 @@ export async function createTestInvoice(
   const res = await request.post('http://localhost:3001/v1/test/invoices', {
     data: {
       orderId,
-      accessKey: overrides.accessKey ?? `TEST-${Date.now()}`,
+      accessKey: overrides.accessKey ?? `TEST-${crypto.randomUUID()}`,
       status: overrides.status ?? 'DRAFT',
       authorizationNumber: overrides.authorizationNumber ?? null,
     },
-    headers: { 'X-Test-Auth': encodeTestAuth(TEST_ADMIN) },
+    headers: await getApiAuthHeaders(request, 'ADMIN'),
   });
 
   if (!res.ok()) {

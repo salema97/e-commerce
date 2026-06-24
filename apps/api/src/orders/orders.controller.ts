@@ -55,6 +55,7 @@ export class OrdersController {
   }
 
   @Get(':id')
+  @Public()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get an order by id' })
   @ApiResponse({ status: 200, description: 'Order found' })

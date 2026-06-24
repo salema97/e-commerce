@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useApiClient } from '@/lib/client-api';
+import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { formatPrice } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
 
@@ -16,10 +16,12 @@ interface ReturnRequestFormProps {
 export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequestFormProps) {
   const router = useRouter();
   const api = useApiClient();
+  const authReady = useAuthApiReady();
   const [selected, setSelected] = React.useState<Record<string, { qty: number; reason: string }>>({});
   const [email, setEmail] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState('');
+  const [submitted, setSubmitted] = React.useState(false);
 
   const windowDays = 30;
   const isWithinWindow =
@@ -43,9 +45,8 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
       const orderItem = order.items.find((i) => i.id === itemId)!;
       return {
         productId: orderItem.productId,
-        variantId: orderItem.variantId ?? undefined,
+        productVariantId: orderItem.variantId ?? undefined,
         quantity: value.qty,
-        reason: value.reason,
       };
     });
 
@@ -55,21 +56,41 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
           orderId: order.id,
           email,
           items,
-          reason: items.map((i) => i.reason).join('; ') || 'Customer return',
+          reason:
+            Object.values(selected)
+              .map((item) => item.reason)
+              .filter(Boolean)
+              .join('; ') || 'Customer return',
         });
       } else {
         await api.returns.createForOrder(order.id, {
           items,
-          reason: items.map((i) => i.reason).join('; ') || 'Customer return',
+          reason:
+            Object.values(selected)
+              .map((item) => item.reason)
+              .filter(Boolean)
+              .join('; ') || 'Customer return',
         });
+        router.push(`/orders/${order.id}`);
+        router.refresh();
       }
-      router.push(`/orders/${order.id}`);
-      router.refresh();
+      setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit return request');
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (submitted && isGuest) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="mb-4 text-2xl font-bold">Return request submitted</h1>
+        <p className="text-muted-foreground">
+          We received your return request for order {order.orderNumber}. Status: Requested.
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -170,7 +191,13 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
 
         <Button
           type="submit"
-          disabled={isSubmitting || Object.keys(selected).length === 0 || !isWithinWindow || (isGuest && !email)}
+          disabled={
+            isSubmitting
+            || Object.keys(selected).length === 0
+            || !isWithinWindow
+            || (isGuest && !email)
+            || (!isGuest && !authReady)
+          }
         >
           {isSubmitting ? 'Submitting...' : 'Submit return request'}
         </Button>

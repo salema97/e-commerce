@@ -10,7 +10,6 @@ export const BASE_TEST_CONFIG = {
   AUTH_JWT_ACCESS_SECRET: TEST_JWT_SECRET,
   AUTH_ACCESS_TOKEN_TTL: '15m',
   AUTH_REFRESH_TOKEN_DAYS: '30',
-  ENABLE_TEST_AUTH: 'true',
   STRIPE_SECRET_KEY: 'sk_test_xxx',
   STRIPE_WEBHOOK_SECRET: 'whsec_xxx',
   KUSHKI_PRIVATE_KEY: 'kushki_private_test',
@@ -41,9 +40,4 @@ export function signTestAccessToken(userId: string, role: string): string {
 
 export function bearerAuth(userId: string, role: string): { Authorization: string } {
   return { Authorization: `Bearer ${signTestAccessToken(userId, role)}` };
-}
-
-export function testAuthHeader(userId: string, role: string): { 'X-Test-Auth': string } {
-  const payload = Buffer.from(JSON.stringify({ userId, role }), 'utf8').toString('base64url');
-  return { 'X-Test-Auth': payload };
 }

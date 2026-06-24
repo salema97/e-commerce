@@ -19,7 +19,7 @@ import { StorageModule } from '../storage/storage.module.js';
 import { EmailModule } from '../notifications/email.module.js';
 import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
 import { SriQueueModule } from './sri/sri-queue.module.js';
-import { isTestAuthEnabled } from '../auth/test-auth.js';
+import { isNonProduction } from '../common/is-non-production.js';
 
 @Module({
   imports: [
@@ -32,7 +32,7 @@ import { isTestAuthEnabled } from '../auth/test-auth.js';
   controllers: [
     InvoicesController,
     CreditNotesController,
-    ...(isTestAuthEnabled() ? [TestInvoicesController] : []),
+    ...(isNonProduction() ? [TestInvoicesController] : []),
   ],
   providers: [
     InvoicesService,

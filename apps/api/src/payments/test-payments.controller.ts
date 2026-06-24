@@ -1,24 +1,17 @@
 import { Controller, Post, Body, ForbiddenException } from '@nestjs/common';
 import { Prisma, PaymentProvider, PaymentStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { isTestAuthEnabled } from '../auth/test-auth.js';
-
-class CreateTestPaymentDto {
-  orderId!: string;
-  amount?: number;
-  provider?: PaymentProvider;
-}
+import { Roles } from '../auth/roles.decorator.js';
+import { Role } from '../auth/role.enum.js';
+import { CreateTestPaymentDto } from './dto/create-test-payment.dto.js';
 
 @Controller('test/payments')
+@Roles(Role.SUPER_ADMIN, Role.ADMIN)
 export class TestPaymentsController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Post()
   async create(@Body() dto: CreateTestPaymentDto) {
-    if (!isTestAuthEnabled()) {
-      throw new ForbiddenException('Test endpoints are disabled');
-    }
-
     const order = await this.prisma.order.findUnique({ where: { id: dto.orderId } });
     if (!order) {
       throw new ForbiddenException('Order not found');
