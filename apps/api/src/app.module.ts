@@ -45,6 +45,10 @@ import { MarketplaceModule } from './marketplace/marketplace.module.js';
 import { AccountingModule } from './accounting/accounting.module.js';
 import { PrivacyModule } from './privacy/privacy.module.js';
 import { CaptchaModule } from './common/captcha/captcha.module.js';
+import { PosModule } from './pos/pos.module.js';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module.js';
+import { SellersModule } from './sellers/sellers.module.js';
+import { DropshipModule } from './dropship/dropship.module.js';
 
 @Module({
   imports: [
@@ -106,6 +110,10 @@ import { CaptchaModule } from './common/captcha/captcha.module.js';
     AccountingModule,
     PrivacyModule,
     CaptchaModule,
+    PosModule,
+    SubscriptionsModule,
+    SellersModule,
+    DropshipModule,
   ],
   providers: [
     {

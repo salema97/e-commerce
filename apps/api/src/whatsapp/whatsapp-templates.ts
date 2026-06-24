@@ -19,6 +19,13 @@ export interface OrderDeliveredContext {
   orderNumber: string;
 }
 
+export interface PickupReadyContext {
+  customerName: string;
+  orderNumber: string;
+  pickupLocation: string;
+  pickupAddress: string;
+}
+
 export interface PaymentFailedContext {
   customerName: string;
   orderNumber: string;
@@ -45,6 +52,7 @@ export type NotificationContext =
   | OrderConfirmedContext
   | OrderShippedContext
   | OrderDeliveredContext
+  | PickupReadyContext
   | PaymentFailedContext
   | RefundConfirmedContext
   | SriDocumentDeliveryContext;
@@ -65,6 +73,8 @@ export function renderWhatsAppTemplate(
       return orderShipped(context as OrderShippedContext);
     case 'ORDER_DELIVERED':
       return orderDelivered(context as OrderDeliveredContext);
+    case 'PICKUP_READY':
+      return pickupReady(context as PickupReadyContext);
     case 'PAYMENT_FAILED':
       return paymentFailed(context as PaymentFailedContext);
     case 'REFUND_CONFIRMED':
@@ -101,6 +111,15 @@ function orderDelivered(ctx: OrderDeliveredContext): string {
   return (
     `Hola ${ctx.customerName}, tu pedido *${ctx.orderNumber}* ha sido entregado.\n\n` +
     `Esperamos que disfrutes tu compra. Si necesitas ayuda, responde a este mensaje.`
+  );
+}
+
+function pickupReady(ctx: PickupReadyContext): string {
+  return (
+    `Hola ${ctx.customerName}, tu pedido *${ctx.orderNumber}* esta listo para retirar.\n\n` +
+    `Tienda: ${ctx.pickupLocation}\n` +
+    `Direccion: ${ctx.pickupAddress}\n\n` +
+    `Presenta tu numero de pedido al retirar.`
   );
 }
 

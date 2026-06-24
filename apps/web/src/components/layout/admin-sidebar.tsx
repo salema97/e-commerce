@@ -20,6 +20,9 @@ import {
   FileSpreadsheet,
   Store,
   Calculator,
+  MapPin,
+  Repeat,
+  UsersRound,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Role } from '@repo/shared-types';
@@ -37,6 +40,7 @@ const adminNav: NavItem[] = [
   { href: '/admin/products', label: 'Products', icon: Package, roles: ['SUPER_ADMIN', 'ADMIN'] },
   { href: '/admin/categories', label: 'Categories', icon: Tags, roles: ['SUPER_ADMIN', 'ADMIN'] },
   { href: '/admin/inventory', label: 'Inventory', icon: Warehouse, roles: ['SUPER_ADMIN', 'ADMIN', 'INVENTORY'] },
+  { href: '/admin/pos', label: 'POS / Tiendas', icon: MapPin, roles: ['SUPER_ADMIN', 'ADMIN', 'INVENTORY'] },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag, roles: ['SUPER_ADMIN', 'ADMIN'] },
   { href: '/admin/returns', label: 'Returns', icon: RotateCcw, roles: ['SUPER_ADMIN', 'ADMIN'] },
   { href: '/admin/customers', label: 'Customers', icon: Users, roles: ['SUPER_ADMIN', 'ADMIN'] },
@@ -45,6 +49,8 @@ const adminNav: NavItem[] = [
   { href: '/admin/b2b', label: 'B2B', icon: Building2, roles: ['SUPER_ADMIN', 'ADMIN'] },
   { href: '/admin/quotes', label: 'Cotizaciones', icon: FileSpreadsheet, roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] },
   { href: '/admin/marketplace', label: 'Marketplace', icon: Store, roles: ['SUPER_ADMIN', 'ADMIN', 'INVENTORY'] },
+  { href: '/admin/sellers', label: 'Vendedores', icon: UsersRound, roles: ['SUPER_ADMIN', 'ADMIN'] },
+  { href: '/admin/subscriptions', label: 'Suscripciones', icon: Repeat, roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] },
   { href: '/admin/accounting', label: 'Contabilidad', icon: Calculator, roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] },
   { href: '/admin/support', label: 'Support', icon: MessageSquare, roles: ['SUPER_ADMIN', 'ADMIN', 'SUPPORT'] },
   { href: '/admin/invoices', label: 'Facturación', icon: FileText, roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'] },

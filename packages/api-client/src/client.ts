@@ -95,6 +95,18 @@ import type {
   PrivacyExportBundle,
   PrivacyDeletionResult,
   CcpaOptOutResult,
+  StoreLocation,
+  CreateStoreLocationDto,
+  PosRegister,
+  CreatePosRegisterDto,
+  CreatePosOrderDto,
+  SubscriptionPlan,
+  CreateSubscriptionPlanDto,
+  CustomerSubscription,
+  Seller,
+  CreateSellerDto,
+  UpdateSellerDto,
+  SellerPayout,
 } from '@repo/shared-types';
 
 export interface ApiClientOptions {
@@ -518,6 +530,31 @@ export function createApiClient(options: ApiClientOptions) {
       deleteMine: () => request<PrivacyDeletionResult>('DELETE', '/privacy/me'),
       ccpaOptOut: (optOut: boolean) =>
         request<CcpaOptOutResult>('PATCH', '/privacy/me/ccpa-opt-out', { optOut }),
+    },
+    pos: {
+      listLocations: (pickup?: boolean) =>
+        request<StoreLocation[]>('GET', '/pos/locations', undefined, { pickup: pickup ? 'true' : undefined }),
+      createLocation: (data: CreateStoreLocationDto) => request<StoreLocation>('POST', '/pos/locations', data),
+      listRegisters: (locationId?: string) =>
+        request<PosRegister[]>('GET', '/pos/registers', undefined, { locationId }),
+      createRegister: (data: CreatePosRegisterDto) => request<PosRegister>('POST', '/pos/registers', data),
+      createOrder: (data: CreatePosOrderDto) => request<unknown>('POST', '/pos/orders', data),
+    },
+    subscriptions: {
+      listPlans: () => request<SubscriptionPlan[]>('GET', '/subscriptions/plans'),
+      createPlan: (data: CreateSubscriptionPlanDto) =>
+        request<SubscriptionPlan>('POST', '/subscriptions/plans', data),
+      mine: () => request<CustomerSubscription[]>('GET', '/subscriptions/me'),
+      subscribe: (planId: string) => request<{ url: string }>('POST', '/subscriptions/subscribe', { planId }),
+      portal: () => request<{ url: string }>('POST', '/subscriptions/portal'),
+    },
+    sellers: {
+      list: (status?: string) => request<Seller[]>('GET', '/sellers', undefined, { status }),
+      create: (data: CreateSellerDto) => request<Seller>('POST', '/sellers', data),
+      update: (id: string, data: UpdateSellerDto) => request<Seller>('PATCH', `/sellers/${id}`, data),
+      listPayouts: (sellerId?: string) =>
+        request<SellerPayout[]>('GET', '/sellers/payouts', undefined, { sellerId }),
+      markPayoutPaid: (id: string) => request<SellerPayout>('POST', `/sellers/payouts/${id}/mark-paid`),
     },
   };
 }

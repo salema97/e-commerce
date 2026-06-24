@@ -8,6 +8,7 @@ export type WhatsAppTemplate =
   | 'ORDER_CONFIRMED'
   | 'ORDER_SHIPPED'
   | 'ORDER_DELIVERED'
+  | 'PICKUP_READY'
   | 'PAYMENT_FAILED'
   | 'REFUND_CONFIRMED'
   | 'SRI_DOCUMENT_DELIVERY';

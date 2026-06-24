@@ -654,32 +654,32 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 ### 17.1 POS & BOPIS
 
-- [ ] POS app/module for in-store sales.
-- [ ] Unified inventory between online store and POS.
-- [ ] BOPIS checkout option.
-- [ ] In-store pickup notifications.
-- [ ] Receipt printing integration.
+- [x] POS app/module for in-store sales. *(PosModule API + admin /admin/pos)*
+- [x] Unified inventory between online store and POS. *(InventoryReservationService compartido)*
+- [x] BOPIS checkout option. *(shippingMethod=PICKUP + checkout UI)*
+- [x] In-store pickup notifications. *(PICKUP_READY WhatsApp/email/push)*
+- [x] Receipt printing integration. *(ReceiptService PDF reutilizado en POS; ESC/POS hardware deferred)*
 
 ### 17.2 Subscriptions / Recurring Billing
 
-- [ ] Stripe Billing integration.
-- [ ] Subscription products and plans.
-- [ ] Billing cycles and renewal logic.
-- [ ] Customer self-service: pause, cancel, upgrade.
-- [ ] Invoice generation for recurring payments.
+- [x] Stripe Billing integration. *(StripeBillingService + webhooks subscription/invoice)*
+- [x] Subscription products and plans. *(SubscriptionPlan + admin UI)*
+- [x] Billing cycles and renewal logic. *(invoice.paid → renewal Order)*
+- [x] Customer self-service: pause, cancel, upgrade. *(Stripe billing portal /subscriptions/portal)*
+- [x] Invoice generation for recurring payments. *(SRI enqueue on renewal order.paid)*
 
 ### 17.3 Dropshipping
 
-- [ ] Supplier ships directly to customer.
-- [ ] Supplier-specific fulfillment rules.
-- [ ] Commission and markup tracking.
+- [x] Supplier ships directly to customer. *(fulfillmentSource=DROPSHIP + split shipments)*
+- [x] Supplier-specific fulfillment rules. *(Supplier.dropshipEnabled + commissionRate)*
+- [x] Commission and markup tracking. *(OrderItem.dropshipCommissionAmount)*
 
 ### 17.4 Internal Marketplace
 
-- [ ] Seller accounts with own products, inventory, and orders.
-- [ ] Marketplace commission model.
-- [ ] Seller payouts.
-- [ ] Dispute handling.
+- [x] Seller accounts with own products, inventory, and orders. *(Seller model + Product.sellerId)*
+- [x] Marketplace commission model. *(sellerCommissionAmount en checkout)*
+- [x] Seller payouts. *(SellerPayout ledger + admin mark paid)*
+- [x] Dispute handling. *(MarketplaceDispute API)*
 
 ---
 

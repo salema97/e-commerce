@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { StripeProvider } from './stripe.provider.js';
 import { PaymentStatus } from '../entities/payment-status.enum.js';
-import { OrderStatus, PaymentProvider } from '@prisma/client';
+import { OrderStatus, PaymentProvider, SubscriptionStatus } from '@prisma/client';
 import { SriQueueService } from '../../invoices/sri/sri-queue.service.js';
 import { InventoryReservationService } from '../../inventory/inventory-reservation.service.js';
 import { AuditLogService } from '../../audit/audit-log.service.js';
@@ -69,6 +69,16 @@ export class StripeWebhookService {
       case 'charge.refunded':
         await this.handleChargeRefunded(event.data.object, event.id);
         break;
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
+        await this.handleSubscriptionUpsert(event.data.object, event.id);
+        break;
+      case 'customer.subscription.deleted':
+        await this.handleSubscriptionDeleted(event.data.object, event.id);
+        break;
+      case 'invoice.paid':
+        await this.handleInvoicePaid(event.data.object, event.id);
+        break;
       default:
         this.logger.warn(`Unhandled Stripe event type: ${event.type}`);
     }
@@ -89,6 +99,12 @@ export class StripeWebhookService {
     object: Record<string, unknown>,
     eventId: string,
   ): Promise<void> {
+    const metadata = object.metadata as Record<string, string> | undefined;
+    if (object.mode === 'subscription' || metadata?.subscriptionCheckout === 'true') {
+      await this.recordWebhookProcessed(eventId, metadata?.userId ?? 'subscription', 'subscription_checkout');
+      return;
+    }
+
     const sessionId = object.id as string;
     const paymentIntentId = (object.payment_intent as string) ?? undefined;
     const orderId = (object.metadata as Record<string, string> | undefined)?.orderId;
@@ -357,5 +373,155 @@ export class StripeWebhookService {
     return this.prisma.payment.findFirst({
       where: { providerTransactionId },
     });
+  }
+
+  private mapStripeSubscriptionStatus(status: string): SubscriptionStatus {
+    switch (status) {
+      case 'trialing':
+        return SubscriptionStatus.TRIALING;
+      case 'active':
+        return SubscriptionStatus.ACTIVE;
+      case 'past_due':
+        return SubscriptionStatus.PAST_DUE;
+      case 'paused':
+        return SubscriptionStatus.PAUSED;
+      case 'canceled':
+        return SubscriptionStatus.CANCELLED;
+      default:
+        return SubscriptionStatus.EXPIRED;
+    }
+  }
+
+  private async handleSubscriptionUpsert(
+    object: Record<string, unknown>,
+    eventId: string,
+  ): Promise<void> {
+    const stripeSubscriptionId = object.id as string;
+    const metadata = (object.metadata as Record<string, string> | undefined) ?? {};
+    const userId = metadata.userId;
+    const planId = metadata.planId;
+    if (!userId || !planId) {
+      this.logger.warn({ stripeSubscriptionId }, 'Subscription webhook missing userId/planId metadata');
+      return;
+    }
+
+    const status = this.mapStripeSubscriptionStatus(String(object.status ?? 'active'));
+    const currentPeriodStart = object.current_period_start
+      ? new Date(Number(object.current_period_start) * 1000)
+      : undefined;
+    const currentPeriodEnd = object.current_period_end
+      ? new Date(Number(object.current_period_end) * 1000)
+      : undefined;
+
+    const existing = await this.prisma.customerSubscription.findFirst({
+      where: { stripeSubscriptionId },
+    });
+
+    if (existing) {
+      await this.prisma.customerSubscription.update({
+        where: { id: existing.id },
+        data: {
+          status,
+          currentPeriodStart,
+          currentPeriodEnd,
+          cancelAtPeriodEnd: Boolean(object.cancel_at_period_end),
+        },
+      });
+    } else {
+      await this.prisma.customerSubscription.create({
+        data: {
+          userId,
+          planId,
+          stripeSubscriptionId,
+          status,
+          currentPeriodStart,
+          currentPeriodEnd,
+          cancelAtPeriodEnd: Boolean(object.cancel_at_period_end),
+        },
+      });
+    }
+
+    await this.recordWebhookProcessed(eventId, stripeSubscriptionId, 'subscription_upsert');
+  }
+
+  private async handleSubscriptionDeleted(
+    object: Record<string, unknown>,
+    eventId: string,
+  ): Promise<void> {
+    const stripeSubscriptionId = object.id as string;
+    const existing = await this.prisma.customerSubscription.findFirst({
+      where: { stripeSubscriptionId },
+    });
+    if (!existing) return;
+
+    await this.prisma.customerSubscription.update({
+      where: { id: existing.id },
+      data: {
+        status: SubscriptionStatus.CANCELLED,
+        cancelledAt: new Date(),
+        cancelAtPeriodEnd: false,
+      },
+    });
+    await this.recordWebhookProcessed(eventId, stripeSubscriptionId, 'subscription_deleted');
+  }
+
+  private async handleInvoicePaid(object: Record<string, unknown>, eventId: string): Promise<void> {
+    const billingReason = String(object.billing_reason ?? '');
+    if (billingReason !== 'subscription_cycle' && billingReason !== 'subscription_create') {
+      return;
+    }
+
+    const stripeSubscriptionId = object.subscription as string | undefined;
+    if (!stripeSubscriptionId) return;
+
+    const subscription = await this.prisma.customerSubscription.findFirst({
+      where: { stripeSubscriptionId },
+      include: {
+        plan: { include: { product: true } },
+        user: true,
+      },
+    });
+    if (!subscription?.plan.product) return;
+
+    const amountPaid = Number(object.amount_paid ?? 0) / 100;
+    const product = subscription.plan.product;
+    const orderNumber = `SUB-${Date.now().toString(36).toUpperCase()}`;
+    const taxAmount = 0;
+    const total = amountPaid || Number(product.price);
+
+    const order = await this.prisma.order.create({
+      data: {
+        orderNumber,
+        userId: subscription.userId,
+        customerEmail: subscription.user.email,
+        customerName: subscription.user.name,
+        status: OrderStatus.PROCESSING,
+        channel: 'WEB',
+        subtotal: total,
+        taxAmount,
+        shippingAmount: 0,
+        discountAmount: 0,
+        total,
+        items: {
+          create: {
+            productId: product.id,
+            name: product.name,
+            sku: product.sku ?? 'SUB',
+            price: total,
+            quantity: 1,
+          },
+        },
+        statusHistory: {
+          create: {
+            status: OrderStatus.PROCESSING,
+            notes: `Subscription renewal (${billingReason})`,
+          },
+        },
+      },
+    });
+
+    void this.eventBus.publish({ name: 'order.paid', payload: { orderId: order.id } });
+    this.enqueueInvoice(order.id);
+    await this.recordWebhookProcessed(eventId, order.id, 'subscription_invoice_paid');
   }
 }

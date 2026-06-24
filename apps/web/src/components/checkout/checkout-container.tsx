@@ -27,6 +27,8 @@ import type {
   CreatedOrderResult,
   PaymentIntentResult,
   ShippingQuote,
+  StoreLocation,
+  ShippingMethodType,
 } from '@repo/shared-types';
 
 const FALLBACK_SHIPPING_FLAT_RATE = 5;
@@ -44,6 +46,9 @@ export function CheckoutContainer() {
   const [referralCode, setReferralCode] = React.useState('');
   const [loyaltyPoints, setLoyaltyPoints] = React.useState(0);
   const [shippingQuote, setShippingQuote] = React.useState<ShippingQuote | null>(null);
+  const [shippingMethod, setShippingMethod] = React.useState<ShippingMethodType>('DELIVERY');
+  const [pickupLocations, setPickupLocations] = React.useState<StoreLocation[]>([]);
+  const [pickupLocationId, setPickupLocationId] = React.useState('');
 
   const [order, setOrder] = React.useState<CreatedOrderResult | null>(null);
   const [paymentIntent, setPaymentIntent] = React.useState<PaymentIntentResult | null>(null);
@@ -66,11 +71,16 @@ export function CheckoutContainer() {
   const tax = taxableBase * taxRate;
   const fallbackShipping =
     subtotal >= FALLBACK_FREE_SHIPPING_THRESHOLD ? 0 : FALLBACK_SHIPPING_FLAT_RATE;
-  const shipping = shippingQuote?.amount ?? fallbackShipping;
+  React.useEffect(() => {
+    void api.pos.listLocations(true).then(setPickupLocations).catch(() => setPickupLocations([]));
+  }, [api]);
+
+  const shipping =
+    shippingMethod === 'PICKUP' ? 0 : (shippingQuote?.amount ?? fallbackShipping);
   const total = taxableBase + tax + shipping;
 
   React.useEffect(() => {
-    if (!isAddressValid(address) || items.length === 0) {
+    if (shippingMethod !== 'DELIVERY' || !isAddressValid(address) || items.length === 0) {
       setShippingQuote(null);
       return;
     }
@@ -93,7 +103,7 @@ export function CheckoutContainer() {
     return () => {
       cancelled = true;
     };
-  }, [address, api, items.length, taxableBase]);
+  }, [address, api, items.length, shippingMethod, taxableBase]);
 
   if (!mounted) {
     return <CheckoutSkeleton />;
@@ -130,6 +140,8 @@ export function CheckoutContainer() {
         shippingAddress: toOrderAddress(address),
         billingAddress: toOrderAddress(address),
         notes: address.notes || undefined,
+        shippingMethod,
+        pickupLocationId: shippingMethod === 'PICKUP' ? pickupLocationId : undefined,
       };
 
       const createdOrder = await api.orders.create(orderDto);
@@ -209,6 +221,45 @@ export function CheckoutContainer() {
 
           <Card>
             <CardHeader>
+              <CardTitle>Entrega</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  type="button"
+                  variant={shippingMethod === 'DELIVERY' ? 'default' : 'outline'}
+                  onClick={() => setShippingMethod('DELIVERY')}
+                >
+                  Envío a domicilio
+                </Button>
+                <Button
+                  type="button"
+                  variant={shippingMethod === 'PICKUP' ? 'default' : 'outline'}
+                  onClick={() => setShippingMethod('PICKUP')}
+                  disabled={pickupLocations.length === 0}
+                >
+                  Retiro en tienda (BOPIS)
+                </Button>
+              </div>
+              {shippingMethod === 'PICKUP' ? (
+                <select
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                  value={pickupLocationId}
+                  onChange={(e) => setPickupLocationId(e.target.value)}
+                >
+                  <option value="">Selecciona una tienda</option>
+                  {pickupLocations.map((location) => (
+                    <option key={location.id} value={location.id}>
+                      {location.name} — {location.address}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Coupon</CardTitle>
             </CardHeader>
             <CardContent>
@@ -254,7 +305,11 @@ export function CheckoutContainer() {
           <Button
             type="button"
             className="w-full"
-            disabled={!isAddressValid(address) || isSubmitting}
+            disabled={
+              !isAddressValid(address) ||
+              isSubmitting ||
+              (shippingMethod === 'PICKUP' && !pickupLocationId)
+            }
             onClick={handleCreateOrder}
           >
             {isSubmitting ? 'Preparing payment...' : `Continue to payment`}

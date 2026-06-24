@@ -10,7 +10,8 @@ import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.s
 import { EmailNotificationService } from '../notifications/email-notification.service.js';
 import { PushNotificationService } from '../notifications/push-notification.service.js';
 import { CreateOrderDto, CreateOrderItemDto } from './dto/create-order.dto.js';
-import { OrderChannel, OrderStatus } from '@prisma/client';
+import { OrderChannel, OrderStatus, ShippingMethodType } from '@prisma/client';
+import { FulfillmentSource } from '@prisma/client';
 import { BackorderService, type ItemAllocation } from './backorder.service.js';
 import { EventBus } from '../event-bus/event-bus.interface.js';
 import { LoyaltyService } from '../loyalty/loyalty.service.js';
@@ -50,11 +51,24 @@ export class OrdersService {
 
   async createOrder(userId: string | undefined, dto: CreateOrderDto): Promise<CreatedOrderResult> {
     const channel = dto.channel ?? OrderChannel.WEB;
+    const shippingMethod = dto.shippingMethod ?? ShippingMethodType.DELIVERY;
     const customerProfile = await this.resolveCustomerProfile(userId, dto);
     if (!customerProfile.email) throw new BadRequestException('customerEmail required for guest orders');
     if (!dto.items?.length) throw new BadRequestException('Order must contain at least one item');
 
-    await this.captchaService.verifyOrSkip(dto.captchaToken);
+    await this.captchaService.verifyOrSkip(channel === OrderChannel.POS ? undefined : dto.captchaToken);
+
+    if (shippingMethod === ShippingMethodType.PICKUP) {
+      if (!dto.pickupLocationId) {
+        throw new BadRequestException('pickupLocationId is required for pickup orders');
+      }
+      const location = await this.prisma.storeLocation.findFirst({
+        where: { id: dto.pickupLocationId, isActive: true, supportsPickup: true },
+      });
+      if (!location) {
+        throw new BadRequestException('Pickup location not found or unavailable');
+      }
+    }
 
     if (dto.shippingAddress) {
       const addressErrors = validateAddress(dto.shippingAddress);
@@ -117,12 +131,15 @@ export class OrdersService {
       country: shippingAddress?.country,
       province: shippingAddress?.state,
     });
-    const shippingQuote = await this.shippingService.quote({
-      country: shippingAddress?.country,
-      province: shippingAddress?.state,
-      subtotal: discountTotals.subtotal - discountTotals.discount - loyaltyDiscount,
-      freeShipping: discountTotals.freeShipping || loyaltyFreeShipping,
-    });
+    const shippingQuote =
+      shippingMethod === ShippingMethodType.DELIVERY
+        ? await this.shippingService.quote({
+            country: shippingAddress?.country,
+            province: shippingAddress?.state,
+            subtotal: discountTotals.subtotal - discountTotals.discount - loyaltyDiscount,
+            freeShipping: discountTotals.freeShipping || loyaltyFreeShipping,
+          })
+        : { amount: 0, carrier: shippingMethod, estimatedDays: 0 };
 
     const totals = {
       subtotal: discountTotals.subtotal,
@@ -163,6 +180,9 @@ export class OrdersService {
         customerAddress: customerProfile.address,
         status: OrderStatus.PAYMENT_PENDING,
         channel,
+        shippingMethod,
+        pickupLocationId: dto.pickupLocationId,
+        posRegisterId: dto.posRegisterId,
         couponCode: dto.couponCode,
         referralCode: dto.referralCode,
         loyaltyPointsRedeemed,
@@ -222,6 +242,68 @@ export class OrdersService {
       status: order.status,
       shipments: order.shipments,
     };
+  }
+
+  async markReadyForPickup(id: string) {
+    const order = await this.getOrderById(id);
+    if (order.shippingMethod !== ShippingMethodType.PICKUP) {
+      throw new BadRequestException('Order is not a pickup order');
+    }
+    await this.prisma.order.update({
+      where: { id },
+      data: {
+        status: OrderStatus.READY_FOR_PICKUP,
+        pickupReadyAt: new Date(),
+        statusHistory: {
+          create: { status: OrderStatus.READY_FOR_PICKUP, notes: 'Ready for in-store pickup' },
+        },
+      },
+    });
+    await this.notifyPickupReady(id);
+    return { id, status: OrderStatus.READY_FOR_PICKUP };
+  }
+
+  async confirmPickup(id: string) {
+    const order = await this.getOrderById(id);
+    if (order.shippingMethod !== ShippingMethodType.PICKUP) {
+      throw new BadRequestException('Order is not a pickup order');
+    }
+    return this.updateOrderStatus(id, OrderStatus.DELIVERED);
+  }
+
+  private async notifyPickupReady(orderId: string): Promise<void> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        pickupLocation: true,
+        user: { select: { whatsappOptOut: true, emailOptOut: true } },
+      },
+    });
+    if (!order) return;
+
+    const context = {
+      customerName: order.customerName ?? 'Cliente',
+      orderNumber: order.orderNumber,
+      pickupLocation: order.pickupLocation?.name ?? 'Tienda',
+      pickupAddress: order.pickupLocation?.address ?? '',
+    };
+
+    try {
+      if (order.customerPhone) {
+        await this.notificationService.notify(orderId, 'PICKUP_READY', order.customerPhone, context);
+      }
+      if (order.customerEmail) {
+        await this.emailNotificationService.notify(orderId, 'PICKUP_READY', order.customerEmail, context);
+      }
+      await this.pushNotificationService.notifyForOrder(
+        orderId,
+        order.userId,
+        'PICKUP_READY',
+        context,
+      );
+    } catch {
+      // best-effort
+    }
   }
 
   async updateOrderStatus(id: string, status: OrderStatus) {
@@ -323,10 +405,32 @@ export class OrdersService {
 
     const productItems = await Promise.all(
       items.map(async (item) => {
-        const product = await this.prisma.product.findUnique({ where: { id: item.productId }, include: { variants: true } });
+        const product = await this.prisma.product.findUnique({
+          where: { id: item.productId },
+          include: { variants: true, supplier: true, seller: true },
+        });
         if (!product) throw new BadRequestException(`Product ${item.productId} not found`);
         const variant = product.variants.find((v) => v.id === item.variantId);
         const allocation = allocationMap.get(`${item.productId}:${item.variantId ?? ''}`);
+        const lineGross = Number(variant?.price ?? product.price) * item.quantity;
+        let fulfillmentSource: FulfillmentSource = FulfillmentSource.WAREHOUSE;
+        if (product.supplier?.dropshipEnabled) {
+          fulfillmentSource = FulfillmentSource.DROPSHIP;
+        } else if (product.sellerId && product.seller?.status === 'ACTIVE') {
+          fulfillmentSource = FulfillmentSource.SELLER;
+        }
+        const sellerCommissionRate = product.seller ? Number(product.seller.commissionRate) : 0;
+        const dropshipCommissionRate = product.supplier?.dropshipCommissionRate
+          ? Number(product.supplier.dropshipCommissionRate)
+          : 0;
+        const sellerCommissionAmount =
+          fulfillmentSource === FulfillmentSource.SELLER
+            ? Number(((lineGross * sellerCommissionRate) / 100).toFixed(2))
+            : null;
+        const dropshipCommissionAmount =
+          fulfillmentSource === FulfillmentSource.DROPSHIP
+            ? Number(((lineGross * dropshipCommissionRate) / 100).toFixed(2))
+            : null;
         return {
           productId: item.productId,
           variantId: item.variantId ?? null,
@@ -336,6 +440,13 @@ export class OrdersService {
           quantity: item.quantity,
           quantityBackordered: allocation?.quantityBackordered ?? 0,
           fulfillmentStatus: allocation?.fulfillmentStatus,
+          fulfillmentSource,
+          supplierId: product.supplierId,
+          sellerId: product.sellerId,
+          sellerCommissionAmount:
+            sellerCommissionAmount != null ? new Prisma.Decimal(sellerCommissionAmount) : null,
+          dropshipCommissionAmount:
+            dropshipCommissionAmount != null ? new Prisma.Decimal(dropshipCommissionAmount) : null,
         };
       }),
     );
@@ -353,6 +464,11 @@ export class OrdersService {
       quantity: number;
       quantityBackordered?: number;
       fulfillmentStatus?: ItemAllocation['fulfillmentStatus'];
+      fulfillmentSource?: FulfillmentSource;
+      supplierId?: string | null;
+      sellerId?: string | null;
+      sellerCommissionAmount?: Prisma.Decimal | null;
+      dropshipCommissionAmount?: Prisma.Decimal | null;
     }>,
     totals: { subtotal: number; discount: number; taxAmount: number },
     taxLines: Array<{ productId: string; taxRate: number; taxAmount: number }>,
@@ -389,6 +505,11 @@ export class OrdersService {
         quantity: item.quantity,
         quantityBackordered: item.quantityBackordered ?? 0,
         fulfillmentStatus: item.fulfillmentStatus,
+        fulfillmentSource: item.fulfillmentSource,
+        supplierId: item.supplierId,
+        sellerId: item.sellerId,
+        sellerCommissionAmount: item.sellerCommissionAmount,
+        dropshipCommissionAmount: item.dropshipCommissionAmount,
         taxRate: new Prisma.Decimal(taxLine?.taxRate ?? 15),
         taxAmount: new Prisma.Decimal(taxLine?.taxAmount ?? 0),
         discountAmount: new Prisma.Decimal(discount),
