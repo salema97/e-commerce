@@ -11,40 +11,79 @@ import type { Shipment } from '@repo/shared-types';
 
 interface ShipmentPanelProps {
   orderId: string;
+  initialShipments: Shipment[];
 }
 
-export function ShipmentPanel({ orderId }: ShipmentPanelProps) {
+type ShipmentFormState = {
+  carrier: string;
+  trackingNumber: string;
+  trackingUrl: string;
+  isSubmitting: boolean;
+  error: string | null;
+};
+
+type ShipmentFormAction =
+  | {
+      type: 'set_field';
+      field: 'carrier' | 'trackingNumber' | 'trackingUrl';
+      value: string;
+    }
+  | { type: 'submit_start' }
+  | { type: 'submit_success' }
+  | { type: 'submit_error'; message: string };
+
+const initialFormState: ShipmentFormState = {
+  carrier: 'Servientrega',
+  trackingNumber: '',
+  trackingUrl: '',
+  isSubmitting: false,
+  error: null,
+};
+
+function shipmentFormReducer(
+  state: ShipmentFormState,
+  action: ShipmentFormAction,
+): ShipmentFormState {
+  switch (action.type) {
+    case 'set_field':
+      return { ...state, [action.field]: action.value };
+    case 'submit_start':
+      return { ...state, isSubmitting: true, error: null };
+    case 'submit_success':
+      return {
+        ...state,
+        isSubmitting: false,
+        trackingNumber: '',
+        trackingUrl: '',
+      };
+    case 'submit_error':
+      return { ...state, isSubmitting: false, error: action.message };
+    default:
+      return state;
+  }
+}
+
+export function ShipmentPanel({ orderId, initialShipments }: ShipmentPanelProps) {
   const router = useRouter();
   const api = useApiClient();
-  const [shipments, setShipments] = React.useState<Shipment[]>([]);
-  const [carrier, setCarrier] = React.useState('Servientrega');
-  const [trackingNumber, setTrackingNumber] = React.useState('');
-  const [trackingUrl, setTrackingUrl] = React.useState('');
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    void api.fulfillment.listShipments(orderId).then(setShipments).catch(() => undefined);
-  }, [api, orderId]);
+  const [form, dispatch] = React.useReducer(shipmentFormReducer, initialFormState);
 
   async function handleCreateShipment(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
+    dispatch({ type: 'submit_start' });
     try {
-      const shipment = await api.fulfillment.createShipment(orderId, {
-        carrier,
-        trackingNumber: trackingNumber || undefined,
-        trackingUrl: trackingUrl || undefined,
+      await api.fulfillment.createShipment(orderId, {
+        carrier: form.carrier,
+        trackingNumber: form.trackingNumber || undefined,
+        trackingUrl: form.trackingUrl || undefined,
       });
-      setShipments((current) => [...current, shipment]);
-      setTrackingNumber('');
-      setTrackingUrl('');
+      dispatch({ type: 'submit_success' });
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo crear el envío.');
-    } finally {
-      setIsSubmitting(false);
+      dispatch({
+        type: 'submit_error',
+        message: err instanceof Error ? err.message : 'No se pudo crear el envío.',
+      });
     }
   }
 
@@ -54,9 +93,9 @@ export function ShipmentPanel({ orderId }: ShipmentPanelProps) {
         <CardTitle>Fulfillment</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        {shipments.length > 0 ? (
+        {initialShipments.length > 0 ? (
           <div className="flex flex-col gap-3">
-            {shipments.map((shipment) => (
+            {initialShipments.map((shipment) => (
               <div key={shipment.id} className="rounded-md border p-3 text-sm">
                 <p className="font-medium">{shipment.carrier}</p>
                 <p className="text-muted-foreground">
@@ -82,7 +121,11 @@ export function ShipmentPanel({ orderId }: ShipmentPanelProps) {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => void api.fulfillment.markDelivered(shipment.id).then(() => router.refresh())}
+                    onClick={() =>
+                      void api.fulfillment
+                        .markDelivered(shipment.id)
+                        .then(() => router.refresh())
+                    }
                   >
                     Marcar entregado
                   </Button>
@@ -97,27 +140,41 @@ export function ShipmentPanel({ orderId }: ShipmentPanelProps) {
         <form onSubmit={handleCreateShipment} className="flex flex-col gap-3">
           <div className="grid gap-2">
             <Label htmlFor="carrier">Transportista</Label>
-            <Input id="carrier" value={carrier} onChange={(e) => setCarrier(e.target.value)} />
+            <Input
+              id="carrier"
+              value={form.carrier}
+              onChange={(e) =>
+                dispatch({ type: 'set_field', field: 'carrier', value: e.target.value })
+              }
+            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="trackingNumber">Número de guía</Label>
             <Input
               id="trackingNumber"
-              value={trackingNumber}
-              onChange={(e) => setTrackingNumber(e.target.value)}
+              value={form.trackingNumber}
+              onChange={(e) =>
+                dispatch({
+                  type: 'set_field',
+                  field: 'trackingNumber',
+                  value: e.target.value,
+                })
+              }
             />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="trackingUrl">URL de rastreo</Label>
             <Input
               id="trackingUrl"
-              value={trackingUrl}
-              onChange={(e) => setTrackingUrl(e.target.value)}
+              value={form.trackingUrl}
+              onChange={(e) =>
+                dispatch({ type: 'set_field', field: 'trackingUrl', value: e.target.value })
+              }
             />
           </div>
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Creando envío...' : 'Crear envío'}
+          {form.error ? <p className="text-sm text-red-600">{form.error}</p> : null}
+          <Button type="submit" disabled={form.isSubmitting}>
+            {form.isSubmitting ? 'Creando envío...' : 'Crear envío'}
           </Button>
         </form>
       </CardContent>

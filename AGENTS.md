@@ -380,6 +380,17 @@ EVOLUTION_INSTANCE_NAME=ecommerce
 RESEND_API_KEY=re_xxx
 POSTHOG_KEY=phc_xxx
 
+# Shipping, taxes & fulfillment (Phase 12)
+SHIPPING_FREE_THRESHOLD=50
+SHIPPING_FLAT_RATE=5
+CARRIER_RATE_PROVIDER=zones
+TAX_PROVIDER=composite
+INTERNATIONAL_TAX_PROVIDER=stripe_tax
+STRIPE_TAX_ENABLED=false
+FULFILLMENT_PROVIDER=manual
+WMS_PROVIDER=manual
+ALLOW_BACKORDERS=false
+
 # SRI Ecuador e-invoicing (direct integration)
 SRI_MODE=direct
 SRI_RUC=xxx

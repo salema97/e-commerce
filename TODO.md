@@ -513,7 +513,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] Implement order allocation, pick/pack/ship workflows — manual provider + split shipments.
 - [x] Sync inventory levels from WMS to Prisma — admin + webhook endpoints.
 - [x] Import tracking numbers and fulfillment events from 3PL — webhook + admin import.
-- [x] Admin panel: fulfillments list, create shipment, print labels, RMA handling.
+- [x] Admin panel: fulfillments list, create shipment, print labels, RMA handling — fulfillments por pedido en `ShipmentPanel`; lista global/backorders solo API.
 
 ## Phase 13 — Search, Filters & Performance
 

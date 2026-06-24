@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
 import { useApiClient } from '@/lib/client-api';
 import { formatPrice, orderStatusLabel } from '@repo/shared-utils';
-import type { Order, OrderStatus } from '@repo/shared-types';
+import type { Order, OrderStatus, Shipment } from '@repo/shared-types';
 import { RefundPanel } from './refund-panel';
 import { ShipmentPanel } from './shipment-panel';
 
@@ -29,7 +29,13 @@ const ORDER_STATUSES: OrderStatus[] = [
   'PARTIALLY_REFUNDED',
 ];
 
-export default function AdminOrderDetailPage({ order }: { order: Order }) {
+export default function AdminOrderDetailPage({
+  order,
+  initialShipments,
+}: {
+  order: Order;
+  initialShipments: Shipment[];
+}) {
   const router = useRouter();
   const api = useApiClient();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -124,7 +130,7 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
 
           <RefundPanel order={order} />
 
-          <ShipmentPanel orderId={order.id} />
+          <ShipmentPanel orderId={order.id} initialShipments={initialShipments} />
 
           <NeoReveal delay={0.08}>
             <Card>

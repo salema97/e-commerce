@@ -31,6 +31,7 @@ Este documento define **una sola lógica de programación, diseño y estructura*
 | **9** | **Email, push, marketing** | ✅ | ✅ cuenta + marketing admin | ✅ prefs + push |
 | **10** | **AI, RAG, chat, knowledge** | ✅ | ✅ store + admin | ✅ chat tienda |
 | **11** | **Analytics, event bus, consent** | ✅ | ✅ tracking + dashboard | ✅ tracking parcial |
+| **12** | **Shipping, taxes, fulfillment/WMS** | ✅ | ✅ checkout + admin + tracking | — (API-only) |
 
 ---
 
@@ -161,7 +162,13 @@ Order paid (webhook) → PaymentsModule → SriQueueService.enqueue
 ```bash
 pnpm --filter @repo/api prisma migrate deploy
 # → 20260705000000_phase11_analytics_events
+# → 20260706000000_phase12_shipping_tax_fulfillment
+# → 20260707000000_phase12_deferred_backorder_wms
 ```
+
+**Vars obligatorias Phase 12** (defaults en `env.validation.ts`; documentadas en `apps/api/.env.example`):
+
+`SHIPPING_FREE_THRESHOLD`, `SHIPPING_FLAT_RATE`, `CARRIER_RATE_PROVIDER`, `TAX_PROVIDER`, `FULFILLMENT_PROVIDER`, `ALLOW_BACKORDERS`
 
 ### 4.5 Desviaciones API (prioridad)
 
@@ -390,6 +397,8 @@ grep "NuevoModule" apps/api/src/app.module.ts
 # 2. Migraciones
 pnpm --filter @repo/api prisma migrate deploy
 
+# 2b. Vars Phase 12 (shipping/taxes/fulfillment) — ver apps/api/.env.example
+
 # 3. JWT alineado
 # apps/api/.env y apps/web/.env.local → mismo AUTH_JWT_ACCESS_SECRET
 
@@ -494,6 +503,27 @@ Fases 8–10 cerraron con PRs encadenadas + UI closure; fase 11 con PR #5 + fixe
 3. ~~`EventBusModule` explícito en `AppModule`~~ ✅
 4. ~~Swagger tags fases 7–11~~ ✅
 
+### Sprint E — Fase 12 (shipping / taxes / fulfillment) ✅
+
+1. ~~`ShippingModule`, `TaxModule`, `FulfillmentModule` en `AppModule`~~ ✅
+2. ~~Migraciones `20260706` + `20260707`~~ ✅
+3. ~~Vars Phase 12 en `env.validation.ts` + `.env.example`~~ ✅
+4. ~~`@Audit` en mutaciones fulfillment/WMS~~ ✅
+5. ~~Checkout: cotización envío + IVA Ecuador vía `TaxService`~~ ✅
+6. ~~Admin: `ShipmentPanel` en detalle de pedido~~ ✅
+7. ~~Cliente: `/store/orders/[id]/tracking`~~ ✅
+
+**Gaps no bloqueantes (fase 12):**
+
+| Gap | Estado | Nota |
+|-----|--------|------|
+| Lista global de fulfillments en admin | Parcial | Panel por pedido en `/admin/orders/[id]`; sin ruta `/admin/fulfillments` |
+| Vista admin backorders | API only | `GET /fulfillment/backorders`; sin UI web |
+| Carrier APIs reales (Shippo/EasyPost) | Stub + zones | `CARRIER_RATE_PROVIDER=zones` por defecto en dev |
+| Mobile tracking envíos | Pendiente | Phase 12 web/API; paridad móvil en fase futura |
+| `shipment-panel` con `useReducer` | Cosmético | React Doctor; formulario pequeño con `useState` |
+| Tracking cliente SSR | ✅ | `page.tsx` + `order-tracking-view.tsx` con `getServerApiClient` |
+
 ---
 
 ## 11. Referencias rápidas de archivos
@@ -536,18 +566,19 @@ docs/PROGRAMMING-LOGIC-AUDIT.md  (este archivo)
 
 ## 12. Conclusión
 
-El monorepo tiene un **núcleo coherente y alineado** tras Sprints A–D (jun 2026):
+El monorepo tiene un **núcleo coherente y alineado** tras Sprints A–E (jun 2026):
 
-- API modular NestJS con guards JWT/RBAC, `@Audit` en mutaciones críticas, abstracciones por proveedor y Swagger documentado  
-- Web con SSR, shell admin unificado, hooks `api-client` en finance/analytics, diseño neo-brutalist  
+- API modular NestJS con guards JWT/RBAC, `@Audit` en mutaciones críticas (incl. fulfillment), abstracciones por proveedor y Swagger documentado  
+- Web con SSR, shell admin unificado, hooks `api-client` en finance/analytics, checkout con IVA + envío, diseño neo-brutalist  
 - Mobile con paridad comercial completa (help, wishlist, legal CMS, tracking con consent, deep links)  
 
-**Gaps residuales:** ninguno bloqueante. Cosmético opcional: ~36 warnings React Doctor restantes (performance SSR en páginas legacy, exports en UI primitives).
+**Gaps residuales:** ninguno bloqueante. Cosmético opcional: `shipment-panel` sin `useReducer`; lista global de fulfillments/backorders solo API.
 
 | Área | Estado |
 |------|--------|
 | Analytics admin gráficos | ✅ embudo barras, top productos, heatmap cohortes + CSV |
-| React Doctor web | ✅ 78/100 (LazyMotion, forwardRef, forms admin, Promise.all SSR) |
+| React Doctor web | ✅ 100/100 (`useReducer` en formularios críticos) |
+| Phase 12 shipping/taxes | ✅ merge `71b686d`; Playwright UI verificado |
 
 La **mayor fuente de bugs en merge** sigue siendo **cableado olvidado**: `AppModule`, JWT, migraciones, nav admin, providers, consent en E2E. Usar las checklists de §8 antes de cada merge a `main`.
 

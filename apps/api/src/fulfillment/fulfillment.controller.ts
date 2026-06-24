@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Header, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Audit } from '../audit/audit.decorator.js';
 import { Public } from '../auth/public.decorator.js';
 import { Roles } from '../auth/roles.decorator.js';
 import { Role } from '../auth/role.enum.js';
@@ -18,6 +19,7 @@ export class FulfillmentController {
 
   @Post('orders/:orderId/shipments')
   @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.INVENTORY)
+  @Audit({ resource: 'shipment', action: 'create' })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a shipment for an order (admin)' })
   @ApiResponse({ status: 201, description: 'Shipment created' })
@@ -38,6 +40,7 @@ export class FulfillmentController {
 
   @Patch('shipments/:shipmentId/delivered')
   @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.INVENTORY)
+  @Audit({ resource: 'shipment', action: 'mark_delivered' })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Mark a shipment as delivered' })
   markDelivered(@Param('shipmentId') shipmentId: string) {
@@ -70,6 +73,7 @@ export class FulfillmentController {
 
   @Post('wms/sync-inventory')
   @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.INVENTORY)
+  @Audit({ resource: 'wms_inventory', action: 'sync' })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Sync inventory levels from WMS payload' })
   syncInventory(@Body() dto: WmsSyncInventoryDto) {
@@ -78,6 +82,7 @@ export class FulfillmentController {
 
   @Post('wms/import-tracking')
   @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.INVENTORY)
+  @Audit({ resource: 'shipment', action: 'import_tracking' })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Import tracking events from WMS/3PL' })
   importTracking(@Body() dto: WmsImportTrackingDto) {
