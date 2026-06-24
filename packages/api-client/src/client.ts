@@ -41,7 +41,10 @@ import type {
   Message,
   PaginatedConversations,
   PaginatedMessages,
-  QuickReply,
+  AuthResponse,
+  LoginDto,
+  RegisterDto,
+  AuthUser,
 } from '@repo/shared-types';
 
 export interface ApiClientOptions {
@@ -73,7 +76,9 @@ async function parseResponse(response: Response): Promise<unknown> {
 }
 
 function buildURL(baseURL: string, path: string, query?: Record<string, string | number | boolean | undefined>): string {
-  const url = new URL(path, baseURL);
+  const normalizedBase = baseURL.endsWith('/') ? baseURL : `${baseURL}/`;
+  const normalizedPath = path.startsWith('/') ? path.slice(1) : path;
+  const url = new URL(normalizedPath, normalizedBase);
 
   if (query) {
     for (const [key, value] of Object.entries(query)) {
@@ -134,7 +139,13 @@ export function createApiClient(options: ApiClientOptions) {
 
   return {
     auth: {
-      getMe: () => request<User>('GET', '/auth/me'),
+      login: (data: LoginDto) => request<AuthResponse>('POST', '/auth/login', data),
+      register: (data: RegisterDto) => request<AuthResponse>('POST', '/auth/register', data),
+      logout: (refreshToken?: string) =>
+        request<{ ok: boolean }>('POST', '/auth/logout', refreshToken ? { refreshToken } : undefined),
+      refresh: (refreshToken: string) =>
+        request<AuthResponse['tokens']>('POST', '/auth/refresh', { refreshToken }),
+      getMe: () => request<AuthUser>('GET', '/auth/me'),
     },
     users: {
       findAll: () => request<User[]>('GET', '/users'),
