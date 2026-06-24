@@ -914,6 +914,24 @@ export function createQueryHooks(client: ApiClient) {
         queryFn: () => client.ai.faqs.findPublished(),
         ...options,
       }),
+
+    useUploadExpenseReceipt: (
+      options?: UseMutationOptions<
+        { key: string },
+        Error,
+        { expenseId: string; data: UploadExpenseReceiptDto }
+      >,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ expenseId, data }) =>
+          client.finance.expenses.uploadReceipt(expenseId, data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['finance', 'expenses'] });
+        },
+        ...options,
+      });
+    },
   };
 }
 

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useApiClient, useAuthApiReady } from '@/lib/client-api';
+import { useApiClient, useAuthApiReady, useApiQueryHooks } from '@/lib/client-api';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +34,7 @@ export function ExpensesView({
   initialCategories: ExpenseCategory[];
 }) {
   const api = useApiClient();
+  const hooks = useApiQueryHooks();
   const authReady = useAuthApiReady();
   const queryClient = useQueryClient();
   const [amount, setAmount] = React.useState('');
@@ -69,6 +70,25 @@ export function ExpensesView({
       setDescription('');
     },
   });
+
+  const uploadReceiptMutation = hooks.useUploadExpenseReceipt();
+
+  async function handleReceiptUpload(expenseId: string, file: File): Promise<void> {
+    const arrayBuffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = '';
+    for (let index = 0; index < bytes.length; index += 1) {
+      binary += String.fromCharCode(bytes[index] ?? 0);
+    }
+    await uploadReceiptMutation.mutateAsync({
+      expenseId,
+      data: {
+        fileName: file.name,
+        contentBase64: btoa(binary),
+        contentType: file.type || 'application/octet-stream',
+      },
+    });
+  }
 
   const categoryMap = React.useMemo(() => {
     const map = new Map<string, string>();
@@ -159,6 +179,7 @@ export function ExpensesView({
             <TableHead>Monto</TableHead>
             <TableHead>Descripción</TableHead>
             <TableHead>Adjuntos</TableHead>
+            <TableHead>Recibo</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -176,6 +197,23 @@ export function ExpensesView({
                 {expense.description ?? '—'}
               </TableCell>
               <TableCell>{expense.attachmentKeys?.length ?? 0}</TableCell>
+              <TableCell>
+                <label className="cursor-pointer text-xs font-bold uppercase underline">
+                  Subir
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    className="sr-only"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) {
+                        void handleReceiptUpload(expense.id, file);
+                      }
+                      event.target.value = '';
+                    }}
+                  />
+                </label>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
