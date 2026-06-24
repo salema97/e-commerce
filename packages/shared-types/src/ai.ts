@@ -32,3 +32,41 @@ export interface ChatSession {
   webSessionId: string;
   contactName?: string | null;
 }
+
+export interface CmsPage {
+  id: string;
+  slug: string;
+  title: string;
+  bodyMarkdown: string;
+  isPublished: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateFaqDto {
+  question: string;
+  answer: string;
+  isPublished?: boolean;
+  sortOrder?: number;
+}
+
+export interface UpdateFaqDto {
+  question?: string;
+  answer?: string;
+  isPublished?: boolean;
+  sortOrder?: number;
+}
+
+export interface CreateCmsPageDto {
+  slug: string;
+  title: string;
+  bodyMarkdown: string;
+  isPublished?: boolean;
+}
+
+export interface UpdateCmsPageDto {
+  slug?: string;
+  title?: string;
+  bodyMarkdown?: string;
+  isPublished?: boolean;
+}

@@ -56,12 +56,21 @@ import type {
   Expense,
   CreateExpenseDto,
   UpdateExpenseDto,
+  UploadExpenseReceiptDto,
   CashFlowReport,
   AdminStoreCredit,
   SearchResultItem,
   Faq,
+  CreateFaqDto,
+  UpdateFaqDto,
+  CmsPage,
+  CreateCmsPageDto,
+  UpdateCmsPageDto,
   ProductContentDraft,
   ChatSession,
+  Promotion,
+  DistributePromoDto,
+  DistributePromoResponse,
 } from '@repo/shared-types';
 import type { ApiClient } from './client.js';
 
@@ -105,6 +114,9 @@ export const queryKeys = {
   chatMessages: (sessionId: string) => ['chat', sessionId, 'messages'] as const,
   productContentDraft: (productId: string) => ['ai', 'products', productId, 'draft'] as const,
   faqs: ['ai', 'faqs'] as const,
+  adminFaqs: ['ai', 'faqs', 'admin'] as const,
+  adminCmsPages: ['ai', 'cms-pages', 'admin'] as const,
+  marketingPromotions: ['marketing', 'promotions'] as const,
 };
 
 export function createQueryHooks(client: ApiClient) {
@@ -476,6 +488,17 @@ export function createQueryHooks(client: ApiClient) {
           queryClient.invalidateQueries({ queryKey: queryKeys.orders() });
           queryClient.invalidateQueries({ queryKey: queryKeys.order(orderId) });
           queryClient.invalidateQueries({ queryKey: ['orders', orderId, 'refunds'] });
+        },
+        ...options,
+      });
+    },
+
+    useApproveRefund: (options?: UseMutationOptions<Refund, Error, string>) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (refundId) => client.refunds.approve(refundId),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.orders() });
         },
         ...options,
       });
@@ -915,6 +938,119 @@ export function createQueryHooks(client: ApiClient) {
         ...options,
       }),
 
+    useAdminFaqs: (
+      options?: Omit<UseQueryOptions<Faq[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.adminFaqs,
+        queryFn: () => client.ai.faqs.findAllAdmin(),
+        ...options,
+      }),
+
+    useCreateFaq: (options?: UseMutationOptions<Faq, Error, CreateFaqDto>) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.ai.faqs.create(data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminFaqs });
+          queryClient.invalidateQueries({ queryKey: queryKeys.faqs });
+        },
+        ...options,
+      });
+    },
+
+    useUpdateFaq: (
+      options?: UseMutationOptions<Faq, Error, { id: string; data: UpdateFaqDto }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, data }) => client.ai.faqs.update(id, data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminFaqs });
+          queryClient.invalidateQueries({ queryKey: queryKeys.faqs });
+        },
+        ...options,
+      });
+    },
+
+    useDeleteFaq: (options?: UseMutationOptions<{ success: boolean }, Error, string>) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (id) => client.ai.faqs.remove(id),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminFaqs });
+          queryClient.invalidateQueries({ queryKey: queryKeys.faqs });
+        },
+        ...options,
+      });
+    },
+
+    useAdminCmsPages: (
+      options?: Omit<UseQueryOptions<CmsPage[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.adminCmsPages,
+        queryFn: () => client.ai.cmsPages.findAllAdmin(),
+        ...options,
+      }),
+
+    useCreateCmsPage: (options?: UseMutationOptions<CmsPage, Error, CreateCmsPageDto>) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.ai.cmsPages.create(data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminCmsPages });
+        },
+        ...options,
+      });
+    },
+
+    useUpdateCmsPage: (
+      options?: UseMutationOptions<CmsPage, Error, { id: string; data: UpdateCmsPageDto }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, data }) => client.ai.cmsPages.update(id, data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminCmsPages });
+        },
+        ...options,
+      });
+    },
+
+    useDeleteCmsPage: (
+      options?: UseMutationOptions<{ success: boolean }, Error, string>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (id) => client.ai.cmsPages.remove(id),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminCmsPages });
+        },
+        ...options,
+      });
+    },
+
+    useMarketingPromotions: (
+      options?: Omit<
+        UseQueryOptions<Array<Pick<Promotion, 'id' | 'name'>>, Error>,
+        'queryKey' | 'queryFn'
+      >,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.marketingPromotions,
+        queryFn: () => client.marketing.listPromotions(),
+        ...options,
+      }),
+
+    useDistributePromo: (
+      options?: UseMutationOptions<DistributePromoResponse, Error, DistributePromoDto>,
+    ) =>
+      useMutation({
+        mutationFn: (data) => client.marketing.distributePromo(data),
+        ...options,
+      }),
+
     useUploadExpenseReceipt: (
       options?: UseMutationOptions<
         { key: string },
@@ -932,6 +1068,26 @@ export function createQueryHooks(client: ApiClient) {
         ...options,
       });
     },
+
+    useRegisterPushToken: (
+      options?: UseMutationOptions<
+        { id: string; token: string; platform: string },
+        Error,
+        { token: string; platform: 'ios' | 'android' | 'web' }
+      >,
+    ) =>
+      useMutation({
+        mutationFn: (data) => client.notifications.pushTokens.register(data),
+        ...options,
+      }),
+
+    useRemovePushToken: (
+      options?: UseMutationOptions<void, Error, string>,
+    ) =>
+      useMutation({
+        mutationFn: (token) => client.notifications.pushTokens.remove(token),
+        ...options,
+      }),
   };
 }
 

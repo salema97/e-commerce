@@ -15,6 +15,8 @@ import {
   MessageSquare,
   BarChart3,
   FileText,
+  BookOpen,
+  Megaphone,
   Store,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -30,7 +32,9 @@ const navIcons: Record<string, React.ElementType> = {
   '/admin/orders': ShoppingBag,
   '/admin/returns': RotateCcw,
   '/admin/customers': Users,
+  '/admin/marketing': Megaphone,
   '/admin/support': MessageSquare,
+  '/admin/knowledge': BookOpen,
   '/admin/invoices': FileText,
   '/admin/finance': BarChart3,
 };

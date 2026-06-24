@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { FormSelect } from '@/components/ui/form-select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { useApiClient } from '@/lib/client-api';
 import type { ProductStatus } from '@repo/shared-types';
 
@@ -42,10 +42,13 @@ export default function NewProductPage() {
   }
 
   return (
-    <AnimatedPageShell
-      className="flex flex-col gap-6"
-      header={<h1 className="text-2xl font-bold">Agregar producto</h1>}
-    >
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
+      <AdminPageHeader
+        title="Agregar producto"
+        subtitle="Catálogo / Nuevo"
+        showNetworkStatus={false}
+      />
+
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Card>
           <CardHeader>
@@ -117,6 +120,6 @@ export default function NewProductPage() {
           </Button>
         </div>
       </form>
-    </AnimatedPageShell>
+    </div>
   );
 }

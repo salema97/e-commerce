@@ -23,8 +23,18 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/help" className="hover:text-neo-gold">
+                  Preguntas frecuentes
+                </Link>
+              </li>
+              <li>
                 <Link href="/orders" className="hover:text-neo-gold">
                   Pedidos
+                </Link>
+              </li>
+              <li>
+                <Link href="/account/notifications" className="hover:text-neo-gold">
+                  Preferencias
                 </Link>
               </li>
               <li>

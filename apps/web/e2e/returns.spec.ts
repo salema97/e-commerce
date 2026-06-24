@@ -13,6 +13,15 @@ import {
 
 const API_BASE = 'http://localhost:3001/v1';
 
+async function selectFirstReturnItem(page: import('@playwright/test').Page): Promise<void> {
+  const checkbox = page.getByRole('checkbox').first();
+  await checkbox.click();
+  if ((await checkbox.getAttribute('data-state')) !== 'checked') {
+    await checkbox.click({ force: true });
+  }
+  await expect(checkbox).toHaveAttribute('data-state', 'checked');
+}
+
 async function expectReturnForOrder(
   request: import('@playwright/test').APIRequestContext,
   orderId: string,
@@ -39,14 +48,17 @@ test.describe('returns e2e', () => {
     await authenticatePage(page, TEST_CUSTOMER);
     await page.goto(`/orders/${order.id}`);
 
-    await expect(page.locator('body')).toContainText('Request return');
-    await page.getByRole('button', { name: 'Request return' }).click();
+    await expect(page.locator('body')).toContainText('Solicitar devolución');
+    await page.getByRole('button', { name: 'Solicitar devolución' }).click();
 
     await expect(page).toHaveURL(`/orders/${order.id}/return`);
-    await page.locator('input[type="checkbox"]').first().check();
-    await page.locator('input[placeholder="Reason for returning this item"]').first().fill('Defective');
+    await selectFirstReturnItem(page);
+    await page
+      .getByPlaceholder('Motivo de la devolución de este artículo')
+      .first()
+      .fill('Defectuoso');
 
-    await page.getByRole('button', { name: 'Submit return request' }).click();
+    await page.getByRole('button', { name: 'Enviar solicitud de devolución' }).click();
 
     await expect(page).toHaveURL(`/orders/${order.id}`, { timeout: 15000 });
     await expectReturnForOrder(request, order.id);
@@ -65,19 +77,19 @@ test.describe('returns e2e', () => {
     await authenticatePage(page, TEST_ADMIN);
     await page.goto('/admin/returns');
 
-    await expect(page.locator('body')).toContainText('Returns');
+    await expect(page.locator('body')).toContainText('Devoluciones');
     const row = page.getByRole('row').filter({ hasText: returnRequest.id.slice(0, 8) });
-    await row.getByRole('link', { name: 'View' }).click();
+    await row.getByRole('link', { name: 'Ver' }).click();
 
     await expect(page).toHaveURL(new RegExp(`/admin/returns/${returnRequest.id}$`));
-    await page.getByRole('button', { name: 'Resolve' }).click();
+    await page.getByRole('button', { name: 'Resolver' }).click();
 
     await expect(page).toHaveURL(`/admin/returns/${returnRequest.id}/resolve`);
-    await page.locator('input[value="STORE_CREDIT"]').check();
-    await page.getByRole('button', { name: 'Confirm resolution' }).click();
+    await page.getByRole('radio', { name: 'Crédito en tienda' }).click();
+    await page.getByRole('button', { name: 'Confirmar resolución' }).click();
 
     await expect(page).toHaveURL(`/admin/returns/${returnRequest.id}`, { timeout: 15000 });
-    await expect(page.locator('body')).toContainText('Resolved');
+    await expect(page.locator('body')).toContainText('Resuelta');
   });
 
   test('guest creates a return request using the order email', async ({ page, request }) => {
@@ -91,14 +103,17 @@ test.describe('returns e2e', () => {
     await clearAuth(page);
     await page.goto(`/orders/${order.id}/return`);
 
-    await expect(page.locator('body')).toContainText('Order email');
+    await expect(page.locator('body')).toContainText('Correo del pedido');
     await page.locator('input[type="email"]').fill(customerEmail);
-    await page.locator('input[type="checkbox"]').first().check();
-    await page.locator('input[placeholder="Reason for returning this item"]').first().fill('Wrong size');
+    await selectFirstReturnItem(page);
+    await page
+      .getByPlaceholder('Motivo de la devolución de este artículo')
+      .first()
+      .fill('Talla incorrecta');
 
-    await page.getByRole('button', { name: 'Submit return request' }).click();
+    await page.getByRole('button', { name: 'Enviar solicitud de devolución' }).click();
 
-    await expect(page.locator('body')).toContainText('Return request submitted');
-    await expect(page.locator('body')).toContainText('Requested');
+    await expect(page.locator('body')).toContainText('Solicitud de devolución enviada');
+    await expect(page.locator('body')).toContainText('Solicitada');
   });
 });

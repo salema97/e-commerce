@@ -315,11 +315,11 @@ export async function seedDatabase(prisma: PrismaClient): Promise<void> {
     }),
     prisma.inventory.upsert({
       where: { productId_variantId: { productId: productShirt.id, variantId: IDS.variantShirtM } },
-      update: { quantity: 120 },
+      update: { quantity: 0 },
       create: {
         productId: productShirt.id,
         variantId: IDS.variantShirtM,
-        quantity: 120,
+        quantity: 0,
         reservedQuantity: 0,
         lowStockThreshold: 20,
       },
@@ -856,6 +856,42 @@ export async function seedDatabase(prisma: PrismaClient): Promise<void> {
       slug: 'politica-devoluciones',
       bodyMarkdown:
         'Puedes solicitar una devolución dentro de los 30 días. Contáctanos por WhatsApp o chat web.',
+      isPublished: true,
+    },
+  });
+
+  await prisma.cmsPage.upsert({
+    where: { slug: 'politica-privacidad' },
+    update: {},
+    create: {
+      title: 'Política de privacidad',
+      slug: 'politica-privacidad',
+      bodyMarkdown:
+        'Respetamos tu privacidad. Solo usamos tus datos para procesar pedidos, soporte y comunicaciones relacionadas con tu compra.',
+      isPublished: true,
+    },
+  });
+
+  await prisma.cmsPage.upsert({
+    where: { slug: 'terminos-servicio' },
+    update: {},
+    create: {
+      title: 'Términos de servicio',
+      slug: 'terminos-servicio',
+      bodyMarkdown:
+        'Al usar NEO.STORE aceptas nuestros términos de compra, envío y facturación electrónica conforme a la normativa ecuatoriana.',
+      isPublished: true,
+    },
+  });
+
+  await prisma.cmsPage.upsert({
+    where: { slug: 'politica-envios' },
+    update: {},
+    create: {
+      title: 'Política de envíos',
+      slug: 'politica-envios',
+      bodyMarkdown:
+        'Enviamos a todo el Ecuador. Los tiempos estimados son de 2 a 5 días hábiles según la ciudad de destino.',
       isPublished: true,
     },
   });

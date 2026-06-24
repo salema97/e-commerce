@@ -26,3 +26,5 @@ export const adminOrSupportRoles: Role[] = [
   'FINANCE',
   'INVENTORY',
 ];
+export const knowledgeRoles: Role[] = ['SUPER_ADMIN', 'ADMIN', 'SUPPORT'];
+export const knowledgeEditorRoles: Role[] = ['SUPER_ADMIN', 'ADMIN'];

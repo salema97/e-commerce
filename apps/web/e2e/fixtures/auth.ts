@@ -78,15 +78,16 @@ export async function createTestOrder(
   } = {},
 ): Promise<{ id: string; orderNumber: string }> {
   const adminHeaders = await getApiAuthHeaders(request, 'ADMIN');
-  const now = new Date();
+  const now = Date.now();
+  const unique = `${now}-${Math.random().toString(36).slice(2, 9)}`;
   const productRes = await request.post(`${API_BASE}/products`, {
     data: {
-      name: `Test Product ${now.getTime()}`,
-      slug: `test-product-${now.getTime()}`,
-      sku: `TEST-${now.getTime()}`,
+      name: `Test Product ${unique}`,
+      slug: `test-product-${unique}`,
+      sku: `TEST-${unique}`,
       status: 'ACTIVE',
       price: 49.99,
-      variants: [{ sku: `TEST-${now.getTime()}-BLK`, name: 'Black', price: 49.99 }],
+      variants: [{ sku: `TEST-${unique}-BLK`, name: 'Black', price: 49.99 }],
     },
     headers: adminHeaders,
   });

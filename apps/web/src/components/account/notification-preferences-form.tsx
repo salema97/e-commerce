@@ -3,86 +3,92 @@
 import * as React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { useAuth } from '@/contexts/auth-context';
+import type { NotificationPreferences } from '@repo/shared-types';
 
-export function NotificationPreferencesForm(): React.ReactElement {
+interface NotificationPreferencesFormProps {
+  initialPreferences: NotificationPreferences;
+}
+
+export function NotificationPreferencesForm({
+  initialPreferences,
+}: NotificationPreferencesFormProps): React.ReactElement {
   const api = useApiClient();
   const authReady = useAuthApiReady();
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data } = useQuery({
     queryKey: ['notification-preferences'],
     queryFn: () => api.notifications.preferences.get(),
+    initialData: initialPreferences,
     enabled: authReady && Boolean(user),
   });
 
   const mutation = useMutation({
-    mutationFn: (payload: {
-      emailOptOut?: boolean;
-      marketingEmailOptOut?: boolean;
-      whatsappOptOut?: boolean;
-    }) => api.notifications.preferences.update(payload),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['notification-preferences'] });
+    mutationFn: (payload: Partial<NotificationPreferences>) =>
+      api.notifications.preferences.update(payload),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(['notification-preferences'], updated);
     },
   });
 
-  if (!user) {
+  if (!user || !data) {
     return <p className="text-muted-foreground">Inicia sesión para gestionar tus preferencias.</p>;
-  }
-
-  if (isLoading || !data) {
-    return <p className="text-muted-foreground">Cargando preferencias…</p>;
   }
 
   return (
     <div className="space-y-6">
-      <label className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <Label>Emails transaccionales</Label>
+          <Label htmlFor="email-opt-out">Emails transaccionales</Label>
           <p className="text-sm text-muted-foreground">
             Confirmaciones de pedido, envíos y reembolsos.
           </p>
         </div>
-        <input
-          type="checkbox"
+        <Checkbox
+          id="email-opt-out"
           checked={!data.emailOptOut}
-          onChange={(event) => mutation.mutate({ emailOptOut: !event.target.checked })}
+          onCheckedChange={(checked) =>
+            mutation.mutate({ emailOptOut: checked !== true })
+          }
         />
-      </label>
+      </div>
 
-      <label className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <Label>Emails de marketing</Label>
+          <Label htmlFor="marketing-opt-out">Emails de marketing</Label>
           <p className="text-sm text-muted-foreground">
             Promociones, carrito abandonado y recuperación.
           </p>
         </div>
-        <input
-          type="checkbox"
+        <Checkbox
+          id="marketing-opt-out"
           checked={!data.marketingEmailOptOut}
-          onChange={(event) =>
-            mutation.mutate({ marketingEmailOptOut: !event.target.checked })
+          onCheckedChange={(checked) =>
+            mutation.mutate({ marketingEmailOptOut: checked !== true })
           }
         />
-      </label>
+      </div>
 
-      <label className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <Label>WhatsApp</Label>
+          <Label htmlFor="whatsapp-opt-out">WhatsApp</Label>
           <p className="text-sm text-muted-foreground">Notificaciones de pedido por WhatsApp.</p>
         </div>
-        <input
-          type="checkbox"
+        <Checkbox
+          id="whatsapp-opt-out"
           checked={!data.whatsappOptOut}
-          onChange={(event) => mutation.mutate({ whatsappOptOut: !event.target.checked })}
+          onCheckedChange={(checked) =>
+            mutation.mutate({ whatsappOptOut: checked !== true })
+          }
         />
-      </label>
+      </div>
 
       {mutation.isSuccess ? (
-        <p className="text-sm text-muted-foreground">Preferencias actualizadas.</p>
+        <p className="text-sm font-bold uppercase text-neo-green">Preferencias actualizadas.</p>
       ) : null}
     </div>
   );

@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApiClient, useAuthApiReady } from '@/lib/client-api';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -103,6 +103,11 @@ export function InvoiceListView({ initialInvoices }: { initialInvoices: InvoiceR
           title="Facturación"
           subtitle="Comprobantes electrónicos SRI"
           showNetworkStatus={false}
+          actions={
+            <Link href="/admin/invoices/credit-notes" className={buttonVariants({ variant: 'outline' })}>
+              Notas de crédito
+            </Link>
+          }
         />
       }
     >

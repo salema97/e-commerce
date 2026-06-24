@@ -33,3 +33,9 @@ export interface RegisterDto {
   name?: string;
   phone?: string;
 }
+
+export interface NotificationPreferences {
+  emailOptOut: boolean;
+  marketingEmailOptOut: boolean;
+  whatsappOptOut: boolean;
+}

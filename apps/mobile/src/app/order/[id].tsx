@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Card, Button } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen.js';
@@ -29,6 +29,23 @@ export default function OrderDetailScreen(): React.ReactElement {
       return false;
     },
   });
+
+  const [isGeneratingReceipt, setIsGeneratingReceipt] = React.useState(false);
+
+  async function handleDownloadReceipt(): Promise<void> {
+    if (!orderId) return;
+    setIsGeneratingReceipt(true);
+    try {
+      const receipt = await api.client.orders.getReceipt(orderId).catch(async () =>
+        api.client.orders.generateReceipt(orderId),
+      );
+      if (receipt?.url) {
+        await Linking.openURL(receipt.url);
+      }
+    } finally {
+      setIsGeneratingReceipt(false);
+    }
+  }
 
   if (isError || !order) {
     return (
@@ -120,6 +137,17 @@ export default function OrderDetailScreen(): React.ReactElement {
         ) : null}
 
         <NeoStaggeredItem index={3}>
+          {order.status !== 'PAYMENT_PENDING' && order.status !== 'PENDING' ? (
+            <Button
+              variant="outline"
+              onPress={() => void handleDownloadReceipt()}
+              disabled={isGeneratingReceipt}
+              size="lg"
+            >
+              {isGeneratingReceipt ? 'Preparando recibo…' : 'Descargar recibo'}
+            </Button>
+          ) : null}
+
           {isReturnable(order) ? (
             <Button
               variant="outline"

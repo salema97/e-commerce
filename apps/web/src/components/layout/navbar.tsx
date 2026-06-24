@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, ShoppingCart, Heart, Search, LogOut, User } from 'lucide-react';
+import { Menu, ShoppingCart, Heart, Search, LogOut, User, Bell } from 'lucide-react';
 import * as React from 'react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -89,6 +89,13 @@ export function Navbar() {
 
           {!loading && user ? (
             <div className="hidden items-stretch lg:flex">
+              <Link
+                href="/account/notifications"
+                className="flex items-center border-l-[3px] border-neo-onyx px-4 hover:bg-neo-gold"
+                aria-label="Notificaciones"
+              >
+                <Bell className="size-4" strokeWidth={3} />
+              </Link>
               <Link
                 href="/account"
                 className="flex items-center border-l-[3px] border-neo-onyx px-4 hover:bg-neo-gold"
@@ -181,6 +188,13 @@ export function Navbar() {
             ) : null}
             {user ? (
               <>
+                <Link
+                  href="/account/notifications"
+                  onClick={() => setMobileOpen(false)}
+                  className={buttonVariants({ variant: 'outline', className: 'w-full' })}
+                >
+                  Notificaciones
+                </Link>
                 <Link
                   href="/account"
                   onClick={() => setMobileOpen(false)}
