@@ -8,6 +8,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
+import { getStaffPanelNav, isStaffPanelPath } from '@/lib/admin-nav';
 import { useCartStore } from '@/lib/cart-store';
 
 const storeLinks = [
@@ -24,11 +25,8 @@ export function Navbar() {
   );
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
-  const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN';
-  const navLinks = [
-    ...storeLinks,
-    ...(isAdmin ? [{ href: '/admin/dashboard', label: 'Administración' }] : []),
-  ];
+  const staffPanelNav = getStaffPanelNav(user?.role);
+  const navLinks = [...storeLinks, ...(staffPanelNav ? [staffPanelNav] : [])];
 
   async function handleSignOut() {
     await signOut();
@@ -53,7 +51,9 @@ export function Navbar() {
               href={link.href}
               className={cn(
                 'px-4 py-1 text-lg font-bold uppercase transition-colors hover:bg-neo-gold',
-                pathname === link.href || pathname.startsWith(`${link.href}/`)
+                pathname === link.href ||
+                  pathname.startsWith(`${link.href}/`) ||
+                  (link.label === 'Administración' && isStaffPanelPath(pathname))
                   ? 'bg-neo-gold'
                   : '',
               )}

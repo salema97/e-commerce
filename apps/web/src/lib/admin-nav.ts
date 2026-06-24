@@ -30,3 +30,31 @@ export function adminNavLabelForPath(pathname: string): string {
   );
   return match?.label ?? 'Administración';
 }
+
+const staffPanelHomeByRole: Partial<Record<Role, string>> = {
+  SUPER_ADMIN: '/admin/dashboard',
+  ADMIN: '/admin/dashboard',
+  FINANCE: '/admin/finance',
+  INVENTORY: '/admin/inventory',
+  SUPPORT: '/admin/support',
+};
+
+/** Default admin landing page for staff roles (navbar + post-login redirect). */
+export function getStaffPanelHome(role: Role | null | undefined): string | null {
+  if (!role) return null;
+  const href = staffPanelHomeByRole[role];
+  if (!href || filterAdminNav(role).length === 0) return null;
+  return href;
+}
+
+export function getStaffPanelNav(
+  role: Role | null | undefined,
+): { href: string; label: string } | null {
+  const href = getStaffPanelHome(role);
+  if (!href) return null;
+  return { href, label: 'Administración' };
+}
+
+export function isStaffPanelPath(pathname: string): boolean {
+  return pathname === '/admin' || pathname.startsWith('/admin/');
+}

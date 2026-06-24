@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/auth-context';
 import { formatApiError } from '@/lib/api-error';
+import { getStaffPanelHome } from '@/lib/admin-nav';
 
 export function SignInForm() {
   const router = useRouter();
@@ -40,7 +41,8 @@ export function SignInForm() {
     const data = (await res.json()) as { user: AuthUser; accessToken: string };
     setSession(data.user, data.accessToken);
 
-    const redirect = searchParams.get('redirect_url') ?? '/';
+    const redirect =
+      searchParams.get('redirect_url') ?? getStaffPanelHome(data.user.role) ?? '/';
     router.push(redirect);
     router.refresh();
   }
