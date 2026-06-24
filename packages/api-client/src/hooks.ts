@@ -63,6 +63,20 @@ import type {
   ReferralPerformanceReport,
   PayoutReferralDto,
   ExternalReviewSummary,
+  Company,
+  Quote,
+  MarketplaceListing,
+  MarketplaceChannelProfile,
+  AccountingSyncRecord,
+  AccountingProviderProfile,
+  MarketplaceFeeReconciliation,
+  CreateCompanyDto,
+  UpdateCompanyDto,
+  UpsertCompanyPriceDto,
+  CreateQuoteDto,
+  UpdateQuoteStatusDto,
+  ConvertQuoteResult,
+  MarketplaceImportOrderDto,
 } from '@repo/shared-types';
 import type { ApiClient } from './client.js';
 
@@ -107,6 +121,16 @@ export const queryKeys = {
   loyaltyTransactions: ['loyalty', 'transactions'] as const,
   referralCode: ['referrals', 'code'] as const,
   referralPerformance: (scope: 'me' | 'admin') => ['referrals', 'performance', scope] as const,
+  companies: ['b2b', 'companies'] as const,
+  myCompany: ['b2b', 'me', 'company'] as const,
+  companyPrices: (companyId: string) => ['b2b', 'companies', companyId, 'prices'] as const,
+  quotes: (scope: 'me' | 'admin', status?: string) => ['quotes', scope, status ?? 'all'] as const,
+  quote: (id: string) => ['quotes', id] as const,
+  marketplaceChannels: ['marketplace', 'channels'] as const,
+  marketplaceListings: (channel?: string) => ['marketplace', 'listings', channel ?? 'all'] as const,
+  accountingProviders: ['accounting', 'providers'] as const,
+  accountingSyncRecords: ['accounting', 'sync-records'] as const,
+  marketplaceFeeReconciliations: ['accounting', 'marketplace-fees'] as const,
 };
 
 export function createQueryHooks(client: ApiClient) {
@@ -953,6 +977,183 @@ export function createQueryHooks(client: ApiClient) {
           scope === 'admin' ? client.referrals.adminPerformance() : client.referrals.myPerformance(),
         ...options,
       }),
+
+    useCompanies: (options?: Omit<UseQueryOptions<Company[], Error>, 'queryKey' | 'queryFn'>) =>
+      useQuery({
+        queryKey: queryKeys.companies,
+        queryFn: () => client.b2b.listCompanies(),
+        ...options,
+      }),
+
+    useMyCompany: (
+      options?: Omit<
+        UseQueryOptions<{ company: Company; role: string } | null, Error>,
+        'queryKey' | 'queryFn'
+      >,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.myCompany,
+        queryFn: () => client.b2b.myCompany(),
+        ...options,
+      }),
+
+    useQuotes: (
+      scope: 'me' | 'admin' = 'me',
+      status?: string,
+      options?: Omit<UseQueryOptions<Quote[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.quotes(scope, status),
+        queryFn: () => (scope === 'admin' ? client.quotes.adminList(status) : client.quotes.mine()),
+        ...options,
+      }),
+
+    useQuote: (
+      id: string,
+      options?: Omit<UseQueryOptions<Quote, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.quote(id),
+        queryFn: () => client.quotes.findOne(id),
+        enabled: Boolean(id),
+        ...options,
+      }),
+
+    useMarketplaceChannels: (
+      options?: Omit<UseQueryOptions<MarketplaceChannelProfile[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.marketplaceChannels,
+        queryFn: () => client.marketplace.channels(),
+        ...options,
+      }),
+
+    useMarketplaceListings: (
+      channel?: string,
+      options?: Omit<UseQueryOptions<MarketplaceListing[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.marketplaceListings(channel),
+        queryFn: () => client.marketplace.listings(channel),
+        ...options,
+      }),
+
+    useAccountingProviders: (
+      options?: Omit<UseQueryOptions<AccountingProviderProfile[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.accountingProviders,
+        queryFn: () => client.accounting.providers(),
+        ...options,
+      }),
+
+    useAccountingSyncRecords: (
+      options?: Omit<UseQueryOptions<AccountingSyncRecord[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.accountingSyncRecords,
+        queryFn: () => client.accounting.syncRecords(),
+        ...options,
+      }),
+
+    useCreateCompany: (
+      options?: UseMutationOptions<Company, Error, CreateCompanyDto>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.b2b.createCompany(data),
+        onSuccess: () => void queryClient.invalidateQueries({ queryKey: queryKeys.companies }),
+        ...options,
+      });
+    },
+
+    useUpdateQuoteStatus: (
+      options?: UseMutationOptions<Quote, Error, { id: string; data: UpdateQuoteStatusDto }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, data }) => client.quotes.updateStatus(id, data),
+        onSuccess: (_, { id }) => {
+          void queryClient.invalidateQueries({ queryKey: ['quotes'] });
+          void queryClient.invalidateQueries({ queryKey: queryKeys.quote(id) });
+        },
+        ...options,
+      });
+    },
+
+    useConvertQuote: (
+      options?: UseMutationOptions<ConvertQuoteResult, Error, string>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (id) => client.quotes.convert(id),
+        onSuccess: () => {
+          void queryClient.invalidateQueries({ queryKey: ['quotes'] });
+          void queryClient.invalidateQueries({ queryKey: ['orders'] });
+        },
+        ...options,
+      });
+    },
+
+    useSyncMarketplaceProduct: (
+      options?: UseMutationOptions<MarketplaceListing, Error, { productId: string; channel?: string }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ productId, channel }) => client.marketplace.syncProduct(productId, channel),
+        onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['marketplace', 'listings'] }),
+        ...options,
+      });
+    },
+
+    useImportMarketplaceOrder: (
+      options?: UseMutationOptions<unknown, Error, MarketplaceImportOrderDto>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.marketplace.importOrder(data),
+        onSuccess: () => {
+          void queryClient.invalidateQueries({ queryKey: ['marketplace', 'listings'] });
+          void queryClient.invalidateQueries({ queryKey: ['orders'] });
+        },
+        ...options,
+      });
+    },
+
+    useSyncAccountingInvoice: (
+      options?: UseMutationOptions<void, Error, string>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (invoiceId) => client.accounting.syncInvoice(invoiceId),
+        onSuccess: () =>
+          void queryClient.invalidateQueries({ queryKey: queryKeys.accountingSyncRecords }),
+        ...options,
+      });
+    },
+
+    useMarketplaceFeeReconciliations: (
+      options?: Omit<UseQueryOptions<MarketplaceFeeReconciliation[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.marketplaceFeeReconciliations,
+        queryFn: () => client.accounting.marketplaceFees(),
+        ...options,
+      }),
+
+    useSyncMarketplaceFee: (
+      options?: UseMutationOptions<void, Error, string>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (orderId) => client.accounting.syncMarketplaceFee(orderId),
+        onSuccess: () => {
+          void queryClient.invalidateQueries({ queryKey: queryKeys.marketplaceFeeReconciliations });
+          void queryClient.invalidateQueries({ queryKey: queryKeys.accountingSyncRecords });
+        },
+        ...options,
+      });
+    },
   };
 }
 

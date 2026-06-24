@@ -73,6 +73,24 @@ import type {
   PayoutReferralDto,
   ReferralConversion,
   ExternalReviewSummary,
+  Company,
+  CompanyUser,
+  CompanyPriceListItem,
+  CreateCompanyDto,
+  UpdateCompanyDto,
+  UpsertCompanyPriceDto,
+  BulkOrderImportResult,
+  Quote,
+  CreateQuoteDto,
+  UpdateQuoteStatusDto,
+  ConvertQuoteResult,
+  MarketplaceChannelProfile,
+  MarketplaceListing,
+  MarketplaceImportOrderDto,
+  MarketplaceOrderImport,
+  AccountingProviderProfile,
+  AccountingSyncRecord,
+  MarketplaceFeeReconciliation,
 } from '@repo/shared-types';
 
 export interface ApiClientOptions {
@@ -446,6 +464,49 @@ export function createApiClient(options: ApiClientOptions) {
         request<ReferralPerformanceReport>('GET', '/referrals/admin/performance'),
       payout: (conversionId: string, data: PayoutReferralDto) =>
         request<ReferralConversion>('POST', `/referrals/admin/conversions/${conversionId}/payout`, data),
+    },
+    b2b: {
+      listCompanies: () => request<Company[]>('GET', '/b2b/companies'),
+      createCompany: (data: CreateCompanyDto) => request<Company>('POST', '/b2b/companies', data),
+      updateCompany: (id: string, data: UpdateCompanyDto) =>
+        request<Company>('PATCH', `/b2b/companies/${id}`, data),
+      addUser: (companyId: string, data: { userId: string; role?: string }) =>
+        request<CompanyUser>('POST', `/b2b/companies/${companyId}/users`, data),
+      listPrices: (companyId: string) =>
+        request<CompanyPriceListItem[]>('GET', `/b2b/companies/${companyId}/prices`),
+      upsertPrice: (companyId: string, data: UpsertCompanyPriceDto) =>
+        request<CompanyPriceListItem>('POST', `/b2b/companies/${companyId}/prices`, data),
+      bulkImport: (companyId: string, rows: UpsertCompanyPriceDto[]) =>
+        request<BulkOrderImportResult>('POST', `/b2b/companies/${companyId}/bulk-orders`, { rows }),
+      myCompany: () => request<{ company: Company; role: string } | null>('GET', '/b2b/me/company'),
+    },
+    quotes: {
+      create: (data: CreateQuoteDto) => request<Quote>('POST', '/quotes', data),
+      mine: () => request<Quote[]>('GET', '/quotes/me'),
+      adminList: (status?: string) =>
+        request<Quote[]>('GET', '/quotes/admin', undefined, { status }),
+      findOne: (id: string) => request<Quote>('GET', `/quotes/${id}`),
+      updateStatus: (id: string, data: UpdateQuoteStatusDto) =>
+        request<Quote>('PATCH', `/quotes/${id}/status`, data),
+      convert: (id: string) => request<ConvertQuoteResult>('POST', `/quotes/${id}/convert`),
+    },
+    marketplace: {
+      channels: () => request<MarketplaceChannelProfile[]>('GET', '/marketplace/channels'),
+      listings: (channel?: string) =>
+        request<MarketplaceListing[]>('GET', '/marketplace/listings', undefined, { channel }),
+      syncProduct: (productId: string, channel?: string) =>
+        request<MarketplaceListing>('POST', `/marketplace/products/${productId}/sync`, undefined, { channel }),
+      importOrder: (data: MarketplaceImportOrderDto) =>
+        request<MarketplaceOrderImport>('POST', '/marketplace/orders/import', data),
+    },
+    accounting: {
+      providers: () => request<AccountingProviderProfile[]>('GET', '/accounting/providers'),
+      syncRecords: () => request<AccountingSyncRecord[]>('GET', '/accounting/sync-records'),
+      syncInvoice: (id: string) => request<void>('POST', `/accounting/invoices/${id}/sync`),
+      marketplaceFees: () =>
+        request<MarketplaceFeeReconciliation[]>('GET', '/accounting/marketplace-fees'),
+      syncMarketplaceFee: (orderId: string) =>
+        request<void>('POST', `/accounting/marketplace-fees/${orderId}/sync`),
     },
   };
 }
