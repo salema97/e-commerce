@@ -4,6 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { Queue } from 'bullmq';
 import { PrismaModule } from '../../prisma/prisma.module.js';
 import { InvoicesModule } from '../invoices.module.js';
+import { EventBusModule } from '../../event-bus/event-bus.module.js';
 import sriQueueConfig, {
   SRI_QUEUE_NAME,
   getSriQueueBackoffDelay,
@@ -33,6 +34,7 @@ async function waitUntilReady(queue: Queue, timeoutMs: number): Promise<void> {
     ScheduleModule.forRoot(),
     ConfigModule.forFeature(sriQueueConfig),
     PrismaModule,
+    EventBusModule,
     forwardRef(() => InvoicesModule),
   ],
   providers: [

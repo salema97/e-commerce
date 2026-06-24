@@ -13,7 +13,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { OrderChannel, OrderStatus } from '@prisma/client';
+import { OrderChannel, OrderStatus, NetPaymentTerms } from '@prisma/client';
 import { IsEcuadorCustomerIdentification } from '../../common/validators/is-ecuador-customer-identification.validator.js';
 
 export class CreateOrderItemDto {
@@ -65,6 +65,16 @@ export class CreateOrderDto {
 
   @ApiPropertyOptional() @IsOptional() shippingAddress?: Record<string, unknown>;
   @ApiPropertyOptional() @IsOptional() billingAddress?: Record<string, unknown>;
+  @ApiPropertyOptional() @IsOptional() @IsString() notes?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional() @IsUUID() companyId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional() @IsString() purchaseOrderNumber?: string;
+
+  @ApiPropertyOptional({ enum: NetPaymentTerms })
+  @IsOptional() @IsEnum(NetPaymentTerms) netPaymentTerms?: NetPaymentTerms;
 }
 
 export class UpdateOrderStatusDto {
