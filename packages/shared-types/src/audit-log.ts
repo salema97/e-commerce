@@ -7,7 +7,6 @@ export interface AuditDiff {
 export interface AuditLog {
   id: string;
   actorId?: string | null;
-  actorClerkUserId?: string | null;
   resource: string;
   action: string;
   resourceId?: string | null;
@@ -18,7 +17,7 @@ export interface AuditLog {
 }
 
 export interface AuditLogEvent {
-  actorClerkUserId: string;
+  actorId?: string | null;
   resource: string;
   action: string;
   resourceId?: string | null;

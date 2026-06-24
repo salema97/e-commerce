@@ -2,9 +2,9 @@ import type { Role } from './enums.js';
 
 export interface User {
   id: string;
-  clerkUserId: string;
   email: string;
   role: Role;
+  name?: string | null;
   phone?: string | null;
   stripeCustomerId?: string | null;
   createdAt: string;
@@ -12,10 +12,11 @@ export interface User {
 }
 
 export type CreateUserDto = {
-  clerkUserId: string;
   email: string;
+  password?: string;
   phone?: string;
   role?: Role;
+  name?: string;
 };
 
 export type UpdateUserDto = Partial<CreateUserDto>;
