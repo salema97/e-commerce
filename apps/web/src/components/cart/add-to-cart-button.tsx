@@ -34,8 +34,10 @@ export function AddToCartButton({
     });
     void trackEvent('add_to_cart', {
       productId: product.id,
+      productName: product.name,
       quantity,
       price: Number(product.price),
+      variantId: variantId || undefined,
     });
     router.push('/cart');
   };

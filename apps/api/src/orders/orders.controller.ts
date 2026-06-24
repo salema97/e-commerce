@@ -54,6 +54,14 @@ export class OrdersController {
     return this.ordersService.listOrders(query);
   }
 
+  @Get(':id/tracking')
+  @Public()
+  @ApiOperation({ summary: 'Get public order tracking' })
+  @ApiResponse({ status: 200, description: 'Order tracking' })
+  getTracking(@Param('id') id: string) {
+    return this.ordersService.getOrderTracking(id);
+  }
+
   @Get(':id')
   @Public()
   @ApiBearerAuth()

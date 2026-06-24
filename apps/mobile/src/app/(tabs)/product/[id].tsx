@@ -17,6 +17,7 @@ import { trackMobileEvent } from '../../../lib/analytics.js';
 import { useAuth } from '../../../providers/AuthProvider.js';
 import { useWishlist } from '../../../lib/wishlist.js';
 import { BackInStockForm } from '../../../components/product/BackInStockForm.js';
+import { captureMobileException } from '../../../lib/sentry.js';
 import type { ProductVariant } from '@repo/shared-types';
 
 export default function ProductDetailScreen(): React.ReactElement {
@@ -58,8 +59,10 @@ export default function ProductDetailScreen(): React.ReactElement {
       'add_to_cart',
       {
         productId: product.id,
+        productName: product.name,
         quantity,
         price: selectedVariant?.price ?? product.price,
+        variantId: selectedVariant?.id,
       },
       user?.id,
     );
@@ -68,6 +71,9 @@ export default function ProductDetailScreen(): React.ReactElement {
   };
 
   if (error || !product) {
+    if (error) {
+      captureMobileException(error, { screen: 'product-detail', productId: id });
+    }
     return (
       <NeoScreen style={styles.center}>
         <Text style={styles.error}>No se pudo cargar el producto.</Text>

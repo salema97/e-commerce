@@ -14,12 +14,14 @@ import { useApiClient } from '@/lib/client-api';
 import { formatPrice, orderStatusLabel } from '@repo/shared-utils';
 import type { Order, OrderStatus } from '@repo/shared-types';
 import { RefundPanel } from './refund-panel';
+import { ShipmentPanel } from './shipment-panel';
 
 const ORDER_STATUSES: OrderStatus[] = [
   'PENDING',
   'PAYMENT_PENDING',
   'PAYMENT_FAILED',
   'PROCESSING',
+  'PARTIALLY_SHIPPED',
   'SHIPPED',
   'DELIVERED',
   'CANCELLED',
@@ -121,6 +123,8 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
           </NeoReveal>
 
           <RefundPanel order={order} />
+
+          <ShipmentPanel orderId={order.id} />
 
           <NeoReveal delay={0.08}>
             <Card>

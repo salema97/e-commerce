@@ -22,3 +22,4 @@ export * from './finance.js';
 export * from './dto.js';
 export * from './ai.js';
 export * from './analytics.js';
+export * from './shipping.js';

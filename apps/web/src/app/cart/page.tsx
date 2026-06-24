@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { ProductImage } from '@/components/store/product-image';
 import { AnimatedPageShell, NeoItem, NeoStagger } from '@/components/motion/neo-page-transition';
 import { useCartStore } from '@/lib/cart-store';
+import { trackEvent } from '@/lib/analytics/track';
 import { formatPrice } from '@repo/shared-utils';
 
 export default function CartPage() {
@@ -70,7 +71,13 @@ export default function CartPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => removeItem(item.productId, item.variantId)}
+                    onClick={() => {
+                      void trackEvent('remove_from_cart', {
+                        productId: item.productId,
+                        variantId: item.variantId,
+                      });
+                      removeItem(item.productId, item.variantId);
+                    }}
                   >
                     Eliminar
                   </Button>
@@ -100,7 +107,16 @@ export default function CartPage() {
                 <span>Total</span>
                 <span>{formatPrice(total)}</span>
               </div>
-              <Button className="w-full" onClick={() => router.push('/checkout')}>
+              <Button
+                className="w-full"
+                onClick={() => {
+                  void trackEvent('begin_checkout', {
+                    cartTotal: total,
+                    itemsCount: items.reduce((sum, item) => sum + item.quantity, 0),
+                  });
+                  router.push('/checkout');
+                }}
+              >
                 Finalizar compra
               </Button>
             </CardContent>

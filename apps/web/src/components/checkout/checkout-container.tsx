@@ -27,10 +27,11 @@ import type {
   CreatePaymentIntentDto,
   CreatedOrderResult,
   PaymentIntentResult,
+  ShippingQuote,
 } from '@repo/shared-types';
 
-const SHIPPING_FLAT_RATE = 5;
-const FREE_SHIPPING_THRESHOLD = 50;
+const FALLBACK_SHIPPING_FLAT_RATE = 5;
+const FALLBACK_FREE_SHIPPING_THRESHOLD = 50;
 
 type CheckoutState = {
   address: AddressFormValues;
@@ -86,8 +87,11 @@ export function CheckoutContainer() {
   const { items } = useCartStore();
   const [checkout, dispatch] = React.useReducer(checkoutReducer, checkoutInitialState);
   const { address, couponCode, order, paymentIntent, isSubmitting, error } = checkout;
+  const [mounted, setMounted] = React.useState(false);
+  const [shippingQuote, setShippingQuote] = React.useState<ShippingQuote | null>(null);
 
   React.useEffect(() => {
+    setMounted(true);
     if (items.length === 0) {
       return;
     }
@@ -100,14 +104,44 @@ export function CheckoutContainer() {
   // Client-side estimate for the summary.
   // (subtotal, discount, IVA, shipping) authoritatively on order creation.
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT_RATE;
-  const taxRate = 0.15;
-  // Discount is unknown until the server validates the coupon at order
-  // creation; the estimate assumes no discount for the live preview.
   const discount = 0;
   const taxableBase = Math.max(0, subtotal - discount);
+  const taxRate = 0.15;
   const tax = taxableBase * taxRate;
+  const fallbackShipping =
+    subtotal >= FALLBACK_FREE_SHIPPING_THRESHOLD ? 0 : FALLBACK_SHIPPING_FLAT_RATE;
+  const shipping = shippingQuote?.amount ?? fallbackShipping;
   const total = taxableBase + tax + shipping;
+
+  React.useEffect(() => {
+    if (!isAddressValid(address) || items.length === 0) {
+      setShippingQuote(null);
+      return;
+    }
+
+    let cancelled = false;
+    void api.shipping
+      .quote({
+        country: address.country,
+        province: address.state,
+        subtotal: taxableBase,
+        freeShipping: false,
+      })
+      .then((quote) => {
+        if (!cancelled) setShippingQuote(quote);
+      })
+      .catch(() => {
+        if (!cancelled) setShippingQuote(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [address, api, items.length, taxableBase]);
+
+  if (!mounted) {
+    return <CheckoutSkeleton />;
+  }
 
   if (items.length === 0 && !order) {
     return (
@@ -292,6 +326,18 @@ function OrderSummaryCard(props: OrderSummaryCardProps) {
           <OrderSummary {...props} />
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function CheckoutSkeleton() {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="h-10 w-64 animate-pulse rounded bg-muted" />
+      <div className="mt-8 grid gap-8 lg:grid-cols-3">
+        <div className="lg:col-span-2 h-96 animate-pulse rounded bg-muted" />
+        <div className="h-64 animate-pulse rounded bg-muted" />
+      </div>
     </div>
   );
 }

@@ -37,7 +37,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 | Phase 9 — Email/Push/Marketing | ✅ | Resend/Loops, push Expo/OneSignal, marketing automation, consent UI. |
 | Phase 10 — AI & Conversational | ✅ Yes | Guardrails, RAG, human escalation. |
 | Phase 11 — Advanced Analytics | ✅ | Merged `12427aa`; UI wiring verified post-merge. |
-| Phase 12 — Shipping/Fulfillment | ⚠️ Partial | SDD for WMS/3PL integration if implemented. |
+| Phase 12 — Shipping/Fulfillment | ✅ Yes | Carrier/WMS abstractions + Ecuador defaults implemented. |
 | Phase 13 — Search/Filters | ❌ | Standard Meilisearch usage. |
 | Phase 14 — Reviews/Referrals/Loyalty | ❌ | Common low-risk features. |
 | Phase 15 — Multi-marketplace/ERP/B2B | ✅ Yes | External channel sync, B2B quotes. |
@@ -490,30 +490,30 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 ### 12.1 Shipping
 
-- [ ] Shipping zones (domestic, international, exclusions).
-- [ ] Address validation at checkout.
-- [ ] Carrier rate calculation (Shippo / EasyPost / ShipEngine).
-- [ ] Fulfillment status tracking and tracking number.
-- [ ] Customer-facing tracking page.
-- [ ] Returns / RMA initiation flow.
-- [ ] Returns shipping / reverse logistics integration.
-- [ ] Backorder and split shipment handling.
+- [x] Shipping zones (domestic, international, exclusions).
+- [x] Address validation at checkout.
+- [x] Carrier rate calculation (Shippo / EasyPost / ShipEngine) — `CarrierRateProvider` with zone fallback.
+- [x] Fulfillment status tracking and tracking number.
+- [x] Customer-facing tracking page.
+- [x] Returns / RMA initiation flow.
+- [x] Returns shipping / reverse logistics integration.
+- [x] Backorder and split shipment handling.
 
 ### 12.2 Taxes
 
-- [ ] Tax calculation at checkout based on shipping address.
-- [ ] Tax categories (standard, reduced, zero, exempt).
-- [ ] Integrate Stripe Tax, TaxJar, or Avalara before multi-jurisdiction scaling.
-- [ ] Build `TaxCalculator` abstraction to support multiple providers.
+- [x] Tax calculation at checkout based on shipping address.
+- [x] Tax categories (standard, reduced, zero, exempt).
+- [x] Integrate Stripe Tax, TaxJar, or Avalara before multi-jurisdiction scaling — composite `TAX_PROVIDER` routing.
+- [x] Build `TaxCalculator` abstraction to support multiple providers.
 
 ### 12.3 Fulfillment & WMS/3PL
 
-- [ ] Define `FulfillmentProvider` port.
-- [ ] Evaluate WMS/3PL providers by region and SKU velocity (ShipBob, Amazon FBA, Redpack, etc.).
-- [ ] Implement order allocation, pick/pack/ship workflows.
-- [ ] Sync inventory levels from WMS to Prisma.
-- [ ] Import tracking numbers and fulfillment events from 3PL.
-- [ ] Admin panel: fulfillments list, create shipment, print labels, RMA handling.
+- [x] Define `FulfillmentProvider` port.
+- [x] Evaluate WMS/3PL providers by region and SKU velocity (ShipBob, Amazon FBA, Redpack, etc.) — `WMS_PROVIDER_REGISTRY`.
+- [x] Implement order allocation, pick/pack/ship workflows — manual provider + split shipments.
+- [x] Sync inventory levels from WMS to Prisma — admin + webhook endpoints.
+- [x] Import tracking numbers and fulfillment events from 3PL — webhook + admin import.
+- [x] Admin panel: fulfillments list, create shipment, print labels, RMA handling.
 
 ## Phase 13 — Search, Filters & Performance
 

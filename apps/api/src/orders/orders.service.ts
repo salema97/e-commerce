@@ -1,14 +1,18 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Inject } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, TaxCategory } from '@prisma/client';
+import { validateAddress } from '@repo/shared-utils';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { InventoryReservationService } from '../inventory/inventory-reservation.service.js';
 import { PromotionService } from '../promotions/promotion.service.js';
+import { ShippingService } from '../shipping/shipping.service.js';
+import { TaxService } from '../tax/tax.service.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
 import { EmailNotificationService } from '../notifications/email-notification.service.js';
 import { PushNotificationService } from '../notifications/push-notification.service.js';
 import { CreateOrderDto, CreateOrderItemDto } from './dto/create-order.dto.js';
 import { ListOrdersQueryDto } from './dto/list-orders.query.dto.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
+import { BackorderService, type ItemAllocation } from './backorder.service.js';
 import { EventBus } from '../event-bus/event-bus.interface.js';
 
 export interface CreatedOrderResult {
@@ -32,6 +36,9 @@ export class OrdersService {
     private readonly prisma: PrismaService,
     private readonly reservationService: InventoryReservationService,
     private readonly promotionService: PromotionService,
+    private readonly shippingService: ShippingService,
+    private readonly taxService: TaxService,
+    private readonly backorderService: BackorderService,
     private readonly notificationService: WhatsAppNotificationService,
     private readonly emailNotificationService: EmailNotificationService,
     private readonly pushNotificationService: PushNotificationService,
@@ -44,6 +51,13 @@ export class OrdersService {
     if (!customerProfile.email) throw new BadRequestException('customerEmail required for guest orders');
     if (!dto.items?.length) throw new BadRequestException('Order must contain at least one item');
 
+    if (dto.shippingAddress) {
+      const addressErrors = validateAddress(dto.shippingAddress);
+      if (addressErrors.length > 0) {
+        throw new BadRequestException(addressErrors.join('; '));
+      }
+    }
+
     // Validate coupon BEFORE reserving inventory so an invalid code fails fast without
     // holding stock. Final totals are computed via PromotionService (tax + discount).
     if (dto.couponCode) {
@@ -51,14 +65,59 @@ export class OrdersService {
     }
 
     const reservationItems = await this.validateItems(dto.items);
-    await this.reservationService.reserveItems(reservationItems);
+    let allocations;
+    if (this.backorderService.isEnabled()) {
+      allocations = await this.backorderService.allocateItems(reservationItems);
+    } else {
+      await this.reservationService.reserveItems(reservationItems);
+    }
 
-    const totals = await this.promotionService.calculateOrderTotals(
-      dto.items.map((i) => ({ productId: i.productId, variantId: i.variantId ?? undefined, price: i.price, quantity: i.quantity })),
+    const cartItems = dto.items.map((item) => ({
+      productId: item.productId,
+      variantId: item.variantId ?? undefined,
+      price: item.price,
+      quantity: item.quantity,
+    }));
+
+    const discountTotals = await this.promotionService.computeDiscountTotals(
+      cartItems,
       dto.couponCode,
     );
 
-    const orderItems = await this.buildOrderItems(dto.items, totals);
+    const shippingAddress = dto.shippingAddress as Record<string, string> | undefined;
+    const taxCategories = await this.loadTaxCategories(dto.items);
+    const taxResult = await this.taxService.calculateForCart({
+      items: cartItems,
+      taxCategories,
+      orderDiscount: discountTotals.discount,
+      country: shippingAddress?.country,
+      province: shippingAddress?.state,
+    });
+    const shippingQuote = await this.shippingService.quote({
+      country: shippingAddress?.country,
+      province: shippingAddress?.state,
+      subtotal: discountTotals.subtotal - discountTotals.discount,
+      freeShipping: discountTotals.freeShipping,
+    });
+
+    const totals = {
+      subtotal: discountTotals.subtotal,
+      discount: discountTotals.discount,
+      taxAmount: taxResult.taxAmount,
+      shipping: shippingQuote.amount,
+      total: Number(
+        (
+          discountTotals.subtotal -
+          discountTotals.discount +
+          taxResult.taxAmount +
+          shippingQuote.amount
+        ).toFixed(2),
+      ),
+      couponCode: discountTotals.couponCode,
+      promotionId: discountTotals.promotionId,
+    };
+
+    const orderItems = await this.buildOrderItems(dto.items, totals, taxResult.lines, allocations);
 
     const subtotal = new Prisma.Decimal(totals.subtotal);
     const taxAmount = new Prisma.Decimal(totals.taxAmount);
@@ -112,9 +171,22 @@ export class OrdersService {
   }
 
   async getOrderById(id: string) {
-    const order = await this.prisma.order.findUnique({ where: { id }, include: { items: true, statusHistory: true } });
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: { items: true, statusHistory: true, shipments: true },
+    });
     if (!order) throw new NotFoundException(`Order ${id} not found`);
     return order;
+  }
+
+  async getOrderTracking(id: string) {
+    const order = await this.getOrderById(id);
+    return {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      status: order.status,
+      shipments: order.shipments,
+    };
   }
 
   async listOrders(query: ListOrdersQueryDto) {
@@ -257,15 +329,34 @@ export class OrdersService {
     return parts.length > 0 ? parts.join(', ') : undefined;
   }
 
+  private async loadTaxCategories(items: CreateOrderItemDto[]): Promise<Map<string, TaxCategory>> {
+    const productIds = [...new Set(items.map((item) => item.productId))];
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, taxCategory: true },
+    });
+    return new Map(products.map((product) => [product.id, product.taxCategory]));
+  }
+
   private async buildOrderItems(
     items: CreateOrderItemDto[],
     totals: { subtotal: number; discount: number; taxAmount: number },
+    taxLines: Array<{ productId: string; taxRate: number; taxAmount: number }>,
+    allocations?: ItemAllocation[],
   ) {
+    const allocationMap = new Map(
+      allocations?.map((item) => [
+        `${item.productId}:${item.variantId ?? ''}`,
+        item,
+      ]),
+    );
+
     const productItems = await Promise.all(
       items.map(async (item) => {
         const product = await this.prisma.product.findUnique({ where: { id: item.productId }, include: { variants: true } });
         if (!product) throw new BadRequestException(`Product ${item.productId} not found`);
         const variant = product.variants.find((v) => v.id === item.variantId);
+        const allocation = allocationMap.get(`${item.productId}:${item.variantId ?? ''}`);
         return {
           productId: item.productId,
           variantId: item.variantId ?? null,
@@ -273,22 +364,33 @@ export class OrdersService {
           sku: variant?.sku ?? product.sku ?? 'N/A',
           price: new Prisma.Decimal(item.price),
           quantity: item.quantity,
+          quantityBackordered: allocation?.quantityBackordered ?? 0,
+          fulfillmentStatus: allocation?.fulfillmentStatus,
         };
       }),
     );
 
-    return this.allocateItemTotals(productItems, totals);
+    return this.allocateItemTotals(productItems, totals, taxLines);
   }
 
   private allocateItemTotals(
-    items: Array<{ productId: string; variantId: string | null; name: string; sku: string; price: Prisma.Decimal; quantity: number }>,
+    items: Array<{
+      productId: string;
+      variantId: string | null;
+      name: string;
+      sku: string;
+      price: Prisma.Decimal;
+      quantity: number;
+      quantityBackordered?: number;
+      fulfillmentStatus?: ItemAllocation['fulfillmentStatus'];
+    }>,
     totals: { subtotal: number; discount: number; taxAmount: number },
+    taxLines: Array<{ productId: string; taxRate: number; taxAmount: number }>,
   ) {
     const lineSubtotals = items.map((i) => Number(i.price) * i.quantity);
     const subtotal = lineSubtotals.reduce((sum, v) => sum + v, 0);
 
     let remainingDiscount = totals.discount;
-    let remainingTax = totals.taxAmount;
 
     const allocated = items.map((item, index) => {
       const lineSubtotal = lineSubtotals[index];
@@ -301,20 +403,12 @@ export class OrdersService {
               subtotal > 0 ? (lineSubtotal / subtotal) * totals.discount : 0,
             ).toFixed(2),
           );
-      const tax = isLast
-        ? remainingTax
-        : Number(
-            new Prisma.Decimal(
-              subtotal > 0 ? (lineSubtotal / subtotal) * totals.taxAmount : 0,
-            ).toFixed(2),
-          );
 
       remainingDiscount = Number(
         new Prisma.Decimal(remainingDiscount).minus(discount).toFixed(2),
       );
-      remainingTax = Number(
-        new Prisma.Decimal(remainingTax).minus(tax).toFixed(2),
-      );
+
+      const taxLine = taxLines[index];
 
       return {
         productId: item.productId,
@@ -323,8 +417,10 @@ export class OrdersService {
         sku: item.sku,
         price: item.price,
         quantity: item.quantity,
-        taxRate: new Prisma.Decimal(15),
-        taxAmount: new Prisma.Decimal(tax),
+        quantityBackordered: item.quantityBackordered ?? 0,
+        fulfillmentStatus: item.fulfillmentStatus,
+        taxRate: new Prisma.Decimal(taxLine?.taxRate ?? 15),
+        taxAmount: new Prisma.Decimal(taxLine?.taxAmount ?? 0),
         discountAmount: new Prisma.Decimal(discount),
       };
     });
@@ -350,11 +446,16 @@ export class OrdersService {
       if (status === OrderStatus.PROCESSING) {
         void this.eventBus.publish({ name: 'order.paid', payload: { orderId: id } });
       } else if (status === OrderStatus.SHIPPED) {
+        const latestShipment = await this.prisma.shipment.findFirst({
+          where: { orderId: id },
+          orderBy: { createdAt: 'desc' },
+        });
         const context = {
           customerName,
           orderNumber: order.orderNumber,
-          carrier: 'Transportista asignado',
-          trackingNumber: 'Pendiente',
+          carrier: latestShipment?.carrier ?? 'Transportista asignado',
+          trackingNumber: latestShipment?.trackingNumber ?? 'Pendiente',
+          trackingUrl: latestShipment?.trackingUrl ?? undefined,
         };
         if (phone) {
           await this.notificationService.notify(id, 'ORDER_SHIPPED', phone, context);

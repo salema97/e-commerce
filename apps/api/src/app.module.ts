@@ -31,6 +31,9 @@ import { NotificationsModule } from './notifications/notifications.module.js';
 import { AiModule } from './ai/ai.module.js';
 import { AnalyticsModule } from './analytics/analytics.module.js';
 import { EventBusModule } from './event-bus/event-bus.module.js';
+import { ShippingModule } from './shipping/shipping.module.js';
+import { TaxModule } from './tax/tax.module.js';
+import { FulfillmentModule } from './fulfillment/fulfillment.module.js';
 
 @Module({
   imports: [
@@ -78,6 +81,9 @@ import { EventBusModule } from './event-bus/event-bus.module.js';
     AiModule,
     AnalyticsModule,
     EventBusModule,
+    ShippingModule,
+    TaxModule,
+    FulfillmentModule,
   ],
   providers: [
     {

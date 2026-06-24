@@ -22,6 +22,7 @@ import { CreateGuestReturnRequestDto } from './dto/create-guest-return-request.d
 import { UpdateReturnStatusDto } from './dto/update-return-status.dto.js';
 import { ResolveReturnDto } from './dto/resolve-return.dto.js';
 import { Role } from '../auth/role.enum.js';
+import { UpdateReturnShippingDto } from './dto/update-return-shipping.dto.js';
 
 /**
  * Allowed transitions for the ReturnRequest state machine.
@@ -263,6 +264,41 @@ export class ReturnsService {
       }
     }
     return record;
+  }
+
+  async updateReturnShipping(
+    id: string,
+    dto: UpdateReturnShippingDto,
+    actorId: string,
+  ) {
+    const current = await this.getReturn(id);
+    const updated = await this.prisma.returnRequest.update({
+      where: { id },
+      data: {
+        returnCarrier: dto.returnCarrier,
+        returnTrackingNumber: dto.returnTrackingNumber,
+        returnTrackingUrl: dto.returnTrackingUrl,
+      },
+    });
+
+    await this.auditLog.log({
+      actorId,
+      action: 'UPDATE',
+      resource: 'ReturnRequest',
+      resourceId: id,
+      before: {
+        returnCarrier: current.returnCarrier,
+        returnTrackingNumber: current.returnTrackingNumber,
+        returnTrackingUrl: current.returnTrackingUrl,
+      },
+      after: {
+        returnCarrier: updated.returnCarrier,
+        returnTrackingNumber: updated.returnTrackingNumber,
+        returnTrackingUrl: updated.returnTrackingUrl,
+      },
+    });
+
+    return updated;
   }
 
   /**

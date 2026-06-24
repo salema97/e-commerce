@@ -35,7 +35,6 @@ async function bootstrap() {
   app.useGlobalFilters(
     new AllExceptionsFilter(app.get(HttpAdapterHost), app.get(ErrorTracker)),
   );
-
   const configService = app.get(ConfigService);
 
   const corsOrigins = (configService.get<string>('CORS_ORIGINS') ?? 'http://localhost:3000')
