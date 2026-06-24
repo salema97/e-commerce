@@ -1,9 +1,8 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { Queue } from 'bullmq';
 import { PrismaModule } from '../../prisma/prisma.module.js';
-import { InvoicesModule } from '../invoices.module.js';
 import sriQueueConfig, {
   SRI_QUEUE_NAME,
   getSriQueueBackoffDelay,
@@ -13,7 +12,6 @@ import sriQueueConfig, {
 } from './sri-queue.config.js';
 import { SRI_QUEUE_TOKEN } from './sri-queue.tokens.js';
 import { SriQueueService } from './sri-queue.service.js';
-import { SriQueueWorker } from './sri-queue.worker.js';
 import { SriReconciliationService } from './sri-reconciliation.service.js';
 
 async function waitUntilReady(queue: Queue, timeoutMs: number): Promise<void> {
@@ -33,11 +31,9 @@ async function waitUntilReady(queue: Queue, timeoutMs: number): Promise<void> {
     ScheduleModule.forRoot(),
     ConfigModule.forFeature(sriQueueConfig),
     PrismaModule,
-    forwardRef(() => InvoicesModule),
   ],
   providers: [
     SriQueueService,
-    SriQueueWorker,
     SriReconciliationService,
     {
       provide: SRI_QUEUE_TOKEN,
@@ -75,6 +71,6 @@ async function waitUntilReady(queue: Queue, timeoutMs: number): Promise<void> {
       inject: [ConfigService],
     },
   ],
-  exports: [SriQueueService, SriQueueWorker, SriReconciliationService],
+  exports: [SriQueueService, SriReconciliationService],
 })
 export class SriQueueModule {}

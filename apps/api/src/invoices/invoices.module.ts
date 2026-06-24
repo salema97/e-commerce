@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { InvoicesService } from './invoices.service.js';
 import { InvoicesController } from './invoices.controller.js';
 import { CreditNotesController } from './credit-notes.controller.js';
@@ -19,6 +19,7 @@ import { StorageModule } from '../storage/storage.module.js';
 import { EmailModule } from '../notifications/email.module.js';
 import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
 import { SriQueueModule } from './sri/sri-queue.module.js';
+import { SriQueueWorker } from './sri/sri-queue.worker.js';
 import { isNonProduction } from '../common/is-non-production.js';
 
 @Module({
@@ -27,7 +28,7 @@ import { isNonProduction } from '../common/is-non-production.js';
     StorageModule,
     EmailModule,
     WhatsAppNotificationModule,
-    forwardRef(() => SriQueueModule),
+    SriQueueModule,
   ],
   controllers: [
     InvoicesController,
@@ -47,6 +48,7 @@ import { isNonProduction } from '../common/is-non-production.js';
     SriRidePdfService,
     SriDocumentStorageService,
     SriDeliveryService,
+    SriQueueWorker,
   ],
   exports: [
     InvoicesService,
