@@ -6,39 +6,9 @@ import { ConfigService } from '@nestjs/config';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
+import { BASE_TEST_CONFIG, bearerAuth } from './test-config.js';
 
-vi.mock('@clerk/backend', async () => {
-  const actual = await vi.importActual('@clerk/backend');
-  return {
-    ...(actual as object),
-    verifyToken: vi.fn(() =>
-      Promise.resolve({
-        sub: 'user_customer',
-        public_metadata: { role: 'CUSTOMER' },
-      }),
-    ),
-  };
-});
-
-const TEST_CONFIG = {
-  NODE_ENV: 'test',
-  PORT: 3001,
-  DATABASE_URL: 'postgresql://localhost:5432/test',
-  REDIS_URL: 'redis://localhost:6379',
-  CLERK_SECRET_KEY: 'sk_test_xxx',
-  CLERK_WEBHOOK_SECRET: 'whsec_xxx',
-  STRIPE_SECRET_KEY: 'sk_test_xxx',
-  STRIPE_WEBHOOK_SECRET: 'whsec_xxx',
-  SRI_MODE: 'direct',
-  SRI_RUC: '1792146739001',
-  SRI_SOL_KEY: 'test',
-  SRI_DIGITAL_CERTIFICATE_PATH: 'data:test',
-  SRI_DIGITAL_CERTIFICATE_PASSWORD: 'test',
-  SRI_ESTABLISHMENT_CODE: '001',
-  SRI_EMISSION_POINT_CODE: '001',
-  SRI_TEST_ENVIRONMENT: 'true',
-  SRI_QUEUE_ENABLED: 'false',
-};
+const TEST_CONFIG = { ...BASE_TEST_CONFIG };
 
 describe('RBAC (e2e)', () => {
   let app: INestApplication;
@@ -72,7 +42,7 @@ describe('RBAC (e2e)', () => {
   it('returns 403 when a customer attempts to create a product', () => {
     return request(app.getHttpServer())
       .post('/v1/products')
-      .set('Authorization', 'Bearer valid-customer-token')
+      .set(bearerAuth('user_customer', 'CUSTOMER'))
       .send({
         name: 'Forbidden product',
         slug: 'forbidden-product',

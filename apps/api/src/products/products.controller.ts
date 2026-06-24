@@ -13,6 +13,7 @@ import { CreateProductDto } from './dto/create-product.dto.js';
 import { UpdateProductDto } from './dto/update-product.dto.js';
 import { Audit } from '../audit/audit.decorator.js';
 import { Roles } from '../auth/roles.decorator.js';
+import { Public } from '../auth/public.decorator.js';
 import { Role } from '../auth/role.enum.js';
 
 @ApiTags('Products')
@@ -31,13 +32,24 @@ export class ProductsController {
   }
 
   @Get()
+  @Public()
   @ApiOperation({ summary: 'List all products' })
   @ApiResponse({ status: 200, description: 'Products returned' })
   findAll() {
     return this.productsService.findAll();
   }
 
+  @Get('slug/:slug')
+  @Public()
+  @ApiOperation({ summary: 'Get an active product by slug' })
+  @ApiResponse({ status: 200, description: 'Product found' })
+  @ApiResponse({ status: 404, description: 'Product not found' })
+  findBySlug(@Param('slug') slug: string) {
+    return this.productsService.findBySlug(slug);
+  }
+
   @Get(':id')
+  @Public()
   @ApiOperation({ summary: 'Get a product by id' })
   @ApiResponse({ status: 200, description: 'Product found' })
   @ApiResponse({ status: 404, description: 'Product not found' })

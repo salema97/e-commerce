@@ -5,6 +5,7 @@ import { InventoryReservationService } from '../inventory/inventory-reservation.
 import { PromotionService } from '../promotions/promotion.service.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
 import { CreateOrderDto, CreateOrderItemDto } from './dto/create-order.dto.js';
+import { ListOrdersQueryDto } from './dto/list-orders.query.dto.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
 
 export interface CreatedOrderResult {
@@ -108,6 +109,74 @@ export class OrdersService {
     const order = await this.prisma.order.findUnique({ where: { id }, include: { items: true, statusHistory: true } });
     if (!order) throw new NotFoundException(`Order ${id} not found`);
     return order;
+  }
+
+  async listOrders(query: ListOrdersQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 50;
+    const skip = (page - 1) * limit;
+    const where = query.status ? { status: query.status } : {};
+
+    const [orders, total] = await Promise.all([
+      this.prisma.order.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip,
+        include: { items: true },
+      }),
+      this.prisma.order.count({ where }),
+    ]);
+
+    return {
+      data: orders.map((order) => this.serializeOrderSummary(order)),
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  private serializeOrderSummary(
+    order: {
+      id: string;
+      orderNumber: string;
+      userId: string | null;
+      customerEmail: string;
+      customerPhone: string | null;
+      customerName: string | null;
+      status: OrderStatus;
+      channel: OrderChannel;
+      subtotal: Prisma.Decimal;
+      taxAmount: Prisma.Decimal;
+      shippingAmount: Prisma.Decimal;
+      discountAmount: Prisma.Decimal;
+      total: Prisma.Decimal;
+      createdAt: Date;
+      updatedAt: Date;
+      items: unknown[];
+    },
+  ) {
+    return {
+      id: order.id,
+      orderNumber: order.orderNumber,
+      userId: order.userId,
+      customerEmail: order.customerEmail,
+      customerPhone: order.customerPhone,
+      customerName: order.customerName,
+      status: order.status,
+      channel: order.channel,
+      subtotal: Number(order.subtotal),
+      taxAmount: Number(order.taxAmount),
+      shippingAmount: Number(order.shippingAmount),
+      discountAmount: Number(order.discountAmount),
+      total: Number(order.total),
+      createdAt: order.createdAt.toISOString(),
+      updatedAt: order.updatedAt.toISOString(),
+      items: order.items,
+    };
   }
 
   async updateOrderStatus(id: string, status: OrderStatus) {

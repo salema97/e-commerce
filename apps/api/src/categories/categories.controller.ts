@@ -13,6 +13,7 @@ import { CreateCategoryDto } from './dto/create-category.dto.js';
 import { UpdateCategoryDto } from './dto/update-category.dto.js';
 import { Audit } from '../audit/audit.decorator.js';
 import { Roles } from '../auth/roles.decorator.js';
+import { Public } from '../auth/public.decorator.js';
 import { Role } from '../auth/role.enum.js';
 
 @ApiTags('Categories')
@@ -31,6 +32,7 @@ export class CategoriesController {
   }
 
   @Get()
+  @Public()
   @ApiOperation({ summary: 'List all categories' })
   @ApiResponse({ status: 200, description: 'Categories returned' })
   findAll() {
@@ -38,6 +40,7 @@ export class CategoriesController {
   }
 
   @Get(':id')
+  @Public()
   @ApiOperation({ summary: 'Get a category by id' })
   @ApiResponse({ status: 200, description: 'Category found' })
   @ApiResponse({ status: 404, description: 'Category not found' })
