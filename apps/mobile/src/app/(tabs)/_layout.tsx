@@ -12,8 +12,8 @@ export default function TabLayout(): React.ReactElement {
 
   useEffect(() => {
     void queryClient.prefetchQuery({
-      queryKey: queryKeys.products(),
-      queryFn: () => api.client.products.findAll({ status: 'ACTIVE' }),
+      queryKey: queryKeys.catalog({ page: 1, limit: 48, sort: 'newest' }),
+      queryFn: () => api.client.catalog.browse({ page: 1, limit: 48, sort: 'newest' }),
     });
     void queryClient.prefetchQuery({
       queryKey: queryKeys.categories,

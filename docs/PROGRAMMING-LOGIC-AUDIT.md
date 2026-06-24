@@ -32,6 +32,7 @@ Este documento define **una sola lógica de programación, diseño y estructura*
 | **10** | **AI, RAG, chat, knowledge** | ✅ | ✅ store + admin | ✅ chat tienda |
 | **11** | **Analytics, event bus, consent** | ✅ | ✅ tracking + dashboard | ✅ tracking parcial |
 | **12** | **Shipping, taxes, fulfillment/WMS** | ✅ | ✅ checkout + admin + tracking | — (API-only) |
+| **13** | **Search, filters, catalog cache** | ✅ | ✅ faceted store SSR | ✅ useCatalog + prefetch |
 
 ---
 
@@ -524,6 +525,22 @@ Fases 8–10 cerraron con PRs encadenadas + UI closure; fase 11 con PR #5 + fixe
 | `shipment-panel` con `useReducer` | Cosmético | React Doctor; formulario pequeño con `useState` |
 | Tracking cliente SSR | ✅ | `page.tsx` + `order-tracking-view.tsx` con `getServerApiClient` |
 
+### Sprint F — Fase 13 (search / catalog / performance) ✅
+
+1. ~~`CatalogModule` + Meilisearch facets en `AiModule`~~ ✅
+2. ~~`GET /catalog` público con Redis cache (`CATALOG_CACHE_TTL_SECONDS`)~~ ✅
+3. ~~Web store: SSR `api.catalog.browse` + `StoreFilters` neo + facets~~ ✅
+4. ~~Mobile: `useCatalog` + prefetch tabs, sin `ActivityIndicator`~~ ✅
+5. ~~`next.config.ts`: AVIF/WebP + bundle analyzer (no `.mjs` duplicado)~~ ✅
+6. ~~`POST /search/admin/reindex` con `@Audit`~~ ✅
+
+**Gaps no bloqueantes (fase 13):**
+
+| Gap | Estado | Nota |
+|-----|--------|------|
+| Core Web Vitals / Lighthouse CI | Pendiente | Optimización imágenes configurada; sin pipeline CI |
+| Sinónimos Meilisearch | API | Config en `meilisearch.service`; revisar en producción |
+
 ---
 
 ## 11. Referencias rápidas de archivos
@@ -579,6 +596,7 @@ El monorepo tiene un **núcleo coherente y alineado** tras Sprints A–E (jun 20
 | Analytics admin gráficos | ✅ embudo barras, top productos, heatmap cohortes + CSV |
 | React Doctor web | ✅ 100/100 (`useReducer` en formularios críticos) |
 | Phase 12 shipping/taxes | ✅ merge `71b686d`; Playwright UI verificado |
+| Phase 13 search/catalog | ✅ merge; React Doctor 100; store facetado SSR |
 
 La **mayor fuente de bugs en merge** sigue siendo **cableado olvidado**: `AppModule`, JWT, migraciones, nav admin, providers, consent en E2E. Usar las checklists de §8 antes de cada merge a `main`.
 

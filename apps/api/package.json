@@ -21,6 +21,7 @@
     "prisma:migrate": "dotenv -e .env -- prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",
     "db:reset": "dotenv -e .env -- prisma migrate reset --force",
+    "search:reindex": "dotenv -e .env -- tsx src/scripts/search-reindex.ts",
     "clean": "rm -rf dist .turbo"
   },
   "prisma": {

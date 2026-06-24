@@ -2,6 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { KnowledgeIndexQueueService } from '../knowledge/knowledge-index-queue.service.js';
 import { MeilisearchService } from './meilisearch.service.js';
+import {
+  mapProductToMeiliDocument,
+  productIndexSelect,
+} from './meili-product.mapper.js';
 
 @Injectable()
 export class ProductSearchSyncService {
@@ -14,27 +18,14 @@ export class ProductSearchSyncService {
   async syncProduct(productId: string): Promise<void> {
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        description: true,
-        status: true,
-      },
+      select: productIndexSelect,
     });
 
     if (!product) {
       return;
     }
 
-    await this.meilisearch.indexProduct({
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      description: product.description ?? '',
-      status: product.status,
-    });
-
+    await this.meilisearch.indexProduct(mapProductToMeiliDocument(product));
     await this.knowledgeIndexQueue.enqueueProduct(productId);
   }
 

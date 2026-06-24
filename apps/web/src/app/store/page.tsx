@@ -2,12 +2,13 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { getServerApiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { StoreFilters } from '@/components/store/store-filters';
 import { StoreProductGrid } from '@/components/store/store-product-grid';
 import { StoreAnalyticsTracker } from '@/components/analytics/store-analytics-tracker';
-import type { Product, Category } from '@repo/shared-types';
+import type { CatalogQuery, Category } from '@repo/shared-types';
 
 interface StorePageProps {
   searchParams: Promise<{
@@ -15,55 +16,48 @@ interface StorePageProps {
     search?: string;
     sort?: string;
     page?: string;
+    brand?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    inStock?: string;
+    attr?: string | string[];
   }>;
 }
 
 export default async function StorePage({ searchParams }: StorePageProps) {
   const [params, api] = await Promise.all([searchParams, getServerApiClient()]);
 
-  const categorySlug = params.category;
-  const search = params.search;
-  const sort = params.sort ?? 'newest';
   const page = Math.max(1, Number(params.page ?? '1'));
-  const limit = 12;
+  const sort = (params.sort as CatalogQuery['sort']) ?? 'newest';
+  const catalogQuery: CatalogQuery & { attr?: string | string[] } = {
+    q: params.search,
+    category: params.category,
+    brand: params.brand,
+    minPrice: params.minPrice ? Number(params.minPrice) : undefined,
+    maxPrice: params.maxPrice ? Number(params.maxPrice) : undefined,
+    inStock: params.inStock === 'true' ? true : undefined,
+    sort,
+    page,
+    limit: 12,
+    attr: params.attr,
+  };
 
-  const [productsResult, categoriesResult] = await Promise.allSettled([
-    api.products.findAll({ status: 'ACTIVE' }),
+  const [catalogResult, categoriesResult] = await Promise.allSettled([
+    api.catalog.browse(catalogQuery),
     api.categories.findAll(),
   ]);
 
-  let products: Product[] = productsResult.status === 'fulfilled' ? productsResult.value : [];
-  const categories: Category[] = categoriesResult.status === 'fulfilled' ? categoriesResult.value : [];
+  const catalog =
+    catalogResult.status === 'fulfilled'
+      ? catalogResult.value
+      : { items: [], total: 0, page, limit: 12, facets: {} };
+  const categories: Category[] =
+    categoriesResult.status === 'fulfilled' ? categoriesResult.value : [];
 
-  if (categorySlug) {
-    const category = categories.find((c) => c.slug === categorySlug);
-    if (category) {
-      products = products.filter((p) => p.categoryId === category.id);
-    }
-  }
-
-  if (search?.trim()) {
-    try {
-      const hits = await api.search.products(search.trim(), 100);
-      const scoreById = new Map(hits.map((hit) => [hit.id, hit.score]));
-      products = products
-        .filter((product) => scoreById.has(product.id))
-        .sort((left, right) => (scoreById.get(right.id) ?? 0) - (scoreById.get(left.id) ?? 0));
-    } catch {
-      const q = search.toLowerCase();
-      products = products.filter(
-        (p) => p.name.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q),
-      );
-    }
-  }
-
-  products = sortProducts(products, sort);
-
-  const total = products.length;
-  const start = (page - 1) * limit;
-  const paginatedProducts = products.slice(start, start + limit);
-  const totalPages = Math.ceil(total / limit);
-  const activeCategory = categories.find((c) => c.slug === categorySlug);
+  const totalPages = Math.max(1, Math.ceil(catalog.total / catalog.limit));
+  const attributeFacets = catalog.facets.attributeFacets ?? [];
+  const brandFacets = catalog.facets.brand ?? [];
+  const activeCategory = categories.find((c) => c.slug === params.category);
 
   return (
     <AnimatedPageShell
@@ -83,21 +77,55 @@ export default async function StorePage({ searchParams }: StorePageProps) {
       <div className="mt-6 flex flex-col gap-8 lg:flex-row">
         <aside className="w-full lg:w-72">
           <StoreFilters
-            search={search}
-            categorySlug={categorySlug}
+            search={params.search}
+            categorySlug={params.category}
+            brand={params.brand}
+            minPrice={params.minPrice}
+            maxPrice={params.maxPrice}
+            inStock={params.inStock === 'true'}
             sort={sort}
             categories={categories}
+            brandFacets={brandFacets}
           />
+
+          {attributeFacets.length > 0 ? (
+            <div className="mt-4 flex flex-col gap-2 border-[3px] border-neo-onyx bg-white p-5 shadow-[6px_6px_0_0_#111111]">
+              <span className="text-sm font-bold uppercase tracking-wide">Atributos</span>
+              <div className="flex flex-wrap gap-2">
+                {attributeFacets.slice(0, 8).map((facet) => {
+                  const [name, value] = facet.value.split(':');
+                  const attrValue = `${name}=${value}`;
+                  const active = Array.isArray(params.attr)
+                    ? params.attr.includes(attrValue)
+                    : params.attr === attrValue;
+                  return (
+                    <Link
+                      key={facet.value}
+                      href={buildHref({
+                        ...params,
+                        attr: active ? undefined : attrValue,
+                        page: '1',
+                      })}
+                    >
+                      <Badge variant={active ? 'default' : 'secondary'}>
+                        {name}: {value} ({facet.count})
+                      </Badge>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
         </aside>
 
         <div className="flex-1">
           <div className="mb-6 text-sm font-bold uppercase tracking-wide text-muted-foreground">
-            Mostrando {paginatedProducts.length} de {total} productos
+            Mostrando {catalog.items.length} de {catalog.total} productos
           </div>
 
-          <StoreProductGrid products={paginatedProducts} />
+          <StoreProductGrid products={catalog.items} />
 
-          {paginatedProducts.length === 0 ? (
+          {catalog.items.length === 0 ? (
             <div className="border-[3px] border-dashed border-neo-onyx py-20 text-center font-bold uppercase text-muted-foreground">
               No se encontraron productos.
             </div>
@@ -112,7 +140,7 @@ export default async function StorePage({ searchParams }: StorePageProps) {
               </Button>
             </Link>
             <span className="text-sm font-bold uppercase">
-              Página {page} de {totalPages || 1}
+              Página {page} de {totalPages}
             </span>
             <Link
               href={buildHref({ ...params, page: String(page + 1) })}
@@ -129,27 +157,17 @@ export default async function StorePage({ searchParams }: StorePageProps) {
   );
 }
 
-function sortProducts(products: Product[], sort: string): Product[] {
-  const copy = [...products];
-  switch (sort) {
-    case 'price_asc':
-      return copy.sort((a, b) => a.price - b.price);
-    case 'price_desc':
-      return copy.sort((a, b) => b.price - a.price);
-    case 'name_asc':
-      return copy.sort((a, b) => a.name.localeCompare(b.name));
-    case 'newest':
-    default:
-      return copy.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      );
-  }
-}
-
-function buildHref(params: Record<string, string | undefined>): string {
+function buildHref(params: Record<string, string | string[] | undefined>): string {
   const searchParams = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
-    if (value) searchParams.set(key, value);
+    if (!value) continue;
+    if (Array.isArray(value)) {
+      for (const entry of value) {
+        if (entry) searchParams.append(key, entry);
+      }
+    } else {
+      searchParams.set(key, value);
+    }
   }
   const query = searchParams.toString();
   return query ? `/store?${query}` : '/store';

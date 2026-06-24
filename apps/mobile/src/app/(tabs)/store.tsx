@@ -1,18 +1,12 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  Pressable,
-  StyleSheet,
-} from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Input, Badge, PressableCard, ProductImage, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen.js';
 import { StoreChatWidget } from '../../components/store/StoreChatWidget.js';
 import { api } from '../../lib/api.js';
-import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
-import type { Product, Category } from '@repo/shared-types';
+import { formatPrice } from '@repo/shared-utils';
+import type { CatalogProductSummary, Category } from '@repo/shared-types';
 import { NeoEnterFromTop, NeoStaggeredItem } from '../../components/neo-animated.js';
 import { trackMobileEvent } from '../../lib/analytics.js';
 import { useAuth } from '../../providers/AuthProvider.js';
@@ -21,11 +15,22 @@ export default function StoreScreen(): React.ReactElement {
   const router = useRouter();
   const { user } = useAuth();
   const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
   const lastSearchRef = useRef<string | null>(null);
   const lastCategoryRef = useRef<string | null>(null);
 
   const trimmedSearch = search.trim();
+
+  const catalogQuery = useMemo(
+    () => ({
+      q: trimmedSearch || undefined,
+      category: selectedCategory,
+      page: 1,
+      limit: 48,
+      sort: 'newest' as const,
+    }),
+    [trimmedSearch, selectedCategory],
+  );
 
   useEffect(() => {
     if (trimmedSearch.length >= 2 && trimmedSearch !== lastSearchRef.current) {
@@ -37,78 +42,47 @@ export default function StoreScreen(): React.ReactElement {
   useEffect(() => {
     if (selectedCategory && selectedCategory !== lastCategoryRef.current) {
       lastCategoryRef.current = selectedCategory;
-      void trackMobileEvent('filter', { categoryId: selectedCategory }, user?.id);
+      void trackMobileEvent('filter', { categorySlug: selectedCategory }, user?.id);
     }
   }, [selectedCategory, user?.id]);
 
-  const {
-    data: products,
-    error: productsError,
-  } = api.hooks.useProducts();
-
+  const { data: catalog, error: catalogError } = api.hooks.useCatalog(catalogQuery);
   const { data: categories } = api.hooks.useCategories();
 
-  const { data: searchHits } = api.hooks.useProductSearch(trimmedSearch, {
-    enabled: trimmedSearch.length >= 2,
-  });
-
-  const filteredProducts = useMemo(() => {
-    if (!products) return [];
-
-    let result = products;
-
-    if (trimmedSearch.length >= 2 && searchHits) {
-      const scoreById = new Map(searchHits.map((hit) => [hit.id, hit.score]));
-      result = result
-        .filter((product) => scoreById.has(product.id))
-        .sort((left, right) => (scoreById.get(right.id) ?? 0) - (scoreById.get(left.id) ?? 0));
-    } else if (trimmedSearch) {
-      const q = trimmedSearch.toLowerCase();
-      result = result.filter((product) => product.name.toLowerCase().includes(q));
-    }
-
-    if (selectedCategory) {
-      result = result.filter((product) => product.categoryId === selectedCategory);
-    }
-
-    return result;
-  }, [products, trimmedSearch, searchHits, selectedCategory]);
+  const products: CatalogProductSummary[] = catalog?.items ?? [];
 
   const renderCategory = ({ item }: { item: Category }) => (
     <Pressable
       onPress={() =>
-        setSelectedCategory((current) => (current === item.id ? null : item.id))
+        setSelectedCategory((current) => (current === item.slug ? undefined : item.slug))
       }
       style={styles.chip}
     >
-      <Badge variant={selectedCategory === item.id ? 'secondary' : 'outline'}>
+      <Badge variant={selectedCategory === item.slug ? 'secondary' : 'outline'}>
         {item.name}
       </Badge>
     </Pressable>
   );
 
-  const renderProduct = ({ item, index }: { item: Product; index: number }) => (
+  const renderProduct = ({ item, index }: { item: CatalogProductSummary; index: number }) => (
     <NeoStaggeredItem index={index}>
       <PressableCard
         padding="none"
         cardStyle={styles.productCard}
         onPress={() => router.push({ pathname: '/(tabs)/product/[id]', params: { id: item.id } })}
       >
-        <ProductImage
-          url={getProductPrimaryImageUrl(item)}
-          alt={getProductPrimaryImageAlt(item)}
-          variant="card"
-        />
+        <ProductImage url={item.imageUrl ?? undefined} alt={item.name} variant="card" />
         <View style={styles.productBody}>
           <Text style={styles.productName} numberOfLines={2}>
             {item.name}
           </Text>
-          {item.category ? (
-            <Text style={styles.categoryName}>{(item.category as Category).name}</Text>
+          {item.categoryName ? (
+            <Text style={styles.categoryName}>{item.categoryName}</Text>
           ) : null}
           <View style={styles.priceRow}>
             <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
             {item.compareAtPrice ? <Badge variant="destructive" size="sm">Oferta</Badge> : null}
+            {!item.inStock ? <Badge variant="outline" size="sm">Agotado</Badge> : null}
           </View>
         </View>
       </PressableCard>
@@ -131,21 +105,21 @@ export default function StoreScreen(): React.ReactElement {
       </NeoEnterFromTop>
 
       <FlatList
-          horizontal
-          data={categories ?? []}
-          keyExtractor={(item) => item.id}
-          renderItem={renderCategory}
-          contentContainerStyle={styles.categories}
-          showsHorizontalScrollIndicator={false}
-        />
+        horizontal
+        data={categories ?? []}
+        keyExtractor={(item) => item.id}
+        renderItem={renderCategory}
+        contentContainerStyle={styles.categories}
+        showsHorizontalScrollIndicator={false}
+      />
 
-      {productsError ? (
+      {catalogError ? (
         <View style={styles.center}>
           <Text style={styles.error}>No se pudieron cargar los productos.</Text>
         </View>
       ) : (
         <FlatList
-          data={filteredProducts}
+          data={products}
           keyExtractor={(item) => item.id}
           renderItem={renderProduct}
           contentContainerStyle={styles.list}
@@ -195,9 +169,6 @@ const styles = StyleSheet.create({
   chip: {
     marginRight: 8,
   },
-  loader: {
-    marginTop: 40,
-  },
   center: {
     flex: 1,
     justifyContent: 'center',
@@ -237,6 +208,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 10,
+    gap: 8,
+    flexWrap: 'wrap',
   },
   productPrice: {
     fontSize: 20,

@@ -83,6 +83,8 @@ import type {
   WmsProviderProfile,
   WmsInventoryRecord,
   UpdateReturnShippingDto,
+  CatalogResponse,
+  CatalogQuery,
 } from '@repo/shared-types';
 
 export interface ApiClientOptions {
@@ -202,6 +204,18 @@ export function createApiClient(options: ApiClientOptions) {
     products: {
       findAll: (query?: { categoryId?: string; status?: string }) =>
         request<Product[]>('GET', '/products', undefined, query),
+      findStore: (query?: {
+        category?: string;
+        sort?: string;
+        page?: number;
+        limit?: number;
+      }) =>
+        request<{ items: Product[]; total: number; page: number; limit: number }>(
+          'GET',
+          '/products/store',
+          undefined,
+          query,
+        ),
       findOne: (id: string) => request<Product>('GET', `/products/${id}`),
       findBySlug: (slug: string) => request<Product>('GET', `/products/slug/${slug}`),
       create: (data: CreateProductDto) => request<Product>('POST', '/products', data),
@@ -429,6 +443,17 @@ export function createApiClient(options: ApiClientOptions) {
     search: {
       products: (query: string, limit?: number) =>
         request<SearchResultItem[]>('GET', '/search', undefined, { q: query, limit }),
+      reindex: () =>
+        request<{ indexed: number; meilisearchEnabled: boolean }>('POST', '/search/admin/reindex'),
+    },
+    catalog: {
+      browse: (query?: CatalogQuery & { attr?: string | string[] }) =>
+        request<CatalogResponse>(
+          'GET',
+          '/catalog',
+          undefined,
+          query as Record<string, string | number | boolean | undefined>,
+        ),
     },
     analytics: {
       trackEvent: (data: {

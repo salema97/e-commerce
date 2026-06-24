@@ -2,18 +2,44 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ProductImage } from '@/components/store/product-image';
-import { formatPrice, getProductPrimaryImageAlt, getProductPrimaryImageUrl } from '@repo/shared-utils';
-import type { Product } from '@repo/shared-types';
+import {
+  formatPrice,
+  getProductPrimaryImageAlt,
+  getProductPrimaryImageUrl,
+} from '@repo/shared-utils';
+import type { CatalogProductSummary, Product } from '@repo/shared-types';
 import { cn } from '@/lib/utils';
 
+export type ProductCardItem = Product | CatalogProductSummary;
+
 interface ProductCardProps {
-  product: Product;
+  product: ProductCardItem;
   className?: string;
   size?: 'default' | 'compact';
 }
 
+function isCatalogSummary(product: ProductCardItem): product is CatalogProductSummary {
+  return 'imageUrl' in product && !('images' in product);
+}
+
+function resolveImage(product: ProductCardItem) {
+  if (isCatalogSummary(product)) {
+    return {
+      url: product.imageUrl ?? undefined,
+      alt: product.name,
+    };
+  }
+  return {
+    url: getProductPrimaryImageUrl(product),
+    alt: getProductPrimaryImageAlt(product),
+  };
+}
+
 export function ProductCard({ product, className, size = 'default' }: ProductCardProps) {
-  const imageUrl = getProductPrimaryImageUrl(product);
+  const { url: imageUrl, alt } = resolveImage(product);
+  const isFeatured = isCatalogSummary(product) ? product.isFeatured : product.isFeatured;
+  const compareAtPrice = product.compareAtPrice;
+  const outOfStock = isCatalogSummary(product) ? !product.inStock : false;
 
   return (
     <Link href={`/store/${product.slug}`} className={cn('group block', className)}>
@@ -21,12 +47,12 @@ export function ProductCard({ product, className, size = 'default' }: ProductCar
         <div className="relative">
           <ProductImage
             url={imageUrl}
-            alt={getProductPrimaryImageAlt(product)}
+            alt={alt}
             variant="card"
             sizes="(max-width: 768px) 100vw, 33vw"
             grayscaleHover
           />
-          {product.compareAtPrice ? (
+          {compareAtPrice ? (
             <div className="absolute top-3 right-3 rotate-3">
               <Badge variant="destructive">Oferta</Badge>
             </div>
@@ -35,9 +61,14 @@ export function ProductCard({ product, className, size = 'default' }: ProductCar
         <CardHeader className={cn('pb-2', size === 'compact' && 'p-4')}>
           <CardTitle className={cn(size === 'compact' && 'text-base')}>{product.name}</CardTitle>
         </CardHeader>
-        <CardContent className={cn('flex items-center justify-between', size === 'compact' && 'p-4 pt-0')}>
+        <CardContent
+          className={cn('flex items-center justify-between', size === 'compact' && 'p-4 pt-0')}
+        >
           <span className="font-anton text-2xl">{formatPrice(product.price)}</span>
-          {product.isFeatured ? <Badge variant="secondary">Destacado</Badge> : null}
+          <div className="flex gap-2">
+            {outOfStock ? <Badge variant="outline">Agotado</Badge> : null}
+            {isFeatured ? <Badge variant="secondary">Destacado</Badge> : null}
+          </div>
         </CardContent>
       </Card>
     </Link>

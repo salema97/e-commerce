@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -13,6 +14,7 @@ import { ProductsService } from './products.service.js';
 import { CreateProductDto } from './dto/create-product.dto.js';
 import { UpdateProductDto } from './dto/update-product.dto.js';
 import { CreateBackInStockAlertDto } from './dto/create-back-in-stock-alert.dto.js';
+import { ProductPublicQueryDto } from './dto/product-public-query.dto.js';
 import { Audit } from '../audit/audit.decorator.js';
 import { Roles } from '../auth/roles.decorator.js';
 import { Public } from '../auth/public.decorator.js';
@@ -35,6 +37,13 @@ export class ProductsController {
   @ApiResponse({ status: 400, description: 'Invalid input' })
   create(@Body() createProductDto: CreateProductDto) {
     return this.productsService.create(createProductDto);
+  }
+
+  @Get('store')
+  @Public()
+  @ApiOperation({ summary: 'List active products for storefront (lean, paginated)' })
+  findStoreProducts(@Query() query: ProductPublicQueryDto) {
+    return this.productsService.findStoreProducts(query);
   }
 
   @Get()

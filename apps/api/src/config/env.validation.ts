@@ -73,6 +73,7 @@ const envSchema = z.object({
   WIN_BACK_ENABLED: z.enum(['true', 'false']).default('true'),
   MEILI_HOST: z.string().optional(),
   MEILI_API_KEY: z.string().optional(),
+  CATALOG_CACHE_TTL_SECONDS: z.coerce.number().int().min(0).default(120),
   LLM_PROVIDER: z.enum(['console', 'openai', 'anthropic']).default('console'),
   OPENAI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),

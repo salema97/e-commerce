@@ -18,6 +18,9 @@ export class SearchDomainEventConsumer implements OnModuleInit {
     if (event.name === 'product.updated' && event.payload.productId) {
       await this.searchSync.syncProduct(String(event.payload.productId));
     }
+    if (event.name === 'product.deleted' && event.payload.productId) {
+      await this.searchSync.removeProduct(String(event.payload.productId));
+    }
     if (event.name === 'inventory.changed' && event.payload.productId) {
       await this.searchSync.syncProduct(String(event.payload.productId));
     }

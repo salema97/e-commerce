@@ -1,12 +1,11 @@
 'use client';
 
 import { m, useReducedMotion } from 'motion/react';
-import { ProductCard } from '@/components/store/product-card';
-import type { Product } from '@repo/shared-types';
+import { ProductCard, type ProductCardItem } from '@/components/store/product-card';
 import { productCardVariants, productGridVariants, reducedMotionTransition } from '@/lib/neo-motion';
 
 interface StoreProductGridProps {
-  products: Product[];
+  products: ProductCardItem[];
 }
 
 export function StoreProductGrid({ products }: StoreProductGridProps) {

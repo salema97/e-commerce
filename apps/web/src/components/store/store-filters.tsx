@@ -4,13 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FormSelect } from '@/components/ui/form-select';
-import type { Category } from '@repo/shared-types';
+import type { CatalogFacetValue, Category } from '@repo/shared-types';
 
 interface StoreFiltersProps {
   search?: string;
   categorySlug?: string;
+  brand?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  inStock?: boolean;
   sort: string;
   categories: Category[];
+  brandFacets?: CatalogFacetValue[];
 }
 
 const SORT_OPTIONS = [
@@ -20,11 +25,18 @@ const SORT_OPTIONS = [
   { value: 'name_asc', label: 'Nombre A-Z' },
 ];
 
+const EMPTY_BRAND_FACETS: CatalogFacetValue[] = [];
+
 export function StoreFilters({
   search = '',
   categorySlug = '',
+  brand = '',
+  minPrice = '',
+  maxPrice = '',
+  inStock = false,
   sort,
   categories,
+  brandFacets = EMPTY_BRAND_FACETS,
 }: StoreFiltersProps) {
   return (
     <form
@@ -60,14 +72,58 @@ export function StoreFilters({
         />
       </div>
 
+      <div className="grid grid-cols-2 gap-2">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="minPrice">Precio mín.</Label>
+          <Input
+            id="minPrice"
+            name="minPrice"
+            type="number"
+            min={0}
+            step="0.01"
+            defaultValue={minPrice}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="maxPrice">Precio máx.</Label>
+          <Input
+            id="maxPrice"
+            name="maxPrice"
+            type="number"
+            min={0}
+            step="0.01"
+            defaultValue={maxPrice}
+          />
+        </div>
+      </div>
+
+      {brandFacets.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="brand">Marca</Label>
+          <FormSelect
+            id="brand"
+            name="brand"
+            defaultValue={brand}
+            placeholder="Todas"
+            options={[
+              { value: '', label: 'Todas' },
+              ...brandFacets.map((facet) => ({
+                value: facet.value,
+                label: `${facet.value} (${facet.count})`,
+              })),
+            ]}
+          />
+        </div>
+      ) : null}
+
+      <label className="flex items-center gap-2 text-sm font-medium">
+        <input type="checkbox" name="inStock" value="true" defaultChecked={inStock} />
+        Solo con stock
+      </label>
+
       <div className="flex flex-col gap-2">
         <Label htmlFor="sort">Ordenar</Label>
-        <FormSelect
-          id="sort"
-          name="sort"
-          defaultValue={sort}
-          options={SORT_OPTIONS}
-        />
+        <FormSelect id="sort" name="sort" defaultValue={sort} options={SORT_OPTIONS} />
       </div>
 
       <Button type="submit" className="w-full">

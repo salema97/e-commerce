@@ -73,6 +73,8 @@ import type {
   DistributePromoResponse,
   AnalyticsOverviewReport,
   CohortRetentionReport,
+  CatalogResponse,
+  CatalogQuery,
 } from '@repo/shared-types';
 import type { ApiClient } from './client.js';
 
@@ -113,6 +115,8 @@ export const queryKeys = {
   financeStoreCredits: ['finance', 'store-credits'] as const,
   notificationPreferences: ['notifications', 'preferences'] as const,
   search: (query: string) => ['search', query] as const,
+  catalog: (filters?: Record<string, string | number | boolean | undefined>) =>
+    ['catalog', filters ?? {}] as const,
   chatMessages: (sessionId: string) => ['chat', sessionId, 'messages'] as const,
   productContentDraft: (productId: string) => ['ai', 'products', productId, 'draft'] as const,
   faqs: ['ai', 'faqs'] as const,
@@ -848,6 +852,16 @@ export function createQueryHooks(client: ApiClient) {
         queryKey: queryKeys.search(query),
         queryFn: () => client.search.products(query),
         enabled: Boolean(query.trim()),
+        ...options,
+      }),
+
+    useCatalog: (
+      query?: CatalogQuery & { attr?: string | string[] },
+      options?: Omit<UseQueryOptions<CatalogResponse, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.catalog(query as Record<string, string | number | boolean | undefined>),
+        queryFn: () => client.catalog.browse(query),
         ...options,
       }),
 

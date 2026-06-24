@@ -37,10 +37,12 @@ import { ChatController } from './chat/chat.controller.js';
 import { MeilisearchService } from './search/meilisearch.service.js';
 import { HybridSearchService } from './search/hybrid-search.service.js';
 import { SearchController } from './search/search.controller.js';
+import { SearchAdminController } from './search/search-admin.controller.js';
 import { ProductContentAiService } from './product-content/product-content-ai.service.js';
 import { ProductContentAiController } from './product-content/product-content-ai.controller.js';
 import { ProductSearchSyncService } from './search/product-search-sync.service.js';
 import { SearchDomainEventConsumer } from './search/search-domain-event.consumer.js';
+import { SearchReindexService } from './search/search-reindex.service.js';
 
 @Module({
   imports: [ConfigModule, PrismaModule, ConversationModule, MessageModule, WhatsAppModule],
@@ -49,6 +51,7 @@ import { SearchDomainEventConsumer } from './search/search-domain-event.consumer
     CmsPageController,
     ChatController,
     SearchController,
+    SearchAdminController,
     ProductContentAiController,
   ],
   providers: [
@@ -141,6 +144,7 @@ import { SearchDomainEventConsumer } from './search/search-domain-event.consumer
     MeilisearchService,
     HybridSearchService,
     ProductSearchSyncService,
+    SearchReindexService,
     ProductContentAiService,
     SearchDomainEventConsumer,
   ],
@@ -155,6 +159,7 @@ import { SearchDomainEventConsumer } from './search/search-domain-event.consumer
     MeilisearchService,
     HybridSearchService,
     ProductSearchSyncService,
+    SearchReindexService,
     ProductContentAiService,
   ],
 })
