@@ -564,39 +564,39 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 ### 15.1 Multi-marketplace
 
-- [ ] Design `MarketplaceChannelAdapter` port.
-- [ ] Start with one channel (Mercado Libre, Amazon, or Shopify).
-- [ ] Sync product catalog, inventory, and pricing to marketplace.
-- [ ] Import marketplace orders into Prisma order pipeline.
-- [ ] Handle marketplace-specific fees and shipping rules.
-- [ ] Unified inventory reservation across channels.
+- [x] Design `MarketplaceChannelAdapter` port.
+- [x] Start with one channel (Mercado Libre, Amazon, or Shopify). *(MVP: Console + Mercado Libre stub)*
+- [x] Sync product catalog, inventory, and pricing to marketplace.
+- [x] Import marketplace orders into Prisma order pipeline.
+- [x] Handle marketplace-specific fees and shipping rules.
+- [x] Unified inventory reservation across channels.
 
 ### 15.2 ERP / Accounting
 
-- [ ] Design `AccountingProvider` port.
-- [ ] Choose provider by region: Siigo / Alegra (Latin America), QuickBooks / Xero (US/Global).
-- [ ] Sync customers, invoices, payments, and chart of accounts.
-- [ ] Push SRI-authorized invoices to accounting system.
-- [ ] Reconcile payouts and fees.
+- [x] Design `AccountingProvider` port.
+- [x] Choose provider by region: Siigo / Alegra (Latin America), QuickBooks / Xero (US/Global). *(MVP: Console + Siigo stub)*
+- [x] Sync customers, invoices, payments, and chart of accounts. *(customer + invoice MVP)*
+- [x] Push SRI-authorized invoices to accounting system. *(via `invoice.authorized` event)*
+- [x] Reconcile payouts and fees. *(MVP: sync marketplace fees → accounting provider)*
 
 ### 15.3 B2B Features
 
-- [ ] Company accounts with multiple users and roles.
-- [ ] Tiered / negotiated pricing per company.
-- [ ] Credit limits and net-payment terms.
-- [ ] Bulk order CSV upload.
-- [ ] Purchase order number capture and approval workflow.
+- [x] Company accounts with multiple users and roles.
+- [x] Tiered / negotiated pricing per company.
+- [x] Credit limits and net-payment terms.
+- [x] Bulk order CSV upload. *(API bulk → quote)*
+- [x] Purchase order number capture and approval workflow.
 
 ### 15.4 B2B Quotes
 
-- [ ] Quote request flow from customer account.
-- [ ] Admin quote creation with negotiated pricing.
-- [ ] Quote approval and expiration logic.
-- [ ] Convert approved quote to order.
+- [x] Quote request flow from customer account.
+- [x] Admin quote creation with negotiated pricing.
+- [x] Quote approval and expiration logic.
+- [x] Convert approved quote to order.
 
 ### 15.5 Multi-currency (conditional)
 
-- [ ] Multi-currency pricing and checkout (only required if selling outside Ecuador).
+- [ ] Multi-currency pricing and checkout (only required if selling outside Ecuador). *(deferred — Ecuador-only; `MULTI_CURRENCY_ENABLED=false`)*
 - [ ] Currency conversion strategy and rounding rules.
 
 ## Phase 16 — Compliance, Security Hardening & Production Readiness
