@@ -1,10 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
 
 export default function AdminFinancePage() {
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Finanzas</h1>
-      <Card>
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={<h1 className="text-2xl font-bold">Finanzas</h1>}
+    >
+      <NeoReveal>
+        <Card>
         <CardHeader>
           <CardTitle>Módulo financiero</CardTitle>
         </CardHeader>
@@ -15,6 +19,7 @@ export default function AdminFinancePage() {
           </p>
         </CardContent>
       </Card>
-    </div>
+      </NeoReveal>
+    </AnimatedPageShell>
   );
 }

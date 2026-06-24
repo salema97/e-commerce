@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { motion, useReducedMotion } from 'motion/react';
 import {
   LayoutDashboard,
   Package,
@@ -15,6 +16,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { sidebarIconHover, sidebarIconRest } from '@/lib/neo-motion';
 import type { Role } from '@repo/shared-types';
 
 interface NavItem {
@@ -43,6 +45,7 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ role }: AdminSidebarProps) {
   const pathname = usePathname();
+  const prefersReducedMotion = useReducedMotion();
   const visibleNav = adminNav.filter((item) => item.roles.includes(role));
 
   return (
@@ -66,7 +69,9 @@ export function AdminSidebar({ role }: AdminSidebarProps) {
               title={item.label}
               className="group relative"
             >
-              <div
+              <motion.div
+                whileHover={prefersReducedMotion ? undefined : sidebarIconHover}
+                animate={prefersReducedMotion ? undefined : sidebarIconRest}
                 className={cn(
                   'flex h-14 w-14 items-center justify-center border-[3px] shadow-[4px_4px_0_white] transition-colors',
                   active
@@ -75,7 +80,7 @@ export function AdminSidebar({ role }: AdminSidebarProps) {
                 )}
               >
                 <Icon className="size-6" strokeWidth={2.5} />
-              </div>
+              </motion.div>
             </Link>
           );
         })}

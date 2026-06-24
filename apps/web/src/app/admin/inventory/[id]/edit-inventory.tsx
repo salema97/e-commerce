@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { useApiClient } from '@/lib/client-api';
 import type { Inventory } from '@repo/shared-types';
 
@@ -31,8 +32,10 @@ export default function EditInventoryPage({ item }: { item: Inventory }) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Editar inventario</h1>
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={<h1 className="text-2xl font-bold">Editar inventario</h1>}
+    >
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Card>
           <CardHeader>
@@ -80,6 +83,6 @@ export default function EditInventoryPage({ item }: { item: Inventory }) {
           </Button>
         </div>
       </form>
-    </div>
+    </AnimatedPageShell>
   );
 }

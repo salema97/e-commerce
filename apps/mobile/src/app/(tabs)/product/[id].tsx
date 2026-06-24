@@ -7,8 +7,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Badge, Card, neo, ProductImage } from '@repo/shared-ui';
+import { NeoScreen } from '../../../components/neo-screen.js';
+import { NeoStaggeredItem } from '../../../components/neo-animated.js';
 import { api } from '../../../lib/api.js';
 import { useCart } from '../../../lib/cart.js';
 import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
@@ -43,93 +44,103 @@ export default function ProductDetailScreen(): React.ReactElement {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.center}>
+      <NeoScreen style={styles.center}>
         <ActivityIndicator size="large" color={neo.onyx} />
-      </SafeAreaView>
+      </NeoScreen>
     );
   }
 
   if (error || !product) {
     return (
-      <SafeAreaView style={styles.center}>
+      <NeoScreen style={styles.center}>
         <Text style={styles.error}>No se pudo cargar el producto.</Text>
-      </SafeAreaView>
+      </NeoScreen>
     );
   }
 
   const effectivePrice = selectedVariant?.price ?? product.price;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <NeoScreen style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Card padding="none" style={styles.productShell}>
-          <View style={styles.imageSection}>
-            <ProductImage
-              url={getProductPrimaryImageUrl(product)}
-              alt={getProductPrimaryImageAlt(product)}
-              variant="detail"
-            />
-            <View style={styles.priceSticker}>
-              <Text style={styles.priceStickerText}>{formatPrice(effectivePrice)}</Text>
-            </View>
-          </View>
-
-          <View style={styles.infoSection}>
-            <View style={styles.badgeRow}>
-              {product.isFeatured ? <Badge variant="secondary">Destacado</Badge> : null}
-              <Badge variant="primary">En stock</Badge>
+        <NeoStaggeredItem index={0}>
+          <Card padding="none" style={styles.productShell}>
+            <View style={styles.imageSection}>
+              <ProductImage
+                url={getProductPrimaryImageUrl(product)}
+                alt={getProductPrimaryImageAlt(product)}
+                variant="detail"
+              />
+              <View style={styles.priceSticker}>
+                <Text style={styles.priceStickerText}>{formatPrice(effectivePrice)}</Text>
+              </View>
             </View>
 
-            <Text style={styles.name}>{product.name}</Text>
-
-            {product.description ? (
-              <Text style={styles.description}>{product.description}</Text>
-            ) : null}
-
-            {product.variants && product.variants.length > 0 ? (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Variante</Text>
-                <View style={styles.variants}>
-                  {product.variants.map((variant) => {
-                    const selected = selectedVariant?.id === variant.id;
-                    return (
-                      <View key={variant.id} style={styles.variantChip}>
-                        <Button
-                          variant={selected ? 'secondary' : 'outline'}
-                          size="sm"
-                          onPress={() => setSelectedVariant(variant)}
-                        >
-                          {variant.name}
-                        </Button>
-                      </View>
-                    );
-                  })}
+            <View style={styles.infoSection}>
+              <NeoStaggeredItem index={1}>
+                <View style={styles.badgeRow}>
+                  {product.isFeatured ? <Badge variant="secondary">Destacado</Badge> : null}
+                  <Badge variant="primary">En stock</Badge>
                 </View>
-              </View>
-            ) : null}
+              </NeoStaggeredItem>
 
-            <View style={styles.quantitySection}>
-              <Text style={styles.sectionTitle}>Cantidad</Text>
-              <View style={styles.quantityControls}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onPress={() => setQuantity((q) => Math.max(1, q - 1))}
-                >
-                  -
-                </Button>
-                <Text style={styles.quantityValue}>{quantity}</Text>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onPress={() => setQuantity((q) => q + 1)}
-                >
-                  +
-                </Button>
-              </View>
+              <NeoStaggeredItem index={2}>
+                <Text style={styles.name}>{product.name}</Text>
+
+                {product.description ? (
+                  <Text style={styles.description}>{product.description}</Text>
+                ) : null}
+              </NeoStaggeredItem>
+
+              {product.variants && product.variants.length > 0 ? (
+                <NeoStaggeredItem index={3}>
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Variante</Text>
+                    <View style={styles.variants}>
+                      {product.variants.map((variant) => {
+                        const selected = selectedVariant?.id === variant.id;
+                        return (
+                          <View key={variant.id} style={styles.variantChip}>
+                            <Button
+                              variant={selected ? 'secondary' : 'outline'}
+                              size="sm"
+                              onPress={() => setSelectedVariant(variant)}
+                            >
+                              {variant.name}
+                            </Button>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
+                </NeoStaggeredItem>
+              ) : null}
+
+              <NeoStaggeredItem index={4}>
+                <View style={styles.quantitySection}>
+                  <Text style={styles.sectionTitle}>Cantidad</Text>
+                  <View style={styles.quantityControls}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onPress={() => setQuantity((q) => Math.max(1, q - 1))}
+                    >
+                      -
+                    </Button>
+                    <Text style={styles.quantityValue}>{quantity}</Text>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onPress={() => setQuantity((q) => q + 1)}
+                    >
+                      +
+                    </Button>
+                  </View>
+                </View>
+              </NeoStaggeredItem>
             </View>
-          </View>
-        </Card>
+          </Card>
+        </NeoStaggeredItem>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -142,7 +153,7 @@ export default function ProductDetailScreen(): React.ReactElement {
           Agregar al carrito
         </Button>
       </View>
-    </SafeAreaView>
+    </NeoScreen>
   );
 }
 

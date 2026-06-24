@@ -2,8 +2,9 @@ import Link from 'next/link';
 import { getServerApiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ProductCard } from '@/components/store/product-card';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { StoreFilters } from '@/components/store/store-filters';
+import { StoreProductGrid } from '@/components/store/store-product-grid';
 import type { Product, Category } from '@repo/shared-types';
 
 interface StorePageProps {
@@ -56,14 +57,17 @@ export default async function StorePage({ searchParams }: StorePageProps) {
   const activeCategory = categories.find((c) => c.slug === categorySlug);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <header className="mb-10 border-b-[6px] border-neo-onyx pb-6">
-        <p className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">Catálogo</p>
-        <h1 className="font-anton text-5xl uppercase md:text-7xl">
-          {activeCategory?.name ?? 'Tienda'}
-        </h1>
-      </header>
-
+    <AnimatedPageShell
+      className="container mx-auto px-4 py-8"
+      header={
+        <header className="mb-10 border-b-[6px] border-neo-onyx pb-6">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">Catálogo</p>
+          <h1 className="font-anton text-5xl uppercase md:text-7xl">
+            {activeCategory?.name ?? 'Tienda'}
+          </h1>
+        </header>
+      }
+    >
       <div className="mt-6 flex flex-col gap-8 lg:flex-row">
         <aside className="w-full lg:w-72">
           <StoreFilters
@@ -79,11 +83,7 @@ export default async function StorePage({ searchParams }: StorePageProps) {
             Mostrando {paginatedProducts.length} de {total} productos
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {paginatedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <StoreProductGrid products={paginatedProducts} />
 
           {paginatedProducts.length === 0 ? (
             <div className="border-[3px] border-dashed border-neo-onyx py-20 text-center font-bold uppercase text-muted-foreground">
@@ -113,7 +113,7 @@ export default async function StorePage({ searchParams }: StorePageProps) {
           </div>
         </div>
       </div>
-    </div>
+    </AnimatedPageShell>
   );
 }
 

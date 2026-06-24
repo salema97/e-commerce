@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
 import { formatPrice, orderStatusLabel } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
 import { PaymentStatus } from './payment-status';
@@ -38,15 +39,19 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Pedido {order.orderNumber}</h1>
-        <Badge variant="outline">{orderStatusLabel(order.status)}</Badge>
-      </div>
-
+    <AnimatedPageShell
+      className="container mx-auto px-4 py-8"
+      header={
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Pedido {order.orderNumber}</h1>
+          <Badge variant="outline">{orderStatusLabel(order.status)}</Badge>
+        </div>
+      }
+    >
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <Card>
+          <NeoReveal>
+            <Card>
             <CardHeader>
               <CardTitle>Artículos</CardTitle>
             </CardHeader>
@@ -69,9 +74,11 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
               ))}
             </CardContent>
           </Card>
+          </NeoReveal>
 
           {order.statusHistory && order.statusHistory.length > 0 ? (
-            <Card>
+            <NeoReveal delay={0.08}>
+              <Card>
               <CardHeader>
                 <CardTitle>Historial de estado</CardTitle>
               </CardHeader>
@@ -86,11 +93,13 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
                 ))}
               </CardContent>
             </Card>
+            </NeoReveal>
           ) : null}
         </div>
 
         <div className="flex flex-col gap-6">
-          <Card>
+          <NeoReveal delay={0.04}>
+            <Card>
             <CardHeader>
               <CardTitle>Resumen</CardTitle>
             </CardHeader>
@@ -129,28 +138,31 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
               ) : null}
             </CardContent>
           </Card>
+          </NeoReveal>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Dirección de envío</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {order.shippingAddress ? (
-                <address className="not-italic text-sm text-muted-foreground">
-                  {order.shippingAddress.recipientName}
-                  <br />
-                  {order.shippingAddress.street}
-                  <br />
-                  {order.shippingAddress.city}
-                  {order.shippingAddress.zipCode ? `, ${order.shippingAddress.zipCode}` : null}
-                </address>
-              ) : (
-                <p className="text-sm text-muted-foreground">Sin dirección de envío.</p>
-              )}
-            </CardContent>
-          </Card>
+          <NeoReveal delay={0.12}>
+            <Card>
+              <CardHeader>
+                <CardTitle>Dirección de envío</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {order.shippingAddress ? (
+                  <address className="not-italic text-sm text-muted-foreground">
+                    {order.shippingAddress.recipientName}
+                    <br />
+                    {order.shippingAddress.street}
+                    <br />
+                    {order.shippingAddress.city}
+                    {order.shippingAddress.zipCode ? `, ${order.shippingAddress.zipCode}` : null}
+                  </address>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Sin dirección de envío.</p>
+                )}
+              </CardContent>
+            </Card>
+          </NeoReveal>
         </div>
       </div>
-    </div>
+    </AnimatedPageShell>
   );
 }

@@ -9,6 +9,7 @@ import { FormSelect } from '@/components/ui/form-select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
 import { useApiClient } from '@/lib/client-api';
 import { formatPrice, orderStatusLabel } from '@repo/shared-utils';
 import type { Order, OrderStatus } from '@repo/shared-types';
@@ -47,15 +48,19 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Pedido {order.orderNumber}</h1>
-        <Badge variant="outline">{orderStatusLabel(order.status)}</Badge>
-      </div>
-
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Pedido {order.orderNumber}</h1>
+          <Badge variant="outline">{orderStatusLabel(order.status)}</Badge>
+        </div>
+      }
+    >
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <Card>
+          <NeoReveal>
+            <Card>
             <CardHeader>
               <CardTitle>Artículos</CardTitle>
             </CardHeader>
@@ -78,10 +83,12 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
               ))}
             </CardContent>
           </Card>
+          </NeoReveal>
         </div>
 
         <div className="flex flex-col gap-6">
-          <Card>
+          <NeoReveal delay={0.04}>
+            <Card>
             <CardHeader>
               <CardTitle>Resumen</CardTitle>
             </CardHeader>
@@ -111,10 +118,12 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
               </div>
             </CardContent>
           </Card>
+          </NeoReveal>
 
           <RefundPanel order={order} />
 
-          <Card>
+          <NeoReveal delay={0.08}>
+            <Card>
             <CardHeader>
               <CardTitle>Actualizar estado</CardTitle>
             </CardHeader>
@@ -142,8 +151,9 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
               </form>
             </CardContent>
           </Card>
+          </NeoReveal>
         </div>
       </div>
-    </div>
+    </AnimatedPageShell>
   );
 }

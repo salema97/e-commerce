@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { InvoiceStatusBadge } from '@/components/admin/invoices/invoice-status-badge';
 import { InvoiceActions } from '@/components/admin/invoices/invoice-actions';
+import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
 import { formatDateTime, formatPrice } from '@repo/shared-utils';
 
 interface InvoiceDetailViewProps {
@@ -44,38 +45,43 @@ export function InvoiceDetailView({ id }: InvoiceDetailViewProps) {
 
   if (invoiceQuery.isLoading) {
     return (
-      <div className="flex flex-col gap-6">
+      <AnimatedPageShell className="flex flex-col gap-6">
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-64 w-full" />
-      </div>
+      </AnimatedPageShell>
     );
   }
 
   if (!invoice) {
     return (
-      <div className="flex flex-col gap-4">
-        <h1 className="neo-page-title">Factura no encontrada</h1>
+      <AnimatedPageShell
+        className="flex flex-col gap-4"
+        header={<h1 className="neo-page-title">Factura no encontrada</h1>}
+      >
         <Link href="/admin/invoices">
           <Button variant="outline">Volver al listado</Button>
         </Link>
-      </div>
+      </AnimatedPageShell>
     );
   }
 
   const showError = invoice.status === 'FAILED' || invoice.status === 'REJECTED';
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="neo-page-title">Factura SRI</h1>
-          <InvoiceStatusBadge status={invoice.status} />
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="neo-page-title">Factura SRI</h1>
+            <InvoiceStatusBadge status={invoice.status} />
+          </div>
+          <Link href="/admin/invoices">
+            <Button variant="outline">Volver</Button>
+          </Link>
         </div>
-        <Link href="/admin/invoices">
-          <Button variant="outline">Volver</Button>
-        </Link>
-      </div>
-
+      }
+    >
       {showError ? (
         <Alert variant="destructive">
           <AlertTitle>Error de facturación SRI</AlertTitle>
@@ -88,7 +94,8 @@ export function InvoiceDetailView({ id }: InvoiceDetailViewProps) {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <Card>
+          <NeoReveal>
+            <Card>
             <CardHeader>
               <CardTitle>Detalles del documento</CardTitle>
             </CardHeader>
@@ -115,10 +122,12 @@ export function InvoiceDetailView({ id }: InvoiceDetailViewProps) {
               </div>
             </CardContent>
           </Card>
+          </NeoReveal>
         </div>
 
         <div className="flex flex-col gap-6">
-          <Card>
+          <NeoReveal delay={0.04}>
+            <Card>
             <CardHeader>
               <CardTitle>Orden asociada</CardTitle>
             </CardHeader>
@@ -150,21 +159,24 @@ export function InvoiceDetailView({ id }: InvoiceDetailViewProps) {
               )}
             </CardContent>
           </Card>
+          </NeoReveal>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Acciones</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <InvoiceActions
-                id={invoice.id}
-                status={invoice.status}
-                onRetry={handleRetry}
-              />
-            </CardContent>
-          </Card>
+          <NeoReveal delay={0.08}>
+            <Card>
+              <CardHeader>
+                <CardTitle>Acciones</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <InvoiceActions
+                  id={invoice.id}
+                  status={invoice.status}
+                  onRetry={handleRetry}
+                />
+              </CardContent>
+            </Card>
+          </NeoReveal>
         </div>
       </div>
-    </div>
+    </AnimatedPageShell>
   );
 }

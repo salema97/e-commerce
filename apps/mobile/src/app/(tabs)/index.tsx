@@ -7,11 +7,18 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card, Button, PressableCard, ProductImage, neo } from '@repo/shared-ui';
+import { Button, PressableCard, ProductImage, neo } from '@repo/shared-ui';
+import { NeoScreen } from '../../components/neo-screen.js';
 import { api } from '../../lib/api.js';
 import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
 import type { Product } from '@repo/shared-types';
+import {
+  NeoEnterFromBottom,
+  NeoEnterFromTop,
+  NeoPulse,
+  NeoScaleIn,
+  NeoStaggeredItem,
+} from '../../components/neo-animated.js';
 
 export default function HomeScreen(): React.ReactElement {
   const router = useRouter();
@@ -23,38 +30,43 @@ export default function HomeScreen(): React.ReactElement {
     return (featured.length > 0 ? featured : products).slice(0, 6);
   }, [products]);
 
-  const renderProduct = ({ item }: { item: Product }) => (
-    <PressableCard
-      style={styles.productTouchable}
-      cardStyle={styles.productCard}
-      padding="none"
-      onPress={() => router.push({ pathname: '/(tabs)/product/[id]', params: { id: item.id } })}
-    >
-      <ProductImage
-        url={getProductPrimaryImageUrl(item)}
-        alt={getProductPrimaryImageAlt(item)}
-        variant="card"
-        style={styles.productImage}
-      />
-      <View style={styles.productBody}>
-        <View style={styles.productTop}>
-          <Text style={styles.productName} numberOfLines={2}>
-            {item.name}
-          </Text>
-          {item.isFeatured ? <View style={styles.featuredDot} /> : null}
+  const renderProduct = ({ item, index }: { item: Product; index: number }) => (
+    <NeoStaggeredItem index={index} style={styles.productTouchable}>
+      <PressableCard
+        cardStyle={styles.productCard}
+        padding="none"
+        onPress={() => router.push({ pathname: '/(tabs)/product/[id]', params: { id: item.id } })}
+      >
+        <NeoScaleIn delay={120}>
+          <ProductImage
+            url={getProductPrimaryImageUrl(item)}
+            alt={getProductPrimaryImageAlt(item)}
+            variant="card"
+            style={styles.productImage}
+          />
+        </NeoScaleIn>
+        <View style={styles.productBody}>
+          <View style={styles.productTop}>
+            <Text style={styles.productName} numberOfLines={2}>
+              {item.name}
+            </Text>
+            {item.isFeatured ? <View style={styles.featuredDot} /> : null}
+          </View>
+          <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
         </View>
-        <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
-      </View>
-    </PressableCard>
+      </PressableCard>
+    </NeoStaggeredItem>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.seasonLabel}>Colección</Text>
-        <Text style={styles.heading}>DESCUBRE</Text>
-        <Text style={styles.subheading}>Productos destacados de la tienda</Text>
-      </View>
+    <NeoScreen style={styles.container} entrance={false}>
+      <NeoEnterFromTop>
+        <View style={styles.header}>
+          <Text style={styles.seasonLabel}>Colección</Text>
+          <Text style={styles.heading}>DESCUBRE</Text>
+          <Text style={styles.subheading}>Productos destacados de la tienda</Text>
+        </View>
+      </NeoEnterFromTop>
 
       {isLoading ? (
         <ActivityIndicator size="large" color={neo.onyx} style={styles.loader} />
@@ -77,12 +89,16 @@ export default function HomeScreen(): React.ReactElement {
         />
       )}
 
-      <View style={styles.footer}>
-        <Button onPress={() => router.push('/(tabs)/store')} size="lg">
-          Explorar tienda
-        </Button>
-      </View>
-    </SafeAreaView>
+      <NeoEnterFromBottom delay={120}>
+        <View style={styles.footer}>
+          <NeoPulse>
+            <Button onPress={() => router.push('/(tabs)/store')} size="lg">
+              Explorar tienda
+            </Button>
+          </NeoPulse>
+        </View>
+      </NeoEnterFromBottom>
+    </NeoScreen>
   );
 }
 

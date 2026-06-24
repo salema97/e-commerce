@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
+import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
 
 interface BlogPageProps {
   params: Promise<{ slug: string }>;
@@ -32,17 +33,21 @@ export default async function BlogPostPage({ params }: BlogPageProps) {
   }
 
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-8">
-      <h1 className="text-3xl font-bold">{title}</h1>
-      <Card className="mt-6">
-        <CardContent className="pt-6">
-          <p className="text-muted-foreground">
-            Artículo del blog gestionado por CMS (placeholder). El contenido de esta
-            publicación se cargará desde el panel de administración cuando la
-            integración CMS esté disponible.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+    <AnimatedPageShell
+      className="container mx-auto max-w-3xl px-4 py-8"
+      header={<h1 className="text-3xl font-bold">{title}</h1>}
+    >
+      <NeoReveal>
+        <Card className="mt-6">
+          <CardContent className="pt-6">
+            <p className="text-muted-foreground">
+              Artículo del blog gestionado por CMS (placeholder). El contenido de esta
+              publicación se cargará desde el panel de administración cuando la
+              integración CMS esté disponible.
+            </p>
+          </CardContent>
+        </Card>
+      </NeoReveal>
+    </AnimatedPageShell>
   );
 }

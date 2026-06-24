@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { useApiClient } from '@/lib/client-api';
 
 export default function NewCategoryPage() {
@@ -33,8 +34,10 @@ export default function NewCategoryPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Agregar categoría</h1>
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={<h1 className="text-2xl font-bold">Agregar categoría</h1>}
+    >
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Card>
           <CardHeader>
@@ -68,6 +71,6 @@ export default function NewCategoryPage() {
           </Button>
         </div>
       </form>
-    </div>
+    </AnimatedPageShell>
   );
 }

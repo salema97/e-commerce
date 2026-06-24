@@ -10,6 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import type { User } from '@repo/shared-types';
 
 export default async function AdminCustomersPage() {
@@ -17,9 +18,10 @@ export default async function AdminCustomersPage() {
   const users = await api.users.findAll().catch(() => []);
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="neo-page-title">Clientes</h1>
-
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={<h1 className="neo-page-title">Clientes</h1>}
+    >
       <Table>
           <TableHeader>
             <TableRow>
@@ -46,6 +48,6 @@ export default async function AdminCustomersPage() {
             ))}
           </TableBody>
         </Table>
-    </div>
+    </AnimatedPageShell>
   );
 }

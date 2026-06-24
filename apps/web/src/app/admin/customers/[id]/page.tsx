@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getServerApiClient } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
 import type { User } from '@repo/shared-types';
 
 interface AdminCustomerDetailPageProps {
@@ -22,10 +23,12 @@ export default async function AdminCustomerDetailPage({
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Detalles del cliente</h1>
-
-      <Card>
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={<h1 className="text-2xl font-bold">Detalles del cliente</h1>}
+    >
+      <NeoReveal>
+        <Card>
         <CardHeader>
           <CardTitle>{user.email}</CardTitle>
         </CardHeader>
@@ -48,6 +51,7 @@ export default async function AdminCustomerDetailPage({
           </div>
         </CardContent>
       </Card>
-    </div>
+      </NeoReveal>
+    </AnimatedPageShell>
   );
 }

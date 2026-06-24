@@ -10,20 +10,24 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 
 export default async function AdminCategoriesPage() {
   const api = await getServerApiClient();
   const categories = await api.categories.findAll().catch(() => []);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="neo-page-title">Categorías</h1>
-        <Link href="/admin/categories/new">
-          <Button>Agregar categoría</Button>
-        </Link>
-      </div>
-
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={
+        <div className="flex items-center justify-between">
+          <h1 className="neo-page-title">Categorías</h1>
+          <Link href="/admin/categories/new">
+            <Button>Agregar categoría</Button>
+          </Link>
+        </div>
+      }
+    >
       <Table>
           <TableHeader>
             <TableRow>
@@ -52,6 +56,6 @@ export default async function AdminCategoriesPage() {
             ))}
           </TableBody>
         </Table>
-    </div>
+    </AnimatedPageShell>
   );
 }

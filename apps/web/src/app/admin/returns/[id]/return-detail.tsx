@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { FormSelect } from '@/components/ui/form-select';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
 import { useApiClient } from '@/lib/client-api';
 import {
   formatPrice,
@@ -54,22 +55,26 @@ export default function ReturnDetail({ returnRequest }: { returnRequest: ReturnR
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">Devolución {returnRequest.id.slice(0, 8)}</h1>
-          <Badge variant="outline">{returnStatusLabel(returnRequest.status)}</Badge>
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">Devolución {returnRequest.id.slice(0, 8)}</h1>
+            <Badge variant="outline">{returnStatusLabel(returnRequest.status)}</Badge>
+          </div>
+          <Link href={`/admin/returns/${returnRequest.id}/resolve`}>
+            <Button disabled={returnRequest.status !== 'INSPECTION'}>Resolver</Button>
+          </Link>
         </div>
-        <Link href={`/admin/returns/${returnRequest.id}/resolve`}>
-          <Button disabled={returnRequest.status !== 'INSPECTION'}>Resolver</Button>
-        </Link>
-      </div>
-
+      }
+    >
       {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <Card>
+          <NeoReveal>
+            <Card>
             <CardHeader>
               <CardTitle>Artículos</CardTitle>
             </CardHeader>
@@ -89,10 +94,12 @@ export default function ReturnDetail({ returnRequest }: { returnRequest: ReturnR
               ))}
             </CardContent>
           </Card>
+          </NeoReveal>
         </div>
 
         <div className="flex flex-col gap-6">
-          <Card>
+          <NeoReveal delay={0.04}>
+            <Card>
             <CardHeader>
               <CardTitle>Resumen</CardTitle>
             </CardHeader>
@@ -124,9 +131,11 @@ export default function ReturnDetail({ returnRequest }: { returnRequest: ReturnR
               ) : null}
             </CardContent>
           </Card>
+          </NeoReveal>
 
           {availableTransitions.length > 0 ? (
-            <Card>
+            <NeoReveal delay={0.08}>
+              <Card>
               <CardHeader>
                 <CardTitle>Actualizar estado</CardTitle>
               </CardHeader>
@@ -156,9 +165,10 @@ export default function ReturnDetail({ returnRequest }: { returnRequest: ReturnR
                 </form>
               </CardContent>
             </Card>
+            </NeoReveal>
           ) : null}
         </div>
       </div>
-    </div>
+    </AnimatedPageShell>
   );
 }

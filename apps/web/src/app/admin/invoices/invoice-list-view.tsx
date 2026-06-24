@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { InvoiceFilters, InvoiceFiltersState } from '@/components/admin/invoices/invoice-filters';
 import { InvoiceStatusBadge } from '@/components/admin/invoices/invoice-status-badge';
 import { InvoiceActions } from '@/components/admin/invoices/invoice-actions';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { formatDateTime } from '@repo/shared-utils';
 import type { InvoiceResponseDto, InvoiceStatus } from '@repo/shared-types';
 
@@ -92,9 +93,10 @@ export function InvoiceListView() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="neo-page-title">Facturación</h1>
-
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={<h1 className="neo-page-title">Facturación</h1>}
+    >
       <InvoiceFilters
         filters={filters}
         onFilterChange={(changes) => setFilters((prev) => ({ ...prev, ...changes }))}
@@ -193,6 +195,6 @@ export function InvoiceListView() {
           Siguiente
         </Button>
       </div>
-    </div>
+    </AnimatedPageShell>
   );
 }

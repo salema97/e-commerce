@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, Button, Input, Textarea } from '@repo/shared-ui';
+import { NeoScreen } from '../../../components/neo-screen.js';
+import { NeoStaggeredItem } from '../../../components/neo-animated.js';
 import { api } from '../../../lib/api.js';
 import { formatPrice } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
@@ -31,18 +32,18 @@ export default function ReturnRequestScreen(): React.ReactElement {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.center}>
+      <NeoScreen style={styles.center}>
         <Text style={styles.muted}>Cargando pedido...</Text>
-      </SafeAreaView>
+      </NeoScreen>
     );
   }
 
   if (isError || !order) {
     return (
-      <SafeAreaView style={styles.center}>
+      <NeoScreen style={styles.center}>
         <Text style={styles.error}>No se pudo cargar el pedido.</Text>
         <Button onPress={() => router.back()}>Volver</Button>
-      </SafeAreaView>
+      </NeoScreen>
     );
   }
 
@@ -84,27 +85,31 @@ export default function ReturnRequestScreen(): React.ReactElement {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <NeoScreen style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Solicitar devolución</Text>
         <Text style={styles.subtitle}>Pedido #{currentOrder.orderNumber}</Text>
 
         {!isDelivered ? (
-          <Card style={styles.banner}>
-            <Text style={styles.bannerTitle}>Pedido no entregado</Text>
-            <Text style={styles.bannerText}>
-              Puedes solicitar una devolución después de que el pedido haya sido entregado.
-            </Text>
-          </Card>
+          <NeoStaggeredItem index={0}>
+            <Card style={styles.banner}>
+              <Text style={styles.bannerTitle}>Pedido no entregado</Text>
+              <Text style={styles.bannerText}>
+                Puedes solicitar una devolución después de que el pedido haya sido entregado.
+              </Text>
+            </Card>
+          </NeoStaggeredItem>
         ) : null}
 
         {isDelivered && !isWithinWindow ? (
-          <Card style={styles.banner}>
-            <Text style={styles.bannerTitle}>Plazo de devolución cerrado</Text>
-            <Text style={styles.bannerText}>
-              El plazo de devolución para este pedido ha expirado.
-            </Text>
-          </Card>
+          <NeoStaggeredItem index={0}>
+            <Card style={styles.banner}>
+              <Text style={styles.bannerTitle}>Plazo de devolución cerrado</Text>
+              <Text style={styles.bannerText}>
+                El plazo de devolución para este pedido ha expirado.
+              </Text>
+            </Card>
+          </NeoStaggeredItem>
         ) : null}
 
         {isDelivered && isWithinWindow ? (
@@ -115,8 +120,9 @@ export default function ReturnRequestScreen(): React.ReactElement {
           </Text>
         ) : null}
 
-        {currentOrder.items.map((item) => (
-          <Card key={item.id} style={styles.itemCard}>
+        {currentOrder.items.map((item, index) => (
+          <NeoStaggeredItem key={item.id} index={index + 1}>
+            <Card style={styles.itemCard}>
             <View style={styles.row}>
               <Text style={styles.itemName}>{item.name}</Text>
               <Button
@@ -166,18 +172,21 @@ export default function ReturnRequestScreen(): React.ReactElement {
                 />
               </View>
             ) : null}
-          </Card>
+            </Card>
+          </NeoStaggeredItem>
         ))}
 
-        <Button
-          onPress={handleSubmit}
-          disabled={createReturn.isPending || Object.keys(selected).length === 0 || !canRequestReturn}
-          size="lg"
-        >
-          {createReturn.isPending ? 'Enviando...' : 'Enviar solicitud de devolución'}
-        </Button>
+        <NeoStaggeredItem index={currentOrder.items.length + 1}>
+          <Button
+            onPress={handleSubmit}
+            disabled={createReturn.isPending || Object.keys(selected).length === 0 || !canRequestReturn}
+            size="lg"
+          >
+            {createReturn.isPending ? 'Enviando...' : 'Enviar solicitud de devolución'}
+          </Button>
+        </NeoStaggeredItem>
       </ScrollView>
-    </SafeAreaView>
+    </NeoScreen>
   );
 }
 

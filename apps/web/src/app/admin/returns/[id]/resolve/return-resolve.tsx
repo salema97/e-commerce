@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { FormSelect } from '@/components/ui/form-select';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
 import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import {
   formatPrice,
@@ -90,14 +91,18 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-bold">Resolver devolución</h1>
-        <Badge variant="outline">{returnStatusLabel(returnRequest.status)}</Badge>
-      </div>
-
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">Resolver devolución</h1>
+          <Badge variant="outline">{returnStatusLabel(returnRequest.status)}</Badge>
+        </div>
+      }
+    >
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+        <NeoReveal>
+          <Card>
           <CardHeader>
             <CardTitle>Artículos a resolver</CardTitle>
           </CardHeader>
@@ -119,8 +124,10 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
             </div>
           </CardContent>
         </Card>
+        </NeoReveal>
 
-        <Card>
+        <NeoReveal delay={0.08}>
+          <Card>
           <CardHeader>
             <CardTitle>Método de resolución</CardTitle>
           </CardHeader>
@@ -201,7 +208,8 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
             </form>
           </CardContent>
         </Card>
+        </NeoReveal>
       </div>
-    </div>
+    </AnimatedPageShell>
   );
 }

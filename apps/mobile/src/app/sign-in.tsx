@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter, Link } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Input } from '@repo/shared-ui';
+import { NeoScreen } from '../components/neo-screen.js';
+import { NeoScaleIn } from '../components/neo-animated.js';
 import { useAuth } from '../providers/AuthProvider.js';
 
 export default function SignInScreen(): React.ReactElement {
@@ -30,8 +31,8 @@ export default function SignInScreen(): React.ReactElement {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+    <NeoScreen style={styles.container}>
+      <NeoScaleIn style={styles.content}>
         <Text style={styles.title}>Iniciar sesión</Text>
 
         <Input
@@ -70,8 +71,8 @@ export default function SignInScreen(): React.ReactElement {
             <Text style={styles.link}>Regístrate</Text>
           </Link>
         </View>
-      </View>
-    </SafeAreaView>
+      </NeoScaleIn>
+    </NeoScreen>
   );
 }
 

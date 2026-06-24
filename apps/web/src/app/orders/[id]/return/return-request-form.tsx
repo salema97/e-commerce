@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AnimatedPageShell, NeoItem, NeoStagger } from '@/components/motion/neo-page-transition';
 import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { formatPrice } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
@@ -88,19 +89,22 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
 
   if (submitted && isGuest) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <AnimatedPageShell className="container mx-auto px-4 py-8">
         <h1 className="mb-4 text-2xl font-bold">Solicitud de devolución enviada</h1>
         <p className="text-muted-foreground">
           Recibimos tu solicitud de devolución para el pedido {order.orderNumber}. Estado: Solicitada.
         </p>
-      </div>
+      </AnimatedPageShell>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">Solicitar devolución del pedido {order.orderNumber}</h1>
-
+    <AnimatedPageShell
+      className="container mx-auto px-4 py-8"
+      header={
+        <h1 className="mb-6 text-2xl font-bold">Solicitar devolución del pedido {order.orderNumber}</h1>
+      }
+    >
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {isGuest ? (
           <Card>
@@ -126,8 +130,10 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
             <CardTitle>Seleccionar artículos</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
+            <NeoStagger className="flex flex-col gap-4">
             {order.items.map((item) => (
-              <div key={item.id} className="border-[3px] border-neo-onyx bg-white p-4 shadow-[4px_4px_0_0_#111111]">
+              <NeoItem key={item.id}>
+              <div className="border-[3px] border-neo-onyx bg-white p-4 shadow-[4px_4px_0_0_#111111]">
                 <div className="flex items-center gap-3">
                   <Checkbox
                     id={`item-${item.id}`}
@@ -186,7 +192,9 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
                   </div>
                 ) : null}
               </div>
+              </NeoItem>
             ))}
+            </NeoStagger>
           </CardContent>
         </Card>
 
@@ -217,6 +225,6 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
           </Alert>
         ) : null}
       </form>
-    </div>
+    </AnimatedPageShell>
   );
 }

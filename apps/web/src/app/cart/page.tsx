@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProductImage } from '@/components/store/product-image';
+import { AnimatedPageShell, NeoItem, NeoStagger } from '@/components/motion/neo-page-transition';
 import { useCartStore } from '@/lib/cart-store';
 import { formatPrice } from '@repo/shared-utils';
 
@@ -27,7 +28,7 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
+      <AnimatedPageShell className="container mx-auto px-4 py-16 text-center">
         <h1 className="font-anton text-4xl uppercase">Carrito vacío</h1>
         <p className="mt-2 font-bold text-muted-foreground">
           Aún no has agregado productos.
@@ -35,7 +36,7 @@ export default function CartPage() {
         <Link href="/store">
           <Button className="mt-6">Seguir comprando</Button>
         </Link>
-      </div>
+      </AnimatedPageShell>
     );
   }
 
@@ -44,13 +45,15 @@ export default function CartPage() {
   const total = subtotal + shipping;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="font-anton text-4xl uppercase md:text-5xl">Carrito</h1>
-
+    <AnimatedPageShell
+      className="container mx-auto px-4 py-8"
+      header={<h1 className="font-anton text-4xl uppercase md:text-5xl">Carrito</h1>}
+    >
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2 flex flex-col gap-4">
+        <NeoStagger className="lg:col-span-2 flex flex-col gap-4">
           {items.map((item) => (
-            <Card key={`${item.productId}:${item.variantId ?? ''}`}>
+            <NeoItem key={`${item.productId}:${item.variantId ?? ''}`}>
+              <Card>
               <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
                 <ProductImage url={item.imageUrl} alt={item.name} variant="thumbnail" />
                 <div className="flex-1">
@@ -84,8 +87,9 @@ export default function CartPage() {
                 </div>
               </CardContent>
             </Card>
+            </NeoItem>
           ))}
-        </div>
+        </NeoStagger>
 
         <div>
           <Card>
@@ -113,7 +117,7 @@ export default function CartPage() {
           </Card>
         </div>
       </div>
-    </div>
+    </AnimatedPageShell>
   );
 }
 

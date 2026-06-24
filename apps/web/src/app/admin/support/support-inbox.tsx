@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { ConversationList } from '@/components/admin/support/conversation-list';
 import { ConversationDetail } from '@/components/admin/support/conversation-detail';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import type { Conversation, ConversationStatus } from '@repo/shared-types';
 
 interface SupportInboxProps {
@@ -105,8 +106,10 @@ export function SupportInbox({ currentUserId }: SupportInboxProps) {
   }
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] flex-col gap-4">
-      <h1 className="neo-page-title">Bandeja de soporte</h1>
+    <AnimatedPageShell
+      className="flex h-[calc(100vh-7rem)] flex-col gap-4"
+      header={<h1 className="neo-page-title">Bandeja de soporte</h1>}
+    >
       {conversationsQuery.isError ? (
         <p className="text-sm text-destructive">
           No se pudieron cargar las conversaciones. Recarga la página o vuelve a iniciar sesión.
@@ -139,6 +142,6 @@ export function SupportInbox({ currentUserId }: SupportInboxProps) {
           </div>
         )}
       </div>
-    </div>
+    </AnimatedPageShell>
   );
 }

@@ -10,6 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { formatDate, returnStatusLabel, refundMethodLabel } from '@repo/shared-utils';
 
 export default async function AdminReturnsPage({
@@ -26,9 +27,10 @@ export default async function AdminReturnsPage({
   });
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="neo-page-title">Devoluciones</h1>
-
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={<h1 className="neo-page-title">Devoluciones</h1>}
+    >
       <Table>
           <TableHeader>
             <TableRow>
@@ -65,6 +67,6 @@ export default async function AdminReturnsPage({
             ))}
           </TableBody>
         </Table>
-    </div>
+    </AnimatedPageShell>
   );
 }

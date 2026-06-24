@@ -20,6 +20,7 @@ import {
 import { CouponInput } from './coupon-input';
 import { OrderSummary } from './order-summary';
 import { PaymentForm } from './payment-element';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import type {
   CreateOrderDto,
   CreatePaymentIntentDto,
@@ -67,12 +68,12 @@ export function CheckoutContainer() {
 
   if (items.length === 0 && !order) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
+      <AnimatedPageShell className="container mx-auto px-4 py-16 text-center">
         <h1 className="text-2xl font-semibold">Tu carrito está vacío</h1>
         <Button className="mt-6" onClick={() => router.push('/store')}>
           Seguir comprando
         </Button>
-      </div>
+      </AnimatedPageShell>
     );
   }
 
@@ -121,11 +122,17 @@ export function CheckoutContainer() {
   // Once the payment intent is created, render the Stripe Payment Element.
   if (order && paymentIntent?.clientSecret) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold">Completa tu pago</h1>
-        <p className="mt-2 text-muted-foreground">
-          Pedido {order.orderNumber} · Total {new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(Number(order.total))}
-        </p>
+      <AnimatedPageShell
+        className="container mx-auto px-4 py-8"
+        header={
+          <>
+            <h1 className="text-3xl font-bold">Completa tu pago</h1>
+            <p className="mt-2 text-muted-foreground">
+              Pedido {order.orderNumber} · Total {new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(Number(order.total))}
+            </p>
+          </>
+        }
+      >
         <div className="mt-8 grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <Card>
@@ -159,14 +166,15 @@ export function CheckoutContainer() {
             couponCode={couponCode}
           />
         </div>
-      </div>
+      </AnimatedPageShell>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold">Finalizar compra</h1>
-
+    <AnimatedPageShell
+      className="container mx-auto px-4 py-8"
+      header={<h1 className="text-3xl font-bold">Finalizar compra</h1>}
+    >
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 flex flex-col gap-6">
           <AddressForm values={address} onChange={setAddress} />
@@ -220,7 +228,7 @@ export function CheckoutContainer() {
           couponCode={couponCode}
         />
       </div>
-    </div>
+    </AnimatedPageShell>
   );
 }
 

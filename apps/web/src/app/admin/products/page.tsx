@@ -10,6 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { formatPrice } from '@repo/shared-utils';
 
 const PRODUCT_STATUS_LABELS: Record<string, string> = {
@@ -23,14 +24,17 @@ export default async function AdminProductsPage() {
   const products = await api.products.findAll().catch(() => []);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="neo-page-title">Productos</h1>
-        <Link href="/admin/products/new">
-          <Button>Agregar producto</Button>
-        </Link>
-      </div>
-
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={
+        <div className="flex items-center justify-between">
+          <h1 className="neo-page-title">Productos</h1>
+          <Link href="/admin/products/new">
+            <Button>Agregar producto</Button>
+          </Link>
+        </div>
+      }
+    >
       <Table>
           <TableHeader>
             <TableRow>
@@ -59,6 +63,6 @@ export default async function AdminProductsPage() {
             ))}
           </TableBody>
         </Table>
-    </div>
+    </AnimatedPageShell>
   );
 }

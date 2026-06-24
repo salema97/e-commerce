@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, Button } from '@repo/shared-ui';
+import { NeoScreen } from '../../components/neo-screen.js';
+import { NeoStaggeredItem } from '../../components/neo-animated.js';
 import { api } from '../../lib/api.js';
 import { formatPrice, orderStatusLabel } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
@@ -31,23 +32,23 @@ export default function OrderDetailScreen(): React.ReactElement {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.center}>
+      <NeoScreen style={styles.center}>
         <Text style={styles.muted}>Cargando pedido...</Text>
-      </SafeAreaView>
+      </NeoScreen>
     );
   }
 
   if (isError || !order) {
     return (
-      <SafeAreaView style={styles.center}>
+      <NeoScreen style={styles.center}>
         <Text style={styles.error}>No se pudo cargar el pedido.</Text>
         <Button onPress={() => router.replace('/(tabs)/account')}>Volver</Button>
-      </SafeAreaView>
+      </NeoScreen>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <NeoScreen style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Pedido {order.orderNumber}</Text>
         <View style={styles.statusBadge}>
@@ -61,24 +62,29 @@ export default function OrderDetailScreen(): React.ReactElement {
           </Text>
         ) : null}
 
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Artículos</Text>
-          {order.items.map((item) => (
-            <View key={item.id} style={styles.itemRow}>
-              <View style={styles.itemInfo}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemMeta}>
-                  SKU: {item.sku} · Cant.: {item.quantity}
-                </Text>
-              </View>
-              <Text style={styles.itemPrice}>
-                {formatPrice(Number(item.price) * item.quantity)}
-              </Text>
-            </View>
-          ))}
-        </Card>
+        <NeoStaggeredItem index={0}>
+          <Card style={styles.section}>
+            <Text style={styles.sectionTitle}>Artículos</Text>
+            {order.items.map((item, index) => (
+              <NeoStaggeredItem key={item.id} index={index}>
+                <View style={styles.itemRow}>
+                  <View style={styles.itemInfo}>
+                    <Text style={styles.itemName}>{item.name}</Text>
+                    <Text style={styles.itemMeta}>
+                      SKU: {item.sku} · Cant.: {item.quantity}
+                    </Text>
+                  </View>
+                  <Text style={styles.itemPrice}>
+                    {formatPrice(Number(item.price) * item.quantity)}
+                  </Text>
+                </View>
+              </NeoStaggeredItem>
+            ))}
+          </Card>
+        </NeoStaggeredItem>
 
-        <Card style={styles.section}>
+        <NeoStaggeredItem index={1}>
+          <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Resumen</Text>
           <View style={styles.row}>
             <Text style={styles.label}>Subtotal</Text>
@@ -104,35 +110,40 @@ export default function OrderDetailScreen(): React.ReactElement {
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalValue}>{formatPrice(Number(order.total))}</Text>
           </View>
-        </Card>
+          </Card>
+        </NeoStaggeredItem>
 
         {order.shippingAddress ? (
-          <Card style={styles.section}>
-            <Text style={styles.sectionTitle}>Dirección de envío</Text>
-            <Text style={styles.addressLine}>{order.shippingAddress.recipientName}</Text>
-            <Text style={styles.addressLine}>{order.shippingAddress.street}</Text>
-            <Text style={styles.addressLine}>
-              {order.shippingAddress.city}
-              {order.shippingAddress.zipCode ? ` ${order.shippingAddress.zipCode}` : ''}
-            </Text>
-          </Card>
+          <NeoStaggeredItem index={2}>
+            <Card style={styles.section}>
+              <Text style={styles.sectionTitle}>Dirección de envío</Text>
+              <Text style={styles.addressLine}>{order.shippingAddress.recipientName}</Text>
+              <Text style={styles.addressLine}>{order.shippingAddress.street}</Text>
+              <Text style={styles.addressLine}>
+                {order.shippingAddress.city}
+                {order.shippingAddress.zipCode ? ` ${order.shippingAddress.zipCode}` : ''}
+              </Text>
+            </Card>
+          </NeoStaggeredItem>
         ) : null}
 
-        {isReturnable(order) ? (
-          <Button
-            variant="outline"
-            onPress={() => router.push(`/order/${orderId}/return`)}
-            size="lg"
-          >
-            Solicitar devolución
+        <NeoStaggeredItem index={3}>
+          {isReturnable(order) ? (
+            <Button
+              variant="outline"
+              onPress={() => router.push(`/order/${orderId}/return`)}
+              size="lg"
+            >
+              Solicitar devolución
+            </Button>
+          ) : null}
+
+          <Button onPress={() => router.replace('/(tabs)/account')} size="lg">
+            Mis pedidos
           </Button>
-        ) : null}
-
-        <Button onPress={() => router.replace('/(tabs)/account')} size="lg">
-          Mis pedidos
-        </Button>
+        </NeoStaggeredItem>
       </ScrollView>
-    </SafeAreaView>
+    </NeoScreen>
   );
 }
 

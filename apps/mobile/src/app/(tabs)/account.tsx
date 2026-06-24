@@ -8,8 +8,9 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../providers/AuthProvider.js';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card, Badge, neo } from '@repo/shared-ui';
+import { NeoScreen } from '../../components/neo-screen.js';
+import { NeoStaggeredItem } from '../../components/neo-animated.js';
 import { api } from '../../lib/api.js';
 import { formatPrice, formatDate, orderStatusLabel } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
@@ -24,20 +25,22 @@ export default function AccountScreen(): React.ReactElement {
     router.replace('/(tabs)');
   };
 
-  const renderOrder = ({ item }: { item: Order }) => (
-    <Card style={styles.orderCard}>
+  const renderOrder = ({ item, index }: { item: Order; index: number }) => (
+    <NeoStaggeredItem index={index}>
+      <Card style={styles.orderCard}>
       <View style={styles.orderHeader}>
         <Text style={styles.orderNumber}>#{item.orderNumber}</Text>
         <Badge variant="secondary">{orderStatusLabel(item.status)}</Badge>
       </View>
       <Text style={styles.orderDate}>{formatDate(item.createdAt)}</Text>
       <Text style={styles.orderTotal}>{formatPrice(item.total)}</Text>
-    </Card>
+      </Card>
+    </NeoStaggeredItem>
   );
 
   if (!user) {
     return (
-      <SafeAreaView style={styles.container}>
+      <NeoScreen style={styles.container}>
         <View style={styles.center}>
           <Text style={styles.seasonLabel}>Acceso</Text>
           <Text style={styles.title}>CUENTA</Text>
@@ -53,12 +56,12 @@ export default function AccountScreen(): React.ReactElement {
             Crear cuenta
           </Button>
         </View>
-      </SafeAreaView>
+      </NeoScreen>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <NeoScreen style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.seasonLabel}>Perfil</Text>
         <Text style={styles.title}>MI CUENTA</Text>
@@ -90,7 +93,7 @@ export default function AccountScreen(): React.ReactElement {
           Cerrar sesión
         </Button>
       </View>
-    </SafeAreaView>
+    </NeoScreen>
   );
 }
 

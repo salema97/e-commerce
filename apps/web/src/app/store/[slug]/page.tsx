@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { ProductImage } from '@/components/store/product-image';
 import { AddToCartButton } from '@/components/cart/add-to-cart-button';
 import { WishlistButton } from '@/components/wishlist/wishlist-button';
+import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
 import { formatPrice, getProductPrimaryImageAlt, getProductPrimaryImageUrl } from '@repo/shared-utils';
 import type { Product } from '@repo/shared-types';
 
@@ -42,9 +43,22 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const variants = product.variants ?? [];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid gap-8 border-[3px] border-neo-onyx bg-white shadow-[10px_10px_0_0_#111111] lg:grid-cols-12">
-        <div className="relative lg:col-span-7">
+    <AnimatedPageShell
+      className="container mx-auto px-4 py-8"
+      header={
+        <header className="mb-6 border-b-[6px] border-neo-onyx pb-4">
+          <Link
+            href="/store"
+            className="text-sm font-bold uppercase underline-offset-4 hover:underline"
+          >
+            ← Volver a la tienda
+          </Link>
+        </header>
+      }
+    >
+      <NeoReveal>
+        <div className="grid gap-8 border-[3px] border-neo-onyx bg-white shadow-[10px_10px_0_0_#111111] lg:grid-cols-12">
+          <div className="relative lg:col-span-7">
           <ProductImage
             url={imageUrl}
             alt={getProductPrimaryImageAlt(product)}
@@ -110,14 +124,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
             />
           </div>
 
-          <Link
-            href="/store"
-            className="text-sm font-bold uppercase underline-offset-4 hover:underline"
-          >
-            ← Volver a la tienda
-          </Link>
+          </div>
         </div>
-      </div>
-    </div>
+      </NeoReveal>
+    </AnimatedPageShell>
   );
 }

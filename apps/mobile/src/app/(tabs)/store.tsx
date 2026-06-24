@@ -8,11 +8,12 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card, Input, Badge, PressableCard, ProductImage, neo } from '@repo/shared-ui';
+import { Input, Badge, PressableCard, ProductImage, neo } from '@repo/shared-ui';
+import { NeoScreen } from '../../components/neo-screen.js';
 import { api } from '../../lib/api.js';
 import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
 import type { Product, Category } from '@repo/shared-types';
+import { NeoEnterFromTop, NeoStaggeredItem } from '../../components/neo-animated.js';
 
 export default function StoreScreen(): React.ReactElement {
   const router = useRouter();
@@ -52,44 +53,48 @@ export default function StoreScreen(): React.ReactElement {
     </Pressable>
   );
 
-  const renderProduct = ({ item }: { item: Product }) => (
-    <PressableCard
-      padding="none"
-      cardStyle={styles.productCard}
-      onPress={() => router.push({ pathname: '/(tabs)/product/[id]', params: { id: item.id } })}
-    >
-      <ProductImage
-        url={getProductPrimaryImageUrl(item)}
-        alt={getProductPrimaryImageAlt(item)}
-        variant="card"
-      />
-      <View style={styles.productBody}>
-        <Text style={styles.productName} numberOfLines={2}>
-          {item.name}
-        </Text>
-        {item.category ? (
-          <Text style={styles.categoryName}>{(item.category as Category).name}</Text>
-        ) : null}
-        <View style={styles.priceRow}>
-          <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
-          {item.compareAtPrice ? <Badge variant="destructive" size="sm">Oferta</Badge> : null}
+  const renderProduct = ({ item, index }: { item: Product; index: number }) => (
+    <NeoStaggeredItem index={index}>
+      <PressableCard
+        padding="none"
+        cardStyle={styles.productCard}
+        onPress={() => router.push({ pathname: '/(tabs)/product/[id]', params: { id: item.id } })}
+      >
+        <ProductImage
+          url={getProductPrimaryImageUrl(item)}
+          alt={getProductPrimaryImageAlt(item)}
+          variant="card"
+        />
+        <View style={styles.productBody}>
+          <Text style={styles.productName} numberOfLines={2}>
+            {item.name}
+          </Text>
+          {item.category ? (
+            <Text style={styles.categoryName}>{(item.category as Category).name}</Text>
+          ) : null}
+          <View style={styles.priceRow}>
+            <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
+            {item.compareAtPrice ? <Badge variant="destructive" size="sm">Oferta</Badge> : null}
+          </View>
         </View>
-      </View>
-    </PressableCard>
+      </PressableCard>
+    </NeoStaggeredItem>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.seasonLabel}>Catálogo</Text>
-        <Text style={styles.title}>TIENDA</Text>
-        <Input
-          placeholder="Buscar productos..."
-          value={search}
-          onChangeText={setSearch}
-          containerStyle={styles.search}
-        />
-      </View>
+    <NeoScreen style={styles.container} entrance={false}>
+      <NeoEnterFromTop>
+        <View style={styles.header}>
+          <Text style={styles.seasonLabel}>Catálogo</Text>
+          <Text style={styles.title}>TIENDA</Text>
+          <Input
+            placeholder="Buscar productos..."
+            value={search}
+            onChangeText={setSearch}
+            containerStyle={styles.search}
+          />
+        </View>
+      </NeoEnterFromTop>
 
       {categoriesLoading ? null : (
         <FlatList
@@ -119,7 +124,7 @@ export default function StoreScreen(): React.ReactElement {
           }
         />
       )}
-    </SafeAreaView>
+    </NeoScreen>
   );
 }
 

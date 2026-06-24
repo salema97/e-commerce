@@ -6,8 +6,9 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, Button, neo, ProductImage } from '@repo/shared-ui';
+import { NeoScreen } from '../../components/neo-screen.js';
+import { NeoStaggeredItem } from '../../components/neo-animated.js';
 import { useCart } from '../../lib/cart.js';
 import { formatPrice } from '@repo/shared-utils';
 
@@ -15,8 +16,15 @@ export default function CartScreen(): React.ReactElement {
   const router = useRouter();
   const { items, updateQuantity, removeItem, total, itemCount } = useCart();
 
-  const renderItem = ({ item }: { item: import('../../lib/cart.js').CartItem }) => (
-    <Card style={styles.itemCard} padding="sm">
+  const renderItem = ({
+    item,
+    index,
+  }: {
+    item: import('../../lib/cart.js').CartItem;
+    index: number;
+  }) => (
+    <NeoStaggeredItem index={index}>
+      <Card style={styles.itemCard} padding="sm">
       <View style={styles.row}>
         <ProductImage url={item.imageUrl} alt={item.name} variant="thumbnail" />
         <View style={styles.info}>
@@ -47,11 +55,12 @@ export default function CartScreen(): React.ReactElement {
           +
         </Button>
       </View>
-    </Card>
+      </Card>
+    </NeoStaggeredItem>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <NeoScreen style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.seasonLabel}>Pago</Text>
         <Text style={styles.title}>CARRITO ({itemCount})</Text>
@@ -84,7 +93,7 @@ export default function CartScreen(): React.ReactElement {
           </Button>
         </View>
       ) : null}
-    </SafeAreaView>
+    </NeoScreen>
   );
 }
 
