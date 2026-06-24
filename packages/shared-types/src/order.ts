@@ -79,6 +79,8 @@ export interface CreateOrderDto {
   billingAddress?: OrderAddress;
   notes?: string;
   cartId?: string;
+  referralCode?: string;
+  loyaltyPointsToRedeem?: number;
 }
 
 export interface CreatedOrderResult {

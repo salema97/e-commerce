@@ -9,6 +9,7 @@ export interface CatalogQuery {
   minPrice?: number;
   maxPrice?: number;
   inStock?: boolean;
+  minRating?: number;
   sort?: CatalogSort;
   page?: number;
   limit?: number;
@@ -42,6 +43,8 @@ export interface CatalogProductSummary {
   inStock: boolean;
   brand?: string | null;
   imageUrl?: string | null;
+  averageRating?: number | null;
+  reviewCount?: number;
 }
 
 export interface CatalogResponse {

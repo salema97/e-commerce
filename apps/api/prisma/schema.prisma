@@ -111,6 +111,42 @@ enum PromotionType {
   TIERED
 }
 
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ReferralConversionStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum ReferralPayoutMethod {
+  STORE_CREDIT
+  EXTERNAL
+}
+
+enum LoyaltyTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+enum LoyaltyTransactionType {
+  EARN
+  REDEEM
+  EXPIRE
+  ADJUST
+}
+
+enum PreOrderChargeTiming {
+  AT_SHIPPING
+  UPFRONT
+}
+
 enum ConversationStatus {
   OPEN
   PENDING
@@ -241,6 +277,9 @@ model User {
   returns       ReturnRequest[]
   storeCredits  StoreCredit[]
   pushDeviceTokens PushDeviceToken[]
+  productReviews ProductReview[]
+  referralCode   ReferralCode?
+  loyaltyAccount LoyaltyAccount?
 
   @@index([clerkUserId])
   @@index([role])
@@ -284,6 +323,11 @@ model Product {
   taxCategory    TaxCategory   @default(STANDARD)
   allowBackorder Boolean       @default(false)
   isFeatured     Boolean       @default(false)
+  isPreOrder     Boolean       @default(false)
+  preOrderReleaseDate DateTime?
+  preOrderChargeTiming PreOrderChargeTiming @default(AT_SHIPPING)
+  averageRating  Decimal?      @db.Decimal(3, 2)
+  reviewCount    Int           @default(0)
   categoryId     String?
   supplierId     String?
   createdAt      DateTime      @default(now())
@@ -301,8 +345,10 @@ model Product {
   backInStockAlerts BackInStockAlert[]
   returnItems       ReturnItem[]
   contentDraft      ProductContentDraft?
+  reviews           ProductReview[]
 
   @@index([slug])
+  @@index([averageRating])
   @@index([categoryId])
   @@index([status])
   @@index([supplierId])
@@ -421,6 +467,8 @@ model Order {
   channel                 OrderChannel @default(WEB)
   reservationExpiresAt    DateTime?
   couponCode              String?
+  referralCode            String?
+  loyaltyPointsRedeemed   Int         @default(0)
   paymentProvider         String?
   shippingAddress         Json?
   billingAddress          Json?
@@ -438,6 +486,8 @@ model Order {
   returns        ReturnRequest[]
   exchangeFor    ReturnRequest?       @relation("ExchangeOrder")
   shipments      Shipment[]
+  productReviews ProductReview[]
+  referralConversion ReferralConversion?
 
   @@index([userId])
   @@index([status])
@@ -1100,4 +1150,93 @@ model ShipmentItem {
 
   @@index([shipmentId])
   @@index([orderItemId])
+}
+
+model ProductReview {
+  id                 String       @id @default(uuid())
+  productId          String
+  userId             String?
+  orderId            String?
+  rating             Int
+  title              String?
+  body               String
+  status             ReviewStatus @default(PENDING)
+  isVerifiedPurchase Boolean      @default(false)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@unique([productId, userId])
+  @@index([productId, status])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ReferralCode {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  code      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversions ReferralConversion[]
+
+  @@index([code])
+}
+
+model ReferralConversion {
+  id               String                   @id @default(uuid())
+  referralCodeId   String
+  referredUserId   String?
+  orderId          String?                  @unique
+  commissionAmount Decimal                  @db.Decimal(12, 2)
+  status           ReferralConversionStatus @default(PENDING)
+  payoutMethod     ReferralPayoutMethod?
+  paidAt           DateTime?
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  referralCode ReferralCode @relation(fields: [referralCodeId], references: [id], onDelete: Cascade)
+  order        Order?       @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([referralCodeId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model LoyaltyAccount {
+  id        String      @id @default(uuid())
+  userId    String      @unique
+  points    Int         @default(0)
+  tier      LoyaltyTier @default(BRONZE)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions LoyaltyTransaction[]
+
+  @@index([tier])
+}
+
+model LoyaltyTransaction {
+  id        String                 @id @default(uuid())
+  accountId String
+  type      LoyaltyTransactionType
+  points    Int
+  reason    String
+  orderId   String?
+  expiresAt DateTime?
+  createdAt DateTime               @default(now())
+
+  account LoyaltyAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([type])
+  @@index([expiresAt])
+  @@index([createdAt])
 }
