@@ -8,11 +8,11 @@
 
 No requiere cambios de código para el MVP; opcional: webhook `radar.early_fraud_warning`.
 
-## MFA para administradores (Clerk)
+## MFA para administradores (JWT nativo)
 
-1. Clerk Dashboard → **User & Authentication** → **Multi-factor**.
-2. Política: obligatorio para roles `admin` y `super_admin` vía **Organization** o **Session tasks**.
-3. Verificar que `/admin` sigue protegido por middleware + JWT role.
+1. Panel admin → **Configuración** → **Seguridad** → activar MFA obligatorio para roles `admin` y `super_admin`.
+2. Política: TOTP (app autenticadora) o códigos de respaldo; sesiones con `mfaVerified` en el JWT.
+3. Verificar que `/admin` sigue protegido por middleware + claim de rol en JWT.
 
 ## Pentest pre-lanzamiento
 
