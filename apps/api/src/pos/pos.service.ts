@@ -187,7 +187,7 @@ export class PosService {
 
     await this.reservationService.confirm(orderId);
     void this.eventBus.publish({ name: 'order.paid', payload: { orderId } });
-    this.invoicesService.enqueueInvoiceForOrder(orderId).catch((error: unknown) => {
+    void this.invoicesService.enqueueInvoiceForOrder(orderId).catch((error: unknown) => {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.error({ error: message, orderId }, 'Failed to enqueue SRI invoice for POS order');
     });
