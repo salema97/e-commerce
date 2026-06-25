@@ -24,8 +24,14 @@ export class WebhookController {
   async handle(
     @Param('event') event: string,
     @Headers('x-evolution-api-signature') signature: string | undefined,
+    @Headers('x-webhook-secret') webhookSecret: string | undefined,
     @Req() request: RawRequest,
   ): Promise<void> {
-    await this.webhookService.receiveEvolutionWebhook(event, request.rawBody, signature);
+    await this.webhookService.receiveEvolutionWebhook(
+      event,
+      request.rawBody,
+      signature,
+      webhookSecret,
+    );
   }
 }

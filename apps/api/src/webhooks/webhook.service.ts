@@ -1,5 +1,6 @@
 import { Injectable, Logger, UnauthorizedException, BadRequestException } from '@nestjs/common';
-import { createHash } from 'crypto';
+import { ConfigService } from '@nestjs/config';
+import { createHash, timingSafeEqual } from 'crypto';
 import { ZodError } from 'zod';
 import { MessageStatus, Prisma } from '@prisma/client';
 import { ecuadorPhoneSchema, webhookPayloadSchema } from '@repo/shared-utils';
@@ -45,19 +46,20 @@ export class WebhookService {
     private readonly orchestrator: ConversationOrchestrator,
     private readonly whatsappProvider: WhatsAppProvider,
     private readonly idempotency: RedisIdempotencyService,
+    private readonly configService: ConfigService,
   ) {}
 
   async receiveEvolutionWebhook(
     event: string,
     rawBody: Buffer | undefined,
     signature: string | undefined,
+    webhookSecretHeader: string | undefined,
   ): Promise<void> {
-    if (!rawBody || !signature) {
-      throw new UnauthorizedException('Missing webhook body or signature');
+    if (!rawBody) {
+      throw new UnauthorizedException('Missing webhook body');
     }
 
-    const valid = this.whatsappProvider.verifyWebhookSignature(rawBody, signature);
-    if (!valid) {
+    if (!this.verifyWebhookAuth(rawBody, signature, webhookSecretHeader)) {
       throw new UnauthorizedException('Invalid webhook signature');
     }
 
@@ -80,7 +82,33 @@ export class WebhookService {
       return;
     }
 
-    await this.handleEvent(event, payload);
+    await this.handleEvent(normalizeEvolutionEvent(event), payload);
+  }
+
+  private verifyWebhookAuth(
+    rawBody: Buffer,
+    signature: string | undefined,
+    webhookSecretHeader: string | undefined,
+  ): boolean {
+    if (signature) {
+      return this.whatsappProvider.verifyWebhookSignature(rawBody, signature);
+    }
+
+    if (!webhookSecretHeader) {
+      return false;
+    }
+
+    const expected = this.configService.getOrThrow<string>('EVOLUTION_WEBHOOK_SECRET');
+    try {
+      const actualBuf = Buffer.from(webhookSecretHeader);
+      const expectedBuf = Buffer.from(expected);
+      if (actualBuf.length !== expectedBuf.length) {
+        return false;
+      }
+      return timingSafeEqual(actualBuf, expectedBuf);
+    } catch {
+      return false;
+    }
   }
 
   async handleEvent(event: string, payload: EvolutionWebhookPayload): Promise<void> {
@@ -264,6 +292,11 @@ export class WebhookService {
       throw error;
     }
   }
+}
+
+/** Evolution `webhookByEvents` uses kebab-case paths (e.g. messages-upsert). */
+export function normalizeEvolutionEvent(event: string): string {
+  return event.replace(/-/g, '.');
 }
 
 function maskPhone(digits: string): string {

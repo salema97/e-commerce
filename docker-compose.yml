@@ -13,6 +13,7 @@ services:
       POSTGRES_DB: ecommerce
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init-evolution-db.sql:/docker-entrypoint-initdb.d/02-evolution.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d ecommerce"]
       interval: 10s
@@ -51,9 +52,15 @@ services:
       retries: 5
 
   evolution-api:
-    image: atendai/evolution-api:latest
+    # v2.2.x often returns qrcode.count=0; 2.3.x + phone version fixes Baileys pairing (evolution-api#2437)
+    image: evoapicloud/evolution-api:v2.3.7
     container_name: ecommerce-evolution-api
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
@@ -61,8 +68,24 @@ services:
       AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY:-change-me}
       WEBHOOK_GLOBAL_URL: ""
       WEBHOOK_GLOBAL_ENABLED: "false"
+      # WhatsApp Web version — update if QR stops appearing (WhatsApp → Ajustes → Ayuda)
+      CONFIG_SESSION_PHONE_VERSION: ${EVOLUTION_PHONE_VERSION:-2.3000.1033773198}
+      NODE_OPTIONS: --dns-result-order=ipv4first
+      # Evolution API v2 requires PostgreSQL + Redis (see doc.evolution-api.com/v2)
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://postgres:postgres@postgres:5432/evolution?schema=public
+      DATABASE_CONNECTION_CLIENT_NAME: ecommerce_evolution
+      DATABASE_SAVE_DATA_CHATS: "false"
+      DATABASE_SAVE_DATA_CONTACTS: "false"
+      DATABASE_SAVE_DATA_HISTORIC: "false"
+      DATABASE_SAVE_DATA_LABELS: "false"
+      CACHE_REDIS_ENABLED: "true"
+      CACHE_REDIS_URI: redis://redis:6379/6
+      CACHE_REDIS_PREFIX_KEY: evolution
+      CACHE_REDIS_SAVE_INSTANCES: "false"
     volumes:
-      - evolution-data:/evolution/storage
+      - evolution-data:/evolution/instances
 
 volumes:
   postgres-data:

@@ -28,12 +28,13 @@ describe('WebhookController', () => {
     const rawBody = Buffer.from(JSON.stringify({ event: 'messages.upsert', data: {} }));
     const req = { rawBody } as RawRequest;
 
-    await controller.handle('messages.upsert', 'sig', req);
+    await controller.handle('messages.upsert', 'sig', undefined, req);
 
     expect(service.receiveEvolutionWebhook).toHaveBeenCalledWith(
       'messages.upsert',
       rawBody,
       'sig',
+      undefined,
     );
   });
 });
