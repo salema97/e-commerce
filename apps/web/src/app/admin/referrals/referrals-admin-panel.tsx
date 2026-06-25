@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -43,7 +44,18 @@ export function ReferralsAdminPanel({ initialReport }: ReferralsAdminPanelProps)
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-8">
+      <AdminPageHeader
+        eyebrow="Marketing"
+        title="Programa de referidos"
+        subtitle="Conversiones y comisiones de afiliados."
+        metrics={[
+          { label: 'Conversiones', value: String(report.totalConversions) },
+          { label: 'Pendiente', value: formatPrice(report.pendingCommission) },
+          { label: 'Pagado', value: formatPrice(report.paidCommission) },
+        ]}
+      />
+      <div className="space-y-4">
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       <div className="rounded-md border">
         <Table>
@@ -83,6 +95,7 @@ export function ReferralsAdminPanel({ initialReport }: ReferralsAdminPanelProps)
             ))}
           </TableBody>
         </Table>
+      </div>
       </div>
     </div>
   );
