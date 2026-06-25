@@ -3,8 +3,11 @@ import { MessageStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ConversationService } from '../conversations/conversation.service.js';
 import { WhatsAppProvider } from '../whatsapp/whatsapp-provider.interface.js';
+import { StorageService } from '../storage/storage.service.js';
 import { CreateMessageDto } from './dto/create-message.dto.js';
 import { ListMessagesQueryDto } from './dto/list-messages.query.dto.js';
+
+const MEDIA_SIGNED_URL_TTL_SECONDS = 3_600;
 
 @Injectable()
 export class MessageService {
@@ -12,6 +15,7 @@ export class MessageService {
     private readonly prisma: PrismaService,
     private readonly conversationService: ConversationService,
     private readonly whatsappProvider: WhatsAppProvider,
+    private readonly storage: StorageService,
   ) {}
 
   async createInbound(data: {
@@ -180,7 +184,7 @@ export class MessageService {
     const limit = query.limit ?? 20;
     const skip = (page - 1) * limit;
 
-    const [data, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       this.prisma.message.findMany({
         where: { conversationId },
         orderBy: { createdAt: 'asc' },
@@ -189,6 +193,8 @@ export class MessageService {
       }),
       this.prisma.message.count({ where: { conversationId } }),
     ]);
+
+    const data = await Promise.all(rows.map((message) => this.withResolvedMediaUrl(message)));
 
     return {
       data,
@@ -229,6 +235,19 @@ export class MessageService {
       where: { externalMessageId },
       data,
     });
+  }
+
+  private async withResolvedMediaUrl<T extends { mediaUrl: string | null }>(message: T) {
+    if (!message.mediaUrl || message.mediaUrl.startsWith('http')) {
+      return message;
+    }
+
+    const mediaUrl = await this.storage.getSignedUrl(
+      message.mediaUrl,
+      MEDIA_SIGNED_URL_TTL_SECONDS,
+    );
+
+    return { ...message, mediaUrl };
   }
 }
 

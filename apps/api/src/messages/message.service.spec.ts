@@ -5,12 +5,20 @@ import { MessageService } from './message.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ConversationService } from '../conversations/conversation.service.js';
 import { WhatsAppProvider } from '../whatsapp/whatsapp-provider.interface.js';
+import { StorageService } from '../storage/storage.service.js';
 
 describe('MessageService', () => {
   let service: MessageService;
   let prisma: ReturnType<typeof mockPrisma>;
   let conversationService: ReturnType<typeof mockConversationService>;
   let provider: ReturnType<typeof mockProvider>;
+  let storage: ReturnType<typeof mockStorage>;
+
+  function mockStorage() {
+    return {
+      getSignedUrl: vi.fn(),
+    };
+  }
 
   function mockPrisma() {
     return {
@@ -43,6 +51,7 @@ describe('MessageService', () => {
     prisma = mockPrisma();
     conversationService = mockConversationService();
     provider = mockProvider();
+    storage = mockStorage();
 
     const module = await Test.createTestingModule({
       providers: [
@@ -50,6 +59,7 @@ describe('MessageService', () => {
         { provide: PrismaService, useValue: prisma },
         { provide: ConversationService, useValue: conversationService },
         { provide: WhatsAppProvider, useValue: provider },
+        { provide: StorageService, useValue: storage },
       ],
     }).compile();
 
@@ -153,6 +163,24 @@ describe('MessageService', () => {
         orderBy: { createdAt: 'asc' },
       }),
     );
+  });
+
+  it('resolves stored media keys to signed URLs when listing messages', async () => {
+    prisma.message.findMany.mockResolvedValue([
+      {
+        id: 'm1',
+        mediaUrl: 'whatsapp/c1/msg-1.jpg',
+        content: '[image]',
+        contentType: 'IMAGE',
+      },
+    ]);
+    prisma.message.count.mockResolvedValue(1);
+    storage.getSignedUrl.mockResolvedValue('https://s3.example.com/signed.jpg');
+
+    const result = await service.findAllByConversation('c1', { page: 1, limit: 20 });
+
+    expect(storage.getSignedUrl).toHaveBeenCalledWith('whatsapp/c1/msg-1.jpg', 3600);
+    expect(result.data[0]?.mediaUrl).toBe('https://s3.example.com/signed.jpg');
   });
 
   it('updates status by external message id', async () => {

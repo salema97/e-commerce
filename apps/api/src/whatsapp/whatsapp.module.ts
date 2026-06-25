@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { StorageModule } from '../storage/storage.module.js';
 import { WhatsAppProvider } from './whatsapp-provider.interface.js';
 import { EvolutionApiProvider } from './providers/evolution-api.provider.js';
 import { ConfiguredWhatsAppProvider } from './configured-whatsapp.provider.js';
 import { WhatsAppProviderWiring } from './whatsapp-provider.wiring.js';
 import { WhatsAppController } from './whatsapp.controller.js';
+import { EvolutionMediaService } from './evolution-media.service.js';
+import { WhatsAppMediaService } from './whatsapp-media.service.js';
 
 /**
  * WhatsApp feature module.
@@ -14,10 +17,12 @@ import { WhatsAppController } from './whatsapp.controller.js';
  * the backend is Evolution API, Baileys, or WhatsApp Cloud API.
  */
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, StorageModule],
   controllers: [WhatsAppController],
   providers: [
     EvolutionApiProvider,
+    EvolutionMediaService,
+    WhatsAppMediaService,
     ConfiguredWhatsAppProvider,
     {
       provide: WhatsAppProvider,
@@ -25,6 +30,6 @@ import { WhatsAppController } from './whatsapp.controller.js';
     },
     WhatsAppProviderWiring,
   ],
-  exports: [WhatsAppProvider, WhatsAppProviderWiring],
+  exports: [WhatsAppProvider, WhatsAppProviderWiring, WhatsAppMediaService],
 })
 export class WhatsAppModule {}

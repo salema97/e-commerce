@@ -7,6 +7,7 @@ import { MessageService } from '../messages/message.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ConversationOrchestrator } from '../ai/orchestrator/conversation-orchestrator.interface.js';
 import { WhatsAppProvider } from '../whatsapp/whatsapp-provider.interface.js';
+import { WhatsAppMediaService } from '../whatsapp/whatsapp-media.service.js';
 import { ConfigService } from '@nestjs/config';
 import { RedisIdempotencyService } from '../common/redis/idempotency.service.js';
 
@@ -28,6 +29,9 @@ describe('WebhookService', () => {
   };
   let whatsappProvider: {
     verifyWebhookSignature: ReturnType<typeof vi.fn>;
+  };
+  let whatsappMedia: {
+    storeInboundMedia: ReturnType<typeof vi.fn>;
   };
   let idempotency: {
     claim: ReturnType<typeof vi.fn>;
@@ -60,6 +64,7 @@ describe('WebhookService', () => {
     fromMe?: boolean;
     content?: string;
     contentType?: string;
+    caption?: string;
     pushName?: string;
     timestamp?: number;
   } = {}): EvolutionWebhookPayload {
@@ -74,7 +79,12 @@ describe('WebhookService', () => {
         },
         pushName: overrides.pushName ?? 'Test Customer',
         message: overrides.contentType
-          ? { [`${overrides.contentType}Message`]: overrides.content ?? '[media]' }
+          ? {
+              [`${overrides.contentType}Message`]:
+                overrides.caption !== undefined
+                  ? { caption: overrides.caption, mimetype: 'image/jpeg' }
+                  : (overrides.content ?? '[media]'),
+            }
           : { conversation: overrides.content ?? 'Hola' },
         messageTimestamp: overrides.timestamp ?? Math.floor(Date.now() / 1000),
       },
@@ -89,6 +99,9 @@ describe('WebhookService', () => {
     messageService = mockMessageService();
     prisma = mockPrisma();
     whatsappProvider = { verifyWebhookSignature: vi.fn().mockReturnValue(true) };
+    whatsappMedia = {
+      storeInboundMedia: vi.fn().mockResolvedValue('whatsapp/c1/msg-1.jpg'),
+    };
     idempotency = { claim: vi.fn().mockResolvedValue(true) };
 
     const module = await Test.createTestingModule({
@@ -102,6 +115,7 @@ describe('WebhookService', () => {
           useValue: { handleInbound: vi.fn().mockResolvedValue(undefined) },
         },
         { provide: WhatsAppProvider, useValue: whatsappProvider },
+        { provide: WhatsAppMediaService, useValue: whatsappMedia },
         { provide: RedisIdempotencyService, useValue: idempotency },
         {
           provide: ConfigService,
@@ -233,14 +247,39 @@ describe('WebhookService', () => {
       expect(messageService.createInbound).not.toHaveBeenCalled();
     });
 
-    it('extracts media message content types', async () => {
+    it('extracts media message content types and stores media', async () => {
       await service.handleEvent(
         'messages.upsert',
         makeMessagePayload({ contentType: 'image', content: '[image]' }),
       );
 
+      expect(whatsappMedia.storeInboundMedia).toHaveBeenCalledWith(
+        expect.objectContaining({
+          instance: 'ecommerce',
+          contentType: 'IMAGE',
+          externalMessageId: 'msg-1',
+        }),
+      );
       expect(messageService.createInbound).toHaveBeenCalledWith(
-        expect.objectContaining({ content: '[image]', contentType: 'IMAGE' }),
+        expect.objectContaining({
+          content: '[image]',
+          contentType: 'IMAGE',
+          mediaUrl: 'whatsapp/c1/msg-1.jpg',
+        }),
+      );
+    });
+
+    it('uses image caption when provided', async () => {
+      await service.handleEvent(
+        'messages.upsert',
+        makeMessagePayload({ contentType: 'image', caption: 'Foto del producto' }),
+      );
+
+      expect(messageService.createInbound).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: 'Foto del producto',
+          contentType: 'IMAGE',
+        }),
       );
     });
 

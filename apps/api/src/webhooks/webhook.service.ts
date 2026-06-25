@@ -9,6 +9,7 @@ import { ConversationService } from '../conversations/conversation.service.js';
 import { MessageService } from '../messages/message.service.js';
 import { ConversationOrchestrator } from '../ai/orchestrator/conversation-orchestrator.interface.js';
 import { WhatsAppProvider } from '../whatsapp/whatsapp-provider.interface.js';
+import { WhatsAppMediaService } from '../whatsapp/whatsapp-media.service.js';
 import { RedisIdempotencyService } from '../common/redis/idempotency.service.js';
 
 export interface EvolutionWebhookPayload {
@@ -45,6 +46,7 @@ export class WebhookService {
     private readonly prisma: PrismaService,
     private readonly orchestrator: ConversationOrchestrator,
     private readonly whatsappProvider: WhatsAppProvider,
+    private readonly whatsAppMedia: WhatsAppMediaService,
     private readonly idempotency: RedisIdempotencyService,
     private readonly configService: ConfigService,
   ) {}
@@ -128,7 +130,7 @@ export class WebhookService {
   }
 
   private async handleInboundMessage(payload: EvolutionWebhookPayload) {
-    const data = (payload.data ?? {}) as EvolutionMessage;
+    const data = (payload.data ?? {}) as EvolutionMessage & { base64?: string };
     const remoteJid = data.key?.remoteJid;
     const externalMessageId = data.key?.id;
 
@@ -150,9 +152,23 @@ export class WebhookService {
 
     const instance = payload.instance ?? 'ecommerce';
     const phone = normalizeRemoteJid(remoteJid);
-    const { content, contentType } = extractContent(data.message);
+    const { content, contentType, mimetype } = extractContent(data.message);
 
     const conversation = await this.findOrCreateConversation(phone, instance, data.pushName);
+
+    let mediaUrl: string | undefined;
+    if (isStorableMedia(contentType) && data.key) {
+      mediaUrl = await this.whatsAppMedia.storeInboundMedia({
+        instance,
+        messageKey: data.key,
+        message: data.message,
+        conversationId: conversation.id,
+        externalMessageId,
+        mimetype,
+        inlineBase64: typeof data.base64 === 'string' ? data.base64 : undefined,
+        contentType,
+      });
+    }
 
     await this.messageService.createInbound({
       conversationId: conversation.id,
@@ -160,6 +176,7 @@ export class WebhookService {
       instance,
       content,
       contentType,
+      mediaUrl,
       externalMessageId,
       sentAt: data.messageTimestamp ? new Date(data.messageTimestamp * 1000) : new Date(),
     });
@@ -309,7 +326,11 @@ function normalizeRemoteJid(remoteJid: string): string {
 
 function extractContent(
   message?: Record<string, unknown>,
-): { content: string; contentType: Prisma.MessageCreateInput['contentType'] } {
+): {
+  content: string;
+  contentType: Prisma.MessageCreateInput['contentType'];
+  mimetype?: string;
+} {
   if (!message) {
     return { content: '', contentType: 'UNKNOWN' };
   }
@@ -325,13 +346,48 @@ function extractContent(
     }
   }
 
-  if (message.imageMessage) return { content: '[image]', contentType: 'IMAGE' };
-  if (message.videoMessage) return { content: '[video]', contentType: 'VIDEO' };
-  if (message.audioMessage) return { content: '[audio]', contentType: 'AUDIO' };
-  if (message.documentMessage) return { content: '[document]', contentType: 'DOCUMENT' };
+  if (message.imageMessage) {
+    return extractMediaMessage(message.imageMessage, 'IMAGE', '[image]');
+  }
+  if (message.videoMessage) {
+    return extractMediaMessage(message.videoMessage, 'VIDEO', '[video]');
+  }
+  if (message.audioMessage) {
+    return extractMediaMessage(message.audioMessage, 'AUDIO', '[audio]');
+  }
+  if (message.documentMessage) {
+    return extractMediaMessage(message.documentMessage, 'DOCUMENT', '[document]');
+  }
   if (message.locationMessage) return { content: '[location]', contentType: 'LOCATION' };
 
   return { content: '[unknown]', contentType: 'UNKNOWN' };
+}
+
+function extractMediaMessage(
+  media: unknown,
+  contentType: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'DOCUMENT',
+  fallback: string,
+): { content: string; contentType: typeof contentType; mimetype?: string } {
+  const record = typeof media === 'object' && media !== null ? (media as Record<string, unknown>) : {};
+  const caption = typeof record.caption === 'string' ? record.caption.trim() : '';
+  const mimetype = typeof record.mimetype === 'string' ? record.mimetype : undefined;
+
+  return {
+    content: caption || fallback,
+    contentType,
+    mimetype,
+  };
+}
+
+function isStorableMedia(
+  contentType: Prisma.MessageCreateInput['contentType'],
+): contentType is 'IMAGE' | 'VIDEO' | 'AUDIO' | 'DOCUMENT' {
+  return (
+    contentType === 'IMAGE' ||
+    contentType === 'VIDEO' ||
+    contentType === 'AUDIO' ||
+    contentType === 'DOCUMENT'
+  );
 }
 
 function mapStatus(status?: string): MessageStatus | null {

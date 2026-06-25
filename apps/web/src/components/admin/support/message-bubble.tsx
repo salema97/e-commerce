@@ -8,9 +8,13 @@ interface MessageBubbleProps {
   message: Message;
 }
 
+const MEDIA_PLACEHOLDERS = new Set(['[image]', '[video]', '[audio]', '[document]']);
+
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isOutbound = message.direction === 'OUTBOUND';
   const isBot = message.senderType === 'BOT';
+  const showCaption =
+    Boolean(message.content) && !MEDIA_PLACEHOLDERS.has(message.content);
 
   function statusIcon() {
     if (message.status === 'FAILED') {
@@ -42,7 +46,26 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         {isBot ? (
           <p className="mb-1 text-[10px] font-bold uppercase opacity-80">Bot</p>
         ) : null}
-        <p className="whitespace-pre-wrap font-medium">{message.content}</p>
+        {message.contentType === 'IMAGE' && message.mediaUrl ? (
+          <a
+            href={message.mediaUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mb-2 block"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- signed S3 URLs are dynamic */}
+            <img
+              src={message.mediaUrl}
+              alt={showCaption ? message.content : 'Imagen de WhatsApp'}
+              className="max-h-72 max-w-full border-2 border-neo-onyx object-contain"
+            />
+          </a>
+        ) : null}
+        {showCaption ? (
+          <p className="whitespace-pre-wrap font-medium">{message.content}</p>
+        ) : message.contentType === 'IMAGE' && !message.mediaUrl ? (
+          <p className="whitespace-pre-wrap font-medium italic opacity-70">Imagen no disponible</p>
+        ) : null}
         <div
           className={`mt-1 flex items-center justify-end gap-1 text-[10px] font-bold uppercase ${
             isOutbound ? 'text-white/70' : 'text-muted-foreground'
