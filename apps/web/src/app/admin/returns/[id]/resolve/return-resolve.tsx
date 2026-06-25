@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -135,8 +136,13 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
         if (exchangeVariantId) payload.exchangeVariantId = exchangeVariantId;
       }
       await api.returns.resolve(activeReturn.id, payload);
+      toast.success('Devolución resuelta correctamente');
       router.push(`/admin/returns/${activeReturn.id}`);
       router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'No se pudo resolver la devolución',
+      );
     } finally {
       dispatch({ type: 'submit_end' });
     }

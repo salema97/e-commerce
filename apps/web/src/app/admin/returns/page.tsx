@@ -1,7 +1,5 @@
 import Link from 'next/link';
 import { getServerApiClient } from '@/lib/api';
-import { buttonVariants } from '@/components/ui/button-variants';
-import { cn } from '@/lib/utils';
 import {
   Table,
   TableBody,
@@ -13,6 +11,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
+import { ReturnRowActions } from '@/components/admin/returns/return-row-actions';
 import { formatDate, returnStatusLabel, refundMethodLabel } from '@repo/shared-utils';
 
 export default async function AdminReturnsPage({
@@ -69,12 +68,17 @@ export default async function AdminReturnsPage({
                 </TableCell>
                 <TableCell>{formatDate(returnRequest.createdAt)}</TableCell>
                 <TableCell className="text-right">
-                  <Link
-                    href={`/admin/returns/${returnRequest.id}`}
-                    className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
-                  >
-                    Ver
-                  </Link>
+                  {returnRequest.orderId ? (
+                    <ReturnRowActions
+                      returnId={returnRequest.id}
+                      orderId={returnRequest.orderId}
+                      status={returnRequest.status}
+                    />
+                  ) : (
+                    <Link href={`/admin/returns/${returnRequest.id}`} className="text-sm font-bold uppercase underline-offset-4 hover:underline">
+                      Ver
+                    </Link>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

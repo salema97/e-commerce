@@ -18,10 +18,10 @@ const API_BASE = E2E_API_BASE;
 
 async function selectFirstReturnItem(page: Page): Promise<void> {
   await expect(page.getByTestId('return-request-form')).toBeVisible();
-  const checkbox = page.locator('[data-testid^="return-item-"]').first();
+  const checkbox = page.getByTestId(/^return-item-/).first();
   await expect(checkbox).toBeVisible({ timeout: 15_000 });
-  await checkbox.check();
-  await expect(checkbox).toBeChecked({ timeout: 10_000 });
+  await checkbox.click();
+  await expect(checkbox).toHaveAttribute('data-state', 'checked', { timeout: 10_000 });
   await expect(
     page.getByPlaceholder('Motivo de la devolución de este artículo').first(),
   ).toBeVisible({ timeout: 10_000 });

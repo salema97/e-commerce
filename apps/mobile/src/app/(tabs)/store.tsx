@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet } from 'react-native';
+import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Input, Badge, PressableCard, ProductImage, neo } from '@repo/shared-ui';
+import { Input, Badge, PressableCard, ProductImage, Button, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen.js';
 import { StoreChatWidget } from '../../components/store/StoreChatWidget.js';
 import { api } from '../../lib/api.js';
@@ -54,16 +54,17 @@ export default function StoreScreen(): React.ReactElement {
   const products: CatalogProductSummary[] = catalog?.items ?? [];
 
   const renderCategory = ({ item }: { item: Category }) => (
-    <Pressable
+    <Button
+      size="sm"
+      variant={selectedCategory === item.slug ? 'secondary' : 'outline'}
       onPress={() =>
         setSelectedCategory((current) => (current === item.slug ? undefined : item.slug))
       }
       style={styles.chip}
+      textStyle={styles.chipText}
     >
-      <Badge variant={selectedCategory === item.slug ? 'secondary' : 'outline'}>
-        {item.name}
-      </Badge>
-    </Pressable>
+      {item.name}
+    </Button>
   );
 
   const renderProduct = ({ item, index }: { item: CatalogProductSummary; index: number }) => (
@@ -122,11 +123,16 @@ export default function StoreScreen(): React.ReactElement {
 
       <View style={styles.ratingRow}>
         {[undefined, 4, 3].map((value) => (
-          <Pressable key={value ?? 'all'} onPress={() => setMinRating(value)} style={styles.chip}>
-            <Badge variant={minRating === value ? 'secondary' : 'outline'}>
-              {value ? `${value}+ ★` : 'Todas'}
-            </Badge>
-          </Pressable>
+          <Button
+            key={value ?? 'all'}
+            size="sm"
+            variant={minRating === value ? 'secondary' : 'outline'}
+            onPress={() => setMinRating(value)}
+            style={styles.chip}
+            textStyle={styles.chipText}
+          >
+            {value ? `${value}+ ★` : 'Todas'}
+          </Button>
         ))}
       </View>
 
@@ -185,6 +191,11 @@ const styles = StyleSheet.create({
   },
   chip: {
     marginRight: 8,
+  },
+  chipText: {
+    textTransform: 'none',
+    letterSpacing: 0,
+    fontWeight: '700',
   },
   ratingRow: {
     flexDirection: 'row',

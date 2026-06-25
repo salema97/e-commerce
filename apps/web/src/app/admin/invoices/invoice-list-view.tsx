@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/table';
 import { InvoiceFilters, InvoiceFiltersState } from '@/components/admin/invoices/invoice-filters';
 import { InvoiceStatusBadge } from '@/components/admin/invoices/invoice-status-badge';
-import { InvoiceActions } from '@/components/admin/invoices/invoice-actions';
+import { InvoiceRowActions } from '@/components/admin/invoices/invoice-row-actions';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { formatDateTime } from '@repo/shared-utils';
@@ -164,16 +164,11 @@ export function InvoiceListView({ initialInvoices }: { initialInvoices: InvoiceR
                   </TableCell>
                   <TableCell>{formatDateTime(invoice.createdAt)}</TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <InvoiceActions
-                        id={invoice.id}
-                        status={invoice.status}
-                        onRetry={handleRetry}
-                      />
-                      <Link href={`/admin/invoices/${invoice.id}`}>
-                        <Button variant="outline" size="sm">Ver</Button>
-                      </Link>
-                    </div>
+                    <InvoiceRowActions
+                      id={invoice.id}
+                      status={invoice.status}
+                      onRetry={handleRetry}
+                    />
                   </TableCell>
                 </TableRow>
               ))
