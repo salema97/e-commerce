@@ -13,18 +13,27 @@ export class ConsoleAccountingProvider implements AccountingProvider {
   readonly provider = AccountingProviderType.CONSOLE;
   private readonly logger = new Logger(ConsoleAccountingProvider.name);
 
-  async pushCustomer(input: AccountingCustomerInput): Promise<AccountingSyncOutput> {
+  pushCustomer(input: AccountingCustomerInput): Promise<AccountingSyncOutput> {
     this.logger.debug(`[console] push customer ${input.externalRef}`);
-    return { externalId: `console-cust-${input.externalRef}`, status: AccountingSyncStatus.SYNCED };
+    return Promise.resolve({
+      externalId: `console-cust-${input.externalRef}`,
+      status: AccountingSyncStatus.SYNCED,
+    });
   }
 
-  async pushInvoice(input: AccountingInvoiceInput): Promise<AccountingSyncOutput> {
+  pushInvoice(input: AccountingInvoiceInput): Promise<AccountingSyncOutput> {
     this.logger.debug(`[console] push invoice ${input.invoiceId}`);
-    return { externalId: `console-inv-${input.invoiceId}`, status: AccountingSyncStatus.SYNCED };
+    return Promise.resolve({
+      externalId: `console-inv-${input.invoiceId}`,
+      status: AccountingSyncStatus.SYNCED,
+    });
   }
 
-  async pushMarketplaceFee(input: AccountingMarketplaceFeeInput): Promise<AccountingSyncOutput> {
+  pushMarketplaceFee(input: AccountingMarketplaceFeeInput): Promise<AccountingSyncOutput> {
     this.logger.debug(`[console] push marketplace fee order ${input.orderId}`);
-    return { externalId: `console-fee-${input.orderId}`, status: AccountingSyncStatus.SYNCED };
+    return Promise.resolve({
+      externalId: `console-fee-${input.orderId}`,
+      status: AccountingSyncStatus.SYNCED,
+    });
   }
 }

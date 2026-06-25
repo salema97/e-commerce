@@ -19,18 +19,18 @@ export class MercadoLibreMarketplaceAdapter implements MarketplaceChannelAdapter
     return Boolean(this.config.get<string>('MERCADO_LIBRE_ACCESS_TOKEN'));
   }
 
-  async syncListing(input: MarketplaceSyncInput): Promise<MarketplaceSyncResult> {
+  syncListing(input: MarketplaceSyncInput): Promise<MarketplaceSyncResult> {
     if (!this.configured) {
       this.logger.warn('Mercado Libre not configured; using stub external id');
     }
-    return {
+    return Promise.resolve({
       externalId: `ml-${input.productId}`,
       status: MarketplaceListingStatus.PUBLISHED,
-    };
+    });
   }
 
-  async importOrder(input: MarketplaceImportOrderInput): Promise<{ externalOrderId: string }> {
+  importOrder(input: MarketplaceImportOrderInput): Promise<{ externalOrderId: string }> {
     this.logger.debug(`[mercado_libre] import order ${input.externalOrderId}`);
-    return { externalOrderId: input.externalOrderId };
+    return Promise.resolve({ externalOrderId: input.externalOrderId });
   }
 }

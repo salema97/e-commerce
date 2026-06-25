@@ -59,7 +59,7 @@ export class MarketplaceService {
       sku: product.sku,
     });
 
-    return this.prisma.marketplaceListing.upsert({
+    return await this.prisma.marketplaceListing.upsert({
       where: { productId_channel: { productId, channel: adapter.channel } },
       create: {
         productId,
@@ -144,7 +144,7 @@ export class MarketplaceService {
       },
     });
 
-    return this.prisma.marketplaceOrderImport.update({
+    return await this.prisma.marketplaceOrderImport.update({
       where: { id: importRecord.id },
       data: { orderId: order.id, status: MarketplaceImportStatus.IMPORTED },
     });

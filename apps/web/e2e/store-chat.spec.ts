@@ -7,8 +7,9 @@ test.describe('storefront chat widget', () => {
     await page.goto('/store');
     await dismissCookieBanner(page);
 
-    await page.getByRole('button', { name: '¿Necesitas ayuda?' }).click();
-    await expect(page.getByText('Soporte en línea')).toBeVisible();
+    await page.getByTestId('store-chat-open').click();
+    await expect(page.getByTestId('store-chat-panel')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Enviar' })).toBeEnabled({ timeout: 15_000 });
 
     const message = 'Hola, tengo una pregunta sobre envíos';
     await page.getByPlaceholder('Escribe tu mensaje...').fill(message);

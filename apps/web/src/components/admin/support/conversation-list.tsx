@@ -98,7 +98,10 @@ export function ConversationList({
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-1">
-                        <span className="text-[10px] text-muted-foreground">
+                        <span
+                          suppressHydrationWarning
+                          className="text-[10px] text-muted-foreground"
+                        >
                           {conversation.lastMessageAt
                             ? formatRelativeDate(conversation.lastMessageAt)
                             : formatRelativeDate(conversation.createdAt)}

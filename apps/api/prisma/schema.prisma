@@ -1499,14 +1499,16 @@ model Quote {
 }
 
 model QuoteLine {
-  id        String  @id @default(uuid())
+  id        String   @id @default(uuid())
   quoteId   String
   productId String
   variantId String?
   name      String
   sku       String
   quantity  Int
-  unitPrice Decimal @db.Decimal(12, 2)
+  unitPrice Decimal  @db.Decimal(12, 2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 

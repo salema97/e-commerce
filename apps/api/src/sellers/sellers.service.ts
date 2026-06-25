@@ -47,7 +47,7 @@ export class SellersService {
     });
   }
 
-  async markPayoutPaid(payoutId: string) {
+  markPayoutPaid(payoutId: string) {
     return this.prisma.sellerPayout.update({
       where: { id: payoutId },
       data: { status: SellerPayoutStatus.PAID, paidAt: new Date() },

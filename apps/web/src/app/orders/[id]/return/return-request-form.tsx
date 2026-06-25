@@ -4,12 +4,10 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert } from '@/components/ui/alert';
 import { AlertDescription } from '@/components/ui/alert-description';
-import { AnimatedPageShell, NeoItem, NeoStagger } from '@/components/motion/neo-page-transition';
 import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { formatPrice } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
@@ -35,7 +33,8 @@ type ReturnFormState = {
 };
 
 type ReturnFormAction =
-  | { type: 'toggle_item'; itemId: string; maxQty: number }
+  | { type: 'select_item'; itemId: string; maxQty: number }
+  | { type: 'deselect_item'; itemId: string }
   | { type: 'set_item_qty'; itemId: string; qty: number }
   | { type: 'set_item_reason'; itemId: string; reason: string }
   | { type: 'set_email'; value: string }
@@ -53,15 +52,17 @@ const returnFormInitialState: ReturnFormState = {
 
 function returnFormReducer(state: ReturnFormState, action: ReturnFormAction): ReturnFormState {
   switch (action.type) {
-    case 'toggle_item': {
-      if (state.selected[action.itemId]) {
-        const { [action.itemId]: _, ...rest } = state.selected;
-        return { ...state, selected: rest };
-      }
+    case 'select_item':
       return {
         ...state,
-        selected: { ...state.selected, [action.itemId]: { qty: action.maxQty, reason: '' } },
+        selected: {
+          ...state.selected,
+          [action.itemId]: { qty: action.maxQty, reason: state.selected[action.itemId]?.reason ?? '' },
+        },
       };
+    case 'deselect_item': {
+      const { [action.itemId]: _, ...rest } = state.selected;
+      return { ...state, selected: rest };
     }
     case 'set_item_qty':
       return {
@@ -96,15 +97,24 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
   const router = useRouter();
   const api = useApiClient();
   const authReady = useAuthApiReady();
+  const [mounted, setMounted] = React.useState(false);
   const [form, dispatch] = React.useReducer(returnFormReducer, returnFormInitialState);
   const { selected, email, isSubmitting, error, submitted } = form;
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const windowDays = 30;
   const isWithinWindow =
     new Date(order.createdAt).getTime() + windowDays * 24 * 60 * 60 * 1000 >= Date.now();
 
-  function toggleItem(itemId: string, maxQty: number) {
-    dispatch({ type: 'toggle_item', itemId, maxQty });
+  function setItemSelected(itemId: string, maxQty: number, checked: boolean) {
+    if (checked) {
+      dispatch({ type: 'select_item', itemId, maxQty });
+    } else {
+      dispatch({ type: 'deselect_item', itemId });
+    }
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -146,23 +156,19 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
 
   if (submitted && isGuest) {
     return (
-      <AnimatedPageShell className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8">
         <h1 className="mb-4 text-2xl font-bold">Solicitud de devolución enviada</h1>
         <p className="text-muted-foreground">
           Recibimos tu solicitud de devolución para el pedido {order.orderNumber}. Estado: Solicitada.
         </p>
-      </AnimatedPageShell>
+      </div>
     );
   }
 
   return (
-    <AnimatedPageShell
-      className="container mx-auto px-4 py-8"
-      header={
-        <h1 className="mb-6 text-2xl font-bold">Solicitar devolución del pedido {order.orderNumber}</h1>
-      }
-    >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="mb-6 text-2xl font-bold">Solicitar devolución del pedido {order.orderNumber}</h1>
+      <form data-testid="return-request-form" onSubmit={handleSubmit} className="flex flex-col gap-6">
         {isGuest ? (
           <Card>
             <CardHeader>
@@ -187,16 +193,29 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
             <CardTitle>Seleccionar artículos</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <NeoStagger className="flex flex-col gap-4">
             {order.items.map((item) => (
-              <NeoItem key={item.id}>
-              <div className="border-[3px] border-neo-onyx bg-white p-4 shadow-[4px_4px_0_0_#111111]">
+              <div
+                key={item.id}
+                className="border-[3px] border-neo-onyx bg-white p-4 shadow-[4px_4px_0_0_#111111]"
+              >
                 <div className="flex items-center gap-3">
-                  <Checkbox
+                  {mounted ? (
+                  <input
+                    type="checkbox"
                     id={`item-${item.id}`}
+                    data-testid={`return-item-${item.id}`}
                     checked={Boolean(selected[item.id])}
-                    onCheckedChange={() => toggleItem(item.id, item.quantity)}
+                    onChange={(event) => {
+                      setItemSelected(item.id, item.quantity, event.target.checked);
+                    }}
+                    className="size-5 shrink-0 border-[3px] border-neo-onyx accent-neo-gold"
                   />
+                  ) : (
+                    <div
+                      aria-hidden
+                      className="size-5 shrink-0 border-[3px] border-neo-onyx bg-white"
+                    />
+                  )}
                   <Label htmlFor={`item-${item.id}`} className="flex flex-1 cursor-pointer flex-col gap-1 normal-case">
                     <span className="font-bold">{item.name}</span>
                     <span className="text-sm font-medium text-muted-foreground">
@@ -248,9 +267,7 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
                   </div>
                 ) : null}
               </div>
-              </NeoItem>
             ))}
-            </NeoStagger>
           </CardContent>
         </Card>
 
@@ -263,7 +280,8 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
         <Button
           type="submit"
           disabled={
-            isSubmitting
+            !mounted
+            || isSubmitting
             || Object.keys(selected).length === 0
             || !isWithinWindow
             || (isGuest && !email)
@@ -281,6 +299,6 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
           </Alert>
         ) : null}
       </form>
-    </AnimatedPageShell>
+    </div>
   );
 }

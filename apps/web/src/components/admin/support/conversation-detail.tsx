@@ -62,12 +62,12 @@ export function ConversationDetail({
 
   function handleAssignToMe() {
     if (currentUserId) {
-      onUpdateConversation({ assignedAgentId: currentUserId });
+      void onUpdateConversation({ assignedAgentId: currentUserId });
     }
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div data-testid="conversation-detail" className="flex h-full flex-col">
       <div className="flex items-start justify-between border-b-[3px] border-neo-onyx bg-white p-4">
         <div>
           <h2 className="font-anton text-xl uppercase">

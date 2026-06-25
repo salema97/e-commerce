@@ -1,5 +1,6 @@
 import { APIRequestContext } from '@playwright/test';
 import { getApiAuthHeaders } from './auth.js';
+import { E2E_API_BASE } from './api-base.js';
 
 export async function createTestInvoice(
   request: APIRequestContext,
@@ -10,7 +11,7 @@ export async function createTestInvoice(
     authorizationNumber?: string | null;
   } = {},
 ): Promise<{ id: string; accessKey: string; status: string }> {
-  const res = await request.post('http://localhost:3001/v1/test/invoices', {
+  const res = await request.post(`${E2E_API_BASE}/test/invoices`, {
     data: {
       orderId,
       accessKey: overrides.accessKey ?? `TEST-${crypto.randomUUID()}`,

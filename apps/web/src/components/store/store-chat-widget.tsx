@@ -44,6 +44,7 @@ export function StoreChatWidget() {
     return (
       <button
         type="button"
+        data-testid="store-chat-open"
         onClick={handleOpenChat}
         className="fixed bottom-6 right-6 z-50 border-[3px] border-neo-onyx bg-neo-gold px-5 py-3 font-bold uppercase shadow-[4px_4px_0_#111] transition-transform hover:-translate-y-0.5"
       >
@@ -53,7 +54,10 @@ export function StoreChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex h-[28rem] w-80 flex-col border-[3px] border-neo-onyx bg-neo-lace shadow-[8px_8px_0_#111]">
+    <div
+      data-testid="store-chat-panel"
+      className="fixed bottom-6 right-6 z-50 flex h-[28rem] w-80 flex-col border-[3px] border-neo-onyx bg-neo-lace shadow-[8px_8px_0_#111]"
+    >
       <div className="flex items-center justify-between border-b-[3px] border-neo-onyx bg-neo-gold px-4 py-3">
         <p className="font-bold uppercase">Soporte en línea</p>
         <button
@@ -105,7 +109,11 @@ export function StoreChatWidget() {
             }
           }}
         />
-        <Button type="button" onClick={() => void handleSendMessage()} disabled={sendMessage.isPending}>
+        <Button
+          type="button"
+          onClick={() => void handleSendMessage()}
+          disabled={sendMessage.isPending || createSession.isPending || !sessionId}
+        >
           Enviar
         </Button>
       </div>

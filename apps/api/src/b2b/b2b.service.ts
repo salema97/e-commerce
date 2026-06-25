@@ -26,7 +26,7 @@ export class B2bService {
     });
   }
 
-  async createCompany(dto: CreateCompanyDto) {
+  createCompany(dto: CreateCompanyDto) {
     return this.prisma.company.create({
       data: {
         name: dto.name,

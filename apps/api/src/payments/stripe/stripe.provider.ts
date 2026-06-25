@@ -109,6 +109,14 @@ export class StripeProvider extends PaymentProvider {
   }
 
   async refund(paymentId: string, amount?: number): Promise<RefundResult> {
+    // E2E / local test payments created via POST /test/payments use pi_test_* ids.
+    if (paymentId.startsWith('pi_test_')) {
+      return {
+        providerRefundId: `re_test_${Date.now()}`,
+        status: RefundStatus.COMPLETED,
+      };
+    }
+
     const refund = await this.stripe.refunds.create({
       payment_intent: paymentId,
       amount,

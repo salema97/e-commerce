@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getServerApiClient } from '@/lib/api';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button-variants';
+import { cn } from '@/lib/utils';
 import {
   Table,
   TableBody,
@@ -68,8 +69,11 @@ export default async function AdminReturnsPage({
                 </TableCell>
                 <TableCell>{formatDate(returnRequest.createdAt)}</TableCell>
                 <TableCell className="text-right">
-                  <Link href={`/admin/returns/${returnRequest.id}`}>
-                    <Button variant="outline" size="sm">Ver</Button>
+                  <Link
+                    href={`/admin/returns/${returnRequest.id}`}
+                    className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
+                  >
+                    Ver
                   </Link>
                 </TableCell>
               </TableRow>

@@ -19,12 +19,10 @@ export default async function AdminInvoiceDetailPage({ params }: AdminInvoiceDet
     redirect('/sign-in?redirect_url=/admin/invoices');
   }
 
-  let invoice: InvoiceResponseDto | null = await api.invoices.findOne(id).catch(() => null);
-  let order: Order | null = null;
-
-  if (invoice?.orderId) {
-    order = await api.orders.findOne(invoice.orderId).catch(() => null);
-  }
+  const invoice: InvoiceResponseDto | null = await api.invoices.findOne(id).catch(() => null);
+  const order: Order | null = invoice?.orderId
+    ? await api.orders.findOne(invoice.orderId).catch(() => null)
+    : null;
 
   if (!invoice) {
     notFound();

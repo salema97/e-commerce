@@ -93,7 +93,7 @@ export function InvoiceListView({ initialInvoices }: { initialInvoices: InvoiceR
   }
 
   function handleRetry() {
-    queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    void queryClient.invalidateQueries({ queryKey: ['invoices'] });
   }
 
   return (

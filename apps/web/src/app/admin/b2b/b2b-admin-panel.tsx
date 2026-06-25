@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useReducer } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,30 +21,66 @@ interface B2bAdminPanelProps {
   initialCompanies: Company[];
 }
 
+type B2bPanelState = {
+  companies: Company[];
+  name: string;
+  taxId: string;
+  pending: boolean;
+  error: string | null;
+};
+
+type B2bPanelAction =
+  | { type: 'set_name'; value: string }
+  | { type: 'set_tax_id'; value: string }
+  | { type: 'submit_start' }
+  | { type: 'submit_success'; companies: Company[] }
+  | { type: 'submit_error'; message: string };
+
+function b2bPanelReducer(state: B2bPanelState, action: B2bPanelAction): B2bPanelState {
+  switch (action.type) {
+    case 'set_name':
+      return { ...state, name: action.value };
+    case 'set_tax_id':
+      return { ...state, taxId: action.value };
+    case 'submit_start':
+      return { ...state, pending: true, error: null };
+    case 'submit_success':
+      return {
+        ...state,
+        companies: action.companies,
+        name: '',
+        taxId: '',
+        pending: false,
+        error: null,
+      };
+    case 'submit_error':
+      return { ...state, pending: false, error: action.message };
+    default:
+      return state;
+  }
+}
+
 export function B2bAdminPanel({ initialCompanies }: B2bAdminPanelProps) {
   const api = useApiClient();
   const router = useRouter();
-  const [companies, setCompanies] = useState(initialCompanies);
-  const [name, setName] = useState('');
-  const [taxId, setTaxId] = useState('');
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(b2bPanelReducer, {
+    companies: initialCompanies,
+    name: '',
+    taxId: '',
+    pending: false,
+    error: null,
+  });
 
   async function createCompany() {
-    if (!name.trim() || !taxId.trim()) return;
-    setPending(true);
-    setError(null);
+    if (!state.name.trim() || !state.taxId.trim()) return;
+    dispatch({ type: 'submit_start' });
     try {
-      await api.b2b.createCompany({ name: name.trim(), taxId: taxId.trim() });
+      await api.b2b.createCompany({ name: state.name.trim(), taxId: state.taxId.trim() });
       const refreshed = await api.b2b.listCompanies();
-      setCompanies(refreshed);
-      setName('');
-      setTaxId('');
+      dispatch({ type: 'submit_success', companies: refreshed });
       router.refresh();
     } catch {
-      setError('No se pudo crear la empresa.');
-    } finally {
-      setPending(false);
+      dispatch({ type: 'submit_error', message: 'No se pudo crear la empresa.' });
     }
   }
 
@@ -54,65 +90,65 @@ export function B2bAdminPanel({ initialCompanies }: B2bAdminPanelProps) {
         eyebrow="Ventas"
         title="B2B"
         subtitle="Gestiona empresas, crédito y precios negociados."
-        metrics={[{ label: 'Empresas', value: String(companies.length) }]}
+        metrics={[{ label: 'Empresas', value: String(state.companies.length) }]}
       />
       <div className="space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-        <div className="flex-1 space-y-1">
-          <label htmlFor="b2b-company-name" className="text-sm font-medium">
-            Nombre
-          </label>
-          <Input
-            id="b2b-company-name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Empresa S.A."
-          />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+          <div className="flex-1 space-y-1">
+            <label htmlFor="b2b-company-name" className="text-sm font-medium">
+              Nombre
+            </label>
+            <Input
+              id="b2b-company-name"
+              value={state.name}
+              onChange={(e) => dispatch({ type: 'set_name', value: e.target.value })}
+              placeholder="Empresa S.A."
+            />
+          </div>
+          <div className="flex-1 space-y-1">
+            <label htmlFor="b2b-company-tax-id" className="text-sm font-medium">
+              RUC
+            </label>
+            <Input
+              id="b2b-company-tax-id"
+              value={state.taxId}
+              onChange={(e) => dispatch({ type: 'set_tax_id', value: e.target.value })}
+              placeholder="1790000000001"
+            />
+          </div>
+          <Button type="button" onClick={() => void createCompany()} disabled={state.pending}>
+            Crear empresa
+          </Button>
         </div>
-        <div className="flex-1 space-y-1">
-          <label htmlFor="b2b-company-tax-id" className="text-sm font-medium">
-            RUC
-          </label>
-          <Input
-            id="b2b-company-tax-id"
-            value={taxId}
-            onChange={(e) => setTaxId(e.target.value)}
-            placeholder="1790000000001"
-          />
-        </div>
-        <Button type="button" onClick={() => void createCompany()} disabled={pending}>
-          Crear empresa
-        </Button>
-      </div>
 
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        {state.error ? <p className="text-sm text-red-600">{state.error}</p> : null}
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Empresa</TableHead>
-              <TableHead>RUC</TableHead>
-              <TableHead>Crédito</TableHead>
-              <TableHead>Estado</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {companies.map((company) => (
-              <TableRow key={company.id}>
-                <TableCell className="font-medium">{company.name}</TableCell>
-                <TableCell>{company.taxId}</TableCell>
-                <TableCell>{company.creditLimit != null ? `$${company.creditLimit}` : '—'}</TableCell>
-                <TableCell>
-                  <Badge variant={company.isActive ? 'default' : 'secondary'}>
-                    {company.isActive ? 'Activa' : 'Inactiva'}
-                  </Badge>
-                </TableCell>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Empresa</TableHead>
+                <TableHead>RUC</TableHead>
+                <TableHead>Crédito</TableHead>
+                <TableHead>Estado</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {state.companies.map((company) => (
+                <TableRow key={company.id}>
+                  <TableCell className="font-medium">{company.name}</TableCell>
+                  <TableCell>{company.taxId}</TableCell>
+                  <TableCell>{company.creditLimit != null ? `$${company.creditLimit}` : '—'}</TableCell>
+                  <TableCell>
+                    <Badge variant={company.isActive ? 'default' : 'secondary'}>
+                      {company.isActive ? 'Activa' : 'Inactiva'}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   );

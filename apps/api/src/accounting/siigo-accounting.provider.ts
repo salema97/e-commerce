@@ -20,24 +20,33 @@ export class SiigoAccountingProvider implements AccountingProvider {
     return Boolean(this.config.get<string>('SIIGO_API_KEY'));
   }
 
-  async pushCustomer(input: AccountingCustomerInput): Promise<AccountingSyncOutput> {
+  pushCustomer(input: AccountingCustomerInput): Promise<AccountingSyncOutput> {
     if (!this.configured) {
       this.logger.warn('Siigo not configured; returning stub sync id');
     }
-    return { externalId: `siigo-cust-${input.externalRef}`, status: AccountingSyncStatus.SYNCED };
+    return Promise.resolve({
+      externalId: `siigo-cust-${input.externalRef}`,
+      status: AccountingSyncStatus.SYNCED,
+    });
   }
 
-  async pushInvoice(input: AccountingInvoiceInput): Promise<AccountingSyncOutput> {
+  pushInvoice(input: AccountingInvoiceInput): Promise<AccountingSyncOutput> {
     if (!this.configured) {
       this.logger.warn('Siigo not configured; returning stub sync id');
     }
-    return { externalId: `siigo-inv-${input.invoiceId}`, status: AccountingSyncStatus.SYNCED };
+    return Promise.resolve({
+      externalId: `siigo-inv-${input.invoiceId}`,
+      status: AccountingSyncStatus.SYNCED,
+    });
   }
 
-  async pushMarketplaceFee(input: AccountingMarketplaceFeeInput): Promise<AccountingSyncOutput> {
+  pushMarketplaceFee(input: AccountingMarketplaceFeeInput): Promise<AccountingSyncOutput> {
     if (!this.configured) {
       this.logger.warn('Siigo not configured; returning stub sync id');
     }
-    return { externalId: `siigo-fee-${input.orderId}`, status: AccountingSyncStatus.SYNCED };
+    return Promise.resolve({
+      externalId: `siigo-fee-${input.orderId}`,
+      status: AccountingSyncStatus.SYNCED,
+    });
   }
 }

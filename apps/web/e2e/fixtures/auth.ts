@@ -17,7 +17,9 @@ export const TEST_CUSTOMER: TestUser = { role: 'CUSTOMER' };
 export const TEST_ADMIN: TestUser = { role: 'ADMIN' };
 export const TEST_FINANCE: TestUser = { role: 'FINANCE' };
 
-const API_BASE = 'http://localhost:3001/v1';
+import { E2E_API_BASE } from './api-base.js';
+
+const API_BASE = E2E_API_BASE;
 const SEED_PASSWORD = process.env.E2E_USER_PASSWORD ?? 'SeedDemo123!';
 
 const SEED_EMAIL_BY_ROLE: Record<TestRole, string> = {

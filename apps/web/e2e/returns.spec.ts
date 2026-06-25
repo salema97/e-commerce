@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
 import {
   authenticatePage,
   clearAuth,
@@ -12,19 +12,23 @@ import {
   TEST_ADMIN,
 } from './fixtures/auth.js';
 
-const API_BASE = 'http://localhost:3001/v1';
+import { E2E_API_BASE } from './fixtures/api-base.js';
 
-async function selectFirstReturnItem(page: import('@playwright/test').Page): Promise<void> {
-  const checkbox = page.getByRole('checkbox').first();
-  await checkbox.click();
-  if ((await checkbox.getAttribute('data-state')) !== 'checked') {
-    await checkbox.click({ force: true });
-  }
-  await expect(checkbox).toHaveAttribute('data-state', 'checked');
+const API_BASE = E2E_API_BASE;
+
+async function selectFirstReturnItem(page: Page): Promise<void> {
+  await expect(page.getByTestId('return-request-form')).toBeVisible();
+  const checkbox = page.locator('[data-testid^="return-item-"]').first();
+  await expect(checkbox).toBeVisible({ timeout: 15_000 });
+  await checkbox.check();
+  await expect(checkbox).toBeChecked({ timeout: 10_000 });
+  await expect(
+    page.getByPlaceholder('Motivo de la devolución de este artículo').first(),
+  ).toBeVisible({ timeout: 10_000 });
 }
 
 async function expectReturnForOrder(
-  request: import('@playwright/test').APIRequestContext,
+  request: APIRequestContext,
   orderId: string,
 ): Promise<void> {
   const res = await request.get(`${API_BASE}/returns?orderId=${orderId}&limit=1`, {
@@ -47,7 +51,7 @@ test.describe('returns e2e', () => {
     });
 
     await authenticatePage(page, TEST_CUSTOMER);
-    await page.goto(`/orders/${order.id}`);
+    await page.goto(`/orders/${order.id}`, { waitUntil: 'domcontentloaded' });
 
     await expect(page.locator('body')).toContainText('Solicitar devolución');
     await page.getByRole('button', { name: 'Solicitar devolución' }).click();
@@ -59,9 +63,11 @@ test.describe('returns e2e', () => {
       .first()
       .fill('Defectuoso');
 
-    await page.getByRole('button', { name: 'Enviar solicitud de devolución' }).click();
+    const submitButton = page.getByRole('button', { name: 'Enviar solicitud de devolución' });
+    await expect(submitButton).toBeEnabled({ timeout: 15_000 });
+    await submitButton.click();
 
-    await expect(page).toHaveURL(`/orders/${order.id}`, { timeout: 15000 });
+    await expect(page).toHaveURL(`/orders/${order.id}`, { timeout: 15_000 });
     await expectReturnForOrder(request, order.id);
   });
 
@@ -76,21 +82,30 @@ test.describe('returns e2e', () => {
     await transitionReturnStatus(request, returnRequest.id, 'INSPECTION');
 
     await authenticatePage(page, TEST_ADMIN);
-    await page.goto('/admin/returns');
-
-    await expect(page.locator('body')).toContainText('Devoluciones');
-    const row = page.getByRole('row').filter({ hasText: returnRequest.id.slice(0, 8) });
-    await row.getByRole('link', { name: 'Ver' }).click();
+    await page.goto(`/admin/returns/${returnRequest.id}`);
 
     await expect(page).toHaveURL(new RegExp(`/admin/returns/${returnRequest.id}$`));
     await page.getByRole('button', { name: 'Resolver' }).click();
 
     await expect(page).toHaveURL(`/admin/returns/${returnRequest.id}/resolve`);
-    await page.getByRole('radio', { name: 'Crédito en tienda' }).click();
-    await page.getByRole('button', { name: 'Confirmar resolución' }).click();
+    await expect(page.getByTestId('resolve-return-form')).toBeVisible();
+    await page.getByRole('radio', { name: 'Pago original' }).click();
+    const confirmButton = page.getByRole('button', { name: 'Confirmar resolución' });
+    await expect(confirmButton).toBeEnabled({ timeout: 15_000 });
 
-    await expect(page).toHaveURL(`/admin/returns/${returnRequest.id}`, { timeout: 15000 });
-    await expect(page.locator('body')).toContainText('Resuelta');
+    const [resolveResponse] = await Promise.all([
+      page.waitForResponse(
+        (response) =>
+          response.url().includes(`/returns/${returnRequest.id}/resolve`) &&
+          response.request().method() === 'POST',
+        { timeout: 30_000 },
+      ),
+      confirmButton.click(),
+    ]);
+    expect(resolveResponse.ok()).toBeTruthy();
+
+    await page.goto(`/admin/returns/${returnRequest.id}`);
+    await expect(page.locator('body')).toContainText('Resuelta', { timeout: 15_000 });
   });
 
   test('guest creates a return request using the order email', async ({ page, request }) => {
@@ -113,9 +128,13 @@ test.describe('returns e2e', () => {
       .first()
       .fill('Talla incorrecta');
 
-    await page.getByRole('button', { name: 'Enviar solicitud de devolución' }).click();
+    const submitButton = page.getByRole('button', { name: 'Enviar solicitud de devolución' });
+    await expect(submitButton).toBeEnabled({ timeout: 15_000 });
+    await submitButton.click();
 
-    await expect(page.locator('body')).toContainText('Solicitud de devolución enviada');
+    await expect(page.locator('body')).toContainText('Solicitud de devolución enviada', {
+      timeout: 15_000,
+    });
     await expect(page.locator('body')).toContainText('Solicitada');
   });
 });

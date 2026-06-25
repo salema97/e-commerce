@@ -2,127 +2,24 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCartStore } from '@/lib/cart-store';
-import type { CartItem } from '@/lib/cart-store';
 import { useApiClient } from '@/lib/client-api';
 import { useAuth } from '@/contexts/auth-context';
-import { AddressForm } from './address-form';
-import {
-  EMPTY_ADDRESS,
-  isAddressValid,
-  toOrderAddress,
-  type AddressFormValues,
-} from './address-form.utils';
-import { CouponInput } from './coupon-input';
-import { EngagementInputs } from './engagement-inputs';
-import { OrderSummary } from './order-summary';
-import { PaymentForm } from './payment-element';
+import { toOrderAddress } from './address-form.utils';
+import { isAddressValid } from './address-form.utils';
 import { trackEvent } from '@/lib/analytics/track';
-import { formatPrice } from '@repo/shared-utils';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
-import type {
-  CreateOrderDto,
-  CreatePaymentIntentDto,
-  CreatedOrderResult,
-  PaymentIntentResult,
-  ShippingQuote,
-  StoreLocation,
-  ShippingMethodType,
-} from '@repo/shared-types';
+import type { CreateOrderDto, CreatePaymentIntentDto, StoreLocation } from '@repo/shared-types';
+import {
+  checkoutReducer,
+  createInitialCheckoutState,
+} from './checkout-state';
+import { CheckoutFormStep } from './checkout-form-step';
+import { CheckoutPaymentStep } from './checkout-payment-step';
 
 const FALLBACK_SHIPPING_FLAT_RATE = 5;
 const FALLBACK_FREE_SHIPPING_THRESHOLD = 50;
-
-type CheckoutState = {
-  address: AddressFormValues;
-  couponCode: string;
-  referralCode: string;
-  loyaltyPoints: number;
-  order: CreatedOrderResult | null;
-  paymentIntent: PaymentIntentResult | null;
-  isSubmitting: boolean;
-  error: string | null;
-  shippingQuote: ShippingQuote | null;
-  shippingMethod: ShippingMethodType;
-  pickupLocationId: string;
-};
-
-type CheckoutAction =
-  | { type: 'set_address'; value: AddressFormValues }
-  | { type: 'set_coupon'; value: string }
-  | { type: 'set_referral'; value: string }
-  | { type: 'set_loyalty'; value: number }
-  | { type: 'submit_start' }
-  | { type: 'submit_success'; order: CreatedOrderResult; paymentIntent: PaymentIntentResult }
-  | { type: 'submit_error'; message: string }
-  | { type: 'set_shipping_quote'; quote: ShippingQuote | null }
-  | { type: 'set_shipping_method'; value: ShippingMethodType }
-  | { type: 'set_pickup_location'; value: string };
-
-const checkoutInitialState: CheckoutState = {
-  address: EMPTY_ADDRESS,
-  couponCode: '',
-  referralCode: '',
-  loyaltyPoints: 0,
-  order: null,
-  paymentIntent: null,
-  isSubmitting: false,
-  error: null,
-  shippingQuote: null,
-  shippingMethod: 'DELIVERY',
-  pickupLocationId: '',
-};
-
-function createInitialCheckoutState(): CheckoutState {
-  if (typeof window === 'undefined') {
-    return checkoutInitialState;
-  }
-
-  const ref = new URLSearchParams(window.location.search).get('ref');
-  if (!ref) {
-    return checkoutInitialState;
-  }
-
-  return {
-    ...checkoutInitialState,
-    referralCode: ref.toUpperCase(),
-  };
-}
-
-function checkoutReducer(state: CheckoutState, action: CheckoutAction): CheckoutState {
-  switch (action.type) {
-    case 'set_address':
-      return { ...state, address: action.value };
-    case 'set_coupon':
-      return { ...state, couponCode: action.value };
-    case 'set_referral':
-      return { ...state, referralCode: action.value };
-    case 'set_loyalty':
-      return { ...state, loyaltyPoints: action.value };
-    case 'submit_start':
-      return { ...state, error: null, isSubmitting: true };
-    case 'submit_success':
-      return {
-        ...state,
-        order: action.order,
-        paymentIntent: action.paymentIntent,
-        isSubmitting: false,
-      };
-    case 'submit_error':
-      return { ...state, error: action.message, isSubmitting: false };
-    case 'set_shipping_quote':
-      return { ...state, shippingQuote: action.quote };
-    case 'set_shipping_method':
-      return { ...state, shippingMethod: action.value };
-    case 'set_pickup_location':
-      return { ...state, pickupLocationId: action.value };
-    default:
-      return state;
-  }
-}
 
 export function CheckoutContainer() {
   const router = useRouter();
@@ -162,8 +59,6 @@ export function CheckoutContainer() {
     });
   }, [items]);
 
-  // Client-side estimate for the summary.
-  // (subtotal, discount, IVA, shipping) authoritatively on order creation.
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const discount = 0;
   const taxableBase = Math.max(0, subtotal - discount);
@@ -171,12 +66,12 @@ export function CheckoutContainer() {
   const tax = taxableBase * taxRate;
   const fallbackShipping =
     subtotal >= FALLBACK_FREE_SHIPPING_THRESHOLD ? 0 : FALLBACK_SHIPPING_FLAT_RATE;
+
   React.useEffect(() => {
     void api.pos.listLocations(true).then(setPickupLocations).catch(() => setPickupLocations([]));
   }, [api]);
 
-  const shipping =
-    shippingMethod === 'PICKUP' ? 0 : (shippingQuote?.amount ?? fallbackShipping);
+  const shipping = shippingMethod === 'PICKUP' ? 0 : (shippingQuote?.amount ?? fallbackShipping);
   const total = taxableBase + tax + shipping;
 
   React.useEffect(() => {
@@ -209,21 +104,6 @@ export function CheckoutContainer() {
     };
   }, [address, api, items.length, shippingMethod, taxableBase]);
 
-  if (!mounted) {
-    return <CheckoutSkeleton />;
-  }
-
-  if (items.length === 0 && !order) {
-    return (
-      <AnimatedPageShell className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-semibold">Tu carrito está vacío</h1>
-        <Button className="mt-6" onClick={() => router.push('/store')}>
-          Seguir comprando
-        </Button>
-      </AnimatedPageShell>
-    );
-  }
-
   async function handleCreateOrder() {
     dispatch({ type: 'submit_start' });
     try {
@@ -248,8 +128,7 @@ export function CheckoutContainer() {
       };
 
       const createdOrder = await api.orders.create(orderDto);
-
-      const intentDto: CreatePaymentIntentDto = {
+      const intent = await api.payments.createIntent({
         orderId: createdOrder.id,
         orderNumber: createdOrder.orderNumber,
         amount: Math.round(Number(createdOrder.total) * 100),
@@ -257,210 +136,68 @@ export function CheckoutContainer() {
         provider: 'STRIPE',
         channel: 'WEB',
         customerEmail: address.email,
-      };
-      const intent = await api.payments.createIntent(intentDto);
+      } satisfies CreatePaymentIntentDto);
+
       dispatch({ type: 'submit_success', order: createdOrder, paymentIntent: intent });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'No se pudo iniciar el pago. Por favor, inténtalo de nuevo.';
+      const message =
+        err instanceof Error ? err.message : 'No se pudo iniciar el pago. Por favor, inténtalo de nuevo.';
       dispatch({ type: 'submit_error', message });
     }
   }
 
-  // Once the payment intent is created, render the Stripe Payment Element.
-  if (order && paymentIntent?.clientSecret) {
+  if (!mounted) {
+    return <CheckoutSkeleton />;
+  }
+
+  if (items.length === 0 && !order) {
     return (
-      <AnimatedPageShell
-        className="container mx-auto px-4 py-8"
-        header={
-          <>
-            <h1 className="text-3xl font-bold">Completa tu pago</h1>
-            <p className="mt-2 text-muted-foreground">
-              Pedido {order.orderNumber} · Total {formatPrice(Number(order.total))}
-            </p>
-          </>
-        }
-      >
-        <div className="mt-8 grid gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Pago</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <PaymentForm
-                  clientSecret={paymentIntent.clientSecret}
-                  orderId={order.id}
-                  total={Number(order.total)}
-                />
-              </CardContent>
-            </Card>
-            <div className="mt-4">
-              <Link
-                href={`/orders/${order.id}`}
-                className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-              >
-                Ver detalles del pedido
-              </Link>
-            </div>
-          </div>
-          <OrderSummaryCard
-            items={items}
-            subtotal={subtotal}
-            discount={discount}
-            tax={tax}
-            shipping={shipping}
-            total={total}
-            couponCode={couponCode}
-          />
-        </div>
+      <AnimatedPageShell className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-2xl font-semibold">Tu carrito está vacío</h1>
+        <Button className="mt-6" onClick={() => router.push('/store')}>
+          Seguir comprando
+        </Button>
       </AnimatedPageShell>
     );
   }
 
+  if (order && paymentIntent?.clientSecret) {
+    return (
+      <CheckoutPaymentStep
+        order={order}
+        clientSecret={paymentIntent.clientSecret}
+        items={items}
+        subtotal={subtotal}
+        discount={discount}
+        tax={tax}
+        shipping={shipping}
+        total={total}
+        couponCode={couponCode}
+      />
+    );
+  }
+
   return (
-    <AnimatedPageShell
-      className="container mx-auto px-4 py-8"
-      header={<h1 className="text-3xl font-bold">Finalizar compra</h1>}
-    >
-      <div className="mt-8 grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          <AddressForm values={address} onChange={(value) => dispatch({ type: 'set_address', value })} />
-
-          <Card className="brutalist-card">
-            <CardHeader>
-              <CardTitle>Entrega</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button
-                  type="button"
-                  variant={shippingMethod === 'DELIVERY' ? 'default' : 'outline'}
-                  onClick={() => dispatch({ type: 'set_shipping_method', value: 'DELIVERY' })}
-                >
-                  Envío a domicilio
-                </Button>
-                <Button
-                  type="button"
-                  variant={shippingMethod === 'PICKUP' ? 'default' : 'outline'}
-                  onClick={() => dispatch({ type: 'set_shipping_method', value: 'PICKUP' })}
-                  disabled={pickupLocations.length === 0}
-                >
-                  Retiro en tienda (BOPIS)
-                </Button>
-              </div>
-              {shippingMethod === 'PICKUP' ? (
-                <select
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                  value={pickupLocationId}
-                  onChange={(event) =>
-                    dispatch({ type: 'set_pickup_location', value: event.target.value })
-                  }
-                >
-                  <option value="">Selecciona una tienda</option>
-                  {pickupLocations.map((location) => (
-                    <option key={location.id} value={location.id}>
-                      {location.name} — {location.address}
-                    </option>
-                  ))}
-                </select>
-              ) : null}
-            </CardContent>
-          </Card>
-
-          <Card className="brutalist-card">
-            <CardHeader>
-              <CardTitle>Cupón</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CouponInput
-                couponCode={couponCode}
-                onCouponCodeChange={(value) => dispatch({ type: 'set_coupon', value })}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Referidos y puntos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <EngagementInputs
-                subtotal={subtotal}
-                referralCode={referralCode}
-                onReferralCodeChange={(value) => dispatch({ type: 'set_referral', value })}
-                loyaltyPoints={loyaltyPoints}
-                onLoyaltyPointsChange={(value) => dispatch({ type: 'set_loyalty', value })}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Pago</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                {user
-                  ? 'Haz clic en continuar para crear tu pedido y cargar el formulario seguro de pago con Stripe.'
-                  : 'Estás comprando como invitado. Puedes crear una cuenta después de la compra.'}
-              </p>
-            </CardContent>
-          </Card>
-
-          {error ? (
-            <p className="text-sm text-red-600">{error}</p>
-          ) : null}
-
-          <Button
-            type="button"
-            className="w-full"
-            disabled={
-              !isAddressValid(address) ||
-              isSubmitting ||
-              (shippingMethod === 'PICKUP' && !pickupLocationId)
-            }
-            onClick={handleCreateOrder}
-          >
-            {isSubmitting ? 'Preparando pago…' : 'Continuar al pago'}
-          </Button>
-        </div>
-
-        <OrderSummaryCard
-          items={items}
-          subtotal={subtotal}
-          discount={discount}
-          tax={tax}
-          shipping={shipping}
-          total={total}
-          couponCode={couponCode}
-        />
-      </div>
-    </AnimatedPageShell>
-  );
-}
-
-interface OrderSummaryCardProps {
-  items: CartItem[];
-  subtotal: number;
-  discount: number;
-  tax: number;
-  shipping: number;
-  total: number;
-  couponCode?: string;
-}
-
-function OrderSummaryCard(props: OrderSummaryCardProps) {
-  return (
-    <div>
-      <Card className="sticky top-24">
-        <CardHeader>
-          <CardTitle>Resumen del pedido</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <OrderSummary {...props} />
-        </CardContent>
-      </Card>
-    </div>
+    <CheckoutFormStep
+      address={address}
+      couponCode={couponCode}
+      referralCode={referralCode}
+      loyaltyPoints={loyaltyPoints}
+      shippingMethod={shippingMethod}
+      pickupLocationId={pickupLocationId}
+      pickupLocations={pickupLocations}
+      isSubmitting={isSubmitting}
+      error={error}
+      user={user}
+      items={items}
+      subtotal={subtotal}
+      discount={discount}
+      tax={tax}
+      shipping={shipping}
+      total={total}
+      dispatch={dispatch}
+      onCreateOrder={() => void handleCreateOrder()}
+    />
   );
 }
 
@@ -469,7 +206,7 @@ function CheckoutSkeleton() {
     <div className="container mx-auto px-4 py-8">
       <div className="h-10 w-64 animate-pulse rounded bg-muted" />
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2 h-96 animate-pulse rounded bg-muted" />
+        <div className="h-96 animate-pulse rounded bg-muted lg:col-span-2" />
         <div className="h-64 animate-pulse rounded bg-muted" />
       </div>
     </div>

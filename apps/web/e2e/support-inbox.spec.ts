@@ -1,20 +1,18 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { authenticatePage, TEST_ADMIN, TEST_FINANCE, TEST_SUPPORT } from './fixtures/auth.js';
 import { createConversationViaWebhook } from './fixtures/support.js';
 
-async function openConversation(
-  page: import('@playwright/test').Page,
-  contactName: string,
-): Promise<void> {
-  const row = page.getByRole('button', { name: contactName });
-  await expect(row).toBeVisible({ timeout: 15000 });
+async function openConversation(page: Page, contactName: string): Promise<void> {
+  const row = page
+    .locator('[data-testid^="conversation-item-"]')
+    .filter({ hasText: contactName })
+    .first();
+  await expect(row).toBeVisible({ timeout: 15_000 });
   await row.click();
+  await expect(page.getByTestId('conversation-detail')).toBeVisible({ timeout: 15_000 });
 }
 
-async function selectConversationStatus(
-  page: import('@playwright/test').Page,
-  label: string,
-): Promise<void> {
+async function selectConversationStatus(page: Page, label: string): Promise<void> {
   const combobox = page.getByRole('combobox', { name: 'Estado de la conversación' });
   await expect(combobox).toBeVisible({ timeout: 10000 });
   await combobox.click();
@@ -36,7 +34,7 @@ test.describe('admin support inbox e2e', () => {
     await expect(page.locator('body')).toContainText(contactName);
 
     await openConversation(page, contactName);
-    await expect(page.locator('body')).toContainText('Hola, tengo una duda');
+    await expect(page.locator('body')).toContainText('Hola, tengo una duda', { timeout: 15_000 });
 
     const reply = 'Gracias por contactarnos. ¿En qué podemos ayudarte?';
     await page.locator('textarea[placeholder="Escribe una respuesta..."]').fill(reply);

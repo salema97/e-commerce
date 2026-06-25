@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useReducer } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,32 +21,73 @@ interface SellersAdminPanelProps {
   initialSellers: Seller[];
 }
 
+type SellersPanelState = {
+  sellers: Seller[];
+  userId: string;
+  businessName: string;
+  slug: string;
+  pending: boolean;
+};
+
+type SellersPanelAction =
+  | { type: 'set_user_id'; value: string }
+  | { type: 'set_business_name'; value: string }
+  | { type: 'set_slug'; value: string }
+  | { type: 'submit_start' }
+  | { type: 'submit_success'; sellers: Seller[] }
+  | { type: 'submit_end' };
+
+function sellersPanelReducer(state: SellersPanelState, action: SellersPanelAction): SellersPanelState {
+  switch (action.type) {
+    case 'set_user_id':
+      return { ...state, userId: action.value };
+    case 'set_business_name':
+      return { ...state, businessName: action.value };
+    case 'set_slug':
+      return { ...state, slug: action.value };
+    case 'submit_start':
+      return { ...state, pending: true };
+    case 'submit_success':
+      return {
+        ...state,
+        sellers: action.sellers,
+        userId: '',
+        businessName: '',
+        slug: '',
+        pending: false,
+      };
+    case 'submit_end':
+      return { ...state, pending: false };
+    default:
+      return state;
+  }
+}
+
 export function SellersAdminPanel({ initialSellers }: SellersAdminPanelProps) {
   const api = useApiClient();
   const router = useRouter();
-  const [sellers, setSellers] = useState(initialSellers);
-  const [userId, setUserId] = useState('');
-  const [businessName, setBusinessName] = useState('');
-  const [slug, setSlug] = useState('');
-  const [pending, setPending] = useState(false);
+  const [state, dispatch] = useReducer(sellersPanelReducer, {
+    sellers: initialSellers,
+    userId: '',
+    businessName: '',
+    slug: '',
+    pending: false,
+  });
 
   async function createSeller() {
-    if (!userId.trim() || !businessName.trim() || !slug.trim()) return;
-    setPending(true);
+    if (!state.userId.trim() || !state.businessName.trim() || !state.slug.trim()) return;
+    dispatch({ type: 'submit_start' });
     try {
       await api.sellers.create({
-        userId: userId.trim(),
-        businessName: businessName.trim(),
-        slug: slug.trim(),
+        userId: state.userId.trim(),
+        businessName: state.businessName.trim(),
+        slug: state.slug.trim(),
       });
       const refreshed = await api.sellers.list();
-      setSellers(refreshed);
-      setUserId('');
-      setBusinessName('');
-      setSlug('');
+      dispatch({ type: 'submit_success', sellers: refreshed });
       router.refresh();
-    } finally {
-      setPending(false);
+    } catch {
+      dispatch({ type: 'submit_end' });
     }
   }
 
@@ -56,42 +97,56 @@ export function SellersAdminPanel({ initialSellers }: SellersAdminPanelProps) {
         eyebrow="Ventas"
         title="Vendedores"
         subtitle="Cuentas de vendedores del marketplace interno."
-        metrics={[{ label: 'Registrados', value: String(sellers.length) }]}
+        metrics={[{ label: 'Registrados', value: String(state.sellers.length) }]}
       />
       <div className="space-y-4">
-      <div className="grid gap-2 sm:grid-cols-3">
-        <Input value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="User ID" />
-        <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Nombre comercial" />
-        <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="slug-tienda" />
-      </div>
-      <Button type="button" onClick={() => void createSeller()} disabled={pending}>
-        Registrar vendedor
-      </Button>
+        <div className="grid gap-2 sm:grid-cols-3">
+          <Input
+            value={state.userId}
+            onChange={(e) => dispatch({ type: 'set_user_id', value: e.target.value })}
+            placeholder="User ID"
+          />
+          <Input
+            value={state.businessName}
+            onChange={(e) => dispatch({ type: 'set_business_name', value: e.target.value })}
+            placeholder="Nombre comercial"
+          />
+          <Input
+            value={state.slug}
+            onChange={(e) => dispatch({ type: 'set_slug', value: e.target.value })}
+            placeholder="slug-tienda"
+          />
+        </div>
+        <Button type="button" onClick={() => void createSeller()} disabled={state.pending}>
+          Registrar vendedor
+        </Button>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Tienda</TableHead>
-              <TableHead>Slug</TableHead>
-              <TableHead>Comisión</TableHead>
-              <TableHead>Estado</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sellers.map((seller) => (
-              <TableRow key={seller.id}>
-                <TableCell>{seller.businessName}</TableCell>
-                <TableCell>{seller.slug}</TableCell>
-                <TableCell>{seller.commissionRate}%</TableCell>
-                <TableCell>
-                  <Badge variant={seller.status === 'ACTIVE' ? 'default' : 'secondary'}>{seller.status}</Badge>
-                </TableCell>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tienda</TableHead>
+                <TableHead>Slug</TableHead>
+                <TableHead>Comisión</TableHead>
+                <TableHead>Estado</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {state.sellers.map((seller) => (
+                <TableRow key={seller.id}>
+                  <TableCell>{seller.businessName}</TableCell>
+                  <TableCell>{seller.slug}</TableCell>
+                  <TableCell>{seller.commissionRate}%</TableCell>
+                  <TableCell>
+                    <Badge variant={seller.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                      {seller.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   );

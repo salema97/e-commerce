@@ -34,6 +34,13 @@ if (storagePattern) {
   remotePatterns.push(storagePattern);
 }
 
+const devApiConnectSrc = [
+  'http://127.0.0.1:3001',
+  'http://localhost:3001',
+  'ws://127.0.0.1:3000',
+  'ws://localhost:3000',
+].join(' ');
+
 const securityHeaders = [
   { key: 'X-DNS-Prefetch-Control', value: 'on' },
   { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
@@ -48,13 +55,17 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
-      "connect-src 'self' https: wss:",
+      process.env.NODE_ENV === 'production'
+        ? "connect-src 'self' https: wss:"
+        : `connect-src 'self' https: wss: ${devApiConnectSrc}`,
       "frame-src 'self' https://challenges.cloudflare.com",
     ].join('; '),
   },
 ];
 
 const nextConfig: NextConfig = {
+  // Playwright E2E uses 127.0.0.1; without this, Next 16 blocks dev HMR and client hydration.
+  allowedDevOrigins: ['127.0.0.1', 'localhost'],
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns,

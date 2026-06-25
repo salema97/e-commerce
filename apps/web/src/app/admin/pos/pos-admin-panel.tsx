@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useReducer } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { Button } from '@/components/ui/button';
@@ -20,34 +20,75 @@ interface PosAdminPanelProps {
   initialLocations: StoreLocation[];
 }
 
+type PosPanelState = {
+  locations: StoreLocation[];
+  code: string;
+  name: string;
+  address: string;
+  pending: boolean;
+};
+
+type PosPanelAction =
+  | { type: 'set_code'; value: string }
+  | { type: 'set_name'; value: string }
+  | { type: 'set_address'; value: string }
+  | { type: 'submit_start' }
+  | { type: 'submit_success'; locations: StoreLocation[] }
+  | { type: 'submit_end' };
+
+function posPanelReducer(state: PosPanelState, action: PosPanelAction): PosPanelState {
+  switch (action.type) {
+    case 'set_code':
+      return { ...state, code: action.value };
+    case 'set_name':
+      return { ...state, name: action.value };
+    case 'set_address':
+      return { ...state, address: action.value };
+    case 'submit_start':
+      return { ...state, pending: true };
+    case 'submit_success':
+      return {
+        ...state,
+        locations: action.locations,
+        code: '',
+        name: '',
+        address: '',
+        pending: false,
+      };
+    case 'submit_end':
+      return { ...state, pending: false };
+    default:
+      return state;
+  }
+}
+
 export function PosAdminPanel({ initialLocations }: PosAdminPanelProps) {
   const api = useApiClient();
   const router = useRouter();
-  const [locations, setLocations] = useState(initialLocations);
-  const [code, setCode] = useState('');
-  const [name, setName] = useState('');
-  const [address, setAddress] = useState('');
-  const [pending, setPending] = useState(false);
+  const [state, dispatch] = useReducer(posPanelReducer, {
+    locations: initialLocations,
+    code: '',
+    name: '',
+    address: '',
+    pending: false,
+  });
 
   async function createLocation() {
-    if (!code.trim() || !name.trim() || !address.trim()) return;
-    setPending(true);
+    if (!state.code.trim() || !state.name.trim() || !state.address.trim()) return;
+    dispatch({ type: 'submit_start' });
     try {
       await api.pos.createLocation({
-        code: code.trim(),
-        name: name.trim(),
-        address: address.trim(),
+        code: state.code.trim(),
+        name: state.name.trim(),
+        address: state.address.trim(),
         supportsPickup: true,
         supportsPos: true,
       });
       const refreshed = await api.pos.listLocations();
-      setLocations(refreshed);
-      setCode('');
-      setName('');
-      setAddress('');
+      dispatch({ type: 'submit_success', locations: refreshed });
       router.refresh();
-    } finally {
-      setPending(false);
+    } catch {
+      dispatch({ type: 'submit_end' });
     }
   }
 
@@ -57,40 +98,52 @@ export function PosAdminPanel({ initialLocations }: PosAdminPanelProps) {
         eyebrow="Ventas"
         title="POS y tiendas"
         subtitle="Ubicaciones físicas para venta en tienda y retiro BOPIS."
-        metrics={[{ label: 'Ubicaciones', value: String(locations.length) }]}
+        metrics={[{ label: 'Ubicaciones', value: String(state.locations.length) }]}
       />
       <div className="space-y-4">
-      <div className="grid gap-2 sm:grid-cols-3">
-        <Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Código (ej. QUITO-01)" />
-        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre tienda" />
-        <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Dirección" />
-      </div>
-      <Button type="button" onClick={() => void createLocation()} disabled={pending}>
-        Crear ubicación
-      </Button>
+        <div className="grid gap-2 sm:grid-cols-3">
+          <Input
+            value={state.code}
+            onChange={(e) => dispatch({ type: 'set_code', value: e.target.value })}
+            placeholder="Código (ej. QUITO-01)"
+          />
+          <Input
+            value={state.name}
+            onChange={(e) => dispatch({ type: 'set_name', value: e.target.value })}
+            placeholder="Nombre tienda"
+          />
+          <Input
+            value={state.address}
+            onChange={(e) => dispatch({ type: 'set_address', value: e.target.value })}
+            placeholder="Dirección"
+          />
+        </div>
+        <Button type="button" onClick={() => void createLocation()} disabled={state.pending}>
+          Crear ubicación
+        </Button>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Código</TableHead>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Pickup</TableHead>
-              <TableHead>POS</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {locations.map((location) => (
-              <TableRow key={location.id}>
-                <TableCell>{location.code}</TableCell>
-                <TableCell>{location.name}</TableCell>
-                <TableCell>{location.supportsPickup ? 'Sí' : 'No'}</TableCell>
-                <TableCell>{location.supportsPos ? 'Sí' : 'No'}</TableCell>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Código</TableHead>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Pickup</TableHead>
+                <TableHead>POS</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {state.locations.map((location) => (
+                <TableRow key={location.id}>
+                  <TableCell>{location.code}</TableCell>
+                  <TableCell>{location.name}</TableCell>
+                  <TableCell>{location.supportsPickup ? 'Sí' : 'No'}</TableCell>
+                  <TableCell>{location.supportsPos ? 'Sí' : 'No'}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   );

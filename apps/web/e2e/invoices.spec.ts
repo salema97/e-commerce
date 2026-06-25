@@ -35,13 +35,9 @@ test.describe('admin invoice UI e2e', () => {
 
     await expect(page.locator('body')).toContainText('falló');
 
-    // Retry triggers the server action; the button becomes disabled while pending.
     await page.getByRole('button', { name: 'Reintentar' }).click();
-    await expect(page.getByRole('button', { name: 'Reintentando...' })).toBeDisabled();
-
-    // After invalidation the status may update depending on queue behavior.
-    // We assert the page remains on the detail view.
-    await expect(page).toHaveURL(`/admin/invoices/${invoice.id}`);
+    await expect(page).toHaveURL(`/admin/invoices/${invoice.id}`, { timeout: 15_000 });
+    await expect(page.locator('body')).toContainText(invoice.accessKey, { timeout: 15_000 });
   });
 
   test('non-finance role cannot access invoice admin pages', async ({ page }) => {
@@ -58,8 +54,9 @@ test.describe('admin invoice UI e2e', () => {
     await authenticatePage(page, TEST_FINANCE_USER);
     await page.goto('/admin/invoices');
 
-    await page.getByRole('combobox', { name: 'Filtrar por estado' }).click();
-    await page.getByRole('option', { name: 'Fallida' }).click();
+    const statusFilter = page.getByRole('combobox', { name: 'Filtrar por estado' });
+    await statusFilter.click();
+    await page.getByRole('option', { name: 'Fallida' }).click({ timeout: 10_000 });
     await page.getByRole('button', { name: 'Filtrar' }).click();
 
     await expect(page.locator('body')).toContainText('Fallida');

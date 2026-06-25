@@ -149,6 +149,14 @@ describe('StripeProvider', () => {
     expect(result.status).toBe(PaymentStatus.FAILED);
   });
 
+  it('short-circuits refunds for E2E test payment intents', async () => {
+    const result = await provider.refund('pi_test_e2e', 100);
+
+    expect(stripeMock.refunds.create).not.toHaveBeenCalled();
+    expect(result.status).toBe(RefundStatus.COMPLETED);
+    expect(result.providerRefundId).toMatch(/^re_test_/);
+  });
+
   it('creates a refund with optional amount', async () => {
     stripeMock.refunds.create.mockResolvedValue({
       id: 're_123',

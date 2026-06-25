@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -67,9 +68,21 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
   const router = useRouter();
   const api = useApiClient();
   const authReady = useAuthApiReady();
+  const [mounted, setMounted] = React.useState(false);
+  const { data: liveReturn } = useQuery({
+    queryKey: ['returns', returnRequest.id],
+    queryFn: () => api.returns.findOne(returnRequest.id),
+    initialData: returnRequest,
+    enabled: authReady,
+  });
+  const activeReturn = liveReturn ?? returnRequest;
   const [form, dispatch] = React.useReducer(resolveFormReducer, resolveFormInitialState);
   const { method, notes, isSubmitting, exchangeProductId, exchangeVariantId } = form;
   const [products, setProducts] = React.useState<Product[]>([]);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   React.useEffect(() => {
     api.products.findAll().then((data) => setProducts(data)).catch(() => setProducts([]));
@@ -77,7 +90,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
 
   const selectedProduct = products.find((p) => p.id === exchangeProductId);
 
-  const total = returnRequest.items.reduce(
+  const total = activeReturn.items.reduce(
     (sum, item) => sum + (item.refundValue ?? 0) * item.quantity,
     0,
   );
@@ -101,7 +114,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
   function getExchangeSummary(): string | null {
     if (method !== 'EXCHANGE' || !selectedProduct) return null;
     const variant = getSelectedVariant();
-    const totalQuantity = returnRequest.items.reduce((sum, item) => sum + item.quantity, 0);
+    const totalQuantity = activeReturn.items.reduce((sum, item) => sum + item.quantity, 0);
     const label = variant ? `${selectedProduct.name} — ${variant.name}` : selectedProduct.name;
     return `${label} (Cantidad: ${totalQuantity})`;
   }
@@ -121,8 +134,8 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
         payload.exchangeProductId = exchangeProductId;
         if (exchangeVariantId) payload.exchangeVariantId = exchangeVariantId;
       }
-      await api.returns.resolve(returnRequest.id, payload);
-      router.push(`/admin/returns/${returnRequest.id}`);
+      await api.returns.resolve(activeReturn.id, payload);
+      router.push(`/admin/returns/${activeReturn.id}`);
       router.refresh();
     } finally {
       dispatch({ type: 'submit_end' });
@@ -135,7 +148,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
       header={
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">Resolver devolución</h1>
-          <Badge variant="outline">{returnStatusLabel(returnRequest.status)}</Badge>
+          <Badge variant="outline">{returnStatusLabel(activeReturn.status)}</Badge>
         </div>
       }
     >
@@ -146,7 +159,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
             <CardTitle>Artículos a resolver</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            {returnRequest.items.map((item) => (
+            {activeReturn.items.map((item) => (
               <div key={item.id} className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">{item.productId}</p>
@@ -171,7 +184,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
             <CardTitle>Método de resolución</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            <form data-testid="resolve-return-form" onSubmit={handleSubmit} className="flex flex-col gap-6">
               <RadioGroup
                 value={method}
                 onValueChange={(value) => dispatch({ type: 'set_method', value: value as RefundMethod })}
@@ -241,7 +254,16 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
                 />
               </div>
 
-              <Button type="submit" disabled={isSubmitting || !authReady || returnRequest.status !== 'INSPECTION' || (method === 'EXCHANGE' && !exchangeProductId)}>
+              <Button
+                type="submit"
+                disabled={
+                  !mounted
+                  || !authReady
+                  || isSubmitting
+                  || activeReturn.status !== 'INSPECTION'
+                  || (method === 'EXCHANGE' && !exchangeProductId)
+                }
+              >
                 {isSubmitting ? 'Resolviendo…' : 'Confirmar resolución'}
               </Button>
             </form>

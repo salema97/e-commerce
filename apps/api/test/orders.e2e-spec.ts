@@ -28,7 +28,22 @@ describe('Orders (e2e)', () => {
       $connect: vi.fn(), $disconnect: vi.fn(), $queryRaw: vi.fn().mockResolvedValue([{ 1: 1 }]),
       $transaction: vi.fn((cb: (t: typeof tx) => Promise<unknown>) => cb(tx)),
       user: { findUnique: vi.fn().mockResolvedValue({ id: 'user_1', email: 'user@example.com' }) },
-      product: { findUnique: vi.fn().mockResolvedValue({ id: 'p1', name: 'Product', sku: 'SKU', variants: [] }) },
+      product: {
+        findUnique: vi.fn().mockResolvedValue({ id: 'p1', name: 'Product', sku: 'SKU', variants: [] }),
+        findMany: vi.fn().mockResolvedValue([{ id: 'p1', taxCategory: 'STANDARD' }]),
+      },
+      shippingZone: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: 'zone_1',
+            zoneType: 'DOMESTIC',
+            isActive: true,
+            provinces: [],
+            flatRate: 5,
+            freeShippingThreshold: 50,
+          },
+        ]),
+      },
       order: {
         findUnique: vi.fn(), findMany: vi.fn(), count: vi.fn(), update: vi.fn(),
         create: vi.fn().mockResolvedValue({

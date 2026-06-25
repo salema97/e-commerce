@@ -1,6 +1,7 @@
 import { APIRequestContext } from '@playwright/test';
 import { createHmac } from 'crypto';
 import { getEvolutionWebhookSecret } from './webhook-secret.js';
+import { E2E_API_BASE } from './api-base.js';
 
 export interface CreateConversationResult {
   remoteJid: string;
@@ -35,7 +36,7 @@ export async function createConversationViaWebhook(
   const body = JSON.stringify(payload);
   const signature = createHmac('sha256', getEvolutionWebhookSecret()).update(body).digest('hex');
 
-  const response = await request.post('http://localhost:3001/v1/webhooks/evolution/messages.upsert', {
+  const response = await request.post(`${E2E_API_BASE}/webhooks/evolution/messages.upsert`, {
     data: body,
     headers: {
       'Content-Type': 'application/json',

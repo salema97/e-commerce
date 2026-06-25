@@ -72,9 +72,9 @@ export function SupportInbox({ currentUserId, initialConversations }: SupportInb
     mutationFn: ({ conversationId, content }: { conversationId: string; content: string }) =>
       api.messages.create(conversationId, { content }),
     onSuccess: (_, { conversationId }) => {
-      queryClient.invalidateQueries({ queryKey: ['conversations', conversationId, 'messages'] });
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['conversations', conversationId] });
+      void queryClient.invalidateQueries({ queryKey: ['conversations', conversationId, 'messages'] });
+      void queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      void queryClient.invalidateQueries({ queryKey: ['conversations', conversationId] });
     },
   });
 
@@ -87,8 +87,8 @@ export function SupportInbox({ currentUserId, initialConversations }: SupportInb
       data: { status?: ConversationStatus; assignedAgentId?: string };
     }) => api.conversations.update(id, data),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      queryClient.invalidateQueries({ queryKey: ['conversations', id] });
+      void queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      void queryClient.invalidateQueries({ queryKey: ['conversations', id] });
     },
   });
 
@@ -127,7 +127,7 @@ export function SupportInbox({ currentUserId, initialConversations }: SupportInb
           No se pudieron cargar las conversaciones. Recarga la página o vuelve a iniciar sesión.
         </p>
       ) : null}
-      <div className="neo-panel grid min-h-[min(70vh,720px)] flex-1 overflow-hidden lg:grid-cols-[360px_1fr]">
+      <div className="neo-panel grid min-h-[min(70vh,720px)] flex-1 overflow-hidden md:grid-cols-[360px_1fr]">
         <ConversationList
           conversations={conversations?.data ?? []}
           selectedId={selectedId}

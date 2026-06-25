@@ -42,8 +42,8 @@ export function InvoiceDetailView({ id, initialInvoice, initialOrder }: InvoiceD
   });
 
   function handleRetry() {
-    queryClient.invalidateQueries({ queryKey: ['invoices'] });
-    queryClient.invalidateQueries({ queryKey: ['invoices', id] });
+    void queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    void queryClient.invalidateQueries({ queryKey: ['invoices', id] });
   }
 
   if (!invoice) {
