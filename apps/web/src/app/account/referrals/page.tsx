@@ -1,53 +1,35 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { getServerApiClient } from '@/lib/api';
+import { getSession } from '@/lib/session';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
+import { AccountReferralsPanel } from './account-referrals-panel';
+import type { ReferralCode, ReferralPerformanceReport } from '@repo/shared-types';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useApiQueryHooks } from '@/lib/client-api';
-import { formatPrice } from '@repo/shared-utils';
+export default async function AccountReferralsPage() {
+  const session = await getSession();
+  if (!session) {
+    redirect('/sign-in?redirect_url=/account/referrals');
+  }
 
-export default function AccountReferralsPage() {
-  const { useReferralCode, useReferralPerformance } = useApiQueryHooks();
-  const codeQuery = useReferralCode();
-  const performanceQuery = useReferralPerformance('me');
-
-  const code = codeQuery.data;
-  const report = performanceQuery.data;
+  const api = await getServerApiClient();
+  const [code, report] = await Promise.all([
+    api.referrals.myCode().catch((): ReferralCode | null => null),
+    api.referrals.myPerformance().catch((): ReferralPerformanceReport | null => null),
+  ]);
 
   return (
-    <div className="container mx-auto max-w-2xl px-4 py-8 space-y-6">
-      <h1 className="text-2xl font-bold">Invita y gana</h1>
-
-      {code ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Tu código</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-2xl font-mono font-bold">{code.code}</p>
-            <p className="text-sm text-muted-foreground break-all">{code.link}</p>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void navigator.clipboard.writeText(code.link)}
-            >
-              Copiar enlace
-            </Button>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {report ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Rendimiento</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-2 text-sm sm:grid-cols-3">
-            <p>Conversiones: {report.totalConversions}</p>
-            <p>Pendiente: {formatPrice(report.pendingCommission)}</p>
-            <p>Pagado: {formatPrice(report.paidCommission)}</p>
-          </CardContent>
-        </Card>
-      ) : null}
-    </div>
+    <AnimatedPageShell
+      className="container mx-auto max-w-2xl px-4 py-8"
+      header={
+        <header className="mb-6 border-b-[6px] border-neo-onyx pb-4">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">
+            Mi cuenta
+          </p>
+          <h1 className="font-anton text-4xl uppercase md:text-5xl">Invita y gana</h1>
+        </header>
+      }
+    >
+      <AccountReferralsPanel initialCode={code} initialReport={report} />
+    </AnimatedPageShell>
   );
 }

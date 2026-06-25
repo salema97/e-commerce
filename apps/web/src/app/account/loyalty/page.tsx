@@ -1,61 +1,35 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { getServerApiClient } from '@/lib/api';
+import { getSession } from '@/lib/session';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
+import { AccountLoyaltyPanel } from './account-loyalty-panel';
+import type { LoyaltyAccount, LoyaltyTransaction } from '@repo/shared-types';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useApiQueryHooks } from '@/lib/client-api';
-import { formatDate } from '@repo/shared-utils';
+export default async function AccountLoyaltyPage() {
+  const session = await getSession();
+  if (!session) {
+    redirect('/sign-in?redirect_url=/account/loyalty');
+  }
 
-export default function AccountLoyaltyPage() {
-  const { useLoyaltyAccount, useLoyaltyTransactions } = useApiQueryHooks();
-  const accountQuery = useLoyaltyAccount();
-  const transactionsQuery = useLoyaltyTransactions();
-
-  const account = accountQuery.data;
-  const transactions = transactionsQuery.data ?? [];
+  const api = await getServerApiClient();
+  const [account, transactions] = await Promise.all([
+    api.loyalty.me().catch((): LoyaltyAccount | null => null),
+    api.loyalty.transactions().catch((): LoyaltyTransaction[] => []),
+  ]);
 
   return (
-    <div className="container mx-auto max-w-2xl px-4 py-8 space-y-6">
-      <h1 className="text-2xl font-bold">Programa de lealtad</h1>
-
-      {account ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Tu cuenta</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>
-              Puntos: <strong>{account.points}</strong>
-            </p>
-            <p>
-              Nivel: <strong>{account.tier}</strong>
-            </p>
-            <p>
-              Valor estimado: <strong>${account.pointsValue.toFixed(2)}</strong>
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <p className="text-sm text-muted-foreground">Cargando cuenta...</p>
-      )}
-
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Historial</h2>
-        {transactions.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Sin movimientos aún.</p>
-        ) : (
-          <ul className="space-y-2">
-            {transactions.map((tx) => (
-              <li key={tx.id} className="rounded-md border p-3 text-sm">
-                <p className="font-medium">
-                  {tx.type} · {tx.points > 0 ? '+' : ''}
-                  {tx.points} pts
-                </p>
-                <p className="text-muted-foreground">{tx.reason}</p>
-                <p className="text-xs text-muted-foreground">{formatDate(tx.createdAt)}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </div>
+    <AnimatedPageShell
+      className="container mx-auto max-w-2xl px-4 py-8"
+      header={
+        <header className="mb-6 border-b-[6px] border-neo-onyx pb-4">
+          <p className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">
+            Mi cuenta
+          </p>
+          <h1 className="font-anton text-4xl uppercase md:text-5xl">Programa de lealtad</h1>
+        </header>
+      }
+    >
+      <AccountLoyaltyPanel initialAccount={account} initialTransactions={transactions} />
+    </AnimatedPageShell>
   );
 }
