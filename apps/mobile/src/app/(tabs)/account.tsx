@@ -104,6 +104,9 @@ export default function AccountScreen(): React.ReactElement {
         <Button variant="outline" onPress={() => router.push('/account/quotes')}>
           Mis cotizaciones
         </Button>
+        <Button variant="outline" onPress={() => router.push('/account/privacy')}>
+          Privacidad y datos
+        </Button>
         <Button variant="outline" onPress={() => router.push('/account/notifications')}>
           Preferencias de notificaciones
         </Button>

@@ -115,6 +115,9 @@ import type {
   AccountingProviderProfile,
   AccountingSyncRecord,
   MarketplaceFeeReconciliation,
+  PrivacyExportBundle,
+  PrivacyDeletionResult,
+  CcpaOptOutResult,
 } from '@repo/shared-types';
 
 export interface ApiClientOptions {
@@ -509,6 +512,7 @@ export function createApiClient(options: ApiClientOptions) {
         request<Message[]>('GET', `/chat/sessions/${sessionId}/messages`),
     },
     ai: {
+      getCmsPage: (slug: string) => request<CmsPage>('GET', `/ai/cms-pages/${slug}`),
       faqs: {
         findPublished: () => request<Faq[]>('GET', '/ai/faqs'),
         findAllAdmin: () => request<Faq[]>('GET', '/ai/faqs/admin'),
@@ -612,6 +616,12 @@ export function createApiClient(options: ApiClientOptions) {
         request<MarketplaceFeeReconciliation[]>('GET', '/accounting/marketplace-fees'),
       syncMarketplaceFee: (orderId: string) =>
         request<void>('POST', `/accounting/marketplace-fees/${orderId}/sync`),
+    },
+    privacy: {
+      exportMine: () => request<PrivacyExportBundle>('GET', '/privacy/me/export'),
+      deleteMine: () => request<PrivacyDeletionResult>('DELETE', '/privacy/me'),
+      ccpaOptOut: (optOut: boolean) =>
+        request<CcpaOptOutResult>('PATCH', '/privacy/me/ccpa-opt-out', { optOut }),
     },
   };
 }

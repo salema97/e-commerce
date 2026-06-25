@@ -29,3 +29,4 @@ export * from './b2b.js';
 export * from './quotes.js';
 export * from './marketplace.js';
 export * from './accounting.js';
+export * from './privacy.js';

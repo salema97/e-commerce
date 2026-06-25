@@ -1,0 +1,25 @@
+name: Deploy Web (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy note
+        run: |
+          echo "Conecta este workflow a Vercel CLI o GitHub integration."
+          echo "Environment: ${{ inputs.environment }}"
+          echo "App path: apps/web"

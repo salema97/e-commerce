@@ -14,6 +14,7 @@ import { PushNotificationService } from '../notifications/push-notification.serv
 import { EventBus } from '../event-bus/event-bus.interface.js';
 import { BackorderService } from './backorder.service.js';
 import { LoyaltyService } from '../loyalty/loyalty.service.js';
+import { CaptchaService } from '../common/captcha/captcha.service.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
 
 describe('OrdersService', () => {
@@ -92,6 +93,7 @@ describe('OrdersService', () => {
         { provide: TaxService, useValue: tax },
         { provide: BackorderService, useValue: backorder },
         { provide: LoyaltyService, useValue: loyalty },
+        { provide: CaptchaService, useValue: { verifyOrSkip: vi.fn().mockResolvedValue(undefined) } },
         { provide: WhatsAppNotificationService, useValue: notificationService },
         { provide: EmailNotificationService, useValue: emailNotificationService },
         { provide: PushNotificationService, useValue: pushNotificationService },

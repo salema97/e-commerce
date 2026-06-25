@@ -32,10 +32,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={`${spaceGrotesk.variable} ${anton.variable}`}>
-      <body className="min-h-screen flex flex-col font-sans antialiased overflow-x-clip">
+      <body className="min-h-screen flex flex-col overflow-x-clip font-sans antialiased">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:border-[3px] focus:border-neo-onyx focus:bg-neo-gold focus:px-3 focus:py-2 focus:font-bold focus:uppercase"
+        >
+          Saltar al contenido
+        </a>
         <Providers>
           <StoreChrome>
-            <main className="flex min-h-screen flex-1 flex-col">{children}</main>
+            <main id="main-content" className="flex min-h-screen flex-1 flex-col">
+              {children}
+            </main>
           </StoreChrome>
           <ServiceWorkerRegistration />
         </Providers>

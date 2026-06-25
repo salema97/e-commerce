@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  APP_ENV: z.enum(['development', 'staging', 'production']).default('development'),
+  CORS_ORIGINS: z.string().default('http://localhost:3000'),
   PORT: z.coerce.number().int().positive().default(3001),
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1),
@@ -120,6 +122,8 @@ const envSchema = z.object({
   KAFKA_PASSWORD: z.string().optional(),
   KAFKA_DOMAIN_EVENTS_TOPIC: z.string().default('domain-events'),
   ENABLE_TEST_AUTH: z.enum(['true', 'false']).default('false'),
+  CAPTCHA_PROVIDER: z.enum(['none', 'hcaptcha']).default('none'),
+  HCAPTCHA_SECRET_KEY: z.string().optional(),
   LOYALTY_SIGNUP_POINTS: z.coerce.number().int().min(0).default(25),
   LOYALTY_REVIEW_POINTS: z.coerce.number().int().min(0).default(50),
   LOYALTY_REFERRAL_POINTS: z.coerce.number().int().min(0).default(100),

@@ -47,10 +47,10 @@ export function CookieConsentBanner({ onConsent }: { onConsent: () => void }) {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 p-4">
+    <div className="fixed inset-x-0 bottom-0 z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="cookie-consent-title">
       <Card className="mx-auto max-w-3xl border shadow-lg">
         <CardHeader>
-          <CardTitle className="text-base">Preferencias de cookies</CardTitle>
+          <CardTitle id="cookie-consent-title" className="text-base">Preferencias de cookies</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground">
           <p>

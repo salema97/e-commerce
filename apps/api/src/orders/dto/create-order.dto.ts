@@ -75,6 +75,9 @@ export class CreateOrderDto {
 
   @ApiPropertyOptional({ enum: NetPaymentTerms })
   @IsOptional() @IsEnum(NetPaymentTerms) netPaymentTerms?: NetPaymentTerms;
+
+  @ApiPropertyOptional({ description: 'hCaptcha token when CAPTCHA_PROVIDER=hcaptcha' })
+  @IsOptional() @IsString() captchaToken?: string;
 }
 
 export class UpdateOrderStatusDto {

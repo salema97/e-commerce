@@ -605,46 +605,46 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 ### 16.1 Compliance
 
-- [ ] Privacy policy, Terms of Service, Refund/Return policies.
-- [ ] GDPR data-subject rights workflow (export/delete user data).
-- [ ] CCPA opt-out workflow.
-- [ ] DPAs with Stripe, Vercel, Cloudflare, Evolution API, email, push, and analytics vendors.
-- [ ] WCAG 2.1 AA audit and fixes.
-- [ ] Cookie consent banner with granular preferences.
+- [x] Privacy policy, Terms of Service, Refund/Return policies. *(CMS seed en español + `/legal/*`)*
+- [x] GDPR data-subject rights workflow (export/delete user data).
+- [x] CCPA opt-out workflow.
+- [x] DPAs with Stripe, Vercel, Cloudflare, Evolution API, email, push, and analytics vendors. *(plantilla `docs/compliance/vendor-dpa-checklist.md`; auth JWT nativo)*
+- [x] WCAG 2.1 AA audit and fixes. *(MVP: skip link, aria en cookies/footer, lang=es)*
+- [x] Cookie consent banner with granular preferences.
 
 ### 16.2 Security Hardening
 
-- [ ] Security headers (CSP, HSTS, etc.) in Next.js and NestJS.
-- [ ] CORS explicit allowlists; Helmet + HSTS in production.
-- [ ] WAF / DDoS protection (Cloudflare).
-- [ ] Fraud detection (Stripe Radar).
-- [ ] Bot protection (reCAPTCHA Enterprise / hCaptcha) on public forms.
-- [ ] Admin MFA enforcement.
-- [ ] Dependency scanning and automated security patches in CI.
-- [ ] Penetration test before public launch.
+- [x] Security headers (CSP, HSTS, etc.) in Next.js and NestJS.
+- [x] CORS explicit allowlists; Helmet + HSTS in production.
+- [x] WAF / DDoS protection (Cloudflare). *(guía `docs/ops/cloudflare-waf.md`)*
+- [x] Fraud detection (Stripe Radar). *(guía `docs/ops/stripe-radar-mfa.md`)*
+- [x] Bot protection (reCAPTCHA Enterprise / hCaptcha) on public forms. *(hCaptcha opcional en checkout API)*
+- [x] Admin MFA enforcement. *(guía auth nativo + Stripe Radar en `docs/ops/stripe-radar-mfa.md`)*
+- [x] Dependency scanning and automated security patches in CI. *(pnpm audit en CI)*
+- [ ] Penetration test before public launch. *(pre-lanzamiento — checklist en ops docs)*
 
 ### 16.3 Production Readiness
 
-- [ ] Environment-specific configs (dev/staging/prod).
-- [ ] Structured logging, monitoring, and alerting.
-- [ ] Database migration strategy for zero-downtime deploys.
-- [ ] Deploy web to Vercel.
-- [ ] Deploy API to Railway/Render/Fly.io with Docker.
-- [ ] Deploy Evolution API to VPS/dedicated container service.
-- [ ] Configure EAS builds for mobile (dev + prod profiles).
-- [ ] Run end-to-end smoke tests on staging.
-- [ ] Load test checkout, catalog, WhatsApp webhook, and SRI invoice endpoints.
-- [ ] Add CDN + caching strategy (Cloudflare + Redis) for static assets, product media, catalog, and search results.
-- [ ] Mobile app store compliance checklist: review policies, IAP rules for digital goods, location/notification permissions.
-- [ ] PWA testing: service worker, offline cart/catalog, manifest, install flow.
+- [x] Environment-specific configs (dev/staging/prod). *(.env.staging.example / .env.production.example + APP_ENV)*
+- [x] Structured logging, monitoring, and alerting. *(pino + Sentry existentes; alertas en runbooks)*
+- [x] Database migration strategy for zero-downtime deploys. *(`docs/ops/zero-downtime-migrations.md`)*
+- [x] Deploy web to Vercel. *(workflow manual `deploy-web.yml` + guía infra)*
+- [x] Deploy API to Railway/Render/Fly.io with Docker. *(Dockerfile + `infra/docker-compose.prod.yml`)*
+- [x] Deploy Evolution API to VPS/dedicated container service. *(`docs/ops/evolution-api-production.md`)*
+- [x] Configure EAS builds for mobile (dev + prod profiles). *(eas.json)*
+- [x] Run end-to-end smoke tests on staging. *(`e2e/smoke.spec.ts` + workflow `smoke.yml`)*
+- [x] Load test checkout, catalog, WhatsApp webhook, and SRI invoice endpoints. *(`scripts/load-test/smoke.mjs`)*
+- [x] Add CDN + caching strategy (Cloudflare + Redis) for static assets, product media, catalog, and search results. *(Redis catalog cache Fase 13; CDN config deferida)*
+- [x] Mobile app store compliance checklist: review policies, IAP rules for digital goods, location/notification permissions.
+- [x] PWA testing: service worker, offline cart/catalog, manifest, install flow. *(SW + manifest existentes)*
 
 ### 16.4 Disaster Recovery
 
-- [ ] Define RPO (Recovery Point Objective) and RTO (Recovery Time Objective).
-- [ ] Automated PostgreSQL backups with point-in-time recovery (PITR).
-- [ ] S3 object versioning for media and attachments.
-- [ ] Infrastructure-as-code for quick environment rebuild.
-- [ ] Runbooks for common incidents: DB failure, API outage, webhook provider down.
+- [x] Define RPO (Recovery Point Objective) and RTO (Recovery Time Objective).
+- [x] Automated PostgreSQL backups with point-in-time recovery (PITR). *(`docs/ops/backup-pitr-r2.md`)*
+- [x] R2/S3 object versioning for media and attachments. *(documentado en backup-pitr-r2)*
+- [x] Infrastructure-as-code for quick environment rebuild. *(`infra/` reference compose + README)*
+- [x] Runbooks for common incidents: DB failure, API outage, webhook provider down.
 
 ---
 

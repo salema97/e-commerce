@@ -33,7 +33,7 @@ export default async function LegalPage({ params }: LegalPageProps) {
   return (
     <AnimatedPageShell
       className="container mx-auto max-w-3xl px-4 py-8"
-      header={<h1 className="text-3xl font-bold">{page.title}</h1>}
+      header={<h1 className="font-anton text-4xl uppercase md:text-5xl">{page.title}</h1>}
     >
       <NeoReveal>
         <Card className="mt-6 brutalist-card">
