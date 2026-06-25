@@ -29,6 +29,8 @@ import type {
   CreatedOrderResult,
   PaymentIntentResult,
   ShippingQuote,
+  StoreLocation,
+  ShippingMethodType,
 } from '@repo/shared-types';
 
 const FALLBACK_SHIPPING_FLAT_RATE = 5;
@@ -44,6 +46,8 @@ type CheckoutState = {
   isSubmitting: boolean;
   error: string | null;
   shippingQuote: ShippingQuote | null;
+  shippingMethod: ShippingMethodType;
+  pickupLocationId: string;
 };
 
 type CheckoutAction =
@@ -54,7 +58,9 @@ type CheckoutAction =
   | { type: 'submit_start' }
   | { type: 'submit_success'; order: CreatedOrderResult; paymentIntent: PaymentIntentResult }
   | { type: 'submit_error'; message: string }
-  | { type: 'set_shipping_quote'; quote: ShippingQuote | null };
+  | { type: 'set_shipping_quote'; quote: ShippingQuote | null }
+  | { type: 'set_shipping_method'; value: ShippingMethodType }
+  | { type: 'set_pickup_location'; value: string };
 
 const checkoutInitialState: CheckoutState = {
   address: EMPTY_ADDRESS,
@@ -66,6 +72,8 @@ const checkoutInitialState: CheckoutState = {
   isSubmitting: false,
   error: null,
   shippingQuote: null,
+  shippingMethod: 'DELIVERY',
+  pickupLocationId: '',
 };
 
 function createInitialCheckoutState(): CheckoutState {
@@ -107,6 +115,10 @@ function checkoutReducer(state: CheckoutState, action: CheckoutAction): Checkout
       return { ...state, error: action.message, isSubmitting: false };
     case 'set_shipping_quote':
       return { ...state, shippingQuote: action.quote };
+    case 'set_shipping_method':
+      return { ...state, shippingMethod: action.value };
+    case 'set_pickup_location':
+      return { ...state, pickupLocationId: action.value };
     default:
       return state;
   }
@@ -128,7 +140,10 @@ export function CheckoutContainer() {
     isSubmitting,
     error,
     shippingQuote,
+    shippingMethod,
+    pickupLocationId,
   } = checkout;
+  const [pickupLocations, setPickupLocations] = React.useState<StoreLocation[]>([]);
   const mounted = React.useSyncExternalStore(
     () => () => {},
     () => true,
@@ -156,11 +171,16 @@ export function CheckoutContainer() {
   const tax = taxableBase * taxRate;
   const fallbackShipping =
     subtotal >= FALLBACK_FREE_SHIPPING_THRESHOLD ? 0 : FALLBACK_SHIPPING_FLAT_RATE;
-  const shipping = shippingQuote?.amount ?? fallbackShipping;
+  React.useEffect(() => {
+    void api.pos.listLocations(true).then(setPickupLocations).catch(() => setPickupLocations([]));
+  }, [api]);
+
+  const shipping =
+    shippingMethod === 'PICKUP' ? 0 : (shippingQuote?.amount ?? fallbackShipping);
   const total = taxableBase + tax + shipping;
 
   React.useEffect(() => {
-    if (!isAddressValid(address) || items.length === 0) {
+    if (shippingMethod !== 'DELIVERY' || !isAddressValid(address) || items.length === 0) {
       dispatch({ type: 'set_shipping_quote', quote: null });
       return;
     }
@@ -187,7 +207,7 @@ export function CheckoutContainer() {
     return () => {
       cancelled = true;
     };
-  }, [address, api, items.length, taxableBase]);
+  }, [address, api, items.length, shippingMethod, taxableBase]);
 
   if (!mounted) {
     return <CheckoutSkeleton />;
@@ -223,6 +243,8 @@ export function CheckoutContainer() {
         shippingAddress: toOrderAddress(address),
         billingAddress: toOrderAddress(address),
         notes: address.notes || undefined,
+        shippingMethod,
+        pickupLocationId: shippingMethod === 'PICKUP' ? pickupLocationId : undefined,
       };
 
       const createdOrder = await api.orders.create(orderDto);
@@ -304,7 +326,48 @@ export function CheckoutContainer() {
         <div className="lg:col-span-2 flex flex-col gap-6">
           <AddressForm values={address} onChange={(value) => dispatch({ type: 'set_address', value })} />
 
-          <Card>
+          <Card className="brutalist-card">
+            <CardHeader>
+              <CardTitle>Entrega</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  type="button"
+                  variant={shippingMethod === 'DELIVERY' ? 'default' : 'outline'}
+                  onClick={() => dispatch({ type: 'set_shipping_method', value: 'DELIVERY' })}
+                >
+                  Envío a domicilio
+                </Button>
+                <Button
+                  type="button"
+                  variant={shippingMethod === 'PICKUP' ? 'default' : 'outline'}
+                  onClick={() => dispatch({ type: 'set_shipping_method', value: 'PICKUP' })}
+                  disabled={pickupLocations.length === 0}
+                >
+                  Retiro en tienda (BOPIS)
+                </Button>
+              </div>
+              {shippingMethod === 'PICKUP' ? (
+                <select
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                  value={pickupLocationId}
+                  onChange={(event) =>
+                    dispatch({ type: 'set_pickup_location', value: event.target.value })
+                  }
+                >
+                  <option value="">Selecciona una tienda</option>
+                  {pickupLocations.map((location) => (
+                    <option key={location.id} value={location.id}>
+                      {location.name} — {location.address}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+            </CardContent>
+          </Card>
+
+          <Card className="brutalist-card">
             <CardHeader>
               <CardTitle>Cupón</CardTitle>
             </CardHeader>
@@ -351,7 +414,11 @@ export function CheckoutContainer() {
           <Button
             type="button"
             className="w-full"
-            disabled={!isAddressValid(address) || isSubmitting}
+            disabled={
+              !isAddressValid(address) ||
+              isSubmitting ||
+              (shippingMethod === 'PICKUP' && !pickupLocationId)
+            }
             onClick={handleCreateOrder}
           >
             {isSubmitting ? 'Preparando pago…' : 'Continuar al pago'}

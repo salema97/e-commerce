@@ -45,6 +45,8 @@ export interface Product {
   reviewCount?: number;
   categoryId?: string | null;
   supplierId?: string | null;
+  sellerId?: string | null;
+  isSubscription?: boolean;
   createdAt: string;
   updatedAt: string;
   category?: unknown;
@@ -84,6 +86,8 @@ export interface CreateProductDto {
   isFeatured?: boolean;
   categoryId?: string;
   supplierId?: string;
+  sellerId?: string;
+  isSubscription?: boolean;
   variants?: CreateProductVariantDto[];
   attributes?: CreateProductAttributeDto[];
   images?: CreateProductImageDto[];

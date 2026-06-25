@@ -19,6 +19,13 @@ export interface OrderDeliveredEmailContext {
   orderNumber: string;
 }
 
+export interface PickupReadyEmailContext {
+  customerName: string;
+  orderNumber: string;
+  pickupLocation: string;
+  pickupAddress: string;
+}
+
 export interface PaymentFailedEmailContext {
   customerName: string;
   orderNumber: string;
@@ -72,6 +79,7 @@ export type EmailTemplateContext =
   | OrderConfirmedEmailContext
   | OrderShippedEmailContext
   | OrderDeliveredEmailContext
+  | PickupReadyEmailContext
   | PaymentFailedEmailContext
   | RefundConfirmedEmailContext
   | SriDocumentDeliveryEmailContext
@@ -91,6 +99,8 @@ export function renderEmailTemplate(
       return orderShipped(context as OrderShippedEmailContext);
     case 'ORDER_DELIVERED':
       return orderDelivered(context as OrderDeliveredEmailContext);
+    case 'PICKUP_READY':
+      return pickupReady(context as PickupReadyEmailContext);
     case 'PAYMENT_FAILED':
       return paymentFailed(context as PaymentFailedEmailContext);
     case 'REFUND_CONFIRMED':
@@ -138,6 +148,16 @@ function orderDelivered(ctx: OrderDeliveredEmailContext) {
   const text =
     `Hola ${ctx.customerName},\n\n` +
     `Tu pedido ${ctx.orderNumber} ha sido entregado. ¡Esperamos que disfrutes tu compra!`;
+  return { subject, text, html: paragraph(text) };
+}
+
+function pickupReady(ctx: PickupReadyEmailContext) {
+  const subject = `Tu pedido ${ctx.orderNumber} esta listo para retirar`;
+  const text =
+    `Hola ${ctx.customerName},\n\n` +
+    `Tu pedido ${ctx.orderNumber} esta listo para retiro en tienda.\n` +
+    `Tienda: ${ctx.pickupLocation}\n` +
+    `Direccion: ${ctx.pickupAddress}`;
   return { subject, text, html: paragraph(text) };
 }
 

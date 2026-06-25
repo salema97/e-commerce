@@ -85,6 +85,22 @@ export class OrdersController {
     return this.ordersService.updateOrderStatus(id, dto.status);
   }
 
+  @Post(':id/pickup/ready')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.INVENTORY)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mark BOPIS order ready for pickup' })
+  markPickupReady(@Param('id') id: string) {
+    return this.ordersService.markReadyForPickup(id);
+  }
+
+  @Post(':id/pickup/confirm')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.INVENTORY)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Confirm BOPIS pickup completed' })
+  confirmPickup(@Param('id') id: string) {
+    return this.ordersService.confirmPickup(id);
+  }
+
   @Post(':id/cancel')
   @Public()
   @Throttle({ default: { limit: 10, ttl: 60_000 } })

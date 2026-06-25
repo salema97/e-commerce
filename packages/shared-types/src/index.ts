@@ -30,3 +30,6 @@ export * from './quotes.js';
 export * from './marketplace.js';
 export * from './accounting.js';
 export * from './privacy.js';
+export * from './pos.js';
+export * from './subscriptions.js';
+export * from './sellers.js';

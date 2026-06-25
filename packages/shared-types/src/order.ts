@@ -1,4 +1,4 @@
-import type { OrderStatus, PaymentChannel } from './enums.js';
+import type { OrderStatus, PaymentChannel, ShippingMethodType } from './enums.js';
 import type { OrderAddress } from './address.js';
 import type { Payment } from './payment.js';
 import type { Refund } from './refund.js';
@@ -14,6 +14,11 @@ export interface OrderItem {
   quantity: number;
   taxRate?: number;
   discountAmount?: number;
+  fulfillmentSource?: 'WAREHOUSE' | 'DROPSHIP' | 'SELLER';
+  supplierId?: string | null;
+  sellerId?: string | null;
+  dropshipCommissionAmount?: number | null;
+  sellerCommissionAmount?: number | null;
   createdAt: string;
   product?: unknown;
   variant?: unknown;
@@ -38,6 +43,10 @@ export interface Order {
   customerAddress?: string | null;
   status: OrderStatus;
   channel?: PaymentChannel | null;
+  shippingMethod?: ShippingMethodType;
+  pickupLocationId?: string | null;
+  posRegisterId?: string | null;
+  pickupReadyAt?: string | null;
   couponCode?: string | null;
   subtotal: number;
   taxAmount: number;
@@ -84,6 +93,8 @@ export interface CreateOrderDto {
   companyId?: string;
   purchaseOrderNumber?: string;
   netPaymentTerms?: 'NET_0' | 'NET_15' | 'NET_30' | 'NET_60';
+  shippingMethod?: ShippingMethodType;
+  pickupLocationId?: string;
 }
 
 export interface CreatedOrderResult {

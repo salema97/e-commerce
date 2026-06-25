@@ -61,6 +61,7 @@ export function orderStatusLabel(status: OrderStatus): string {
     PAYMENT_PENDING: 'Pago pendiente',
     PAYMENT_FAILED: 'Pago fallido',
     PROCESSING: 'En proceso',
+    READY_FOR_PICKUP: 'Listo para retiro',
     PARTIALLY_SHIPPED: 'Envío parcial',
     SHIPPED: 'Enviado',
     DELIVERED: 'Entregado',

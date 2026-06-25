@@ -24,6 +24,9 @@ import {
   Building2,
   FileSpreadsheet,
   Calculator,
+  MapPin,
+  Repeat,
+  UsersRound,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { sidebarIconHover, sidebarIconRest } from '@/lib/neo-motion';
@@ -43,6 +46,9 @@ const navIcons: Record<string, React.ElementType> = {
   '/admin/b2b': Building2,
   '/admin/quotes': FileSpreadsheet,
   '/admin/marketplace': Store,
+  '/admin/pos': MapPin,
+  '/admin/sellers': UsersRound,
+  '/admin/subscriptions': Repeat,
   '/admin/accounting': Calculator,
   '/admin/marketing': Megaphone,
   '/admin/analytics': BarChart3,
