@@ -19,6 +19,12 @@ import {
 import type { ProductReview, ProductReviewSummary } from '@repo/shared-types';
 import { getProductAvailableQuantity } from '@/lib/product-stock';
 
+const EMPTY_REVIEW_SUMMARY: ProductReviewSummary = {
+  averageRating: 0,
+  reviewCount: 0,
+  distribution: {},
+};
+
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
@@ -54,11 +60,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     product.preOrderReleaseDate &&
     new Date(product.preOrderReleaseDate) > new Date();
 
-  const emptySummary: ProductReviewSummary = {
-    averageRating: 0,
-    reviewCount: 0,
-    distribution: {},
-  };
+  const emptySummary = EMPTY_REVIEW_SUMMARY;
 
   const [initialReviews, reviewSummary] = await Promise.all([
     api.reviews.listByProduct(product.id).catch(() => [] as ProductReview[]),

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { formatDateTime } from '@repo/shared-utils';
 import { Check, CheckCheck, AlertCircle } from 'lucide-react';
 import type { Message } from '@repo/shared-types';
@@ -53,10 +54,12 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             rel="noopener noreferrer"
             className="mb-2 block"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element -- signed S3 URLs are dynamic */}
-            <img
+            <Image
               src={message.mediaUrl}
               alt={showCaption ? message.content : 'Imagen de WhatsApp'}
+              width={400}
+              height={288}
+              unoptimized
               className="max-h-72 max-w-full border-2 border-neo-onyx object-contain"
             />
           </a>

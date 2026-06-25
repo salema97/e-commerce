@@ -59,12 +59,26 @@ export function B2bAdminPanel({ initialCompanies }: B2bAdminPanelProps) {
       <div className="space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <div className="flex-1 space-y-1">
-          <label className="text-sm font-medium">Nombre</label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Empresa S.A." />
+          <label htmlFor="b2b-company-name" className="text-sm font-medium">
+            Nombre
+          </label>
+          <Input
+            id="b2b-company-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Empresa S.A."
+          />
         </div>
         <div className="flex-1 space-y-1">
-          <label className="text-sm font-medium">RUC</label>
-          <Input value={taxId} onChange={(e) => setTaxId(e.target.value)} placeholder="1790000000001" />
+          <label htmlFor="b2b-company-tax-id" className="text-sm font-medium">
+            RUC
+          </label>
+          <Input
+            id="b2b-company-tax-id"
+            value={taxId}
+            onChange={(e) => setTaxId(e.target.value)}
+            placeholder="1790000000001"
+          />
         </div>
         <Button type="button" onClick={() => void createCompany()} disabled={pending}>
           Crear empresa

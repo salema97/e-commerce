@@ -161,9 +161,8 @@ export function AccountingAdminPanel({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {records
-                .filter((record) => record.resourceType === 'invoice')
-                .map((record) => (
+              {records.flatMap((record) =>
+                record.resourceType === 'invoice' ? (
                   <TableRow key={record.id}>
                     <TableCell className="font-mono text-xs">{record.resourceId.slice(0, 8)}</TableCell>
                     <TableCell>{record.provider}</TableCell>
@@ -183,7 +182,10 @@ export function AccountingAdminPanel({
                       ) : null}
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  []
+                ),
+              )}
             </TableBody>
           </Table>
         </div>
