@@ -18,9 +18,9 @@
 
 ## PR 2 — B2B pricing module
 
-- [ ] 2.1 Extract `B2bPricingModule`
-- [ ] 2.2 Quotes imports pricing module only
-- [ ] 2.3 health:api sin error circular
+- [x] 2.1 Extract `B2bPricingModule`
+- [x] 2.2 Quotes imports pricing module only
+- [x] 2.3 health:api sin error circular
 - [ ] 2.4 verify + PR + merge
 
 ## PR 3 — POS catch
