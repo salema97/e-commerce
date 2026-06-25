@@ -29,5 +29,6 @@ import { BackorderService } from './backorder.service.js';
   ],
   controllers: [OrdersController, RefundsController],
   providers: [OrdersService, BackorderService],
+  exports: [OrdersService],
 })
 export class OrdersModule {}

@@ -39,6 +39,10 @@ import { ReviewsModule } from './reviews/reviews.module.js';
 import { ReferralsModule } from './referrals/referrals.module.js';
 import { LoyaltyModule } from './loyalty/loyalty.module.js';
 import { EngagementModule } from './engagement/engagement.module.js';
+import { B2bModule } from './b2b/b2b.module.js';
+import { QuotesModule } from './quotes/quotes.module.js';
+import { MarketplaceModule } from './marketplace/marketplace.module.js';
+import { AccountingModule } from './accounting/accounting.module.js';
 
 @Module({
   imports: [
@@ -94,6 +98,10 @@ import { EngagementModule } from './engagement/engagement.module.js';
     ReferralsModule,
     LoyaltyModule,
     EngagementModule,
+    B2bModule,
+    QuotesModule,
+    MarketplaceModule,
+    AccountingModule,
   ],
   providers: [
     {

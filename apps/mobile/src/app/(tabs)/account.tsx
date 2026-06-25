@@ -101,6 +101,9 @@ export default function AccountScreen(): React.ReactElement {
         <Button variant="outline" onPress={() => router.push('/account/referrals')}>
           Invita y gana
         </Button>
+        <Button variant="outline" onPress={() => router.push('/account/quotes')}>
+          Mis cotizaciones
+        </Button>
         <Button variant="outline" onPress={() => router.push('/account/notifications')}>
           Preferencias de notificaciones
         </Button>

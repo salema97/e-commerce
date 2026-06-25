@@ -9,6 +9,16 @@ import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { StoreCreditCard } from '@/components/account/store-credit-card';
 import type { StoreCreditBalance } from '@repo/shared-types';
 
+const ACCOUNT_LINKS = [
+  { href: '/orders', label: 'Mis pedidos' },
+  { href: '/account/loyalty', label: 'Programa de lealtad' },
+  { href: '/account/referrals', label: 'Invita y gana' },
+  { href: '/account/quotes', label: 'Mis cotizaciones' },
+  { href: '/account/notifications', label: 'Preferencias de notificaciones' },
+  { href: '/help', label: 'Preguntas frecuentes' },
+  { href: '/wishlist', label: 'Lista de deseos' },
+] as const;
+
 export default async function AccountPage() {
   const session = await getSession();
   if (!session) {
@@ -40,21 +50,15 @@ export default async function AccountPage() {
             <CardTitle>Accesos rápidos</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            <Link href="/orders" className={cn(buttonVariants({ variant: 'outline' }), 'justify-start')}>
-              Mis pedidos
-            </Link>
-            <Link
-              href="/account/notifications"
-              className={cn(buttonVariants({ variant: 'outline' }), 'justify-start')}
-            >
-              Preferencias de notificaciones
-            </Link>
-            <Link href="/help" className={cn(buttonVariants({ variant: 'outline' }), 'justify-start')}>
-              Preguntas frecuentes
-            </Link>
-            <Link href="/wishlist" className={cn(buttonVariants({ variant: 'outline' }), 'justify-start')}>
-              Lista de deseos
-            </Link>
+            {ACCOUNT_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(buttonVariants({ variant: 'outline' }), 'justify-start')}
+              >
+                {link.label}
+              </Link>
+            ))}
           </CardContent>
         </Card>
       </div>

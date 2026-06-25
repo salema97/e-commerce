@@ -17,11 +17,15 @@ export const adminNavItems: AdminNavItem[] = [
   { href: '/admin/customers', label: 'Clientes', roles: ['SUPER_ADMIN', 'ADMIN'], group: 'sales' },
   { href: '/admin/reviews', label: 'Reseñas', roles: ['SUPER_ADMIN', 'ADMIN'], group: 'sales' },
   { href: '/admin/referrals', label: 'Referidos', roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'], group: 'sales' },
+  { href: '/admin/b2b', label: 'B2B', roles: ['SUPER_ADMIN', 'ADMIN'], group: 'sales' },
+  { href: '/admin/quotes', label: 'Cotizaciones', roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'], group: 'sales' },
+  { href: '/admin/marketplace', label: 'Marketplace', roles: ['SUPER_ADMIN', 'ADMIN', 'INVENTORY'], group: 'sales' },
   { href: '/admin/marketing', label: 'Marketing', roles: ['SUPER_ADMIN', 'ADMIN'], group: 'sales' },
   { href: '/admin/analytics', label: 'Analítica', roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'], group: 'sales' },
   { href: '/admin/support', label: 'Soporte', roles: ['SUPER_ADMIN', 'ADMIN', 'SUPPORT'], group: 'support' },
   { href: '/admin/knowledge', label: 'Conocimiento', roles: ['SUPER_ADMIN', 'ADMIN', 'SUPPORT'], group: 'knowledge' },
   { href: '/admin/invoices', label: 'Facturación', roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'], group: 'finance' },
+  { href: '/admin/accounting', label: 'Contabilidad', roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'], group: 'finance' },
   { href: '/admin/finance', label: 'Finanzas', roles: ['SUPER_ADMIN', 'ADMIN', 'FINANCE'], group: 'finance' },
 ];
 

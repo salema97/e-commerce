@@ -24,7 +24,7 @@ export function ReviewsModerationView({ initialReviews }: ReviewsModerationViewP
   const { useModerateReview } = useApiQueryHooks();
   const moderate = useModerateReview();
 
-  const { data: reviews = initialReviews } = useQuery({
+  const { data: reviews = initialReviews } = useQuery<PendingReview[]>({
     queryKey: queryKeys.pendingReviews,
     queryFn: () => api.reviews.listPending(),
     initialData: initialReviews,

@@ -17,6 +17,7 @@ import { SriSoapClient } from './sri-soap.client.js';
 import { SriRidePdfService } from './sri-ride-pdf.service.js';
 import { SriDocumentStorageService } from './sri-document-storage.service.js';
 import { SriDeliveryService } from './sri-delivery.service.js';
+import { EventBus } from '../../event-bus/event-bus.interface.js';
 import { SriQueueWorker } from './sri-queue.worker.js';
 
 vi.mock('bullmq', () => ({
@@ -220,6 +221,7 @@ describe('SriQueueWorker', () => {
         { provide: SriRidePdfService, useValue: ridePdfService },
         { provide: SriDocumentStorageService, useValue: documentStorageService },
         { provide: SriDeliveryService, useValue: deliveryService },
+        { provide: EventBus, useValue: { publish: vi.fn(), registerHandler: vi.fn() } },
       ],
     }).compile();
 

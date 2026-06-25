@@ -19,6 +19,7 @@ import { PrismaModule } from '../prisma/prisma.module.js';
 import { StorageModule } from '../storage/storage.module.js';
 import { EmailModule } from '../notifications/email.module.js';
 import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
+import { EventBusModule } from '../event-bus/event-bus.module.js';
 import { SriQueueModule } from './sri/sri-queue.module.js';
 import { SriQueueWorker } from './sri/sri-queue.worker.js';
 import { isNonProduction } from '../common/is-non-production.js';
@@ -29,6 +30,7 @@ import { isNonProduction } from '../common/is-non-production.js';
     StorageModule,
     EmailModule,
     WhatsAppNotificationModule,
+    EventBusModule,
     SriQueueModule,
   ],
   controllers: [

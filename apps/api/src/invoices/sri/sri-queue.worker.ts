@@ -3,6 +3,7 @@ import {
   Logger,
   OnModuleDestroy,
   OnModuleInit,
+  Inject,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, SriDocumentJobStatus } from '@prisma/client';
@@ -18,6 +19,7 @@ import { SriSoapClient } from './sri-soap.client.js';
 import { SriRidePdfService } from './sri-ride-pdf.service.js';
 import { SriDocumentStorageService } from './sri-document-storage.service.js';
 import { SriDeliveryService } from './sri-delivery.service.js';
+import { EventBus } from '../../event-bus/event-bus.interface.js';
 import {
   SRI_QUEUE_NAME,
   getSriQueueConcurrency,
@@ -67,6 +69,7 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
     private readonly ridePdfService: SriRidePdfService,
     private readonly documentStorageService: SriDocumentStorageService,
     private readonly deliveryService: SriDeliveryService,
+    @Inject(EventBus) private readonly eventBus: EventBus,
   ) {}
 
   onModuleInit(): void {
@@ -672,6 +675,10 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
           pdfBuffer,
         );
         await this.deliveryService.deliverInvoice(document, order);
+        void this.eventBus.publish({
+          name: 'invoice.authorized',
+          payload: { invoiceId: document.id, orderId: document.orderId },
+        });
       } else {
         await this.documentStorageService.uploadCreditNoteDocuments(
           document.id,

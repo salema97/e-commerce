@@ -134,6 +134,13 @@ const envSchema = z.object({
   TRUSTPILOT_RATING: z.coerce.number().min(0).max(5).optional(),
   TRUSTPILOT_REVIEW_COUNT: z.coerce.number().int().min(0).optional(),
   TRUSTPILOT_PROFILE_URL: z.string().optional(),
+  MARKETPLACE_CHANNEL: z.enum(['console', 'mercado_libre']).default('console'),
+  MERCADO_LIBRE_ACCESS_TOKEN: z.string().optional(),
+  MERCADO_LIBRE_SELLER_ID: z.string().optional(),
+  ACCOUNTING_PROVIDER: z.enum(['console', 'siigo', 'alegra']).default('console'),
+  SIIGO_API_KEY: z.string().optional(),
+  SIIGO_API_URL: z.string().optional(),
+  MULTI_CURRENCY_ENABLED: z.enum(['true', 'false']).default('false'),
 });
 
 export type Env = z.infer<typeof envSchema>;
