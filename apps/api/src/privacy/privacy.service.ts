@@ -9,8 +9,8 @@ export class PrivacyService {
     private readonly provisioning: UserProvisioningService,
   ) {}
 
-  async exportUserData(clerkUserId: string) {
-    const user = await this.provisioning.ensureByClerkUserId(clerkUserId);
+  async exportUserData(userId: string) {
+    const user = await this.provisioning.ensureByUserId(userId);
 
     const [addresses, orders, returns, loyalty, referralCode, quotes] = await Promise.all([
       this.prisma.address.findMany({ where: { userId: user.id } }),
@@ -63,8 +63,8 @@ export class PrivacyService {
     };
   }
 
-  async deleteUserData(clerkUserId: string) {
-    const user = await this.provisioning.ensureByClerkUserId(clerkUserId);
+  async deleteUserData(userId: string) {
+    const user = await this.provisioning.ensureByUserId(userId);
     const anonymizedEmail = `deleted+${user.id}@anon.local`;
 
     await this.prisma.$transaction(async (tx) => {
@@ -105,12 +105,12 @@ export class PrivacyService {
       anonymized: true,
       deletedAt: new Date().toISOString(),
       message:
-        'Datos personales anonimizados. Las órdenes se conservan por obligaciones fiscales. Elimina la cuenta en Clerk desde su panel de usuario.',
+        'Datos personales anonimizados. Las órdenes se conservan por obligaciones fiscales. Contacta soporte si necesitas cerrar la cuenta por completo.',
     };
   }
 
-  async setCcpaOptOut(clerkUserId: string, optOut: boolean) {
-    const user = await this.provisioning.ensureByClerkUserId(clerkUserId);
+  async setCcpaOptOut(userId: string, optOut: boolean) {
+    const user = await this.provisioning.ensureByUserId(userId);
     const updated = await this.prisma.user.update({
       where: { id: user.id },
       data: { ccpaDoNotSell: optOut },

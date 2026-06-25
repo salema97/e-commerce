@@ -18,7 +18,7 @@ describe('PrivacyService', () => {
     $transaction: vi.fn(async (fn: (tx: typeof prisma) => Promise<void>) => fn(prisma)),
   };
   const provisioning = {
-    ensureByClerkUserId: vi.fn().mockResolvedValue({
+    ensureByUserId: vi.fn().mockResolvedValue({
       id: 'user-1',
       email: 'test@example.com',
       name: 'Test',
@@ -38,13 +38,13 @@ describe('PrivacyService', () => {
   });
 
   it('exports user bundle', async () => {
-    const result = await service.exportUserData('clerk_1');
+    const result = await service.exportUserData('user-1');
     expect(result.user.email).toBe('test@example.com');
     expect(result.exportedAt).toBeTruthy();
   });
 
   it('anonymizes user on delete', async () => {
-    const result = await service.deleteUserData('clerk_1');
+    const result = await service.deleteUserData('user-1');
     expect(result.anonymized).toBe(true);
     expect(prisma.user.update).toHaveBeenCalled();
   });
