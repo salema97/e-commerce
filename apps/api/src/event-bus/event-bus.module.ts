@@ -1,8 +1,10 @@
 import { Global, Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { EventBus } from './event-bus.interface.js';
 import { RedisStreamsEventBus } from './redis-streams-event-bus.service.js';
 import { UpstashKafkaEventBus } from './upstash-kafka-event-bus.service.js';
+import { ConfiguredEventBus } from './configured-event-bus.js';
+import { EventBusProviderWiring } from './event-bus-provider.wiring.js';
 
 @Global()
 @Module({
@@ -10,22 +12,13 @@ import { UpstashKafkaEventBus } from './upstash-kafka-event-bus.service.js';
   providers: [
     RedisStreamsEventBus,
     UpstashKafkaEventBus,
+    ConfiguredEventBus,
     {
       provide: EventBus,
-      useFactory: (
-        config: ConfigService,
-        redisBus: RedisStreamsEventBus,
-        kafkaBus: UpstashKafkaEventBus,
-      ) => {
-        const backend = config.get<string>('EVENT_BUS_BACKEND', 'redis');
-        if (backend === 'kafka') {
-          return kafkaBus;
-        }
-        return redisBus;
-      },
-      inject: [ConfigService, RedisStreamsEventBus, UpstashKafkaEventBus],
+      useExisting: ConfiguredEventBus,
     },
+    EventBusProviderWiring,
   ],
-  exports: [EventBus],
+  exports: [EventBus, EventBusProviderWiring],
 })
 export class EventBusModule {}

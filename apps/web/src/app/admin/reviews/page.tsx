@@ -1,10 +1,14 @@
-import { ReviewsModeration } from './reviews-moderation';
+import { getServerApiClient } from '@/lib/api';
+import { ReviewsModerationView } from './reviews-moderation-view';
+import type { ProductReview } from '@repo/shared-types';
 
-export default function AdminReviewsPage() {
-  return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Moderación de reseñas</h1>
-      <ReviewsModeration />
-    </div>
-  );
+type PendingReview = ProductReview & {
+  product?: { id: string; name: string; slug: string };
+};
+
+export default async function AdminReviewsPage() {
+  const api = await getServerApiClient();
+  const initialReviews = await api.reviews.listPending().catch(() => [] as PendingReview[]);
+
+  return <ReviewsModerationView initialReviews={initialReviews} />;
 }

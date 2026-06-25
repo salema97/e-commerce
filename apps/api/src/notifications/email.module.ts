@@ -1,8 +1,11 @@
+import { Injectable } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EmailProvider } from './email-provider.interface.js';
 import { ConsoleEmailProvider } from './providers/console-email.provider.js';
 import { ResendEmailProvider } from './providers/resend-email.provider.js';
+import { ConfiguredEmailProvider } from './configured-email.provider.js';
+import { EmailProviderWiring } from './email-provider.wiring.js';
 
 /**
  * Registers the active {@link EmailProvider} implementation. Other modules
@@ -14,19 +17,13 @@ import { ResendEmailProvider } from './providers/resend-email.provider.js';
   providers: [
     ConsoleEmailProvider,
     ResendEmailProvider,
+    ConfiguredEmailProvider,
+    EmailProviderWiring,
     {
       provide: EmailProvider,
-      useFactory: (
-        config: ConfigService,
-        consoleProvider: ConsoleEmailProvider,
-        resendProvider: ResendEmailProvider,
-      ) => {
-        const selected = config.get<string>('EMAIL_PROVIDER', 'console');
-        return selected === 'resend' ? resendProvider : consoleProvider;
-      },
-      inject: [ConfigService, ConsoleEmailProvider, ResendEmailProvider],
+      useExisting: ConfiguredEmailProvider,
     },
   ],
-  exports: [EmailProvider],
+  exports: [EmailProvider, EmailProviderWiring],
 })
 export class EmailModule {}

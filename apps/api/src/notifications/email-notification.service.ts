@@ -8,6 +8,7 @@ import {
   EmailProvider,
   type EmailAttachment,
 } from './email-provider.interface.js';
+import { EmailProviderWiring } from './email-provider.wiring.js';
 
 /**
  * Sends transactional emails for order, payment, and refund lifecycle events.
@@ -27,6 +28,7 @@ export class EmailNotificationService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly idempotency: RedisIdempotencyService,
+    private readonly providerWiring: EmailProviderWiring,
   ) {}
 
   async notify(

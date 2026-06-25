@@ -7,6 +7,7 @@ import { MessageService } from '../messages/message.service.js';
 import { ConversationService } from '../conversations/conversation.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { RedisIdempotencyService } from '../common/redis/idempotency.service.js';
+import { WhatsAppProviderWiring } from './whatsapp-provider.wiring.js';
 
 describe('WhatsAppNotificationService', () => {
   let service: WhatsAppNotificationService;
@@ -65,6 +66,7 @@ describe('WhatsAppNotificationService', () => {
         { provide: PrismaService, useValue: prisma },
         { provide: ConfigService, useValue: configService },
         { provide: RedisIdempotencyService, useValue: idempotency },
+        { provide: WhatsAppProviderWiring, useValue: { whatsapp: provider } },
       ],
     }).compile();
 

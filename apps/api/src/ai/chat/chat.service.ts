@@ -3,6 +3,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { MessageService } from '../../messages/message.service.js';
 import { ConversationOrchestrator } from '../orchestrator/conversation-orchestrator.interface.js';
+import { AiProviderWiring } from '../ai-provider.wiring.js';
 
 @Injectable()
 export class ChatService {
@@ -10,6 +11,7 @@ export class ChatService {
     private readonly prisma: PrismaService,
     private readonly messageService: MessageService,
     private readonly orchestrator: ConversationOrchestrator,
+    private readonly providerWiring: AiProviderWiring,
   ) {}
 
   createSession(contactName?: string) {

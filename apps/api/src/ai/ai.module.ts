@@ -43,6 +43,12 @@ import { ProductContentAiController } from './product-content/product-content-ai
 import { ProductSearchSyncService } from './search/product-search-sync.service.js';
 import { SearchDomainEventConsumer } from './search/search-domain-event.consumer.js';
 import { SearchReindexService } from './search/search-reindex.service.js';
+import {
+  ConfiguredConversationOrchestrator,
+  ConfiguredEmbeddingProvider,
+  ConfiguredLlmProvider,
+} from './configured-ai.providers.js';
+import { AiProviderWiring } from './ai-provider.wiring.js';
 
 @Module({
   imports: [ConfigModule, PrismaModule, ConversationModule, MessageModule, WhatsAppModule],
@@ -59,34 +65,17 @@ import { SearchReindexService } from './search/search-reindex.service.js';
     ConsoleLlmProvider,
     OpenAiLlmProvider,
     AnthropicLlmProvider,
+    ConfiguredLlmProvider,
     {
       provide: LlmProvider,
-      useFactory: (
-        config: ConfigService,
-        consoleProvider: ConsoleLlmProvider,
-        openAiProvider: OpenAiLlmProvider,
-        anthropicProvider: AnthropicLlmProvider,
-      ) => {
-        const selected = config.get<string>('LLM_PROVIDER', 'console');
-        if (selected === 'openai') return openAiProvider;
-        if (selected === 'anthropic') return anthropicProvider;
-        return consoleProvider;
-      },
-      inject: [ConfigService, ConsoleLlmProvider, OpenAiLlmProvider, AnthropicLlmProvider],
+      useExisting: ConfiguredLlmProvider,
     },
     ConsoleEmbeddingProvider,
     OpenAiEmbeddingProvider,
+    ConfiguredEmbeddingProvider,
     {
       provide: EmbeddingProvider,
-      useFactory: (
-        config: ConfigService,
-        consoleProvider: ConsoleEmbeddingProvider,
-        openAiProvider: OpenAiEmbeddingProvider,
-      ) => {
-        const selected = config.get<string>('EMBEDDING_PROVIDER', 'console');
-        return selected === 'openai' ? openAiProvider : consoleProvider;
-      },
-      inject: [ConfigService, ConsoleEmbeddingProvider, OpenAiEmbeddingProvider],
+      useExisting: ConfiguredEmbeddingProvider,
     },
     {
       provide: KNOWLEDGE_INDEX_QUEUE_TOKEN,
@@ -125,21 +114,12 @@ import { SearchReindexService } from './search/search-reindex.service.js';
     NativeSupportBotOrchestrator,
     DifyOrchestrator,
     TypebotOrchestrator,
+    ConfiguredConversationOrchestrator,
     {
       provide: ConversationOrchestrator,
-      useFactory: (
-        config: ConfigService,
-        native: NativeSupportBotOrchestrator,
-        dify: DifyOrchestrator,
-        typebot: TypebotOrchestrator,
-      ) => {
-        const selected = config.get<string>('CONVERSATION_ORCHESTRATOR', 'native');
-        if (selected === 'dify') return dify;
-        if (selected === 'typebot') return typebot;
-        return native;
-      },
-      inject: [ConfigService, NativeSupportBotOrchestrator, DifyOrchestrator, TypebotOrchestrator],
+      useExisting: ConfiguredConversationOrchestrator,
     },
+    AiProviderWiring,
     ChatService,
     MeilisearchService,
     HybridSearchService,

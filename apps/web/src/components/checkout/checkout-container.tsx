@@ -68,6 +68,22 @@ const checkoutInitialState: CheckoutState = {
   shippingQuote: null,
 };
 
+function createInitialCheckoutState(): CheckoutState {
+  if (typeof window === 'undefined') {
+    return checkoutInitialState;
+  }
+
+  const ref = new URLSearchParams(window.location.search).get('ref');
+  if (!ref) {
+    return checkoutInitialState;
+  }
+
+  return {
+    ...checkoutInitialState,
+    referralCode: ref.toUpperCase(),
+  };
+}
+
 function checkoutReducer(state: CheckoutState, action: CheckoutAction): CheckoutState {
   switch (action.type) {
     case 'set_address':
@@ -101,7 +117,7 @@ export function CheckoutContainer() {
   const { user } = useAuth();
   const api = useApiClient();
   const { items } = useCartStore();
-  const [checkout, dispatch] = React.useReducer(checkoutReducer, checkoutInitialState);
+  const [checkout, dispatch] = React.useReducer(checkoutReducer, undefined, createInitialCheckoutState);
   const {
     address,
     couponCode,

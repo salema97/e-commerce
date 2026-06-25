@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
 import { WhatsAppModule } from './whatsapp.module.js';
 import { WhatsAppProvider } from './whatsapp-provider.interface.js';
-import { EvolutionApiProvider } from './providers/evolution-api.provider.js';
+import { ConfiguredWhatsAppProvider } from './configured-whatsapp.provider.js';
 
 describe('WhatsAppModule', () => {
   beforeEach(() => {
@@ -13,13 +13,13 @@ describe('WhatsAppModule', () => {
     process.env.EVOLUTION_INSTANCE_NAME = 'ecommerce';
   });
 
-  it('compiles and exports the WhatsAppProvider token bound to EvolutionApiProvider', async () => {
+  it('compiles and exports the WhatsAppProvider token bound to ConfiguredWhatsAppProvider', async () => {
     const module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({ isGlobal: true }), WhatsAppModule],
     }).compile();
 
     const provider = module.get(WhatsAppProvider);
 
-    expect(provider).toBeInstanceOf(EvolutionApiProvider);
+    expect(provider).toBeInstanceOf(ConfiguredWhatsAppProvider);
   });
 });

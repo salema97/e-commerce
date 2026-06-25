@@ -22,7 +22,7 @@ Este documento define **cómo ejecutar los doctores**, qué patrones evitan sus 
 | App | Score / estado | Errores críticos |
 |-----|----------------|------------------|
 | Web | **100/100** | **0** |
-| API | **90/100** | **0** — reglas `require-guards`/`no-orm-in-services` off con `APP_GUARD` + recipe Prisma |
+| API | **100/100** | **0** — reglas `require-guards`/`no-orm-in-services` con `false` (APP_GUARD + recipe Prisma); infos residuales en exports globales y relaciones 1:1 Prisma |
 | Mobile | **21/21 checks** expo-doctor | **0** |
 
 ---
@@ -123,6 +123,25 @@ const loadError = failedUrl !== null && failedUrl === normalizedUrl;
 onError={() => setFailedUrl(normalizedUrl ?? null)}
 ```
 
+#### JSON-LD seguro en PDP
+
+Usar `serializeJsonLd()` de `@repo/shared-utils` — no `JSON.stringify` crudo en `dangerouslySetInnerHTML`:
+
+```tsx
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
+/>
+```
+
+#### Checkout: estado inicial sin useEffect para query params
+
+Leer `?ref=` en el inicializador lazy de `useReducer`, no en un `useEffect` del hijo:
+
+```tsx
+const [checkout, dispatch] = React.useReducer(checkoutReducer, undefined, createInitialCheckoutState);
+```
+
 #### Context provider estable
 
 ```tsx
@@ -201,11 +220,13 @@ Config en `apps/api/nestjs-doctor.config.json`:
 ```json
 {
   "rules": {
-    "security/require-guards-on-endpoints": "off",
-    "architecture/no-orm-in-services": "off"
+    "security/require-guards-on-endpoints": false,
+    "architecture/no-orm-in-services": false
   }
 }
 ```
+
+Usar `false` (no `"off"`) — es el valor documentado por nestjs-doctor v0.4+.
 
 **IDs de regla (nestjs-doctor v0.4+):** los nombres antiguos `missing-use-guards` / `service-injects-orm` ya no aplican. Usar `--config nestjs-doctor.config.json` en el script `health:nest`.
 
@@ -388,6 +409,7 @@ React Doctor: `npx react-doctor . --verbose --min-score 60` (subir umbral con el
 | `apps/api/src/payments/test-payments.service.ts` | Idem |
 | `apps/api/src/webhooks/webhook.service.ts` | `receiveEvolutionWebhook()` |
 | `apps/web/public/sw.js` | PWA sin sintaxis TS |
+| `packages/shared-utils/src/json-ld.ts` | JSON-LD escapado para PDP |
 | `package.json` (raíz) | Scripts `health:*` |
 
 ---

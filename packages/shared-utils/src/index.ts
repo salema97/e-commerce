@@ -7,3 +7,4 @@ export * from './product-image.js';
 export * from './neo-motion.js';
 export * from './email-templates.js';
 export * from './cms-slugs.js';
+export * from './json-ld.js';

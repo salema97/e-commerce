@@ -7,6 +7,7 @@ import { ConversationService } from '../conversations/conversation.service.js';
 import { MessageService } from '../messages/message.service.js';
 import { RedisIdempotencyService } from '../common/redis/idempotency.service.js';
 import { WhatsAppProvider } from './whatsapp-provider.interface.js';
+import { WhatsAppProviderWiring } from './whatsapp-provider.wiring.js';
 import { renderWhatsAppTemplate, type NotificationContext } from './whatsapp-templates.js';
 
 export interface NotifyWhatsAppOptions {
@@ -30,6 +31,7 @@ export class WhatsAppNotificationService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly idempotency: RedisIdempotencyService,
+    private readonly providerWiring: WhatsAppProviderWiring,
   ) {}
 
   async notify(

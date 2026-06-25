@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from '../prisma/prisma.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { RedisModule } from '../common/redis/redis.module.js';
@@ -28,6 +28,11 @@ import { ConsoleMarketingEmailProvider } from './providers/console-marketing-ema
 import { LoopsMarketingEmailProvider } from './providers/loops-marketing-email.provider.js';
 import { OrderConfirmationService } from './order-confirmation.service.js';
 import { OrderPaidDomainConsumer } from './order-paid-domain.consumer.js';
+import {
+  ConfiguredMarketingEmailProvider,
+  ConfiguredPushNotificationProvider,
+} from './configured-notification.providers.js';
+import { NotificationProviderWiring } from './notification-provider.wiring.js';
 
 @Module({
   imports: [ConfigModule, EmailModule, PrismaModule, RedisModule, UsersModule, ReceiptsModule, WhatsAppNotificationModule, WhatsAppModule],
@@ -53,38 +58,17 @@ import { OrderPaidDomainConsumer } from './order-paid-domain.consumer.js';
     OneSignalPushNotificationProvider,
     ConsoleMarketingEmailProvider,
     LoopsMarketingEmailProvider,
+    ConfiguredPushNotificationProvider,
+    ConfiguredMarketingEmailProvider,
     {
       provide: PushNotificationProvider,
-      useFactory: (
-        config: ConfigService,
-        consoleProvider: ConsolePushNotificationProvider,
-        expoProvider: ExpoPushNotificationProvider,
-        oneSignalProvider: OneSignalPushNotificationProvider,
-      ) => {
-        const selected = config.get<string>('PUSH_PROVIDER', 'console');
-        if (selected === 'expo') return expoProvider;
-        if (selected === 'onesignal') return oneSignalProvider;
-        return consoleProvider;
-      },
-      inject: [
-        ConfigService,
-        ConsolePushNotificationProvider,
-        ExpoPushNotificationProvider,
-        OneSignalPushNotificationProvider,
-      ],
+      useExisting: ConfiguredPushNotificationProvider,
     },
     {
       provide: MarketingEmailProvider,
-      useFactory: (
-        config: ConfigService,
-        consoleProvider: ConsoleMarketingEmailProvider,
-        loopsProvider: LoopsMarketingEmailProvider,
-      ) => {
-        const selected = config.get<string>('MARKETING_EMAIL_PROVIDER', 'console');
-        return selected === 'loops' ? loopsProvider : consoleProvider;
-      },
-      inject: [ConfigService, ConsoleMarketingEmailProvider, LoopsMarketingEmailProvider],
+      useExisting: ConfiguredMarketingEmailProvider,
     },
+    NotificationProviderWiring,
   ],
   exports: [
     EmailNotificationService,

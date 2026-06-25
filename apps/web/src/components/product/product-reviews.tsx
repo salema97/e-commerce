@@ -73,14 +73,22 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
       {user ? (
         <form onSubmit={(event) => void submitReview(event)} className="space-y-3 rounded-lg border p-4">
           <h3 className="font-medium">Escribe tu reseña</h3>
+          <label className="text-sm font-medium" htmlFor="review-rating">
+            Calificación (1–5)
+          </label>
           <Input
+            id="review-rating"
             type="number"
             min={1}
             max={5}
             value={rating}
             onChange={(event) => setRating(Number(event.target.value))}
           />
+          <label className="text-sm font-medium" htmlFor="review-body">
+            Tu reseña
+          </label>
           <textarea
+            id="review-body"
             className="min-h-24 w-full rounded-md border p-2 text-sm"
             value={body}
             onChange={(event) => setBody(event.target.value)}

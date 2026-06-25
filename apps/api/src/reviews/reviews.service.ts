@@ -51,7 +51,7 @@ export class ReviewsService {
   }
 
   async listByProduct(productId: string, approvedOnly = true) {
-    return this.prisma.productReview.findMany({
+    return await this.prisma.productReview.findMany({
       where: {
         productId,
         ...(approvedOnly ? { status: ReviewStatus.APPROVED } : {}),
@@ -88,7 +88,7 @@ export class ReviewsService {
   }
 
   async listPending(limit = 50) {
-    return this.prisma.productReview.findMany({
+    return await this.prisma.productReview.findMany({
       where: { status: ReviewStatus.PENDING },
       orderBy: { createdAt: 'asc' },
       take: limit,

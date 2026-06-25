@@ -14,6 +14,7 @@ import {
   formatPrice,
   getProductPrimaryImageAlt,
   getProductPrimaryImageUrl,
+  serializeJsonLd,
 } from '@repo/shared-utils';
 import { getProductAvailableQuantity } from '@/lib/product-stock';
 
@@ -102,7 +103,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     >
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
       <ProductViewTracker productId={product.id} productName={product.name} />
       <NeoReveal>

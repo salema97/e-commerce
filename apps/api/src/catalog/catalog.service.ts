@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import type { CatalogFacets, CatalogProductSummary, CatalogResponse } from '@repo/shared-types';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import type { CatalogFacets, CatalogProductSummary, CatalogResponse, DomainEvent } from '@repo/shared-types';
 import { Prisma } from '@prisma/client';
+import { EventBus } from '../event-bus/event-bus.interface.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import {
   MeilisearchService,
@@ -9,14 +10,31 @@ import {
 } from '../ai/search/meilisearch.service.js';
 import type { CatalogQueryDto } from './dto/catalog-query.dto.js';
 import { CatalogCacheService } from './catalog-cache.service.js';
+import { EventBusProviderWiring } from '../event-bus/event-bus-provider.wiring.js';
 
 @Injectable()
-export class CatalogService {
+export class CatalogService implements OnModuleInit {
   constructor(
     private readonly prisma: PrismaService,
     private readonly meilisearch: MeilisearchService,
     private readonly cache: CatalogCacheService,
+    @Inject(EventBus) private readonly eventBus: EventBus,
+    private readonly eventBusWiring: EventBusProviderWiring,
   ) {}
+
+  onModuleInit(): void {
+    this.eventBus.registerHandler((event) => this.handleCatalogInvalidation(event));
+  }
+
+  private async handleCatalogInvalidation(event: DomainEvent): Promise<void> {
+    if (
+      event.name === 'product.updated' ||
+      event.name === 'product.deleted' ||
+      event.name === 'inventory.changed'
+    ) {
+      await this.cache.invalidateCatalogQueries();
+    }
+  }
 
   async browse(query: CatalogQueryDto): Promise<CatalogResponse> {
     const cacheKey = this.cache.buildKey(query);

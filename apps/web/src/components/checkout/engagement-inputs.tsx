@@ -27,14 +27,6 @@ export function EngagementInputs({
     enabled: Boolean(user) && subtotal > 0,
   });
 
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const ref = new URLSearchParams(window.location.search).get('ref');
-    if (ref && !referralCode) {
-      onReferralCodeChange(ref);
-    }
-  }, [onReferralCodeChange, referralCode]);
-
   if (!user) {
     return (
       <div className="space-y-3">

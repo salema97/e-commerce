@@ -1,17 +1,25 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import type { AnalyticsEventInput, AnalyticsOverviewReport, CohortRetentionReport, DomainEvent } from '@repo/shared-types';
 import { OrderStatus } from '@prisma/client';
+import { EventBus } from '../event-bus/event-bus.interface.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { AnalyticsEventStore } from './analytics-event-store.interface.js';
 import { ProductAnalyticsProvider } from './product-analytics-provider.interface.js';
+import { AnalyticsProviderWiring } from './analytics-provider.wiring.js';
 
 @Injectable()
-export class AnalyticsService {
+export class AnalyticsService implements OnModuleInit {
   constructor(
     private readonly store: AnalyticsEventStore,
     private readonly productAnalytics: ProductAnalyticsProvider,
     private readonly prisma: PrismaService,
+    @Inject(EventBus) private readonly eventBus: EventBus,
+    private readonly providerWiring: AnalyticsProviderWiring,
   ) {}
+
+  onModuleInit(): void {
+    this.eventBus.registerHandler((event) => this.handleDomainEvent(event));
+  }
 
   async trackEvent(input: AnalyticsEventInput): Promise<void> {
     await this.store.record(input);

@@ -15,6 +15,7 @@ import {
   type MarketingSegment,
 } from './notification-segment.service.js';
 import { NotificationPreferencesService } from './notification-preferences.service.js';
+import { NotificationProviderWiring } from './notification-provider.wiring.js';
 
 const WIN_BACK_BATCH_SIZE = 100;
 const WIN_BACK_CURSOR_KEY = 'marketing:win-back:cursor';
@@ -33,6 +34,7 @@ export class MarketingAutomationService {
     private readonly segmentService: NotificationSegmentService,
     private readonly preferencesService: NotificationPreferencesService,
     private readonly configService: ConfigService,
+    private readonly providerWiring: NotificationProviderWiring,
   ) {}
 
   async trackPurchaseEvent(orderId: string): Promise<void> {

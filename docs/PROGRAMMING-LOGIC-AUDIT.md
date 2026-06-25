@@ -1,7 +1,7 @@
 # Auditoría de lógica de programación — Web, API y Móvil
 
 **Proyecto:** e-commerce monorepo  
-**Alcance:** `main` desde núcleo (fases 0–6) hasta integración **fase 7 (SRI)** y cierre **fases 8–11**  
+**Alcance:** `main` desde núcleo (fases 0–6) hasta **fase 14 (reviews, referrals, loyalty)**  
 **Fecha:** junio 2026  
 **Complementa:** [`MERGE-GUIDE-FRONTEND.md`](./MERGE-GUIDE-FRONTEND.md), [`AGENTS.md`](../AGENTS.md), [`TODO.md`](../TODO.md)
 
@@ -33,6 +33,7 @@ Este documento define **una sola lógica de programación, diseño y estructura*
 | **11** | **Analytics, event bus, consent** | ✅ | ✅ tracking + dashboard | ✅ tracking parcial |
 | **12** | **Shipping, taxes, fulfillment/WMS** | ✅ | ✅ checkout + admin + tracking | — (API-only) |
 | **13** | **Search, filters, catalog cache** | ✅ | ✅ faceted store SSR | ✅ useCatalog + prefetch |
+| **14** | **Reviews, referrals, loyalty, pre-orders** | ✅ | ✅ PDP + admin + checkout | ✅ PDP + cuenta + filtros |
 
 ---
 
@@ -558,6 +559,7 @@ Fases 8–10 cerraron con PRs encadenadas + UI closure; fase 11 con PR #5 + fixe
 |-----|--------|------|
 | Google/Trustpilot API live | Stub | `ExternalReviewsService` devuelve perfil configurable; integración real opcional |
 | Admin loyalty dashboard | Pendiente | Lealtad visible en cuenta cliente; sin panel admin dedicado |
+| Admin reviews SSR | ✅ | `page.tsx` + `reviews-moderation-view.tsx` con `AdminPageHeader` + `initialData` |
 | Pre-order reserva dedicada | Parcial | Flags en producto + PDP; sin cola de fulfillment pre-order |
 
 ---
@@ -602,7 +604,7 @@ docs/PROGRAMMING-LOGIC-AUDIT.md  (este archivo)
 
 ## 12. Conclusión
 
-El monorepo tiene un **núcleo coherente y alineado** tras Sprints A–E (jun 2026):
+El monorepo tiene un **núcleo coherente y alineado** tras Sprints A–G (jun 2026):
 
 - API modular NestJS con guards JWT/RBAC, `@Audit` en mutaciones críticas (incl. fulfillment), abstracciones por proveedor y Swagger documentado  
 - Web con SSR, shell admin unificado, hooks `api-client` en finance/analytics, checkout con IVA + envío, diseño neo-brutalist  
@@ -616,6 +618,7 @@ El monorepo tiene un **núcleo coherente y alineado** tras Sprints A–E (jun 20
 | React Doctor web | ✅ 100/100 (`useReducer` en formularios críticos) |
 | Phase 12 shipping/taxes | ✅ merge `71b686d`; Playwright UI verificado |
 | Phase 13 search/catalog | ✅ merge; React Doctor 100; store facetado SSR |
+| Phase 14 engagement | ✅ merge PR #6; reviews admin SSR; React/Nest/Expo doctors 100/100/21 |
 
 La **mayor fuente de bugs en merge** sigue siendo **cableado olvidado**: `AppModule`, JWT, migraciones, nav admin, providers, consent en E2E. Usar las checklists de §8 antes de cada merge a `main`.
 

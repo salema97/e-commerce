@@ -1,8 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { promisify } from 'node:util';
 import * as soap from 'soap';
 
 const SOAP_TIMEOUT_MS = 30_000;
+
+type SoapCreateClient = (
+  url: string,
+  options: { wsdl_options: { timeout: number } },
+  callback: (err: Error | null, client: soap.Client) => void,
+) => void;
+
+const createSoapClientAsync = promisify(soap.createClient as SoapCreateClient);
 
 export interface SriReceptionResponse {
   estado: string;
@@ -87,16 +96,7 @@ export class SriSoapClient {
   }
 
   private createClient(url: string): Promise<soap.Client> {
-    return new Promise((resolve, reject) => {
-      soap.createClient(
-        url,
-        { wsdl_options: { timeout: SOAP_TIMEOUT_MS } },
-        (err, client) => {
-          if (err) reject(err);
-          else resolve(client);
-        },
-      );
-    });
+    return createSoapClientAsync(url, { wsdl_options: { timeout: SOAP_TIMEOUT_MS } });
   }
 
   private callWithTimeout<T>(promise: Promise<T>): Promise<T> {

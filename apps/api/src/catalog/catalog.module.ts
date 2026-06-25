@@ -6,12 +6,11 @@ import { EventBusModule } from '../event-bus/event-bus.module.js';
 import { CatalogController } from './catalog.controller.js';
 import { CatalogService } from './catalog.service.js';
 import { CatalogCacheService } from './catalog-cache.service.js';
-import { CatalogCacheInvalidator } from './catalog-cache.invalidator.js';
 
 @Module({
   imports: [PrismaModule, AiModule, RedisModule, EventBusModule],
   controllers: [CatalogController],
-  providers: [CatalogService, CatalogCacheService, CatalogCacheInvalidator],
+  providers: [CatalogService, CatalogCacheService],
   exports: [CatalogService, CatalogCacheService],
 })
 export class CatalogModule {}
