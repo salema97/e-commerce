@@ -23,6 +23,17 @@ export function CookieConsentBanner({ onConsent }: { onConsent: () => void }) {
   const [dismissed, setDismissed] = React.useState(false);
   const visible = needsConsent && !dismissed;
   const [prefs, setPrefs] = React.useState<ConsentPreferences>(DEFAULT_CONSENT);
+  const dialogRef = React.useRef<HTMLDialogElement>(null);
+
+  React.useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (visible) {
+      if (!dialog.open) dialog.showModal();
+    } else if (dialog.open) {
+      dialog.close();
+    }
+  }, [visible]);
 
   if (!visible) {
     return null;
@@ -47,10 +58,16 @@ export function CookieConsentBanner({ onConsent }: { onConsent: () => void }) {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="cookie-consent-title">
+    <dialog
+      ref={dialogRef}
+      className="fixed inset-x-0 bottom-0 z-50 m-0 max-h-none w-full max-w-none border-0 bg-transparent p-4 backdrop:bg-black/40 open:flex open:justify-center"
+      aria-labelledby="cookie-consent-title"
+    >
       <Card className="mx-auto max-w-3xl border shadow-lg">
         <CardHeader>
-          <CardTitle id="cookie-consent-title" className="text-base">Preferencias de cookies</CardTitle>
+          <CardTitle id="cookie-consent-title" className="text-base">
+            Preferencias de cookies
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground">
           <p>
@@ -90,6 +107,6 @@ export function CookieConsentBanner({ onConsent }: { onConsent: () => void }) {
           </Button>
         </CardFooter>
       </Card>
-    </div>
+    </dialog>
   );
 }
