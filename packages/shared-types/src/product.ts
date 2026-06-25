@@ -38,6 +38,11 @@ export interface Product {
   compareAtPrice?: number | null;
   cost?: number | null;
   isFeatured: boolean;
+  isPreOrder?: boolean;
+  preOrderReleaseDate?: string | null;
+  preOrderChargeTiming?: 'AT_SHIPPING' | 'UPFRONT' | null;
+  averageRating?: number | null;
+  reviewCount?: number;
   categoryId?: string | null;
   supplierId?: string | null;
   createdAt: string;

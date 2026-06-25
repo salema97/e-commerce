@@ -11,6 +11,7 @@ import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.mo
 import { NotificationsModule } from '../notifications/notifications.module.js';
 import { ShippingModule } from '../shipping/shipping.module.js';
 import { TaxModule } from '../tax/tax.module.js';
+import { LoyaltyModule } from '../loyalty/loyalty.module.js';
 import { BackorderService } from './backorder.service.js';
 
 @Module({
@@ -24,6 +25,7 @@ import { BackorderService } from './backorder.service.js';
     NotificationsModule,
     ShippingModule,
     TaxModule,
+    LoyaltyModule,
   ],
   controllers: [OrdersController, RefundsController],
   providers: [OrdersService, BackorderService],

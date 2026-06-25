@@ -17,6 +17,7 @@ import {
   type AddressFormValues,
 } from './address-form.utils';
 import { CouponInput } from './coupon-input';
+import { EngagementInputs } from './engagement-inputs';
 import { OrderSummary } from './order-summary';
 import { PaymentForm } from './payment-element';
 import { trackEvent } from '@/lib/analytics/track';
@@ -36,6 +37,8 @@ const FALLBACK_FREE_SHIPPING_THRESHOLD = 50;
 type CheckoutState = {
   address: AddressFormValues;
   couponCode: string;
+  referralCode: string;
+  loyaltyPoints: number;
   order: CreatedOrderResult | null;
   paymentIntent: PaymentIntentResult | null;
   isSubmitting: boolean;
@@ -46,6 +49,8 @@ type CheckoutState = {
 type CheckoutAction =
   | { type: 'set_address'; value: AddressFormValues }
   | { type: 'set_coupon'; value: string }
+  | { type: 'set_referral'; value: string }
+  | { type: 'set_loyalty'; value: number }
   | { type: 'submit_start' }
   | { type: 'submit_success'; order: CreatedOrderResult; paymentIntent: PaymentIntentResult }
   | { type: 'submit_error'; message: string }
@@ -54,6 +59,8 @@ type CheckoutAction =
 const checkoutInitialState: CheckoutState = {
   address: EMPTY_ADDRESS,
   couponCode: '',
+  referralCode: '',
+  loyaltyPoints: 0,
   order: null,
   paymentIntent: null,
   isSubmitting: false,
@@ -67,6 +74,10 @@ function checkoutReducer(state: CheckoutState, action: CheckoutAction): Checkout
       return { ...state, address: action.value };
     case 'set_coupon':
       return { ...state, couponCode: action.value };
+    case 'set_referral':
+      return { ...state, referralCode: action.value };
+    case 'set_loyalty':
+      return { ...state, loyaltyPoints: action.value };
     case 'submit_start':
       return { ...state, error: null, isSubmitting: true };
     case 'submit_success':
@@ -94,6 +105,8 @@ export function CheckoutContainer() {
   const {
     address,
     couponCode,
+    referralCode,
+    loyaltyPoints,
     order,
     paymentIntent,
     isSubmitting,
@@ -187,6 +200,8 @@ export function CheckoutContainer() {
         })),
         channel: 'WEB',
         couponCode: couponCode.trim() || undefined,
+        referralCode: referralCode.trim() || undefined,
+        loyaltyPointsToRedeem: loyaltyPoints > 0 ? loyaltyPoints : undefined,
         customerEmail: address.email,
         customerPhone: address.phone || undefined,
         shippingAddress: toOrderAddress(address),
@@ -281,6 +296,21 @@ export function CheckoutContainer() {
               <CouponInput
                 couponCode={couponCode}
                 onCouponCodeChange={(value) => dispatch({ type: 'set_coupon', value })}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Referidos y puntos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <EngagementInputs
+                subtotal={subtotal}
+                referralCode={referralCode}
+                onReferralCodeChange={(value) => dispatch({ type: 'set_referral', value })}
+                loyaltyPoints={loyaltyPoints}
+                onLoyaltyPointsChange={(value) => dispatch({ type: 'set_loyalty', value })}
               />
             </CardContent>
           </Card>

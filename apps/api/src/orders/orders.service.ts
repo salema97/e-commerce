@@ -14,6 +14,7 @@ import { ListOrdersQueryDto } from './dto/list-orders.query.dto.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
 import { BackorderService, type ItemAllocation } from './backorder.service.js';
 import { EventBus } from '../event-bus/event-bus.interface.js';
+import { LoyaltyService } from '../loyalty/loyalty.service.js';
 
 export interface CreatedOrderResult {
   id: string;
@@ -42,6 +43,7 @@ export class OrdersService {
     private readonly notificationService: WhatsAppNotificationService,
     private readonly emailNotificationService: EmailNotificationService,
     private readonly pushNotificationService: PushNotificationService,
+    private readonly loyaltyService: LoyaltyService,
     @Inject(EventBus) private readonly eventBus: EventBus,
   ) {}
 
@@ -84,31 +86,51 @@ export class OrdersService {
       dto.couponCode,
     );
 
+    let loyaltyDiscount = 0;
+    let loyaltyPointsRedeemed = 0;
+    if (userId && dto.loyaltyPointsToRedeem && dto.loyaltyPointsToRedeem > 0) {
+      const quote = await this.loyaltyService.quoteRedemption(
+        userId,
+        discountTotals.subtotal - discountTotals.discount,
+        dto.loyaltyPointsToRedeem,
+      );
+      loyaltyPointsRedeemed = quote.points;
+      loyaltyDiscount = quote.discountAmount;
+    }
+
     const shippingAddress = dto.shippingAddress as Record<string, string> | undefined;
     const taxCategories = await this.loadTaxCategories(dto.items);
+
+    let loyaltyFreeShipping = false;
+    if (userId) {
+      const loyaltyAccount = await this.loyaltyService.getOrCreateAccount(userId);
+      loyaltyFreeShipping = this.loyaltyService.hasFreeShippingBenefit(loyaltyAccount.tier);
+    }
+
     const taxResult = await this.taxService.calculateForCart({
       items: cartItems,
       taxCategories,
-      orderDiscount: discountTotals.discount,
+      orderDiscount: discountTotals.discount + loyaltyDiscount,
       country: shippingAddress?.country,
       province: shippingAddress?.state,
     });
     const shippingQuote = await this.shippingService.quote({
       country: shippingAddress?.country,
       province: shippingAddress?.state,
-      subtotal: discountTotals.subtotal - discountTotals.discount,
-      freeShipping: discountTotals.freeShipping,
+      subtotal: discountTotals.subtotal - discountTotals.discount - loyaltyDiscount,
+      freeShipping: discountTotals.freeShipping || loyaltyFreeShipping,
     });
 
     const totals = {
       subtotal: discountTotals.subtotal,
-      discount: discountTotals.discount,
+      discount: discountTotals.discount + loyaltyDiscount,
       taxAmount: taxResult.taxAmount,
       shipping: shippingQuote.amount,
       total: Number(
         (
           discountTotals.subtotal -
-          discountTotals.discount +
+          discountTotals.discount -
+          loyaltyDiscount +
           taxResult.taxAmount +
           shippingQuote.amount
         ).toFixed(2),
@@ -139,6 +161,8 @@ export class OrdersService {
         status: OrderStatus.PAYMENT_PENDING,
         channel,
         couponCode: dto.couponCode,
+        referralCode: dto.referralCode,
+        loyaltyPointsRedeemed,
         subtotal,
         taxAmount,
         shippingAmount,
@@ -155,6 +179,10 @@ export class OrdersService {
 
     if (dto.couponCode) {
       await this.promotionService.incrementCouponUsage(dto.couponCode);
+    }
+
+    if (userId && loyaltyPointsRedeemed > 0) {
+      await this.loyaltyService.redeem(userId, loyaltyPointsRedeemed, order.id);
     }
 
     return {
@@ -286,6 +314,9 @@ export class OrdersService {
     return Promise.all(items.map(async (item) => {
       const product = await this.prisma.product.findUnique({ where: { id: item.productId }, include: { variants: true } });
       if (!product) throw new BadRequestException(`Product ${item.productId} not found`);
+      if (product.isPreOrder && product.preOrderReleaseDate && product.preOrderReleaseDate > new Date()) {
+        // Pre-orders allowed before release; fulfillment waits until release date.
+      }
       if (item.variantId && !product.variants.some((v) => v.id === item.variantId)) {
         throw new BadRequestException(`Variant ${item.variantId} not found for product ${item.productId}`);
       }

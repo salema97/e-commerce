@@ -19,6 +19,8 @@ import {
   Megaphone,
   Store,
   Wallet,
+  Star,
+  Gift,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { sidebarIconHover, sidebarIconRest } from '@/lib/neo-motion';
@@ -33,6 +35,8 @@ const navIcons: Record<string, React.ElementType> = {
   '/admin/orders': ShoppingBag,
   '/admin/returns': RotateCcw,
   '/admin/customers': Users,
+  '/admin/reviews': Star,
+  '/admin/referrals': Gift,
   '/admin/marketing': Megaphone,
   '/admin/analytics': BarChart3,
   '/admin/support': MessageSquare,

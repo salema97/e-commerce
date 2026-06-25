@@ -17,6 +17,7 @@ import { trackMobileEvent } from '../../../lib/analytics.js';
 import { useAuth } from '../../../providers/AuthProvider.js';
 import { useWishlist } from '../../../lib/wishlist.js';
 import { BackInStockForm } from '../../../components/product/BackInStockForm.js';
+import { ProductReviews } from '../../../components/product/ProductReviews.js';
 import { captureMobileException } from '../../../lib/sentry.js';
 import type { ProductVariant } from '@repo/shared-types';
 
@@ -84,6 +85,10 @@ export default function ProductDetailScreen(): React.ReactElement {
   const effectivePrice = selectedVariant?.price ?? product.price;
   const availableQuantity = getProductAvailableQuantity(product.inventory);
   const isOutOfStock = availableQuantity <= 0;
+  const isPreOrder =
+    product.isPreOrder &&
+    product.preOrderReleaseDate &&
+    new Date(product.preOrderReleaseDate) > new Date();
   const savedToWishlist = isInWishlist(product.id);
 
   const handleToggleWishlist = (): void => {
@@ -119,7 +124,10 @@ export default function ProductDetailScreen(): React.ReactElement {
               <NeoStaggeredItem index={1}>
                 <View style={styles.badgeRow}>
                   {product.isFeatured ? <Badge variant="secondary">Destacado</Badge> : null}
-                  <Badge variant="primary">{isOutOfStock ? 'Sin stock' : 'En stock'}</Badge>
+                  {isPreOrder ? <Badge variant="outline">Pre-orden</Badge> : null}
+                  <Badge variant="primary">
+                    {isOutOfStock && !isPreOrder ? 'Sin stock' : 'En stock'}
+                  </Badge>
                 </View>
               </NeoStaggeredItem>
 
@@ -128,6 +136,13 @@ export default function ProductDetailScreen(): React.ReactElement {
 
                 {product.description ? (
                   <Text style={styles.description}>{product.description}</Text>
+                ) : null}
+
+                {isPreOrder && product.preOrderReleaseDate ? (
+                  <Text style={styles.preorderNote}>
+                    Disponible a partir del{' '}
+                    {new Date(product.preOrderReleaseDate).toLocaleDateString('es-EC')}
+                  </Text>
                 ) : null}
               </NeoStaggeredItem>
 
@@ -178,7 +193,7 @@ export default function ProductDetailScreen(): React.ReactElement {
                 </View>
               </NeoStaggeredItem>
 
-              {isOutOfStock ? (
+              {isOutOfStock && !isPreOrder ? (
                 <NeoStaggeredItem index={5}>
                   <BackInStockForm productId={product.id} />
                 </NeoStaggeredItem>
@@ -186,6 +201,8 @@ export default function ProductDetailScreen(): React.ReactElement {
             </View>
           </Card>
         </NeoStaggeredItem>
+
+        <ProductReviews productId={product.id} />
       </ScrollView>
 
       <View style={styles.footer}>
@@ -197,8 +214,8 @@ export default function ProductDetailScreen(): React.ReactElement {
         <Button variant="outline" onPress={handleToggleWishlist} size="lg">
           {savedToWishlist ? 'Quitar de favoritos' : 'Guardar en favoritos'}
         </Button>
-        <Button onPress={handleAddToCart} size="lg" disabled={isOutOfStock}>
-          {isOutOfStock ? 'Sin stock' : 'Agregar al carrito'}
+        <Button onPress={handleAddToCart} size="lg" disabled={isOutOfStock && !isPreOrder}>
+          {isOutOfStock && !isPreOrder ? 'Sin stock' : 'Agregar al carrito'}
         </Button>
       </View>
     </NeoScreen>
@@ -272,6 +289,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: neo.muted,
     lineHeight: 20,
+    fontWeight: '600',
+  },
+  preorderNote: {
+    marginTop: 8,
+    fontSize: 13,
+    color: neo.muted,
     fontWeight: '600',
   },
   section: {

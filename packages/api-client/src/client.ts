@@ -85,6 +85,18 @@ import type {
   UpdateReturnShippingDto,
   CatalogResponse,
   CatalogQuery,
+  ProductReview,
+  ProductReviewSummary,
+  CreateProductReviewDto,
+  UpdateReviewStatusDto,
+  ExternalReviewSummary,
+  LoyaltyAccount,
+  LoyaltyTransaction,
+  LoyaltyRedemptionQuote,
+  ReferralCode,
+  ReferralConversion,
+  ReferralPerformanceReport,
+  PayoutReferralDto,
 } from '@repo/shared-types';
 
 export interface ApiClientOptions {
@@ -504,6 +516,41 @@ export function createApiClient(options: ApiClientOptions) {
         rejectDraft: (productId: string) =>
           request<{ success: boolean }>('POST', `/ai/products/${productId}/content-draft/reject`),
       },
+    },
+    reviews: {
+      listByProduct: (productId: string) =>
+        request<ProductReview[]>('GET', `/reviews/products/${productId}`),
+      summary: (productId: string) =>
+        request<ProductReviewSummary>('GET', `/reviews/products/${productId}/summary`),
+      create: (productId: string, data: CreateProductReviewDto) =>
+        request<ProductReview>('POST', `/reviews/products/${productId}`, data),
+      listPending: (limit?: number) =>
+        request<ProductReview[]>('GET', '/reviews/moderation/pending', undefined, { limit }),
+      moderate: (id: string, data: UpdateReviewStatusDto) =>
+        request<ProductReview>('PATCH', `/reviews/${id}/status`, data),
+      externalSummary: () => request<ExternalReviewSummary>('GET', '/reviews/external/summary'),
+    },
+    loyalty: {
+      me: () => request<LoyaltyAccount>('GET', '/loyalty/me'),
+      transactions: (limit?: number) =>
+        request<LoyaltyTransaction[]>('GET', '/loyalty/me/transactions', undefined, { limit }),
+      quoteRedemption: (subtotal: number, points?: number) =>
+        request<LoyaltyRedemptionQuote>('GET', '/loyalty/me/redemption-quote', undefined, {
+          subtotal,
+          points,
+        }),
+    },
+    referrals: {
+      myCode: () => request<ReferralCode>('GET', '/referrals/me/code'),
+      myPerformance: () => request<ReferralPerformanceReport>('GET', '/referrals/me/performance'),
+      adminPerformance: () =>
+        request<ReferralPerformanceReport>('GET', '/referrals/admin/performance'),
+      payout: (conversionId: string, data: PayoutReferralDto) =>
+        request<ReferralConversion>(
+          'POST',
+          `/referrals/admin/conversions/${conversionId}/payout`,
+          data,
+        ),
     },
   };
 }

@@ -16,6 +16,7 @@ export default function StoreScreen(): React.ReactElement {
   const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
+  const [minRating, setMinRating] = useState<number | undefined>();
   const lastSearchRef = useRef<string | null>(null);
   const lastCategoryRef = useRef<string | null>(null);
 
@@ -25,11 +26,12 @@ export default function StoreScreen(): React.ReactElement {
     () => ({
       q: trimmedSearch || undefined,
       category: selectedCategory,
+      minRating,
       page: 1,
       limit: 48,
       sort: 'newest' as const,
     }),
-    [trimmedSearch, selectedCategory],
+    [trimmedSearch, selectedCategory, minRating],
   );
 
   useEffect(() => {
@@ -79,6 +81,11 @@ export default function StoreScreen(): React.ReactElement {
           {item.categoryName ? (
             <Text style={styles.categoryName}>{item.categoryName}</Text>
           ) : null}
+          {item.reviewCount && item.reviewCount > 0 ? (
+            <Text style={styles.productRating}>
+              {(item.averageRating ?? 0).toFixed(1)} ★ ({item.reviewCount})
+            </Text>
+          ) : null}
           <View style={styles.priceRow}>
             <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
             {item.compareAtPrice ? <Badge variant="destructive" size="sm">Oferta</Badge> : null}
@@ -112,6 +119,16 @@ export default function StoreScreen(): React.ReactElement {
         contentContainerStyle={styles.categories}
         showsHorizontalScrollIndicator={false}
       />
+
+      <View style={styles.ratingRow}>
+        {[undefined, 4, 3].map((value) => (
+          <Pressable key={value ?? 'all'} onPress={() => setMinRating(value)} style={styles.chip}>
+            <Badge variant={minRating === value ? 'secondary' : 'outline'}>
+              {value ? `${value}+ ★` : 'Todas'}
+            </Badge>
+          </Pressable>
+        ))}
+      </View>
 
       {catalogError ? (
         <View style={styles.center}>
@@ -169,6 +186,12 @@ const styles = StyleSheet.create({
   chip: {
     marginRight: 8,
   },
+  ratingRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    gap: 8,
+  },
   center: {
     flex: 1,
     justifyContent: 'center',
@@ -202,6 +225,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontWeight: '600',
     textTransform: 'uppercase',
+  },
+  productRating: {
+    fontSize: 12,
+    color: neo.muted,
+    marginTop: 4,
+    fontWeight: '600',
   },
   priceRow: {
     flexDirection: 'row',

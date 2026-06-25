@@ -42,6 +42,12 @@ export class CreateOrderDto {
   @IsOptional() @IsString() couponCode?: string;
 
   @ApiPropertyOptional()
+  @IsOptional() @IsString() referralCode?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional() @IsInt() @Min(0) loyaltyPointsToRedeem?: number;
+
+  @ApiPropertyOptional()
   @IsOptional() @IsEmail() customerEmail?: string;
 
   @ApiPropertyOptional()

@@ -57,6 +57,13 @@ export class CatalogQueryDto {
   @Max(100)
   limit?: number;
 
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
+  @Max(5)
+  minRating?: number;
+
   /** Serialized attribute filters: attr_Color=rojo */
   @IsOptional()
   @IsString({ each: true })

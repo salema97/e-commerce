@@ -39,7 +39,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 | Phase 11 — Advanced Analytics | ✅ | Merged `12427aa`; UI wiring verified post-merge. |
 | Phase 12 — Shipping/Fulfillment | ✅ Yes | Carrier/WMS abstractions + Ecuador defaults implemented. |
 | Phase 13 — Search/Filters | ❌ | Standard Meilisearch usage. |
-| Phase 14 — Reviews/Referrals/Loyalty | ❌ | Common low-risk features. |
+| Phase 14 — Reviews/Referrals/Loyalty | ✅ | Reviews, referrals, loyalty, pre-order flags, back-in-stock. |
 | Phase 15 — Multi-marketplace/ERP/B2B | ✅ Yes | External channel sync, B2B quotes. |
 | Phase 16 — Compliance/Security/Production | ✅ Yes | Security hardening, disaster recovery, compliance workflows. |
 | Phase 17 — POS/Subscriptions/Dropshipping/Marketplace | ✅ Yes | Business-model-changing features. |
@@ -532,31 +532,31 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 ### 14.1 Reviews
 
-- [ ] Integrate Google Reviews or Trustpilot for store/social proof.
-- [ ] Build in-house product review system (ratings, text, verified purchase badge).
-- [ ] Admin moderation workflow.
-- [ ] Display reviews on product detail pages with structured data.
+- [x] Integrate Google Reviews or Trustpilot for store/social proof.
+- [x] Build in-house product review system (ratings, text, verified purchase badge).
+- [x] Admin moderation workflow.
+- [x] Display reviews on product detail pages with structured data.
 
 ### 14.2 Referrals
 
-- [ ] Design `ReferralEngine` in core codebase.
-- [ ] Generate unique referral codes/links per customer.
-- [ ] Track conversions and attribute commissions.
-- [ ] Payout workflow (store credit or external payment).
-- [ ] Admin dashboard for referral performance.
+- [x] Design `ReferralEngine` in core codebase.
+- [x] Generate unique referral codes/links per customer.
+- [x] Track conversions and attribute commissions.
+- [x] Payout workflow (store credit or external payment).
+- [x] Admin dashboard for referral performance.
 
 ### 14.3 Loyalty & Rewards
 
-- [ ] Design `LoyaltyEngine` in core codebase.
-- [ ] Points accrual rules (purchase, review, referral, signup).
-- [ ] Tier levels and associated benefits.
-- [ ] Redemption at checkout (discounts, free shipping).
-- [ ] Expiration and fraud prevention rules.
+- [x] Design `LoyaltyEngine` in core codebase.
+- [x] Points accrual rules (purchase, review, referral, signup).
+- [x] Tier levels and associated benefits.
+- [x] Redemption at checkout (discounts, free shipping).
+- [x] Expiration and fraud prevention rules.
 
 ### 14.4 Pre-orders & Back-in-stock
 
-- [ ] Pre-order flow: reserve stock before release date with configurable charge timing (at shipping or upfront).
-- [ ] Back-in-stock alerts for subscribed customers via email, push, and WhatsApp.
+- [x] Pre-order flow: reserve stock before release date with configurable charge timing (at shipping or upfront).
+- [x] Back-in-stock alerts for subscribed customers via email, push, and WhatsApp.
 
 ## Phase 15 — Multi-marketplace, ERP/Accounting, B2B & Multi-currency
 

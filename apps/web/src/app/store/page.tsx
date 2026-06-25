@@ -19,6 +19,7 @@ interface StorePageProps {
     brand?: string;
     minPrice?: string;
     maxPrice?: string;
+    minRating?: string;
     inStock?: string;
     attr?: string | string[];
   }>;
@@ -82,6 +83,7 @@ export default async function StorePage({ searchParams }: StorePageProps) {
             brand={params.brand}
             minPrice={params.minPrice}
             maxPrice={params.maxPrice}
+            minRating={params.minRating}
             inStock={params.inStock === 'true'}
             sort={sort}
             categories={categories}

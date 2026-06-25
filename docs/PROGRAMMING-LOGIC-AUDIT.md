@@ -541,6 +541,25 @@ Fases 8–10 cerraron con PRs encadenadas + UI closure; fase 11 con PR #5 + fixe
 | Core Web Vitals / Lighthouse CI | Pendiente | Optimización imágenes configurada; sin pipeline CI |
 | Sinónimos Meilisearch | API | Config en `meilisearch.service`; revisar en producción |
 
+### Sprint G — Fase 14 (reviews / referrals / loyalty) ✅
+
+1. ~~Prisma: `ProductReview`, `ReferralCode`, `ReferralConversion`, `LoyaltyAccount`, `LoyaltyTransaction`; campos pre-order en `Product`~~ ✅
+2. ~~API: `ReviewsModule`, `ReferralsModule` (`ReferralEngine`), `LoyaltyModule` (`LoyaltyEngine`), `OrderPaidEngagementConsumer`~~ ✅
+3. ~~Checkout: `referralCode` + `loyaltyPointsToRedeem` en `CreateOrderDto` / `OrdersService`~~ ✅
+4. ~~Web PDP: SSR + JSON-LD `aggregateRating`, `ProductReviews`, neo UI (`MERGE-GUIDE`)~~ ✅
+5. ~~Web admin: `/admin/reviews`, `/admin/referrals`; checkout `EngagementInputs` con `useReducer`~~ ✅
+6. ~~Mobile: reseñas en PDP, filtro `minRating` en tienda, referidos/puntos en checkout y cuenta~~ ✅
+7. ~~`@repo/api-client`: hooks `useProductReviews`, `useLoyaltyAccount`, `useReferralCode`, etc.~~ ✅
+8. ~~Catálogo: facet `minRating` + `averageRating`/`reviewCount` en índice Meilisearch~~ ✅
+
+**Gaps no bloqueantes (fase 14):**
+
+| Gap | Estado | Nota |
+|-----|--------|------|
+| Google/Trustpilot API live | Stub | `ExternalReviewsService` devuelve perfil configurable; integración real opcional |
+| Admin loyalty dashboard | Pendiente | Lealtad visible en cuenta cliente; sin panel admin dedicado |
+| Pre-order reserva dedicada | Parcial | Flags en producto + PDP; sin cola de fulfillment pre-order |
+
 ---
 
 ## 11. Referencias rápidas de archivos

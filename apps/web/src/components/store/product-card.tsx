@@ -40,6 +40,8 @@ export function ProductCard({ product, className, size = 'default' }: ProductCar
   const isFeatured = isCatalogSummary(product) ? product.isFeatured : product.isFeatured;
   const compareAtPrice = product.compareAtPrice;
   const outOfStock = isCatalogSummary(product) ? !product.inStock : false;
+  const reviewCount = isCatalogSummary(product) ? product.reviewCount : undefined;
+  const averageRating = isCatalogSummary(product) ? product.averageRating : undefined;
 
   return (
     <Link href={`/store/${product.slug}`} className={cn('group block', className)}>
@@ -60,6 +62,11 @@ export function ProductCard({ product, className, size = 'default' }: ProductCar
         </div>
         <CardHeader className={cn('pb-2', size === 'compact' && 'p-4')}>
           <CardTitle className={cn(size === 'compact' && 'text-base')}>{product.name}</CardTitle>
+          {reviewCount && reviewCount > 0 ? (
+            <p className="text-xs font-bold text-muted-foreground">
+              {(averageRating ?? 0).toFixed(1)} ★ ({reviewCount})
+            </p>
+          ) : null}
         </CardHeader>
         <CardContent
           className={cn('flex items-center justify-between', size === 'compact' && 'p-4 pt-0')}

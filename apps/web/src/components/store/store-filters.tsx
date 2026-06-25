@@ -12,6 +12,7 @@ interface StoreFiltersProps {
   brand?: string;
   minPrice?: string;
   maxPrice?: string;
+  minRating?: string;
   inStock?: boolean;
   sort: string;
   categories: Category[];
@@ -33,6 +34,7 @@ export function StoreFilters({
   brand = '',
   minPrice = '',
   maxPrice = '',
+  minRating = '',
   inStock = false,
   sort,
   categories,
@@ -115,6 +117,22 @@ export function StoreFilters({
           />
         </div>
       ) : null}
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="minRating">Valoración mínima</Label>
+        <FormSelect
+          id="minRating"
+          name="minRating"
+          defaultValue={minRating}
+          placeholder="Cualquiera"
+          options={[
+            { value: '', label: 'Cualquiera' },
+            { value: '4', label: '4+ estrellas' },
+            { value: '3', label: '3+ estrellas' },
+            { value: '2', label: '2+ estrellas' },
+          ]}
+        />
+      </div>
 
       <label className="flex items-center gap-2 text-sm font-medium">
         <input type="checkbox" name="inStock" value="true" defaultChecked={inStock} />

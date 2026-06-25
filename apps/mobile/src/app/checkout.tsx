@@ -36,10 +36,13 @@ export default function CheckoutScreen(): React.ReactElement {
   const [zipCode, setZipCode] = useState('');
   const [country, setCountry] = useState('Ecuador');
   const [couponCode, setCouponCode] = useState('');
+  const [referralCode, setReferralCode] = useState('');
+  const [loyaltyPoints, setLoyaltyPoints] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const createOrder = api.hooks.useCreateOrder();
   const createPaymentIntent = api.hooks.useCreatePaymentIntent();
+  const { data: loyaltyAccount } = api.hooks.useLoyaltyAccount();
 
   const shipping = cartTotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT_RATE;
   const tax = cartTotal * TAX_RATE;
@@ -74,6 +77,8 @@ export default function CheckoutScreen(): React.ReactElement {
         })),
         channel: 'MOBILE',
         couponCode: couponCode.trim() || undefined,
+        referralCode: referralCode.trim() || undefined,
+        loyaltyPointsToRedeem: loyaltyPoints ? Number(loyaltyPoints) : undefined,
         customerEmail: email,
         customerPhone: phone || undefined,
         shippingAddress,
@@ -252,6 +257,29 @@ export default function CheckoutScreen(): React.ReactElement {
           />
         </NeoEnterFromBottom>
 
+        <NeoEnterFromBottom delay={280}>
+          <Text style={styles.sectionTitle}>Referido y puntos</Text>
+          <Input
+            label="Código de referido"
+            value={referralCode}
+            onChangeText={setReferralCode}
+            autoCapitalize="characters"
+            containerStyle={styles.field}
+          />
+          {loyaltyAccount ? (
+            <Text style={styles.loyaltyHint}>
+              Puntos disponibles: {loyaltyAccount.points} ({loyaltyAccount.tier})
+            </Text>
+          ) : null}
+          <Input
+            label="Puntos a canjear"
+            value={loyaltyPoints}
+            onChangeText={setLoyaltyPoints}
+            keyboardType="number-pad"
+            containerStyle={styles.field}
+          />
+        </NeoEnterFromBottom>
+
         <NeoEnterFromBottom delay={320}>
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -356,6 +384,11 @@ const styles = StyleSheet.create({
   },
   field: {
     marginBottom: 12,
+  },
+  loyaltyHint: {
+    fontSize: 13,
+    color: '#525252',
+    marginBottom: 8,
   },
   row: {
     flexDirection: 'row',

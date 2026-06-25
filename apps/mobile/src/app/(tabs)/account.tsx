@@ -95,6 +95,12 @@ export default function AccountScreen(): React.ReactElement {
       ) : null}
 
       <View style={styles.actions}>
+        <Button variant="outline" onPress={() => router.push('/account/loyalty')}>
+          Programa de lealtad
+        </Button>
+        <Button variant="outline" onPress={() => router.push('/account/referrals')}>
+          Invita y gana
+        </Button>
         <Button variant="outline" onPress={() => router.push('/account/notifications')}>
           Preferencias de notificaciones
         </Button>

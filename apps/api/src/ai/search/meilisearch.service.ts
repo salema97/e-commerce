@@ -20,6 +20,8 @@ export interface MeiliProductDocument {
   attributeFacets: string[];
   imageUrl: string | null;
   createdAt: number;
+  averageRating: number | null;
+  reviewCount: number;
 }
 
 export interface CatalogSearchParams {
@@ -28,6 +30,7 @@ export interface CatalogSearchParams {
   brand?: string;
   minPrice?: number;
   maxPrice?: number;
+  minRating?: number;
   inStock?: boolean;
   attributes?: Record<string, string>;
   sort?: 'newest' | 'price_asc' | 'price_desc' | 'name_asc';
@@ -107,8 +110,10 @@ export class MeilisearchService implements OnModuleInit {
       'inStock',
       'brand',
       'attributeFacets',
+      'averageRating',
+      'reviewCount',
     ]);
-    await index.updateSortableAttributes(['price', 'createdAt', 'name']);
+    await index.updateSortableAttributes(['price', 'createdAt', 'name', 'averageRating']);
     await index.updateRankingRules([
       'words',
       'typo',
@@ -192,6 +197,9 @@ export class MeilisearchService implements OnModuleInit {
     }
     if (params.maxPrice !== undefined) {
       filters.push(`price <= ${params.maxPrice}`);
+    }
+    if (params.minRating !== undefined) {
+      filters.push(`averageRating >= ${params.minRating}`);
     }
     if (params.inStock === true) {
       filters.push('inStock = true');
