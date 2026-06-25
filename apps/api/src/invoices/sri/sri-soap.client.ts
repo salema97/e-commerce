@@ -41,9 +41,11 @@ export class SriSoapClient {
   async submit(xml: string): Promise<SriReceptionResponse> {
     const client = await this.createClient(this.getRecepcionUrl());
     const [result] = await this.callWithTimeout(
-      client.recepcionComprobantesOfflineAsync({ xml }) as Promise<[unknown]>,
+      client.validarComprobanteAsync({
+        xml: Buffer.from(xml, 'utf8').toString('base64'),
+      }) as Promise<[unknown]>,
     );
-    return this.parseReceptionResponse(result);
+    return this.parseReceptionResponse(this.unwrapSoapResult(result));
   }
 
   async poll(accessKey: string): Promise<SriAuthorizationResponse> {
@@ -88,11 +90,24 @@ export class SriSoapClient {
   async queryStatus(accessKey: string): Promise<SriAuthorizationResponse> {
     const client = await this.createClient(this.getAutorizacionUrl());
     const [result] = await this.callWithTimeout(
-      client.autorizacionComprobantesOfflineAsync({
+      client.autorizacionComprobanteAsync({
         claveAccesoComprobante: accessKey,
       }) as Promise<[unknown]>,
     );
-    return this.parseAuthorizationResponse(result);
+    return this.parseAuthorizationResponse(this.unwrapSoapResult(result));
+  }
+
+  private unwrapSoapResult(result: unknown): unknown {
+    if (typeof result !== 'object' || result === null) {
+      return result;
+    }
+
+    const record = result as Record<string, unknown>;
+    return (
+      record.RespuestaRecepcionComprobante ??
+      record.RespuestaAutorizacionComprobante ??
+      result
+    );
   }
 
   private createClient(url: string): Promise<soap.Client> {
@@ -134,11 +149,28 @@ export class SriSoapClient {
       return { estado: 'NO_PROCESADA' };
     }
 
-    const response = result as SriReceptionResponse;
+    const response = result as SriReceptionResponse & {
+      comprobantes?: SriReceptionResponse['comprobantes'] | {
+        comprobante?: SriReceptionResponse['comprobantes'];
+      };
+    };
+    const rawComprobantes = Array.isArray(response.comprobantes)
+      ? response.comprobantes
+      : response.comprobantes &&
+          typeof response.comprobantes === 'object' &&
+          'comprobante' in response.comprobantes
+        ? response.comprobantes.comprobante
+        : undefined;
+    const comprobanteList = Array.isArray(rawComprobantes)
+      ? rawComprobantes
+      : rawComprobantes
+        ? [rawComprobantes]
+        : [];
+
     return {
       estado: this.normalizeEstado(response.estado),
-      comprobantes: Array.isArray(response.comprobantes)
-        ? response.comprobantes.map((comprobante) => ({
+      comprobantes: comprobanteList.length
+        ? comprobanteList.map((comprobante) => ({
             claveAcceso: String(comprobante.claveAcceso ?? ''),
             mensajes: this.normalizeMessages(comprobante.mensajes),
           }))
@@ -153,10 +185,19 @@ export class SriSoapClient {
       return {};
     }
 
-    const response = result as SriAuthorizationResponse;
+    const response = result as SriAuthorizationResponse & {
+      autorizacion?: SriAuthorizationResponse['autorizaciones'];
+    };
+    const rawAuthorizations = response.autorizaciones ?? response.autorizacion;
+    const authorizationList = Array.isArray(rawAuthorizations)
+      ? rawAuthorizations
+      : rawAuthorizations
+        ? [rawAuthorizations]
+        : [];
+
     return {
-      autorizaciones: Array.isArray(response.autorizaciones)
-        ? response.autorizaciones.map((auth) => ({
+      autorizaciones: authorizationList.length
+        ? authorizationList.map((auth) => ({
             estado: this.normalizeEstado(auth.estado),
             numeroAutorizacion: String(auth.numeroAutorizacion ?? ''),
             fechaAutorizacion: String(auth.fechaAutorizacion ?? ''),

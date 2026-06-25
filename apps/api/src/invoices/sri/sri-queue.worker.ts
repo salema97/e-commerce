@@ -19,6 +19,10 @@ import { SriSoapClient } from './sri-soap.client.js';
 import { SriRidePdfService } from './sri-ride-pdf.service.js';
 import { SriDocumentStorageService } from './sri-document-storage.service.js';
 import { SriDeliveryService } from './sri-delivery.service.js';
+import {
+  mapSriCompanyToXmlFields,
+  readSriCompanyConfig,
+} from './sri-company.config.js';
 import { EventBus } from '../../event-bus/event-bus.interface.js';
 import {
   SRI_QUEUE_NAME,
@@ -230,6 +234,9 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
       })),
     };
 
+    const company = readSriCompanyConfig(this.config);
+    const companyFields = mapSriCompanyToXmlFields(company);
+
     const result = await this.issueDocument(
       '01',
       orderId,
@@ -246,14 +253,7 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
           ),
           sequenceNumber,
           environment: this.getEnvironmentCode(),
-          companyRuc: this.config.getOrThrow<string>('SRI_RUC'),
-          companyName: this.config.getOrThrow<string>('SRI_COMPANY_NAME'),
-          companyTradeName:
-            this.config.get<string>('SRI_COMPANY_TRADE_NAME') ??
-            this.config.getOrThrow<string>('SRI_COMPANY_NAME'),
-          companyAddress:
-            this.config.get<string>('SRI_COMPANY_ADDRESS') ??
-            'Direccion matriz',
+          ...companyFields,
         });
       },
     );
@@ -342,6 +342,9 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
       total,
     };
 
+    const company = readSriCompanyConfig(this.config);
+    const companyFields = mapSriCompanyToXmlFields(company);
+
     const result = await this.issueDocument(
       '04',
       creditNoteId,
@@ -363,14 +366,7 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
           ),
           sequenceNumber,
           environment: this.getEnvironmentCode(),
-          companyRuc: this.config.getOrThrow<string>('SRI_RUC'),
-          companyName: this.config.getOrThrow<string>('SRI_COMPANY_NAME'),
-          companyTradeName:
-            this.config.get<string>('SRI_COMPANY_TRADE_NAME') ??
-            this.config.getOrThrow<string>('SRI_COMPANY_NAME'),
-          companyAddress:
-            this.config.get<string>('SRI_COMPANY_ADDRESS') ??
-            'Direccion matriz',
+          ...companyFields,
         });
       },
     );

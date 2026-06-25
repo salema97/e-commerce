@@ -42,8 +42,10 @@ const envSchema = z.object({
   SRI_COMPANY_NAME: z.string().min(1),
   SRI_COMPANY_TRADE_NAME: z.string().min(1),
   SRI_COMPANY_ADDRESS: z.string().min(1),
-  SRI_COMPANY_CONTRIBUYENTE_ESPECIAL: z.string().optional(),
-  SRI_COMPANY_OBLIGADO_CONTABILIDAD: z.string().min(1).default('SI'),
+  SRI_COMPANY_SPECIAL_TAXPAYER_NUMBER: z.string().optional(),
+  SRI_COMPANY_REQUIRES_ACCOUNTING: z
+    .enum(['true', 'false'])
+    .default('true'),
   SRI_QUEUE_ENABLED: z.enum(['true', 'false']).default('true'),
   SRI_WORKER_CONCURRENCY: z.coerce.number().int().positive().default(5),
   SRI_MAX_RETRIES: z.coerce.number().int().positive().default(5),

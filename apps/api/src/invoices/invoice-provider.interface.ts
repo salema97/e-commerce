@@ -24,6 +24,8 @@ export interface InvoiceOrder {
   discountAmount: number;
   total: number;
   currency: string;
+  /** SRI tabla 24 — default 20 (pago con sistema financiero) for online checkout. */
+  paymentMethodCode?: string;
 }
 
 export interface InvoiceResult {

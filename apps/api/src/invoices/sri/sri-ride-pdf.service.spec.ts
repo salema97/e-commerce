@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { SriRidePdfService } from './sri-ride-pdf.service.js';
 
 const fixtureInvoiceXml = `<?xml version="1.0" encoding="UTF-8"?>
-<factura id="comprobante" version="2.3.2">
+<factura id="comprobante" version="2.1.0">
   <infoTributaria>
     <ambiente>1</ambiente>
     <tipoEmision>1</tipoEmision>

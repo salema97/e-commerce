@@ -1,13 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SriXmlBuilder } from './sri-xml.builder.js';
-import { SriAccessKeyBuilder } from './sri-access-key.builder.js';
 import { InvoiceOrder } from '../invoice-provider.interface.js';
 
 describe('SriXmlBuilder', () => {
   let builder: SriXmlBuilder;
 
   beforeEach(() => {
-    builder = new SriXmlBuilder(new SriAccessKeyBuilder());
+    builder = new SriXmlBuilder();
   });
 
   const order: InvoiceOrder = {
@@ -48,7 +47,7 @@ describe('SriXmlBuilder', () => {
 
     expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
     expect(xml).toContain('<factura');
-    expect(xml).toContain('version="2.3.2"');
+    expect(xml).toContain('version="2.1.0"');
     expect(xml).toContain('1501202401017921467390011001001001000000001000000001');
   });
 
@@ -66,7 +65,10 @@ describe('SriXmlBuilder', () => {
 
     expect(xml).toContain('<importeTotal>115.00</importeTotal>');
     expect(xml).toContain('<descripcion>Test product</descripcion>');
-    expect(xml).toContain('<cantidad>1</cantidad>');
+    expect(xml).toContain('<campoAdicional nombre="email">john@example.com</campoAdicional>');
+    expect(xml).toContain('<formaPago>20</formaPago>');
+    expect(xml).toContain('<total>115.00</total>');
+    expect(xml).toContain('<cantidad>1.00</cantidad>');
     expect(xml).toContain('<totalSinImpuestos>100.00</totalSinImpuestos>');
     expect(xml).toContain('<totalDescuento>0.00</totalDescuento>');
   });

@@ -48,7 +48,7 @@ describe('SriCreditNoteXmlBuilder', () => {
 
     expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
     expect(xml).toContain('<notaCredito');
-    expect(xml).toContain('version="2.3.2"');
+    expect(xml).toContain('version="1.1.0"');
     expect(xml).toContain('1501202401017921467390011001001001000000001000000001');
     expect(xml).toContain('<codDoc>04</codDoc>');
   });
@@ -93,7 +93,7 @@ describe('SriCreditNoteXmlBuilder', () => {
     });
 
     expect(xml).toContain('<descripcion>Test product</descripcion>');
-    expect(xml).toContain('<cantidad>1</cantidad>');
+    expect(xml).toContain('<cantidad>1.00</cantidad>');
     expect(xml).toContain('<precioUnitario>100.00</precioUnitario>');
     expect(xml).toContain('<tarifa>15.00</tarifa>');
     expect(xml).toContain('<motivo>Customer return</motivo>');

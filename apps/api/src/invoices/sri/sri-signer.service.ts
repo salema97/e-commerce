@@ -3,7 +3,7 @@ import {
   Logger,
   BadRequestException,
 } from '@nestjs/common';
-import * as forge from 'node-forge';
+import forge from 'node-forge';
 import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 import * as XmlDSigJs from 'xmldsigjs';
 import crypto from 'node:crypto';

@@ -24,7 +24,7 @@ describe('SriSoapClient', () => {
 
   it('submits an XML and returns the reception response', async () => {
     const clientMock = {
-      recepcionComprobantesOfflineAsync: vi
+      validarComprobanteAsync: vi
         .fn()
         .mockResolvedValue([{ estado: 'RECIBIDA' }]),
     };
@@ -45,7 +45,7 @@ describe('SriSoapClient', () => {
 
   it('normalizes reception error messages', async () => {
     const clientMock = {
-      recepcionComprobantesOfflineAsync: vi.fn().mockResolvedValue([
+      validarComprobanteAsync: vi.fn().mockResolvedValue([
         {
           estado: 'DEVUELTA',
           comprobantes: [
@@ -82,7 +82,7 @@ describe('SriSoapClient', () => {
 
   it('returns SOAP authorization when available', async () => {
     const clientMock = {
-      autorizacionComprobantesOfflineAsync: vi.fn().mockResolvedValue([
+      autorizacionComprobanteAsync: vi.fn().mockResolvedValue([
         {
           autorizaciones: [
             {
@@ -107,7 +107,7 @@ describe('SriSoapClient', () => {
 
   it('normalizes unknown statuses to NO_PROCESADA', async () => {
     const clientMock = {
-      autorizacionComprobantesOfflineAsync: vi
+      autorizacionComprobanteAsync: vi
         .fn()
         .mockResolvedValue([{ autorizaciones: [{ estado: 'unrecognized' }] }]),
     };
@@ -123,7 +123,7 @@ describe('SriSoapClient', () => {
 
   it('polls authorization until RECHAZADO', async () => {
     const clientMock = {
-      autorizacionComprobantesOfflineAsync: vi.fn().mockResolvedValue([
+      autorizacionComprobanteAsync: vi.fn().mockResolvedValue([
         {
           autorizaciones: [
             {
@@ -160,7 +160,7 @@ describe('SriSoapClient', () => {
 
   it('returns NO_AUTORIZADO when polling times out', async () => {
     const clientMock = {
-      autorizacionComprobantesOfflineAsync: vi
+      autorizacionComprobanteAsync: vi
         .fn()
         .mockResolvedValue([{ autorizaciones: [] }]),
     };
@@ -183,7 +183,7 @@ describe('SriSoapClient', () => {
 
   it('does not expose the SOL key in any URL', async () => {
     const clientMock = {
-      recepcionComprobantesOfflineAsync: vi
+      validarComprobanteAsync: vi
         .fn()
         .mockResolvedValue([{ estado: 'RECIBIDA' }]),
     };

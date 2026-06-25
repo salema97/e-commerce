@@ -22,6 +22,8 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "db:reset": "dotenv -e .env -- prisma migrate reset --force",
     "search:reindex": "dotenv -e .env -- tsx src/scripts/search-reindex.ts",
+    "sri:generate-dev-cert": "tsx scripts/generate-dev-sri-cert.ts",
+    "sri:smoke": "dotenv -e .env -- tsx scripts/sri-dev-smoke.ts",
     "clean": "rm -rf dist .turbo"
   },
   "prisma": {

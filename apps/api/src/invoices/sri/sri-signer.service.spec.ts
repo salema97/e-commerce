@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import * as forge from 'node-forge';
+import forge from 'node-forge';
 import { SriSignerService } from './sri-signer.service.js';
 
 const TEST_PASSWORD = 'test-password';
@@ -28,7 +28,7 @@ function createTestP12(password: string): Buffer {
 }
 
 const sampleXml = `<?xml version="1.0" encoding="UTF-8"?>
-<factura id="comprobante" version="2.3.2">
+<factura id="comprobante" version="2.1.0">
   <infoTributaria>
     <ambiente>1</ambiente>
   </infoTributaria>

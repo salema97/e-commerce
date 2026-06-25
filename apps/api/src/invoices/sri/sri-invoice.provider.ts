@@ -15,6 +15,10 @@ import { SriXmlBuilder } from './sri-xml.builder.js';
 import { SriCreditNoteXmlBuilder } from './sri-credit-note-xml.builder.js';
 import { SriSignerService } from './sri-signer.service.js';
 import { SriSoapClient } from './sri-soap.client.js';
+import {
+  mapSriCompanyToXmlFields,
+  readSriCompanyConfig,
+} from './sri-company.config.js';
 
 @Injectable()
 export class DirectSriInvoiceProvider implements InvoiceProvider {
@@ -46,8 +50,9 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
         emissionPointCode,
       );
 
+    const emissionDate = new Date();
     const accessKey = this.accessKeyBuilder.build({
-      date: new Date(),
+      date: emissionDate,
       documentType: '01',
       ruc: this.configService.getOrThrow<string>('SRI_RUC'),
       environment: this.getEnvironmentCode(),
@@ -56,9 +61,7 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
       sequenceNumber,
     });
 
-    const companyName = this.configService.getOrThrow<string>('SRI_COMPANY_NAME');
-    const companyTradeName = this.configService.get<string>('SRI_COMPANY_TRADE_NAME') ?? companyName;
-    const companyAddress = this.configService.get<string>('SRI_COMPANY_ADDRESS') ?? 'Direccion matriz';
+    const company = readSriCompanyConfig(this.configService);
 
     const xml = this.xmlBuilder.buildFactura({
       accessKey,
@@ -67,10 +70,8 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
       emissionPointCode,
       sequenceNumber,
       environment: this.getEnvironmentCode(),
-      companyRuc: this.configService.getOrThrow<string>('SRI_RUC'),
-      companyName,
-      companyTradeName,
-      companyAddress,
+      emissionDate,
+      ...mapSriCompanyToXmlFields(company),
     });
 
     const certificatePath = this.configService.getOrThrow<string>(
@@ -152,8 +153,9 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
         emissionPointCode,
       );
 
+    const emissionDate = new Date();
     const accessKey = this.accessKeyBuilder.build({
-      date: new Date(),
+      date: emissionDate,
       documentType: '04',
       ruc: this.configService.getOrThrow<string>('SRI_RUC'),
       environment: this.getEnvironmentCode(),
@@ -173,9 +175,7 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
       );
     }
 
-    const companyName = this.configService.getOrThrow<string>('SRI_COMPANY_NAME');
-    const companyTradeName = this.configService.get<string>('SRI_COMPANY_TRADE_NAME') ?? companyName;
-    const companyAddress = this.configService.get<string>('SRI_COMPANY_ADDRESS') ?? 'Direccion matriz';
+    const company = readSriCompanyConfig(this.configService);
 
     const xml = this.creditNoteXmlBuilder.buildNotaDeCredito({
       accessKey,
@@ -189,10 +189,8 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
       emissionPointCode,
       sequenceNumber,
       environment: this.getEnvironmentCode(),
-      companyRuc: this.configService.getOrThrow<string>('SRI_RUC'),
-      companyName,
-      companyTradeName,
-      companyAddress,
+      emissionDate,
+      ...mapSriCompanyToXmlFields(company),
     });
 
     const certificatePath = this.configService.getOrThrow<string>(

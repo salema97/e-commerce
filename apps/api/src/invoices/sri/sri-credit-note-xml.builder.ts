@@ -1,9 +1,19 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { XMLBuilder } from 'fast-xml-parser';
 import {
   CreditNoteInput,
   CreditNoteItem,
 } from '../invoice-provider.interface.js';
+import { SRI_CREDIT_NOTE_XML_VERSION } from './sri-xml.constants.js';
+import {
+  buildAdditionalInfoFields,
+  formatSriAmount,
+  formatSriCurrency,
+  formatSriDate,
+  formatSriYesNo,
+  resolveBuyerIdentificationType,
+  resolveEmissionDate,
+} from './sri-xml.utils.js';
 
 export interface CreditNoteXmlBuildInput {
   accessKey: string;
@@ -21,20 +31,16 @@ export interface CreditNoteXmlBuildInput {
   companyName: string;
   companyTradeName?: string;
   companyAddress?: string;
+  emissionDate?: Date;
+  requiresAccounting?: boolean;
+  specialTaxpayerNumber?: string;
 }
 
 /**
- * Builds SRI v2.32 nota de crédito (04) XML documents.
- *
- * The credit note references a previously issued factura (01) and represents
- * a partial or total reversal of its amounts. Values are kept positive because
- * that is what the SRI offline schema expects for document type 04; the credit
- * nature is expressed by the document type itself.
+ * Builds SRI nota de crédito (04) XML documents (schema version 1.1.0).
  */
 @Injectable()
 export class SriCreditNoteXmlBuilder {
-  private readonly logger = new Logger(SriCreditNoteXmlBuilder.name);
-
   buildNotaDeCredito(input: CreditNoteXmlBuildInput): string {
     const builder = new XMLBuilder({
       ignoreAttributes: false,
@@ -50,134 +56,110 @@ export class SriCreditNoteXmlBuilder {
 
   private buildDocument(input: CreditNoteXmlBuildInput): unknown {
     const totals = this.calculateTotals(input.creditNote.items);
+    const emissionDate = input.emissionDate ?? resolveEmissionDate(input.accessKey);
 
-    return {
-      notaCredito: {
-        '@_id': 'comprobante',
-        '@_version': '2.3.2',
-        infoTributaria: {
-          ambiente: input.environment,
-          tipoEmision: '1',
-          razonSocial: input.companyName,
-          nombreComercial: input.companyTradeName ?? input.companyName,
-          ruc: input.companyRuc,
-          claveAcceso: input.accessKey,
-          codDoc: '04',
-          estab: input.establishmentCode.padStart(3, '0'),
-          ptoEmi: input.emissionPointCode.padStart(3, '0'),
-          secuencial: input.sequenceNumber.padStart(9, '0'),
-          dirMatriz: input.companyAddress ?? 'Direccion matriz',
+    const infoNotaCredito: Record<string, unknown> = {
+      fechaEmision: formatSriDate(emissionDate),
+      dirEstablecimiento: input.companyAddress ?? 'Direccion establecimiento',
+      obligadoContabilidad: formatSriYesNo(input.requiresAccounting ?? false),
+      tipoIdentificacionComprador: resolveBuyerIdentificationType(
+        input.customerIdentification,
+      ),
+      razonSocialComprador: input.customerName ?? 'CONSUMIDOR FINAL',
+      identificacionComprador:
+        input.customerIdentification ?? '9999999999999',
+      codDocModificado: input.creditNote.codDocModificado,
+      numDocModificado: input.creditNote.numDocModificado,
+      fechaEmisionDocumentoModificado:
+        input.creditNote.fechaEmisionDocumentoModificado,
+      totalSinImpuestos: formatSriAmount(totals.subtotal),
+      valorModificacion: formatSriAmount(input.creditNote.total),
+      moneda: formatSriCurrency('USD'),
+      motivo: input.creditNote.reason,
+      totalConImpuestos: {
+        totalImpuesto: {
+          codigo: '2',
+          codigoPorcentaje: '4',
+          baseImponible: formatSriAmount(totals.taxableBase),
+          valor: formatSriAmount(totals.taxAmount),
         },
-        infoNotaCredito: {
-          fechaEmision: this.formatDate(new Date()),
-          dirEstablecimiento: input.companyAddress ?? 'Direccion establecimiento',
-          obligadoContabilidad: 'SI',
-          tipoIdentificacionComprador: this.identificationType(
-            input.customerIdentification,
-          ),
-          razonSocialComprador:
-            input.customerName ?? 'CONSUMIDOR FINAL',
-          identificacionComprador:
-            input.customerIdentification ?? '9999999999999',
-          direccionComprador:
-            input.customerAddress ?? 'Direccion comprador',
-          codDocModificado: input.creditNote.codDocModificado,
-          numDocModificado: input.creditNote.numDocModificado,
-          fechaEmisionDocumentoModificado:
-            input.creditNote.fechaEmisionDocumentoModificado,
-          totalSinImpuestos: this.formatNumber(totals.subtotal),
-          valorModificacion: this.formatNumber(input.creditNote.total),
-          moneda: this.formatCurrency('USD'),
-          motivo: input.creditNote.reason,
-          totalConImpuestos: {
-            totalImpuesto: {
-              codigo: '2',
-              codigoPorcentaje: '4',
-              baseImponible: this.formatNumber(totals.taxableBase),
-              valor: this.formatNumber(totals.taxAmount),
-            },
-          },
-        },
-        detalles: {
-          detalle: input.creditNote.items.map((item) =>
-            this.buildDetail(item, input.creditNote.reason),
-          ),
-        },
-        infoAdicional: this.buildAdditionalInfo(input),
       },
     };
+
+    if (input.specialTaxpayerNumber) {
+      infoNotaCredito.contribuyenteEspecial = input.specialTaxpayerNumber;
+    }
+
+    if (input.customerAddress) {
+      infoNotaCredito.direccionComprador = input.customerAddress;
+    }
+
+    const notaCredito: Record<string, unknown> = {
+      '@_id': 'comprobante',
+      '@_version': SRI_CREDIT_NOTE_XML_VERSION,
+      infoTributaria: {
+        ambiente: input.environment,
+        tipoEmision: '1',
+        razonSocial: input.companyName,
+        nombreComercial: input.companyTradeName ?? input.companyName,
+        ruc: input.companyRuc,
+        claveAcceso: input.accessKey,
+        codDoc: '04',
+        estab: input.establishmentCode.padStart(3, '0'),
+        ptoEmi: input.emissionPointCode.padStart(3, '0'),
+        secuencial: input.sequenceNumber.padStart(9, '0'),
+        dirMatriz: input.companyAddress ?? 'Direccion matriz',
+      },
+      infoNotaCredito,
+      detalles: {
+        detalle: input.creditNote.items.map((item) =>
+          this.buildDetail(item, input.creditNote.reason),
+        ),
+      },
+    };
+
+    const additionalInfo = buildAdditionalInfoFields([
+      { name: 'email', value: input.customerEmail },
+      { name: 'telefono', value: input.customerPhone },
+      {
+        name: 'claveAccesoFactura',
+        value: input.creditNote.invoiceAccessKey,
+      },
+      {
+        name: 'numeroAutorizacionFactura',
+        value: input.creditNote.authorizationNumber,
+      },
+    ]);
+    if (additionalInfo) {
+      notaCredito.infoAdicional = additionalInfo;
+    }
+
+    return { notaCredito };
   }
 
   private buildDetail(item: CreditNoteItem, defaultReason: string): unknown {
     const totalWithoutTax = item.quantity * item.unitPrice - item.discount;
     const taxValue =
       item.taxAmount ?? this.calculateTax(totalWithoutTax, item.taxRate);
+
     return {
       codigoPrincipal: item.code,
       descripcion: item.description,
-      cantidad: String(item.quantity),
-      precioUnitario: this.formatNumber(item.unitPrice),
-      descuento: this.formatNumber(item.discount),
-      precioTotalSinImpuesto: this.formatNumber(totalWithoutTax),
+      cantidad: formatSriAmount(item.quantity),
+      precioUnitario: formatSriAmount(item.unitPrice),
+      descuento: formatSriAmount(item.discount),
+      precioTotalSinImpuesto: formatSriAmount(totalWithoutTax),
       impuestos: {
         impuesto: {
           codigo: '2',
           codigoPorcentaje: '4',
-          tarifa: this.formatNumber(item.taxRate),
-          baseImponible: this.formatNumber(totalWithoutTax),
-          valor: this.formatNumber(taxValue),
+          tarifa: formatSriAmount(item.taxRate),
+          baseImponible: formatSriAmount(totalWithoutTax),
+          valor: formatSriAmount(taxValue),
         },
       },
       motivo: item.reason ?? defaultReason,
     };
-  }
-
-  private buildAdditionalInfo(input: CreditNoteXmlBuildInput): unknown {
-    const fields: Array<{ campoAdicional: string; '@_nombre': string }> = [];
-    if (input.customerEmail) {
-      fields.push({ campoAdicional: input.customerEmail, '@_nombre': 'email' });
-    }
-    if (input.customerPhone) {
-      fields.push({ campoAdicional: input.customerPhone, '@_nombre': 'telefono' });
-    }
-    if (input.creditNote.invoiceAccessKey) {
-      fields.push({
-        campoAdicional: input.creditNote.invoiceAccessKey,
-        '@_nombre': 'claveAccesoFactura',
-      });
-    }
-    if (input.creditNote.authorizationNumber) {
-      fields.push({
-        campoAdicional: input.creditNote.authorizationNumber,
-        '@_nombre': 'numeroAutorizacionFactura',
-      });
-    }
-    if (fields.length === 0) {
-      return { campoAdicional: { '#text': 'N/A', '@_nombre': 'observacion' } };
-    }
-    return { campoAdicional: fields };
-  }
-
-  private identificationType(identification?: string): string {
-    if (!identification) return '07';
-    if (identification.length === 10) return '05';
-    if (identification.length === 13 && identification.endsWith('001')) return '04';
-    return '06';
-  }
-
-  private formatDate(date: Date): string {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  }
-
-  private formatNumber(value: number): string {
-    return value.toFixed(2);
-  }
-
-  private formatCurrency(currency: string): string {
-    return currency.toUpperCase() === 'USD' ? 'DOLAR' : currency.toUpperCase();
   }
 
   private calculateTax(base: number, rate: number): number {
@@ -202,6 +184,7 @@ export class SriCreditNoteXmlBuilder {
         ),
       0,
     );
+
     return {
       subtotal,
       taxableBase: subtotal,
