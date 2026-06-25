@@ -7,6 +7,8 @@ export { Modal } from './Modal.js';
 export { ChatBubble } from './ChatBubble.js';
 export { PressableCard, Checkbox } from './PressableCard.js';
 export { ProductImage } from './ProductImage.js';
+export { Switch } from './Switch.js';
+export { Alert } from './Alert.js';
 export { neo } from './theme.js';
 
 export type { ButtonProps } from './Button.js';
@@ -18,4 +20,6 @@ export type { ModalPropsCustom as ModalProps } from './Modal.js';
 export type { ChatBubbleProps } from './ChatBubble.js';
 export type { PressableCardProps, CheckboxProps } from './PressableCard.js';
 export type { ProductImageProps, ProductImageVariant } from './ProductImage.js';
+export type { SwitchProps } from './Switch.js';
+export type { AlertProps } from './Alert.js';
 export type { NeoColors } from './theme.js';

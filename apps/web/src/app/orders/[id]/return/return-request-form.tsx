@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert } from '@/components/ui/alert';
 import { AlertDescription } from '@/components/ui/alert-description';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { formatPrice } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
@@ -200,16 +201,14 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
               >
                 <div className="flex items-center gap-3">
                   {mounted ? (
-                  <input
-                    type="checkbox"
-                    id={`item-${item.id}`}
-                    data-testid={`return-item-${item.id}`}
-                    checked={Boolean(selected[item.id])}
-                    onChange={(event) => {
-                      setItemSelected(item.id, item.quantity, event.target.checked);
-                    }}
-                    className="size-5 shrink-0 border-[3px] border-neo-onyx accent-neo-gold"
-                  />
+                    <Checkbox
+                      id={`item-${item.id}`}
+                      data-testid={`return-item-${item.id}`}
+                      checked={Boolean(selected[item.id])}
+                      onCheckedChange={(checked) => {
+                        setItemSelected(item.id, item.quantity, checked === true);
+                      }}
+                    />
                   ) : (
                     <div
                       aria-hidden

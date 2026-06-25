@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Switch } from 'react-native';
-import { Card } from '@repo/shared-ui';
+import { View, Text, StyleSheet } from 'react-native';
+import { Card, Switch, neo } from '@repo/shared-ui';
 import { api } from '../../lib/api.js';
 
 export function NotificationPreferencesPanel(): React.ReactElement {
@@ -37,6 +37,7 @@ export function NotificationPreferencesPanel(): React.ReactElement {
           <Switch
             value={!data.emailOptOut}
             onValueChange={(value) => handleToggle('emailOptOut', value)}
+            accessibilityLabel="Emails transaccionales"
           />
         </View>
       </Card>
@@ -50,6 +51,7 @@ export function NotificationPreferencesPanel(): React.ReactElement {
           <Switch
             value={!data.marketingEmailOptOut}
             onValueChange={(value) => handleToggle('marketingEmailOptOut', value)}
+            accessibilityLabel="Emails de marketing"
           />
         </View>
       </Card>
@@ -63,6 +65,7 @@ export function NotificationPreferencesPanel(): React.ReactElement {
           <Switch
             value={!data.whatsappOptOut}
             onValueChange={(value) => handleToggle('whatsappOptOut', value)}
+            accessibilityLabel="Notificaciones WhatsApp"
           />
         </View>
       </Card>
@@ -82,7 +85,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   loading: {
-    color: '#737373',
+    color: neo.muted,
     fontSize: 15,
   },
   card: {
@@ -99,23 +102,26 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#171717',
+    fontWeight: '700',
+    color: neo.onyx,
     marginBottom: 4,
   },
   hint: {
     fontSize: 13,
-    color: '#737373',
+    color: neo.muted,
     lineHeight: 18,
+    fontWeight: '600',
   },
   message: {
     fontSize: 14,
-    color: '#525252',
+    color: neo.onyx,
+    fontWeight: '600',
   },
   accountNote: {
     fontSize: 12,
-    color: '#737373',
+    color: neo.muted,
     lineHeight: 18,
     marginTop: 8,
+    fontWeight: '600',
   },
 });

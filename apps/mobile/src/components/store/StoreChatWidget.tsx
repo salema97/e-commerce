@@ -3,14 +3,12 @@ import {
   View,
   Text,
   Modal,
-  Pressable,
-  TextInput,
   ScrollView,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Button, neo } from '@repo/shared-ui';
+import { Button, ChatBubble, Input, neo } from '@repo/shared-ui';
 import type { Message } from '@repo/shared-types';
 import { api } from '../../lib/api.js';
 
@@ -48,9 +46,15 @@ export function StoreChatWidget(): React.ReactElement {
 
   if (!open) {
     return (
-      <Pressable style={styles.fab} onPress={() => setOpen(true)}>
-        <Text style={styles.fabText}>¿Ayuda?</Text>
-      </Pressable>
+      <Button
+        variant="secondary"
+        size="sm"
+        onPress={() => setOpen(true)}
+        style={styles.fab}
+        testID="store-chat-open"
+      >
+        ¿Ayuda?
+      </Button>
     );
   }
 
@@ -63,9 +67,14 @@ export function StoreChatWidget(): React.ReactElement {
         <View style={styles.panel}>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Soporte en línea</Text>
-            <Pressable onPress={() => setOpen(false)}>
-              <Text style={styles.close}>Cerrar</Text>
-            </Pressable>
+            <Button
+              variant="ghost"
+              size="sm"
+              onPress={() => setOpen(false)}
+              textStyle={styles.close}
+            >
+              Cerrar
+            </Button>
           </View>
 
           <ScrollView style={styles.messages} contentContainerStyle={styles.messagesContent}>
@@ -78,39 +87,23 @@ export function StoreChatWidget(): React.ReactElement {
                   key={message.id}
                   style={[styles.bubbleRow, isOutbound ? styles.rowEnd : styles.rowStart]}
                 >
-                  <View
-                    style={[
-                      styles.bubble,
-                      isOutbound
-                        ? isBot
-                          ? styles.botBubble
-                          : styles.agentBubble
-                        : styles.userBubble,
-                    ]}
-                  >
-                    {isBot ? <Text style={styles.botLabel}>Bot</Text> : null}
-                    <Text
-                      style={[
-                        styles.bubbleText,
-                        isOutbound && styles.bubbleTextLight,
-                      ]}
-                    >
-                      {message.content}
-                    </Text>
-                  </View>
+                  <ChatBubble
+                    content={message.content}
+                    direction={isOutbound ? 'outbound' : 'inbound'}
+                    isBot={isBot}
+                  />
                 </View>
               );
             })}
           </ScrollView>
 
           <View style={styles.composer}>
-            <TextInput
-              style={styles.input}
+            <Input
               value={input}
               onChangeText={setInput}
               placeholder="Escribe tu mensaje..."
-              placeholderTextColor={neo.muted}
               onSubmitEditing={() => void handleSendMessage()}
+              containerStyle={styles.inputContainer}
             />
             <Button
               onPress={() => void handleSendMessage()}
@@ -132,22 +125,6 @@ const styles = StyleSheet.create({
     right: 16,
     bottom: 88,
     zIndex: 50,
-    borderWidth: 3,
-    borderColor: neo.onyx,
-    backgroundColor: neo.gold,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    shadowColor: neo.onyx,
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4,
-  },
-  fabText: {
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    color: neo.onyx,
-    fontSize: 12,
   },
   overlay: {
     flex: 1,
@@ -168,7 +145,7 @@ const styles = StyleSheet.create({
     borderBottomColor: neo.onyx,
     backgroundColor: neo.gold,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   headerTitle: {
     fontWeight: '800',
@@ -177,10 +154,8 @@ const styles = StyleSheet.create({
   },
   close: {
     fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
     textDecorationLine: 'underline',
-    color: neo.onyx,
+    textTransform: 'uppercase',
   },
   messages: {
     flex: 1,
@@ -198,53 +173,15 @@ const styles = StyleSheet.create({
   rowStart: {
     justifyContent: 'flex-start',
   },
-  bubble: {
-    maxWidth: '85%',
-    borderWidth: 3,
-    borderColor: neo.onyx,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  userBubble: {
-    backgroundColor: '#fff',
-  },
-  agentBubble: {
-    backgroundColor: neo.onyx,
-  },
-  botBubble: {
-    backgroundColor: '#7c3aed',
-  },
-  botLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.8)',
-    marginBottom: 4,
-  },
-  bubbleText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: neo.onyx,
-  },
-  bubbleTextLight: {
-    color: '#fff',
-  },
   composer: {
     flexDirection: 'row',
     gap: 8,
     borderTopWidth: 3,
     borderTopColor: neo.onyx,
     padding: 12,
-    alignItems: 'center',
+    alignItems: 'flex-end',
   },
-  input: {
+  inputContainer: {
     flex: 1,
-    borderWidth: 3,
-    borderColor: neo.onyx,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontWeight: '600',
-    color: neo.onyx,
-    backgroundColor: '#fff',
   },
 });

@@ -1,6 +1,8 @@
 'use client';
 
+import * as React from 'react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FormSelect } from '@/components/ui/form-select';
@@ -40,6 +42,8 @@ export function StoreFilters({
   categories,
   brandFacets = EMPTY_BRAND_FACETS,
 }: StoreFiltersProps) {
+  const [inStockChecked, setInStockChecked] = React.useState(inStock);
+
   return (
     <form
       className="flex flex-col gap-4 border-[3px] border-neo-onyx bg-white p-5 shadow-[6px_6px_0_0_#111111]"
@@ -134,10 +138,17 @@ export function StoreFilters({
         />
       </div>
 
-      <label className="flex items-center gap-2 text-sm font-medium">
-        <input type="checkbox" name="inStock" value="true" defaultChecked={inStock} />
-        Solo con stock
-      </label>
+      {inStockChecked ? <input type="hidden" name="inStock" value="true" /> : null}
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="inStock"
+          checked={inStockChecked}
+          onCheckedChange={(checked) => setInStockChecked(checked === true)}
+        />
+        <Label htmlFor="inStock" className="cursor-pointer font-medium normal-case">
+          Solo con stock
+        </Label>
+      </div>
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="sort">Ordenar</Label>

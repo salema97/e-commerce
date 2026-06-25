@@ -42,14 +42,15 @@ export function StoreChatWidget() {
 
   if (!open) {
     return (
-      <button
+      <Button
         type="button"
+        variant="secondary"
         data-testid="store-chat-open"
         onClick={handleOpenChat}
-        className="fixed bottom-6 right-6 z-50 border-[3px] border-neo-onyx bg-neo-gold px-5 py-3 font-bold uppercase shadow-[4px_4px_0_#111] transition-transform hover:-translate-y-0.5"
+        className="fixed bottom-6 right-6 z-50 shadow-[4px_4px_0_#111] transition-transform hover:-translate-y-0.5"
       >
         ¿Necesitas ayuda?
-      </button>
+      </Button>
     );
   }
 
@@ -60,13 +61,15 @@ export function StoreChatWidget() {
     >
       <div className="flex items-center justify-between border-b-[3px] border-neo-onyx bg-neo-gold px-4 py-3">
         <p className="font-bold uppercase">Soporte en línea</p>
-        <button
+        <Button
           type="button"
-          className="text-xs font-bold uppercase underline-offset-4 hover:underline"
+          variant="ghost"
+          size="sm"
+          className="h-auto px-0 py-0 text-xs normal-case shadow-none hover:border-transparent"
           onClick={() => setOpen(false)}
         >
           Cerrar
-        </button>
+        </Button>
       </div>
       <div className="flex-1 space-y-3 overflow-y-auto p-3">
         {messages.map((message: Message) => {

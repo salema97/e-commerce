@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
+import { neo } from './theme.js';
 
 export interface ChatBubbleProps {
   content: string;
@@ -7,6 +8,7 @@ export interface ChatBubbleProps {
   timestamp?: string;
   status?: 'sent' | 'delivered' | 'read' | 'failed';
   senderName?: string;
+  isBot?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
 }
@@ -17,6 +19,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   timestamp,
   status,
   senderName,
+  isBot = false,
   style,
   textStyle,
 }) => {
@@ -31,8 +34,24 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
       ]}
     >
       {senderName ? <Text style={styles.senderName}>{senderName}</Text> : null}
-      <View style={[styles.bubble, isOutbound ? styles.outboundBubble : styles.inboundBubble]}>
-        <Text style={[styles.text, isOutbound ? styles.outboundText : styles.inboundText, textStyle]}>
+      <View
+        style={[
+          styles.bubble,
+          isOutbound
+            ? isBot
+              ? styles.botBubble
+              : styles.outboundBubble
+            : styles.inboundBubble,
+        ]}
+      >
+        {isBot ? <Text style={styles.botLabel}>Bot</Text> : null}
+        <Text
+          style={[
+            styles.text,
+            isOutbound ? styles.outboundText : styles.inboundText,
+            textStyle,
+          ]}
+        >
           {content}
         </Text>
       </View>
@@ -46,7 +65,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    maxWidth: '80%',
+    maxWidth: '85%',
     marginVertical: 4,
   },
   inboundContainer: {
@@ -56,33 +75,49 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   bubble: {
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    borderWidth: 3,
+    borderColor: neo.onyx,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    shadowColor: neo.onyx,
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   inboundBubble: {
-    backgroundColor: '#f5f5f5',
-    borderBottomLeftRadius: 4,
+    backgroundColor: neo.white,
   },
   outboundBubble: {
-    backgroundColor: '#171717',
-    borderBottomRightRadius: 4,
+    backgroundColor: neo.onyx,
+  },
+  botBubble: {
+    backgroundColor: '#7c3aed',
+  },
+  botLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.8)',
+    marginBottom: 4,
   },
   text: {
-    fontSize: 15,
+    fontSize: 14,
+    fontWeight: '600',
     lineHeight: 20,
   },
   inboundText: {
-    color: '#171717',
+    color: neo.onyx,
   },
   outboundText: {
-    color: '#ffffff',
+    color: neo.white,
   },
   senderName: {
     fontSize: 12,
-    color: '#737373',
+    color: neo.muted,
     marginBottom: 4,
     marginLeft: 4,
+    fontWeight: '700',
   },
   footer: {
     flexDirection: 'row',
@@ -93,11 +128,14 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     fontSize: 11,
-    color: '#a3a3a3',
+    color: neo.muted,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   status: {
     fontSize: 11,
-    color: '#a3a3a3',
+    color: neo.muted,
     textTransform: 'capitalize',
+    fontWeight: '700',
   },
 });

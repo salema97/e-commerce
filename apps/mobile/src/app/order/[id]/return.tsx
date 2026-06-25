@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Card, Button, Input, Textarea } from '@repo/shared-ui';
+import { Card, Button, Input, Textarea, Checkbox, Alert, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../../../components/neo-screen.js';
 import { NeoStaggeredItem } from '../../../components/neo-animated.js';
 import { api } from '../../../lib/api.js';
@@ -84,23 +84,17 @@ export default function ReturnRequestScreen(): React.ReactElement {
 
         {!isDelivered ? (
           <NeoStaggeredItem index={0}>
-            <Card style={styles.banner}>
-              <Text style={styles.bannerTitle}>Pedido no entregado</Text>
-              <Text style={styles.bannerText}>
-                Puedes solicitar una devolución después de que el pedido haya sido entregado.
-              </Text>
-            </Card>
+            <Alert variant="destructive" title="Pedido no entregado" style={styles.banner}>
+              Puedes solicitar una devolución después de que el pedido haya sido entregado.
+            </Alert>
           </NeoStaggeredItem>
         ) : null}
 
         {isDelivered && !isWithinWindow ? (
           <NeoStaggeredItem index={0}>
-            <Card style={styles.banner}>
-              <Text style={styles.bannerTitle}>Plazo de devolución cerrado</Text>
-              <Text style={styles.bannerText}>
-                El plazo de devolución para este pedido ha expirado.
-              </Text>
-            </Card>
+            <Alert variant="destructive" title="Plazo de devolución cerrado" style={styles.banner}>
+              El plazo de devolución para este pedido ha expirado.
+            </Alert>
           </NeoStaggeredItem>
         ) : null}
 
@@ -115,17 +109,12 @@ export default function ReturnRequestScreen(): React.ReactElement {
         {currentOrder.items.map((item, index) => (
           <NeoStaggeredItem key={item.id} index={index + 1}>
             <Card style={styles.itemCard}>
-            <View style={styles.row}>
-              <Text style={styles.itemName}>{item.name}</Text>
-              <Button
-                variant={selected[item.id] ? 'primary' : 'outline'}
-                size="sm"
-                onPress={() => toggleItem(item.id, item.quantity)}
-                disabled={!canRequestReturn}
-              >
-                {selected[item.id] ? 'Seleccionado' : 'Seleccionar'}
-              </Button>
-            </View>
+            <Checkbox
+              checked={Boolean(selected[item.id])}
+              onCheckedChange={() => toggleItem(item.id, item.quantity)}
+              label={item.name}
+              disabled={!canRequestReturn}
+            />
             <Text style={styles.meta}>
               SKU: {item.sku} · {formatPrice(item.price * item.quantity)}
             </Text>
@@ -185,7 +174,7 @@ export default function ReturnRequestScreen(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: neo.white,
   },
   center: {
     flex: 1,
@@ -199,82 +188,42 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 26,
-    fontWeight: '700',
-    color: '#171717',
+    fontWeight: '800',
+    color: neo.onyx,
+    textTransform: 'uppercase',
   },
   subtitle: {
     fontSize: 14,
-    color: '#737373',
+    color: neo.muted,
     marginBottom: 20,
+    fontWeight: '600',
   },
   windowText: {
     fontSize: 14,
-    color: '#15803d',
+    color: neo.green,
     marginBottom: 16,
+    fontWeight: '700',
   },
   banner: {
     marginBottom: 16,
-    padding: 16,
-    backgroundColor: '#fef2f2',
-    borderColor: '#fecaca',
-  },
-  bannerTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#991b1b',
-    marginBottom: 4,
-  },
-  bannerText: {
-    fontSize: 13,
-    color: '#b91c1c',
   },
   itemCard: {
     marginBottom: 12,
     padding: 16,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  itemName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#171717',
-    flex: 1,
-    marginRight: 12,
+    gap: 8,
   },
   meta: {
     fontSize: 13,
-    color: '#737373',
+    color: neo.muted,
+    fontWeight: '600',
+    marginTop: 4,
   },
   inputs: {
     marginTop: 12,
   },
-  label: {
-    fontSize: 13,
-    color: '#525252',
-    marginBottom: 4,
-    marginTop: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#e5e5e5',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 14,
-    color: '#171717',
-  },
-  inputDisabled: {
-    backgroundColor: '#f5f5f5',
-    color: '#a3a3a3',
-  },
-  muted: {
-    color: '#737373',
-  },
   error: {
-    color: '#ef4444',
+    color: neo.scarlet,
     marginBottom: 16,
+    fontWeight: '700',
   },
 });

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
-import { Button, Card } from '@repo/shared-ui';
+import { View, Text, StyleSheet } from 'react-native';
+import { Button, Card, Input, neo } from '@repo/shared-ui';
 import { useAuth } from '../../providers/AuthProvider.js';
 import { api } from '../../lib/api.js';
 
@@ -28,8 +28,7 @@ export function BackInStockForm({ productId }: BackInStockFormProps): React.Reac
   return (
     <Card style={styles.card}>
       <Text style={styles.title}>Avísame cuando haya stock</Text>
-      <TextInput
-        style={styles.input}
+      <Input
         value={email}
         onChangeText={setEmail}
         placeholder="tu@correo.com"
@@ -53,20 +52,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#171717',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#e5e5e5',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: '#171717',
+    fontWeight: '700',
+    color: neo.onyx,
+    textTransform: 'uppercase',
   },
   message: {
     fontSize: 14,
-    color: '#525252',
+    color: neo.muted,
+    fontWeight: '600',
   },
 });

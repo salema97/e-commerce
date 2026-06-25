@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Input, Card } from '@repo/shared-ui';
+import { Input, Card, Button, neo } from '@repo/shared-ui';
 import { api } from '../../lib/api.js';
 import { useAuth } from '../../providers/AuthProvider.js';
 
@@ -56,9 +56,9 @@ export function ProductReviews({ productId }: ProductReviewsProps): React.ReactE
             multiline
             containerStyle={styles.field}
           />
-          <Text style={styles.link} onPress={() => void submitReview()}>
+          <Button onPress={() => void submitReview()} size="sm" style={styles.submit}>
             Enviar reseña
-          </Text>
+          </Button>
           {message ? <Text style={styles.message}>{message}</Text> : null}
         </View>
       ) : null}
@@ -68,13 +68,13 @@ export function ProductReviews({ productId }: ProductReviewsProps): React.ReactE
 
 const styles = StyleSheet.create({
   container: { marginTop: 24 },
-  title: { fontSize: 18, fontWeight: '600', marginBottom: 4 },
-  summary: { color: '#737373', marginBottom: 12 },
+  title: { fontSize: 18, fontWeight: '800', marginBottom: 4, color: neo.onyx, textTransform: 'uppercase' },
+  summary: { color: neo.muted, marginBottom: 12, fontWeight: '600' },
   reviewCard: { marginBottom: 8 },
-  reviewRating: { fontWeight: '600', marginBottom: 4 },
-  reviewBody: { color: '#525252' },
+  reviewRating: { fontWeight: '700', marginBottom: 4, color: neo.onyx },
+  reviewBody: { color: neo.muted, fontWeight: '600' },
   form: { marginTop: 16, gap: 8 },
   field: { marginTop: 8 },
-  link: { color: '#171717', fontWeight: '600', marginTop: 8 },
-  message: { color: '#737373', marginTop: 8 },
+  submit: { marginTop: 8, alignSelf: 'flex-start' },
+  message: { color: neo.muted, marginTop: 8, fontWeight: '600' },
 });

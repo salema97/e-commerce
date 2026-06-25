@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Button, neo } from '@repo/shared-ui';
 import {
   DEFAULT_ANALYTICS_CONSENT,
@@ -43,9 +43,9 @@ export function AnalyticsConsentBanner(): React.ReactElement | null {
         <Button size="sm" onPress={() => void acceptAnalytics()}>
           Aceptar
         </Button>
-        <Pressable onPress={() => void rejectAnalytics()} accessibilityRole="button">
-          <Text style={styles.reject}>Solo esencial</Text>
-        </Pressable>
+        <Button size="sm" variant="ghost" onPress={() => void rejectAnalytics()}>
+          Solo esencial
+        </Button>
       </View>
     </View>
   );
@@ -80,13 +80,6 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-  },
-  reject: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: neo.onyx,
-    textDecorationLine: 'underline',
-    textTransform: 'uppercase',
+    gap: 12,
   },
 });
