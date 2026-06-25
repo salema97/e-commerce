@@ -1,5 +1,14 @@
 id: compliance-audit-fixes
-status: in_progress
-current_pr: 1
+status: archived
+current_pr: 8
 delivery_strategy: auto-chain
 chain_strategy: stacked-to-main
+merged_prs:
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
