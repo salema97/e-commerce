@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import type { ProductReview, ProductReviewSummary } from '@repo/shared-types';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,9 +10,15 @@ import { useApiQueryHooks } from '@/lib/client-api';
 
 interface ProductReviewsProps {
   productId: string;
+  initialReviews: ProductReview[];
+  initialSummary: ProductReviewSummary;
 }
 
-export function ProductReviews({ productId }: ProductReviewsProps) {
+export function ProductReviews({
+  productId,
+  initialReviews,
+  initialSummary,
+}: ProductReviewsProps) {
   const { user } = useAuth();
   const {
     useProductReviews,
@@ -19,16 +26,16 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
     useCreateProductReview,
   } = useApiQueryHooks();
 
-  const reviewsQuery = useProductReviews(productId);
-  const summaryQuery = useProductReviewSummary(productId);
+  const reviewsQuery = useProductReviews(productId, { initialData: initialReviews });
+  const summaryQuery = useProductReviewSummary(productId, { initialData: initialSummary });
   const createReview = useCreateProductReview();
 
   const [rating, setRating] = React.useState(5);
   const [body, setBody] = React.useState('');
   const [message, setMessage] = React.useState<string | null>(null);
 
-  const reviews = reviewsQuery.data ?? [];
-  const summary = summaryQuery.data ?? { averageRating: 0, reviewCount: 0, distribution: {} };
+  const reviews = reviewsQuery.data ?? initialReviews;
+  const summary = summaryQuery.data ?? initialSummary;
 
   async function submitReview(event: React.FormEvent) {
     event.preventDefault();

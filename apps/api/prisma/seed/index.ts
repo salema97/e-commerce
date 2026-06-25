@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
 import { ACCESS_KEYS, IDS } from './constants.js';
 import { hashSeedPassword, logSeedCredentials } from './auth.js';
+import { logPhaseSeedExpectations, seedPhases11To14 } from './phases-11-14.js';
 
 const ESTABLISHMENT = process.env.SRI_ESTABLISHMENT_CODE ?? '001';
 const EMISSION_POINT = process.env.SRI_EMISSION_POINT_CODE ?? '001';
@@ -896,13 +897,27 @@ export async function seedDatabase(prisma: PrismaClient): Promise<void> {
     },
   });
 
+  await seedPhases11To14(prisma, {
+    customerId: customer.id,
+    adminId: IDS.userAdmin,
+    productLaptopId: productLaptop.id,
+    productPhoneId: productPhone.id,
+    productShirtId: productShirt.id,
+    orderDeliveredId: orderDelivered.id,
+    orderItemDeliveredId: IDS.orderItemDelivered,
+    categoryElectronicsId: categoryElectronics.id,
+    supplierMainId: supplierMain.id,
+  });
+
+  logPhaseSeedExpectations();
+
   // eslint-disable-next-line no-console
   console.log('Seed completed for all models:', {
     suppliers: 2,
     categories: 3,
-    products: 3,
-    users: users.length,
-    orders: 2,
+    products: 4,
+    users: users.length + 1,
+    orders: 3,
     promotions: 1,
   });
 }

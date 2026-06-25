@@ -29,6 +29,7 @@ export function logSeedCredentials(): void {
     ['INVENTORY', 'inventory@example.com'],
     ['SUPPORT', 'support@example.com'],
     ['CUSTOMER', 'cliente@example.com'],
+    ['CUSTOMER', 'amiga@example.com'],
   ] as const;
   for (const [role, email] of accounts) {
     // eslint-disable-next-line no-console

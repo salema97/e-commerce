@@ -16,6 +16,7 @@ import {
   getProductPrimaryImageUrl,
   serializeJsonLd,
 } from '@repo/shared-utils';
+import type { ProductReview, ProductReviewSummary } from '@repo/shared-types';
 import { getProductAvailableQuantity } from '@/lib/product-stock';
 
 interface ProductPageProps {
@@ -53,12 +54,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
     product.preOrderReleaseDate &&
     new Date(product.preOrderReleaseDate) > new Date();
 
-  let reviewSummary = { averageRating: 0, reviewCount: 0 };
-  try {
-    reviewSummary = await api.reviews.summary(product.id);
-  } catch {
-    // Reseñas pueden no estar disponibles antes de migrar.
-  }
+  const emptySummary: ProductReviewSummary = {
+    averageRating: 0,
+    reviewCount: 0,
+    distribution: {},
+  };
+
+  const [initialReviews, reviewSummary] = await Promise.all([
+    api.reviews.listByProduct(product.id).catch(() => [] as ProductReview[]),
+    api.reviews.summary(product.id).catch(() => emptySummary),
+  ]);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -199,7 +204,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
       </NeoReveal>
 
       <Separator className="my-10 border-neo-onyx" />
-      <ProductReviews productId={product.id} />
+      <ProductReviews
+        productId={product.id}
+        initialReviews={initialReviews}
+        initialSummary={reviewSummary}
+      />
     </AnimatedPageShell>
   );
 }

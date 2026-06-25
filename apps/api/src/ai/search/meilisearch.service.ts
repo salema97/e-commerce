@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Meilisearch } from 'meilisearch';
 
@@ -61,7 +61,7 @@ export class MeilisearchService implements OnModuleInit {
   private readonly indexName = 'products';
   private settingsApplied = false;
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(@Inject(ConfigService) private readonly config: ConfigService) {}
 
   async onModuleInit(): Promise<void> {
     const host = this.config.get<string>('MEILI_HOST');

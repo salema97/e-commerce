@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { MeilisearchService } from './meilisearch.service.js';
 import {
@@ -9,8 +9,8 @@ import {
 @Injectable()
 export class SearchReindexService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly meilisearch: MeilisearchService,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(MeilisearchService) private readonly meilisearch: MeilisearchService,
   ) {}
 
   async reindexAll(): Promise<{ indexed: number; meilisearchEnabled: boolean }> {
