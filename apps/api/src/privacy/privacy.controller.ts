@@ -11,19 +11,19 @@ export class PrivacyController {
 
   @Get('me/export')
   @ApiOperation({ summary: 'Export personal data (GDPR)' })
-  exportMine(@CurrentUser('userId') clerkUserId: string) {
-    return this.privacyService.exportUserData(clerkUserId);
+  exportMine(@CurrentUser('userId') userId: string) {
+    return this.privacyService.exportUserData(userId);
   }
 
   @Delete('me')
   @ApiOperation({ summary: 'Request account data deletion / anonymization (GDPR)' })
-  deleteMine(@CurrentUser('userId') clerkUserId: string) {
-    return this.privacyService.deleteUserData(clerkUserId);
+  deleteMine(@CurrentUser('userId') userId: string) {
+    return this.privacyService.deleteUserData(userId);
   }
 
   @Patch('me/ccpa-opt-out')
   @ApiOperation({ summary: 'CCPA do-not-sell / share preference' })
-  ccpaOptOut(@CurrentUser('userId') clerkUserId: string, @Body() dto: UpdateCcpaOptOutDto) {
-    return this.privacyService.setCcpaOptOut(clerkUserId, dto.optOut);
+  ccpaOptOut(@CurrentUser('userId') userId: string, @Body() dto: UpdateCcpaOptOutDto) {
+    return this.privacyService.setCcpaOptOut(userId, dto.optOut);
   }
 }
