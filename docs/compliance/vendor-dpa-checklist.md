@@ -4,7 +4,7 @@ Plantilla de seguimiento para cumplimiento GDPR. Marca cada proveedor cuando el 
 
 | Proveedor | Servicio | DPA / Privacy | Estado |
 |-----------|----------|---------------|--------|
-| Clerk | Autenticación | [Clerk DPA](https://clerk.com/legal/dpa) | Pendiente |
+| Auth (JWT nativo) | Autenticación | Política interna + hosting | En producción |
 | Stripe | Pagos | Dashboard → Legal | Pendiente |
 | Vercel | Hosting web | Settings → Legal | Pendiente |
 | Cloudflare | CDN / R2 | Dashboard → Privacy | Pendiente |

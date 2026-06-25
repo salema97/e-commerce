@@ -3,7 +3,7 @@
 ## Affected providers
 
 - Stripe (`/v1/webhooks/stripe`)
-- Clerk user sync
+- Auth session webhooks (si aplica proveedor externo de identidad)
 - Evolution API (WhatsApp)
 - Local payment providers (Kushki, PayPhone, etc.)
 

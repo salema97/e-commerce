@@ -10,7 +10,7 @@
 
 1. Check container/pod status and recent deploys.
 2. Roll back to previous image/tag if deploy-related.
-3. Verify `DATABASE_URL`, `REDIS_URL`, and Clerk keys in runtime env.
+3. Verify `DATABASE_URL`, `REDIS_URL`, and `JWT_SECRET` / auth keys in runtime env.
 
 ## Recovery
 

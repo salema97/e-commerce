@@ -8,7 +8,7 @@
 
 ## iOS (App Store)
 
-- [ ] Sign in with Apple if offering third-party login (Clerk)
+- [ ] Sign in with Apple si ofreces login social de terceros (OAuth nativo)
 - [ ] ATT prompt if tracking across apps (PostHog) — respect cookie/consent parity
 - [ ] Push notification permission rationale in Spanish
 - [ ] No IAP required for physical goods (e-commerce)
