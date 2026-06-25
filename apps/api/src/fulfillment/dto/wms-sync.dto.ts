@@ -53,6 +53,7 @@ export class WmsTrackingEventDto {
   @ApiProperty({ required: false, enum: SHIPMENT_STATUSES })
   @IsOptional()
   @IsIn(SHIPMENT_STATUSES)
+  @Type(() => String)
   status?: ShipmentStatus;
 }
 

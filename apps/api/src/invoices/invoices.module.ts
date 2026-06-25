@@ -52,19 +52,6 @@ import { isNonProduction } from '../common/is-non-production.js';
     SriDeliveryService,
     SriQueueWorker,
   ],
-  exports: [
-    InvoicesService,
-    InvoiceProviderFactory,
-    InvoiceSequenceService,
-    DirectSriInvoiceProvider,
-    SriAccessKeyBuilder,
-    SriXmlBuilder,
-    SriCreditNoteXmlBuilder,
-    SriSignerService,
-    SriSoapClient,
-    SriRidePdfService,
-    SriDocumentStorageService,
-    SriDeliveryService,
-  ],
+  exports: [InvoicesService],
 })
 export class InvoicesModule {}

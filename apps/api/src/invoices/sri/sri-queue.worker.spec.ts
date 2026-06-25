@@ -138,7 +138,7 @@ describe('SriQueueWorker', () => {
     };
 
     signerService = {
-      loadCertificateFileAsBuffer: vi.fn().mockReturnValue(Buffer.from('p12')),
+      loadCertificateFileAsBuffer: vi.fn().mockResolvedValue(Buffer.from('p12')),
       sign: vi.fn().mockReturnValue('signed_xml'),
     };
 

@@ -5,6 +5,7 @@ import { SriDocumentStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { SriQueueService } from './sri-queue.service.js';
 import { SriReconciliationService } from './sri-reconciliation.service.js';
+import { SchedulerRegistry } from '@nestjs/schedule';
 
 describe('SriReconciliationService', () => {
   let service: SriReconciliationService;
@@ -48,6 +49,12 @@ describe('SriReconciliationService', () => {
         },
         { provide: PrismaService, useValue: prisma },
         { provide: SriQueueService, useValue: queueService },
+        {
+          provide: SchedulerRegistry,
+          useValue: {
+            addCronJob: vi.fn(),
+          },
+        },
       ],
     }).compile();
 

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { MercadoPagoProvider } from './mercadopago.provider.js';
-import { PaymentStatus } from '../entities/payment-status.enum.js';
+import { PaymentStatus } from '../public-api.js';
 
 const TEST_CONFIG = {
   MERCADOPAGO_ACCESS_TOKEN: 'mp_token_test',

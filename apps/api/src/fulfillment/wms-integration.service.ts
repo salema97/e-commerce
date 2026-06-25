@@ -20,15 +20,15 @@ export class WmsIntegrationService {
     return WMS_PROVIDER_REGISTRY;
   }
 
-  async syncInventory(records: WmsInventoryRecord[]): Promise<WmsSyncResult> {
+  syncInventory(records: WmsInventoryRecord[]): Promise<WmsSyncResult> {
     return this.providerFactory.resolve().syncInventory(records);
   }
 
-  async importTracking(events: WmsTrackingEvent[]): Promise<number> {
+  importTracking(events: WmsTrackingEvent[]): Promise<number> {
     return this.providerFactory.resolve().importTrackingEvents(events);
   }
 
-  async listBackorders(limit = 50) {
+  listBackorders(limit = 50) {
     return this.prisma.orderItem.findMany({
       where: {
         OR: [

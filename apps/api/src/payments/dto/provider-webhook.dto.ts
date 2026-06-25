@@ -1,4 +1,5 @@
 import { IsString, IsOptional, IsNumber, IsObject } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class KushkiWebhookDto {
   @IsString()
@@ -11,6 +12,7 @@ export class KushkiWebhookDto {
 
   @IsObject()
   @IsOptional()
+  @Type(() => Object)
   metadata?: Record<string, unknown>;
 }
 

@@ -122,7 +122,7 @@ export class ExpensesService {
     return { key };
   }
 
-  async getReceiptSignedUrl(expenseId: string, key: string): Promise<string> {
+  getReceiptSignedUrl(expenseId: string, key: string): Promise<string> {
     return this.receiptStorage.getSignedUrl(expenseId, key);
   }
 

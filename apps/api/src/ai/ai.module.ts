@@ -149,18 +149,9 @@ import { SearchReindexService } from './search/search-reindex.service.js';
     SearchDomainEventConsumer,
   ],
   exports: [
-    LlmProvider,
-    EmbeddingProvider,
-    KnowledgeIndexingService,
-    KnowledgeIndexQueueService,
-    RagService,
-    SupportBotService,
-    ConversationOrchestrator,
     MeilisearchService,
-    HybridSearchService,
     ProductSearchSyncService,
-    SearchReindexService,
-    ProductContentAiService,
+    ConversationOrchestrator,
   ],
 })
 export class AiModule {}

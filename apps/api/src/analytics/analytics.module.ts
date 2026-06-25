@@ -55,6 +55,6 @@ import { ConsoleErrorTracker, SentryErrorTracker } from './error-trackers.js';
       inject: [ConfigService, ConsoleErrorTracker, SentryErrorTracker],
     },
   ],
-  exports: [AnalyticsService, ErrorTracker, ProductAnalyticsProvider],
+  exports: [],
 })
 export class AnalyticsModule {}

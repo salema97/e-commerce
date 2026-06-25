@@ -4,10 +4,11 @@ import {
   ExecutionContext,
   CallHandler,
 } from '@nestjs/common';
-import { Reflector, ModuleRef } from '@nestjs/core';
+import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { concatMap } from 'rxjs/operators';
 import { AuditLogService } from './audit-log.service.js';
+import { AuditBeforeStateRegistry } from './audit-before-state.registry.js';
 import { AUDIT_KEY, AuditMetadata } from './audit.decorator.js';
 import { AuthenticatedRequest } from '../auth/jwt-auth.guard.js';
 
@@ -15,7 +16,7 @@ import { AuthenticatedRequest } from '../auth/jwt-auth.guard.js';
 export class AuditInterceptor implements NestInterceptor {
   constructor(
     private readonly reflector: Reflector,
-    private readonly moduleRef: ModuleRef,
+    private readonly auditBeforeState: AuditBeforeStateRegistry,
     private readonly auditLogService: AuditLogService,
   ) {}
 
@@ -34,7 +35,7 @@ export class AuditInterceptor implements NestInterceptor {
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const id = (request.params?.id as string | undefined) ?? undefined;
-    const before = id ? await this.loadBeforeState(context, id) : null;
+    const before = id ? await this.loadBeforeState(metadata, id) : null;
 
     return next.handle().pipe(
       concatMap(async (response) => {
@@ -61,45 +62,10 @@ export class AuditInterceptor implements NestInterceptor {
   }
 
   private async loadBeforeState(
-    context: ExecutionContext,
+    metadata: AuditMetadata,
     id: string,
   ): Promise<unknown | null> {
-    try {
-      const controllerClass = context.getClass();
-      const controllerInstance = this.moduleRef.get(controllerClass, {
-        strict: false,
-      });
-      const service = this.findService(controllerInstance);
-
-      if (
-        service &&
-        typeof service === 'object' &&
-        'findOne' in service &&
-        typeof service.findOne === 'function'
-      ) {
-        return await (service.findOne as (id: string) => Promise<unknown>)(id);
-      }
-    } catch {
-      // Before-state loading is best-effort; ignore failures so the
-      // primary mutation is never blocked by audit bookkeeping.
-    }
-
-    return null;
-  }
-
-  private findService(controllerInstance: object): unknown {
-    for (const key of Object.keys(controllerInstance)) {
-      const value = (controllerInstance as Record<string, unknown>)[key];
-      if (
-        key.endsWith('Service') &&
-        value !== null &&
-        value !== undefined
-      ) {
-        return value;
-      }
-    }
-
-    return null;
+    return await this.auditBeforeState.load(metadata.resource, id);
   }
 
   private isDelete(request: AuthenticatedRequest): boolean {

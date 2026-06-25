@@ -20,7 +20,7 @@ import { RefundService } from '../payments/refund.service.js';
 import { ReceiptService } from '../receipts/receipt.service.js';
 import { CreateOrderDto, UpdateOrderStatusDto } from './dto/create-order.dto.js';
 import { ListOrdersQueryDto } from './dto/list-orders.query.dto.js';
-import { CreateRefundDto } from '../payments/dto/create-refund.dto.js';
+import { CreateRefundDto } from '../payments/public-api.js';
 
 @ApiTags('Orders')
 @Controller('orders')

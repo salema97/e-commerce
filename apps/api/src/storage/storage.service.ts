@@ -60,7 +60,7 @@ export class StorageService {
    * @param key Object key.
    * @param expiresInSeconds URL lifetime in seconds (default 300 = 5 minutes).
    */
-  async getSignedUrl(
+  getSignedUrl(
     key: string,
     expiresInSeconds = 300,
   ): Promise<string> {

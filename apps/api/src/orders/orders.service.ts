@@ -282,7 +282,7 @@ export class OrdersService {
     return { id, status: OrderStatus.CANCELLED };
   }
 
-  private async validateItems(items: CreateOrderItemDto[]) {
+  private validateItems(items: CreateOrderItemDto[]) {
     return Promise.all(items.map(async (item) => {
       const product = await this.prisma.product.findUnique({ where: { id: item.productId }, include: { variants: true } });
       if (!product) throw new BadRequestException(`Product ${item.productId} not found`);

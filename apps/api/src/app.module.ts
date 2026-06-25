@@ -21,6 +21,7 @@ import { ReturnsModule } from './returns/returns.module.js';
 import { JwtAuthGuard } from './auth/jwt-auth.guard.js';
 import { RolesGuard } from './auth/roles.guard.js';
 import { AuditInterceptor } from './audit/audit.interceptor.js';
+import { AuditBootstrapModule } from './audit/audit-bootstrap.module.js';
 import { WhatsAppModule } from './whatsapp/whatsapp.module.js';
 import { ConversationModule } from './conversations/conversation.module.js';
 import { MessageModule } from './messages/message.module.js';
@@ -60,6 +61,7 @@ import { CatalogModule } from './catalog/catalog.module.js';
     }),
     AuthModule,
     AuditModule,
+    AuditBootstrapModule,
     PrismaModule,
     HealthModule,
     CategoriesModule,

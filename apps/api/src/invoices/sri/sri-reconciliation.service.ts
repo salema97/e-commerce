@@ -1,21 +1,38 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { SchedulerRegistry } from '@nestjs/schedule';
+import { CronJob } from 'cron';
 import { SriDocumentStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { SriQueueService } from './sri-queue.service.js';
 
 @Injectable()
-export class SriReconciliationService {
+export class SriReconciliationService implements OnModuleInit {
   private readonly logger = new Logger(SriReconciliationService.name);
 
   constructor(
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
     private readonly queueService: SriQueueService,
+    private readonly schedulerRegistry: SchedulerRegistry,
   ) {}
 
-  @Cron(process.env.SRI_RECONCILIATION_CRON ?? CronExpression.EVERY_HOUR)
+  onModuleInit(): void {
+    const cronExpression = this.config.get<string>(
+      'SRI_RECONCILIATION_CRON',
+      '0 * * * *',
+    );
+
+    const job = new CronJob(cronExpression, () => {
+      void this.reconcileStuckDocuments().catch((error: unknown) => {
+        this.logger.error({ error }, 'SRI reconciliation cron failed');
+      });
+    });
+
+    this.schedulerRegistry.addCronJob('sri-reconciliation', job);
+    job.start();
+  }
+
   async reconcileStuckDocuments(olderThanHours?: number): Promise<{
     invoices: number;
     creditNotes: number;

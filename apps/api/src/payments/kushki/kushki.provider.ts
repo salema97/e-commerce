@@ -11,8 +11,8 @@ import {
   RefundResult,
   CheckoutSessionResult,
 } from '../payment-provider.interface.js';
-import { PaymentStatus } from '../entities/payment-status.enum.js';
-import { KushkiWebhookDto } from '../dto/provider-webhook.dto.js';
+import { PaymentStatus } from '../public-api.js';
+import { KushkiWebhookDto } from '../public-api.js';
 
 @Injectable()
 export class KushkiProvider extends PaymentProvider {
@@ -65,18 +65,18 @@ export class KushkiProvider extends PaymentProvider {
     };
   }
 
-  async capturePayment(): Promise<void> {
+  capturePayment(): Promise<void> {
     throw new Error('Kushki capturePayment is not implemented');
   }
 
-  async confirmPayment(externalId: string): Promise<PaymentResult> {
-    return {
+  confirmPayment(externalId: string): Promise<PaymentResult> {
+    return Promise.resolve({
       providerTransactionId: externalId,
       status: PaymentStatus.PENDING,
-    };
+    });
   }
 
-  async refund(): Promise<RefundResult> {
+  refund(): Promise<RefundResult> {
     throw new Error('Kushki refund is not implemented');
   }
 
@@ -84,14 +84,14 @@ export class KushkiProvider extends PaymentProvider {
     return constantTimeCompare(signature, secret);
   }
 
-  async parseWebhookPayload(payload: unknown): Promise<ProviderPaymentResult> {
+  parseWebhookPayload(payload: unknown): Promise<ProviderPaymentResult> {
     const dto = payload as KushkiWebhookDto;
     const status = mapKushkiStatus(dto.status);
-    return {
+    return Promise.resolve({
       providerTransactionId: dto.transactionReference ?? '',
       status,
       metadata: dto as Record<string, unknown>,
-    };
+    });
   }
 }
 

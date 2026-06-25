@@ -224,7 +224,7 @@ export class ReturnsService {
     return created;
   }
 
-  async listReturns(filter: ListReturnsFilter = {}) {
+  listReturns(filter: ListReturnsFilter = {}) {
     const where: Prisma.ReturnRequestWhereInput = {};
     if (filter.status) where.status = filter.status;
     if (filter.orderId) where.orderId = filter.orderId;

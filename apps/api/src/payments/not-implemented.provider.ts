@@ -14,23 +14,23 @@ export abstract class NotImplementedPaymentProvider extends PaymentProvider {
     throw new Error(`${this.constructor.name} is not implemented`);
   }
 
-  async createPaymentIntent(): Promise<PaymentIntentResult> {
+  createPaymentIntent(): Promise<PaymentIntentResult> {
     this.notImplemented();
   }
 
-  async createCheckoutSession(): Promise<CheckoutSessionResult> {
+  createCheckoutSession(): Promise<CheckoutSessionResult> {
     this.notImplemented();
   }
 
-  async capturePayment(): Promise<void> {
+  capturePayment(): Promise<void> {
     this.notImplemented();
   }
 
-  async confirmPayment(): Promise<PaymentResult> {
+  confirmPayment(): Promise<PaymentResult> {
     this.notImplemented();
   }
 
-  async refund(): Promise<RefundResult> {
+  refund(): Promise<RefundResult> {
     this.notImplemented();
   }
 
@@ -38,7 +38,7 @@ export abstract class NotImplementedPaymentProvider extends PaymentProvider {
     this.notImplemented();
   }
 
-  async parseWebhookPayload(): Promise<ProviderPaymentResult> {
+  parseWebhookPayload(): Promise<ProviderPaymentResult> {
     this.notImplemented();
   }
 }

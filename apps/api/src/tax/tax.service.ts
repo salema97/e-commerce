@@ -97,7 +97,7 @@ export class TaxService {
     return international ?? 'stripe_tax';
   }
 
-  private async calculateWithProvider(
+  private calculateWithProvider(
     provider: TaxProviderName,
     lines: Array<{ lineSubtotal: number; taxCategory: TaxCategory }>,
     input: CartTaxInput,

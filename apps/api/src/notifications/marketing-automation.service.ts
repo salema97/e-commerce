@@ -217,7 +217,7 @@ export class MarketingAutomationService {
     return { sent };
   }
 
-  async listActivePromotions(): Promise<Array<{ id: string; name: string }>> {
+  listActivePromotions(): Promise<Array<{ id: string; name: string }>> {
     return this.prisma.promotion.findMany({
       where: { isActive: true },
       select: { id: true, name: true },

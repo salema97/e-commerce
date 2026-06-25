@@ -30,7 +30,7 @@ export class SriQueueService {
     return isSriQueueEnabled(this.config);
   }
 
-  async addIssueInvoiceJob(orderId: string): Promise<SriDocumentJob> {
+  addIssueInvoiceJob(orderId: string): Promise<SriDocumentJob> {
     return this.enqueue(
       SriJobName.ISSUE_INVOICE,
       { orderId },
@@ -39,7 +39,7 @@ export class SriQueueService {
     );
   }
 
-  async addIssueCreditNoteJob(creditNoteId: string): Promise<SriDocumentJob> {
+  addIssueCreditNoteJob(creditNoteId: string): Promise<SriDocumentJob> {
     return this.enqueue(
       SriJobName.ISSUE_CREDIT_NOTE,
       { creditNoteId },
@@ -48,7 +48,7 @@ export class SriQueueService {
     );
   }
 
-  async addReconcileDocumentJob(
+  addReconcileDocumentJob(
     documentType: string,
     documentId: string,
   ): Promise<SriDocumentJob> {

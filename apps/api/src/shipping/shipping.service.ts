@@ -23,14 +23,14 @@ export class ShippingService {
     private readonly carrierRateFactory: CarrierRateProviderFactory,
   ) {}
 
-  async listZones() {
+  listZones() {
     return this.prisma.shippingZone.findMany({
       where: { isActive: true },
       orderBy: { name: 'asc' },
     });
   }
 
-  async quote(input: ShippingQuoteInput): Promise<ShippingQuote> {
+  quote(input: ShippingQuoteInput): Promise<ShippingQuote> {
     const carrierInput: CarrierRateQuoteInput = {
       destination: {
         country: input.country,

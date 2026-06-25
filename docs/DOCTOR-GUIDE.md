@@ -21,9 +21,9 @@ Este documento define **cómo ejecutar los doctores**, qué patrones evitan sus 
 
 | App | Score / estado | Errores críticos |
 |-----|----------------|------------------|
-| Web | **100/100** (antes 90 → 78 → 63) | **0** | 0 warnings |
-| API | **83/100** | **0** (antes 6) |
-| Mobile | **21/21 checks** expo-doctor | **0** — `expo-doctor` como devDependency en `@repo/mobile` |
+| Web | **100/100** | **0** |
+| API | **90/100** | **0** — reglas `require-guards`/`no-orm-in-services` off con `APP_GUARD` + recipe Prisma |
+| Mobile | **21/21 checks** expo-doctor | **0** |
 
 ---
 
@@ -201,11 +201,13 @@ Config en `apps/api/nestjs-doctor.config.json`:
 ```json
 {
   "rules": {
-    "missing-use-guards": "off",
-    "service-injects-orm": "off"
+    "security/require-guards-on-endpoints": "off",
+    "architecture/no-orm-in-services": "off"
   }
 }
 ```
+
+**IDs de regla (nestjs-doctor v0.4+):** los nombres antiguos `missing-use-guards` / `service-injects-orm` ya no aplican. Usar `--config nestjs-doctor.config.json` en el script `health:nest`.
 
 **Por qué no es “ocultar”:** seguimos el [recipe oficial NestJS + Prisma](https://docs.nestjs.com/recipes/prisma) y guards globales en `app.module.ts`. La regla no detecta `APP_GUARD`.
 

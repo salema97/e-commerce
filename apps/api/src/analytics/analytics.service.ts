@@ -89,7 +89,7 @@ export class AnalyticsService {
     return counts;
   }
 
-  async isFeatureEnabled(flag: string, distinctId: string): Promise<boolean> {
+  isFeatureEnabled(flag: string, distinctId: string): Promise<boolean> {
     return this.productAnalytics.isFeatureEnabled(flag, distinctId);
   }
 
