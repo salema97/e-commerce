@@ -909,6 +909,50 @@ export async function seedDatabase(prisma: PrismaClient): Promise<void> {
     supplierMainId: supplierMain.id,
   });
 
+  const storeLocation = await prisma.storeLocation.upsert({
+    where: { code: 'QUITO-01' },
+    update: { isActive: true, supportsPickup: true, supportsPos: true },
+    create: {
+      id: IDS.storeLocationQuito,
+      code: 'QUITO-01',
+      name: 'NEO Store Quito',
+      address: 'Av. 6 de Diciembre N24-102',
+      city: 'Quito',
+      province: 'Pichincha',
+      phone: '+593222345678',
+      supportsPickup: true,
+      supportsPos: true,
+      isActive: true,
+    },
+  });
+
+  await prisma.posRegister.upsert({
+    where: { locationId_code: { locationId: storeLocation.id, code: 'CAJA-01' } },
+    update: { isActive: true },
+    create: {
+      id: IDS.posRegisterMain,
+      locationId: storeLocation.id,
+      code: 'CAJA-01',
+      name: 'Caja principal',
+      isActive: true,
+    },
+  });
+
+  await prisma.subscriptionPlan.upsert({
+    where: { productId: productShirt.id },
+    update: { isActive: true },
+    create: {
+      id: IDS.subscriptionPlanShirt,
+      productId: productShirt.id,
+      interval: 'MONTHLY',
+      intervalCount: 1,
+      trialDays: 7,
+      isActive: true,
+      stripeProductId: 'prod_seed_shirt_sub',
+      stripePriceId: 'price_seed_shirt_sub',
+    },
+  });
+
   logPhaseSeedExpectations();
 
   // eslint-disable-next-line no-console

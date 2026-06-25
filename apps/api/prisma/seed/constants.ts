@@ -72,6 +72,9 @@ export const IDS = {
   loyaltyAccountCustomer: '00000000-0000-0000-0000-000000001551',
   loyaltyTxEarn: '00000000-0000-0000-0000-000000001552',
   loyaltyTxBonus: '00000000-0000-0000-0000-000000001553',
+  storeLocationQuito: '00000000-0000-0000-0000-000000001561',
+  posRegisterMain: '00000000-0000-0000-0000-000000001562',
+  subscriptionPlanShirt: '00000000-0000-0000-0000-000000001563',
 } as const;
 
 export const SEED_REFERRAL_CODE = 'STOREADMIN' as const;
