@@ -2,6 +2,7 @@ import type { PrismaClient } from '@prisma/client';
 import { ACCESS_KEYS, IDS } from './constants.js';
 import { hashSeedPassword, logSeedCredentials } from './auth.js';
 import { logPhaseSeedExpectations, seedPhases11To14 } from './phases-11-14.js';
+import { seedPhases15To17 } from './phases-15-17.js';
 
 const ESTABLISHMENT = process.env.SRI_ESTABLISHMENT_CODE ?? '001';
 const EMISSION_POINT = process.env.SRI_EMISSION_POINT_CODE ?? '001';
@@ -951,6 +952,23 @@ export async function seedDatabase(prisma: PrismaClient): Promise<void> {
       stripeProductId: 'prod_seed_shirt_sub',
       stripePriceId: 'price_seed_shirt_sub',
     },
+  });
+
+  await seedPhases15To17(prisma, {
+    customerId: customer.id,
+    customer2Id: IDS.userCustomer2,
+    adminId: IDS.userAdmin,
+    productLaptopId: productLaptop.id,
+    productPhoneId: productPhone.id,
+    variantLaptopBaseId: IDS.variantLaptopBase,
+    orderDeliveredId: orderDelivered.id,
+    orderShippedId: IDS.orderShipped,
+    subscriptionPlanId: IDS.subscriptionPlanShirt,
+    storeLocationId: storeLocation.id,
+    posRegisterId: IDS.posRegisterMain,
+    conversationId: IDS.conversationSeed,
+    invoiceId: IDS.invoiceDelivered,
+    faqReturnsId: IDS.faqReturns,
   });
 
   logPhaseSeedExpectations();

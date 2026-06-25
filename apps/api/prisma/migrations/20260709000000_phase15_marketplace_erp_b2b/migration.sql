@@ -68,7 +68,7 @@ CREATE TABLE "Quote" (
     "notes" TEXT,
     "convertedOrderId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "Quote_pkey" PRIMARY KEY ("id")
 );
 
@@ -81,6 +81,8 @@ CREATE TABLE "QuoteLine" (
     "sku" TEXT NOT NULL,
     "quantity" INTEGER NOT NULL,
     "unitPrice" DECIMAL(12,2) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "QuoteLine_pkey" PRIMARY KEY ("id")
 );
 
