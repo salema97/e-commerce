@@ -81,7 +81,7 @@ describe('DirectSriInvoiceProvider', () => {
     };
     signerService = {
       sign: vi.fn((xml: string) => `signed_${xml}`),
-      loadCertificateFileAsBuffer: vi.fn(() => Buffer.from('test-p12')),
+      loadCertificateFileAsBuffer: vi.fn().mockResolvedValue(Buffer.from('test-p12')),
     };
     invoiceSequenceService = {
       allocateNext: vi.fn().mockResolvedValue('000000001'),

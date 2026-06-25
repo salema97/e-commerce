@@ -56,7 +56,7 @@ function CheckoutForm({ clientSecret, orderId, total }: PaymentElementWrapperPro
     });
 
     if (result.error) {
-      setErrorMessage(result.error.message ?? 'Payment failed. Please try again.');
+      setErrorMessage(result.error.message ?? 'El pago falló. Por favor, inténtalo de nuevo.');
       setIsProcessing(false);
       return;
     }
@@ -78,11 +78,11 @@ function CheckoutForm({ clientSecret, orderId, total }: PaymentElementWrapperPro
         <p className="text-sm text-red-600">{errorMessage}</p>
       ) : null}
       <Button type="submit" disabled={!stripe || isProcessing} className="w-full">
-        {isProcessing ? 'Processing...' : `Pay ${formatPrice(total)}`}
+        {isProcessing ? 'Procesando…' : `Pagar ${formatPrice(total)}`}
       </Button>
       <p className="text-xs text-muted-foreground">
-        Payment is confirmed securely by Stripe. Your card details never touch
-        our servers.
+        El pago se confirma de forma segura con Stripe. Los datos de tu tarjeta nunca
+        pasan por nuestros servidores.
       </p>
     </form>
   );

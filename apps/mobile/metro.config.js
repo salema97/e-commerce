@@ -13,6 +13,7 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ];
 
-config.resolver.disableHierarchicalLookup = true;
+// Expo Doctor expects false; monorepo resolution uses nodeModulesPaths + watchFolders.
+config.resolver.disableHierarchicalLookup = false;
 
 module.exports = config;

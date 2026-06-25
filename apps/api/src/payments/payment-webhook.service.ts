@@ -124,7 +124,7 @@ export class PaymentWebhookService {
   }
 
   private enqueueInvoice(orderId: string): void {
-    this.invoicesService
+    void this.invoicesService
       .enqueueInvoiceForOrder(orderId)
       .catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);

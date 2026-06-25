@@ -10,6 +10,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { formatDate, returnStatusLabel, refundMethodLabel } from '@repo/shared-utils';
 
 export default async function AdminReturnsPage({
@@ -17,8 +19,10 @@ export default async function AdminReturnsPage({
 }: {
   searchParams: Promise<{ status?: string; customerEmail?: string }>;
 }) {
-  const api = getServerApiClient();
-  const { status, customerEmail } = await searchParams;
+  const [api, { status, customerEmail }] = await Promise.all([
+    getServerApiClient(),
+    searchParams,
+  ]);
   const returns = await api.returns.findAll({
     status,
     customerEmail,
@@ -26,20 +30,26 @@ export default async function AdminReturnsPage({
   });
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Returns</h1>
-
-      <div className="rounded-md border">
-        <Table>
+    <AnimatedPageShell
+      className="flex min-h-0 flex-1 flex-col gap-6"
+      header={
+        <AdminPageHeader
+          title="Devoluciones"
+          subtitle="Solicitudes y reembolsos"
+          showNetworkStatus={false}
+        />
+      }
+    >
+      <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Return</TableHead>
-              <TableHead>Order</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Resolution</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Devolución</TableHead>
+              <TableHead>Pedido</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead>Resolución</TableHead>
+              <TableHead>Fecha</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -47,7 +57,7 @@ export default async function AdminReturnsPage({
               <TableRow key={returnRequest.id}>
                 <TableCell className="font-medium">{returnRequest.id.slice(0, 8)}</TableCell>
                 <TableCell>{returnRequest.order?.orderNumber.slice(0, 8) ?? '-'}</TableCell>
-                <TableCell>{returnRequest.order?.customerEmail ?? 'Guest'}</TableCell>
+                <TableCell>{returnRequest.order?.customerEmail ?? 'Invitado'}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{returnStatusLabel(returnRequest.status)}</Badge>
                 </TableCell>
@@ -59,14 +69,13 @@ export default async function AdminReturnsPage({
                 <TableCell>{formatDate(returnRequest.createdAt)}</TableCell>
                 <TableCell className="text-right">
                   <Link href={`/admin/returns/${returnRequest.id}`}>
-                    <Button variant="outline" size="sm">View</Button>
+                    <Button variant="outline" size="sm">Ver</Button>
                   </Link>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      </div>
-    </div>
+    </AnimatedPageShell>
   );
 }

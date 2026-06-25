@@ -5,8 +5,9 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3001),
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1),
-  CLERK_SECRET_KEY: z.string().min(1),
-  CLERK_WEBHOOK_SECRET: z.string().min(1),
+  AUTH_JWT_ACCESS_SECRET: z.string().min(32),
+  AUTH_ACCESS_TOKEN_TTL: z.string().default('15m'),
+  AUTH_REFRESH_TOKEN_DAYS: z.coerce.number().int().positive().default(30),
   STRIPE_SECRET_KEY: z.string().min(1),
   STRIPE_WEBHOOK_SECRET: z.string().min(1),
   STRIPE_SUCCESS_URL: z.string().min(1),
@@ -21,11 +22,13 @@ const envSchema = z.object({
   PLACETOPAY_SECRET_KEY: z.string().min(1),
   PLACETOPAY_BASE_URL: z.string().min(1),
   DEFAULT_LOCAL_PAYMENT_PROVIDER: z.string().optional(),
-  R2_ACCOUNT_ID: z.string().min(1),
-  R2_ACCESS_KEY_ID: z.string().min(1),
-  R2_SECRET_ACCESS_KEY: z.string().min(1),
-  R2_BUCKET_NAME: z.string().min(1),
-  R2_PUBLIC_URL: z.string().min(1),
+  AWS_REGION: z.string().min(1),
+  AWS_ACCESS_KEY_ID: z.string().min(1),
+  AWS_SECRET_ACCESS_KEY: z.string().min(1),
+  AWS_S3_BUCKET: z.string().min(1),
+  AWS_S3_ENDPOINT: z.string().url(),
+  AWS_S3_FORCE_PATH_STYLE: z.enum(['true', 'false']).default('true'),
+  AWS_S3_PUBLIC_URL: z.string().optional(),
   SRI_MODE: z.enum(['direct', 'intermediary']).default('direct'),
   SRI_RUC: z.string().min(1),
   SRI_SOL_KEY: z.string().min(1),
@@ -141,12 +144,6 @@ export function validate(config: Record<string, unknown>): Env {
   if (!result.success) {
     const issues = result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join('; ');
     throw new Error(`Environment validation failed: ${issues}`);
-  }
-
-  if (config.NODE_ENV === 'production' && config.ENABLE_TEST_AUTH === 'true') {
-    throw new Error(
-      'Environment validation failed: ENABLE_TEST_AUTH cannot be true in production',
-    );
   }
 
   return result.data;

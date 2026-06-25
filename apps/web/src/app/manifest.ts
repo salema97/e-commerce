@@ -2,23 +2,25 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'E-commerce Store',
-    short_name: 'Store',
-    description: 'Your local e-commerce destination',
+    name: 'NEO.STORE',
+    short_name: 'NEO.STORE',
+    description: 'Tu tienda online local',
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',
     theme_color: '#171717',
     icons: [
       {
-        src: '/icon-192x192.png',
-        sizes: '192x192',
-        type: 'image/png',
+        src: '/icon.svg',
+        sizes: 'any',
+        type: 'image/svg+xml',
+        purpose: 'any',
       },
       {
-        src: '/icon-512x512.png',
+        src: '/icon.svg',
         sizes: '512x512',
-        type: 'image/png',
+        type: 'image/svg+xml',
+        purpose: 'maskable',
       },
     ],
   };

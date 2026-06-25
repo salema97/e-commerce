@@ -3,7 +3,7 @@ import { getServerApiClient } from '@/lib/api';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://example.com';
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
 
   const [products, categories] = await Promise.allSettled([
     api.products.findAll({ status: 'ACTIVE' }),

@@ -1,13 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from '@/contexts/auth-context';
 import { getStoredConsent } from '@/lib/analytics/consent';
 import { initAnalytics, reportClientError } from '@/lib/analytics/track';
 import { CookieConsentBanner } from '@/components/analytics/cookie-consent-banner';
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
-  const { userId } = useAuth();
+  const { user } = useAuth();
+  const userId = user?.id;
   const [ready, setReady] = React.useState(false);
 
   React.useEffect(() => {

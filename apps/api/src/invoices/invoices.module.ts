@@ -1,8 +1,9 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { InvoicesService } from './invoices.service.js';
 import { InvoicesController } from './invoices.controller.js';
 import { CreditNotesController } from './credit-notes.controller.js';
 import { TestInvoicesController } from './test-invoices.controller.js';
+import { TestInvoicesService } from './test-invoices.service.js';
 import { InvoiceProviderFactory } from './invoice-provider.factory.js';
 import { DirectSriInvoiceProvider } from './sri/sri-invoice.provider.js';
 import { SriAccessKeyBuilder } from './sri/sri-access-key.builder.js';
@@ -19,7 +20,8 @@ import { StorageModule } from '../storage/storage.module.js';
 import { EmailModule } from '../notifications/email.module.js';
 import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
 import { SriQueueModule } from './sri/sri-queue.module.js';
-import { isTestAuthEnabled } from '../auth/test-auth.js';
+import { SriQueueWorker } from './sri/sri-queue.worker.js';
+import { isNonProduction } from '../common/is-non-production.js';
 
 @Module({
   imports: [
@@ -27,15 +29,16 @@ import { isTestAuthEnabled } from '../auth/test-auth.js';
     StorageModule,
     EmailModule,
     WhatsAppNotificationModule,
-    forwardRef(() => SriQueueModule),
+    SriQueueModule,
   ],
   controllers: [
     InvoicesController,
     CreditNotesController,
-    ...(isTestAuthEnabled() ? [TestInvoicesController] : []),
+    ...(isNonProduction() ? [TestInvoicesController] : []),
   ],
   providers: [
     InvoicesService,
+    TestInvoicesService,
     InvoiceProviderFactory,
     DirectSriInvoiceProvider,
     SriAccessKeyBuilder,
@@ -47,20 +50,8 @@ import { isTestAuthEnabled } from '../auth/test-auth.js';
     SriRidePdfService,
     SriDocumentStorageService,
     SriDeliveryService,
+    SriQueueWorker,
   ],
-  exports: [
-    InvoicesService,
-    InvoiceProviderFactory,
-    InvoiceSequenceService,
-    DirectSriInvoiceProvider,
-    SriAccessKeyBuilder,
-    SriXmlBuilder,
-    SriCreditNoteXmlBuilder,
-    SriSignerService,
-    SriSoapClient,
-    SriRidePdfService,
-    SriDocumentStorageService,
-    SriDeliveryService,
-  ],
+  exports: [InvoicesService],
 })
 export class InvoicesModule {}

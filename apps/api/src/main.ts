@@ -35,6 +35,17 @@ async function bootstrap() {
   app.useGlobalFilters(
     new AllExceptionsFilter(app.get(HttpAdapterHost), app.get(ErrorTracker)),
   );
+  const configService = app.get(ConfigService);
+
+  const corsOrigins = (configService.get<string>('CORS_ORIGINS') ?? 'http://localhost:3000')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  app.enableCors({
+    origin: corsOrigins,
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('E-commerce API')
@@ -48,11 +59,21 @@ async function bootstrap() {
     .addTag('Users')
     .addTag('Cart')
     .addTag('Orders')
+    .addTag('Payments')
+    .addTag('Invoices')
+    .addTag('Returns')
+    .addTag('Finance')
+    .addTag('Notifications')
+    .addTag('Marketing')
+    .addTag('Analytics')
+    .addTag('AI')
+    .addTag('WhatsApp')
+    .addTag('Webhooks')
+    .addTag('Auth')
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, document);
 
-  const configService = app.get(ConfigService);
   const port = parseInt(configService.get('PORT', '3001'), 10);
 
   await app.listen(port);

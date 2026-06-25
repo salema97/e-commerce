@@ -6,10 +6,9 @@
     "scheme": "ecommerce",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "backgroundColor": "#ffffff"
-    },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.example.ecommerce"
@@ -33,7 +32,21 @@
       ],
       [
         "expo-secure-store"
-      ]
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.example.ecommerce",
+          "enableGooglePay": false
+        }
+      ],
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true

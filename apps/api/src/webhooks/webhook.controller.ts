@@ -1,23 +1,9 @@
-import {
-  BadRequestException,
-  Controller,
-  Headers,
-  HttpCode,
-  Param,
-  Post,
-  Req,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Controller, Headers, HttpCode, Param, Post, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
-import { createHash } from 'crypto';
-import { ZodError } from 'zod';
-import { webhookPayloadSchema } from '@repo/shared-utils';
 import { Public } from '../auth/public.decorator.js';
-import { WhatsAppProvider } from '../whatsapp/whatsapp-provider.interface.js';
-import { RedisIdempotencyService } from '../common/redis/idempotency.service.js';
-import { WebhookService, EvolutionWebhookPayload } from './webhook.service.js';
+import { WebhookService } from './webhook.service.js';
 
 interface RawRequest extends Request {
   rawBody?: Buffer;
@@ -27,11 +13,7 @@ interface RawRequest extends Request {
 @Controller('webhooks/evolution')
 @Public()
 export class WebhookController {
-  constructor(
-    private readonly whatsappProvider: WhatsAppProvider,
-    private readonly idempotency: RedisIdempotencyService,
-    private readonly webhookService: WebhookService,
-  ) {}
+  constructor(private readonly webhookService: WebhookService) {}
 
   @Post(':event')
   @HttpCode(204)
@@ -44,43 +26,6 @@ export class WebhookController {
     @Headers('x-evolution-api-signature') signature: string | undefined,
     @Req() request: RawRequest,
   ): Promise<void> {
-    const rawBody = request.rawBody;
-
-    if (!rawBody || !signature) {
-      throw new UnauthorizedException('Missing webhook body or signature');
-    }
-
-    const valid = this.whatsappProvider.verifyWebhookSignature(rawBody, signature);
-
-    if (!valid) {
-      throw new UnauthorizedException('Invalid webhook signature');
-    }
-
-    let payload: EvolutionWebhookPayload;
-
-    try {
-      payload = webhookPayloadSchema.parse(
-        JSON.parse(rawBody.toString('utf8')),
-      ) as EvolutionWebhookPayload;
-    } catch (error) {
-      if (error instanceof ZodError) {
-        throw new BadRequestException(error.flatten());
-      }
-      throw new UnauthorizedException('Invalid JSON payload');
-    }
-
-    const idempotencyKey = this.buildIdempotencyKey(event, rawBody);
-    const isFirst = await this.idempotency.claim(idempotencyKey);
-
-    if (!isFirst) {
-      return;
-    }
-
-    await this.webhookService.handleEvent(event, payload);
-  }
-
-  private buildIdempotencyKey(event: string, rawBody: Buffer): string {
-    const hash = createHash('sha256').update(rawBody).digest('hex');
-    return `evolution:${event}:${hash}`;
+    await this.webhookService.receiveEvolutionWebhook(event, request.rawBody, signature);
   }
 }

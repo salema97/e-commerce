@@ -149,7 +149,7 @@ export class RefundService {
 
     if (input.requestedById) {
       await this.auditLog.log({
-        actorClerkUserId: input.requestedById,
+        actorId: input.requestedById,
         resource: 'Refund',
         action: 'CREATE',
         resourceId: refund.id,
@@ -189,7 +189,7 @@ export class RefundService {
     });
 
     await this.auditLog.log({
-      actorClerkUserId: approvedById,
+      actorId: approvedById,
       resource: 'Refund',
       action: 'APPROVE',
       resourceId: refundId,

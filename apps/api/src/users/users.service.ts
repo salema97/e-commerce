@@ -5,7 +5,7 @@ import { UpdateUserDto } from './dto/update-user.dto.js';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   create(data: CreateUserDto) {
     return this.prisma.user.create({ data });

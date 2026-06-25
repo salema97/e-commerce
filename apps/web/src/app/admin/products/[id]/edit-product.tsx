@@ -2,74 +2,42 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select } from '@/components/ui/select';
+import { FormSelect } from '@/components/ui/form-select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useApiClient } from '@/lib/client-api';
-import { formatPrice } from '@repo/shared-utils';
-import type { Product, ProductStatus } from '@repo/shared-types';
+import { Checkbox } from '@/components/ui/checkbox';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
+import { useApiClient, useApiQueryHooks } from '@/lib/client-api';
+import type { Product, ProductContentDraft, ProductStatus } from '@repo/shared-types';
 
-export default function EditProductPage({ product }: { product: Product }) {
+interface EditProductProps {
+  product: Product;
+  initialDraft: ProductContentDraft | null;
+}
+
+export default function EditProductPage({ product, initialDraft }: EditProductProps) {
   const router = useRouter();
   const api = useApiClient();
-  const { getToken } = useAuth();
+  const hooks = useApiQueryHooks();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [isGenerating, setIsGenerating] = React.useState(false);
-  const [draft, setDraft] = React.useState<{
-    description?: string;
-    metaTitle?: string;
-    metaDescription?: string;
-    status?: string;
-  } | null>(null);
-
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001/v1';
-
-  async function authHeaders(): Promise<HeadersInit> {
-    const token = await getToken();
-    return {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-  }
-
-  async function handleGenerateContent() {
-    setIsGenerating(true);
-    try {
-      const response = await fetch(`${apiBase}/ai/products/${product.id}/generate-content`, {
-        method: 'POST',
-        headers: await authHeaders(),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setDraft(data);
-      }
-    } finally {
-      setIsGenerating(false);
-    }
-  }
-
-  async function handleApproveDraft() {
-    const response = await fetch(`${apiBase}/ai/products/${product.id}/content-draft/approve`, {
-      method: 'POST',
-      headers: await authHeaders(),
-    });
-    if (response.ok) {
+  const { data: draft, refetch: refetchDraft } = hooks.useProductContentDraft(product.id, {
+    initialData: initialDraft,
+  });
+  const generateContent = hooks.useGenerateProductContent({
+    onSuccess: () => void refetchDraft(),
+  });
+  const approveDraft = hooks.useApproveProductContent({
+    onSuccess: () => {
       router.refresh();
-      setDraft(null);
-    }
-  }
-
-  async function handleRejectDraft() {
-    await fetch(`${apiBase}/ai/products/${product.id}/content-draft/reject`, {
-      method: 'POST',
-      headers: await authHeaders(),
-    });
-    setDraft(null);
-  }
+      void refetchDraft();
+    },
+  });
+  const rejectDraft = hooks.useRejectProductContent({
+    onSuccess: () => void refetchDraft(),
+  });
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -95,27 +63,31 @@ export default function EditProductPage({ product }: { product: Product }) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Edit Product</h1>
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
+      <AdminPageHeader
+        title="Editar producto"
+        subtitle={product.name}
+        showNetworkStatus={false}
+      />
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>{product.name}</CardTitle>
+            <CardTitle>Detalles</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">Nombre</Label>
               <Input id="name" name="name" defaultValue={product.name} required />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="slug">Slug</Label>
+              <Label htmlFor="slug">URL amigable</Label>
               <Input id="slug" name="slug" defaultValue={product.slug} required />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Descripción</Label>
               <Textarea
                 id="description"
                 name="description"
@@ -129,17 +101,22 @@ export default function EditProductPage({ product }: { product: Product }) {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="status">Status</Label>
-              <Select id="status" name="status" defaultValue={product.status}>
-                <option value="DRAFT">Draft</option>
-                <option value="ACTIVE">Active</option>
-                <option value="ARCHIVED">Archived</option>
-              </Select>
+              <Label htmlFor="status">Estado</Label>
+              <FormSelect
+                id="status"
+                name="status"
+                defaultValue={product.status}
+                options={[
+                  { value: 'DRAFT', label: 'Borrador' },
+                  { value: 'ACTIVE', label: 'Activo' },
+                  { value: 'ARCHIVED', label: 'Archivado' },
+                ]}
+              />
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="price">Price</Label>
+                <Label htmlFor="price">Precio</Label>
                 <Input
                   id="price"
                   name="price"
@@ -150,7 +127,7 @@ export default function EditProductPage({ product }: { product: Product }) {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="compareAtPrice">Compare at price</Label>
+                <Label htmlFor="compareAtPrice">Precio de comparación</Label>
                 <Input
                   id="compareAtPrice"
                   name="compareAtPrice"
@@ -160,7 +137,7 @@ export default function EditProductPage({ product }: { product: Product }) {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="cost">Cost</Label>
+                <Label htmlFor="cost">Costo</Label>
                 <Input
                   id="cost"
                   name="cost"
@@ -172,13 +149,14 @@ export default function EditProductPage({ product }: { product: Product }) {
             </div>
 
             <div className="flex items-center gap-2">
-              <input
+              <Checkbox
                 id="isFeatured"
                 name="isFeatured"
-                type="checkbox"
                 defaultChecked={product.isFeatured}
               />
-              <Label htmlFor="isFeatured">Featured product</Label>
+              <Label htmlFor="isFeatured" className="normal-case">
+                Producto destacado
+              </Label>
             </div>
           </CardContent>
         </Card>
@@ -188,20 +166,48 @@ export default function EditProductPage({ product }: { product: Product }) {
             <CardTitle>Contenido con IA</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            <Button type="button" variant="secondary" disabled={isGenerating} onClick={() => void handleGenerateContent()}>
-              {isGenerating ? 'Generando...' : 'Generar con IA'}
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={generateContent.isPending}
+              onClick={() => generateContent.mutate(product.id)}
+            >
+              {generateContent.isPending ? 'Generando...' : 'Generar con IA'}
             </Button>
             {draft ? (
-              <div className="rounded-md border p-4 text-sm">
-                <p className="font-medium">Borrador pendiente ({draft.status ?? 'PENDING'})</p>
-                {draft.metaTitle ? <p className="mt-2"><strong>Meta título:</strong> {draft.metaTitle}</p> : null}
-                {draft.metaDescription ? <p className="mt-1"><strong>Meta descripción:</strong> {draft.metaDescription}</p> : null}
-                {draft.description ? <p className="mt-1 whitespace-pre-wrap"><strong>Descripción:</strong> {draft.description}</p> : null}
+              <div className="rounded-md border-[3px] border-neo-onyx p-4 text-sm shadow-[3px_3px_0_#111]">
+                <p className="font-bold uppercase">Borrador pendiente de revisión</p>
+                {draft.metaTitle ? (
+                  <p className="mt-2">
+                    <strong>Meta título:</strong> {draft.metaTitle}
+                  </p>
+                ) : null}
+                {draft.metaDescription ? (
+                  <p className="mt-1">
+                    <strong>Meta descripción:</strong> {draft.metaDescription}
+                  </p>
+                ) : null}
+                {draft.description ? (
+                  <p className="mt-1 whitespace-pre-wrap">
+                    <strong>Descripción:</strong> {draft.description}
+                  </p>
+                ) : null}
                 <div className="mt-3 flex gap-2">
-                  <Button type="button" size="sm" onClick={() => void handleApproveDraft()}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={approveDraft.isPending}
+                    onClick={() => approveDraft.mutate(product.id)}
+                  >
                     Aprobar y publicar
                   </Button>
-                  <Button type="button" size="sm" variant="outline" onClick={() => void handleRejectDraft()}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={rejectDraft.isPending}
+                    onClick={() => rejectDraft.mutate(product.id)}
+                  >
                     Rechazar
                   </Button>
                 </div>
@@ -212,10 +218,10 @@ export default function EditProductPage({ product }: { product: Product }) {
 
         <div className="flex gap-4">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save changes'}
+            {isSubmitting ? 'Guardando…' : 'Guardar cambios'}
           </Button>
           <Button type="button" variant="outline" onClick={() => router.back()}>
-            Cancel
+            Cancelar
           </Button>
         </div>
       </form>

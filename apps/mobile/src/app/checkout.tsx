@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStripe } from '@stripe/stripe-react-native';
 import { Button, Input, Card } from '@repo/shared-ui';
+import { NeoScreen } from '../components/neo-screen.js';
+import { NeoEnterFromBottom, NeoStaggeredItem } from '../components/neo-animated.js';
 import { api } from '../lib/api.js';
 import { useCart } from '../lib/cart.js';
 import { formatPrice } from '@repo/shared-utils';
 import type { OrderAddress, CreateOrderDto, CreatePaymentIntentDto } from '@repo/shared-types';
+import { trackMobileEvent } from '../lib/analytics.js';
+import { useAuth } from '../providers/AuthProvider.js';
 
 const FREE_SHIPPING_THRESHOLD = 50;
 const SHIPPING_FLAT_RATE = 5;
@@ -15,8 +18,14 @@ const TAX_RATE = 0.15;
 
 export default function CheckoutScreen(): React.ReactElement {
   const router = useRouter();
+  const { user } = useAuth();
   const { items, total: cartTotal, clearCart } = useCart();
   const stripe = useStripe();
+
+  useEffect(() => {
+    if (items.length === 0) return;
+    void trackMobileEvent('begin_checkout', { itemCount: items.length, total: cartTotal }, user?.id);
+  }, [items.length, cartTotal, user?.id]);
 
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -53,7 +62,7 @@ export default function CheckoutScreen(): React.ReactElement {
 
   async function handleCheckout(): Promise<void> {
     if (!stripe) {
-      Alert.alert('Error', 'Stripe no esta disponible. Construye con un development build.');
+      Alert.alert('Error', 'Stripe no está disponible. Construye con una compilación de desarrollo.');
       return;
     }
 
@@ -90,7 +99,7 @@ export default function CheckoutScreen(): React.ReactElement {
       const paymentIntent = await createPaymentIntent.mutateAsync(intentDto);
 
       if (!paymentIntent.clientSecret) {
-        throw new Error('No se recibio el client secret de Stripe.');
+        throw new Error('No se recibió el client secret de Stripe.');
       }
 
       const { error: initError } = await stripe.initPaymentSheet({
@@ -116,6 +125,7 @@ export default function CheckoutScreen(): React.ReactElement {
 
       // Payment Sheet completed. The Stripe webhook is the source of truth for
       // order status; navigate to the order detail screen.
+      void trackMobileEvent('purchase', { orderId: order.id, total: order.total }, user?.id);
       clearCart();
       router.replace({ pathname: '/order/[id]', params: { id: order.id } });
     } catch {
@@ -129,34 +139,37 @@ export default function CheckoutScreen(): React.ReactElement {
 
   if (items.length === 0) {
     return (
-      <SafeAreaView style={styles.center}>
+      <NeoScreen style={styles.center}>
         <Text style={styles.empty}>No hay productos en el carrito.</Text>
         <Button onPress={() => router.push('/(tabs)/store')}>Ir a la tienda</Button>
-      </SafeAreaView>
+      </NeoScreen>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <NeoScreen style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Checkout</Text>
+        <Text style={styles.title}>Finalizar compra</Text>
 
-        <Card style={styles.summary}>
-          <Text style={styles.sectionTitle}>Resumen del pedido</Text>
-          {items.map((item) => (
-            <View key={`${item.productId}-${item.variantId ?? 'default'}`} style={styles.summaryRow}>
-              <Text style={styles.summaryName} numberOfLines={1}>
-                {item.name} x{item.quantity}
-              </Text>
-              <Text style={styles.summaryPrice}>{formatPrice(item.price * item.quantity)}</Text>
-            </View>
-          ))}
+        <NeoEnterFromBottom delay={0}>
+          <Card style={styles.summary}>
+            <Text style={styles.sectionTitle}>Resumen del pedido</Text>
+            {items.map((item, index) => (
+              <NeoStaggeredItem key={`${item.productId}-${item.variantId ?? 'default'}`} index={index}>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryName} numberOfLines={1}>
+                    {item.name} x{item.quantity}
+                  </Text>
+                  <Text style={styles.summaryPrice}>{formatPrice(item.price * item.quantity)}</Text>
+                </View>
+              </NeoStaggeredItem>
+            ))}
           <View style={[styles.summaryRow, styles.subRow]}>
             <Text style={styles.subLabel}>Subtotal</Text>
             <Text style={styles.subValue}>{formatPrice(cartTotal)}</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.subLabel}>Envio</Text>
+            <Text style={styles.subLabel}>Envío</Text>
             <Text style={styles.subValue}>
               {shipping === 0 ? 'Gratis' : formatPrice(shipping)}
             </Text>
@@ -172,107 +185,118 @@ export default function CheckoutScreen(): React.ReactElement {
           <Text style={styles.disclaimer}>
             El total final se calcula al crear el pedido.
           </Text>
-        </Card>
+          </Card>
+        </NeoEnterFromBottom>
 
-        <Text style={styles.sectionTitle}>Datos de contacto</Text>
-        <Input
-          label="Correo electronico"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          containerStyle={styles.field}
-        />
-        <Input
-          label="Telefono"
-          value={phone}
-          onChangeText={setPhone}
-          keyboardType="phone-pad"
-          containerStyle={styles.field}
-        />
-
-        <Text style={styles.sectionTitle}>Direccion de envio</Text>
-        <Input
-          label="Nombre del destinatario"
-          value={recipientName}
-          onChangeText={setRecipientName}
-          containerStyle={styles.field}
-        />
-        <Input label="Calle" value={street} onChangeText={setStreet} containerStyle={styles.field} />
-        <View style={styles.row}>
+        <NeoEnterFromBottom delay={80}>
+          <Text style={styles.sectionTitle}>Datos de contacto</Text>
           <Input
-            label="Ciudad"
-            value={city}
-            onChangeText={setCity}
-            containerStyle={[styles.field, styles.halfField]}
+            label="Correo electrónico"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            containerStyle={styles.field}
           />
           <Input
-            label="Provincia"
-            value={state}
-            onChangeText={setState}
-            containerStyle={[styles.field, styles.halfField]}
+            label="Teléfono"
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+            containerStyle={styles.field}
           />
-        </View>
-        <View style={styles.row}>
+        </NeoEnterFromBottom>
+
+        <NeoEnterFromBottom delay={160}>
+          <Text style={styles.sectionTitle}>Dirección de envío</Text>
           <Input
-            label="Codigo postal"
-            value={zipCode}
-            onChangeText={setZipCode}
-            containerStyle={[styles.field, styles.halfField]}
+            label="Nombre del destinatario"
+            value={recipientName}
+            onChangeText={setRecipientName}
+            containerStyle={styles.field}
           />
+          <Input label="Calle" value={street} onChangeText={setStreet} containerStyle={styles.field} />
+          <View style={styles.row}>
+            <Input
+              label="Ciudad"
+              value={city}
+              onChangeText={setCity}
+              containerStyle={[styles.field, styles.halfField]}
+            />
+            <Input
+              label="Provincia"
+              value={state}
+              onChangeText={setState}
+              containerStyle={[styles.field, styles.halfField]}
+            />
+          </View>
+          <View style={styles.row}>
+            <Input
+              label="Código postal"
+              value={zipCode}
+              onChangeText={setZipCode}
+              containerStyle={[styles.field, styles.halfField]}
+            />
+            <Input
+              label="País"
+              value={country}
+              onChangeText={setCountry}
+              containerStyle={[styles.field, styles.halfField]}
+            />
+          </View>
+        </NeoEnterFromBottom>
+
+        <NeoEnterFromBottom delay={240}>
+          <Text style={styles.sectionTitle}>Cupón (opcional)</Text>
           <Input
-            label="Pais"
-            value={country}
-            onChangeText={setCountry}
-            containerStyle={[styles.field, styles.halfField]}
+            label="Código de cupón"
+            value={couponCode}
+            onChangeText={setCouponCode}
+            autoCapitalize="none"
+            containerStyle={styles.field}
           />
-        </View>
+        </NeoEnterFromBottom>
 
-        <Text style={styles.sectionTitle}>Cupon (opcional)</Text>
-        <Input
-          label="Codigo de cupon"
-          value={couponCode}
-          onChangeText={setCouponCode}
-          autoCapitalize="none"
-          containerStyle={styles.field}
-        />
+        <NeoEnterFromBottom delay={280}>
+          <Text style={styles.sectionTitle}>Referido y puntos</Text>
+          <Input
+            label="Código de referido"
+            value={referralCode}
+            onChangeText={setReferralCode}
+            autoCapitalize="characters"
+            containerStyle={styles.field}
+          />
+          {loyaltyAccount ? (
+            <Text style={styles.loyaltyHint}>
+              Puntos disponibles: {loyaltyAccount.points} ({loyaltyAccount.tier})
+            </Text>
+          ) : null}
+          <Input
+            label="Puntos a canjear"
+            value={loyaltyPoints}
+            onChangeText={setLoyaltyPoints}
+            keyboardType="number-pad"
+            containerStyle={styles.field}
+          />
+        </NeoEnterFromBottom>
 
-        <Text style={styles.sectionTitle}>Referido y puntos</Text>
-        <Input
-          label="Codigo de referido"
-          value={referralCode}
-          onChangeText={setReferralCode}
-          autoCapitalize="characters"
-          containerStyle={styles.field}
-        />
-        {loyaltyAccount ? (
-          <Text style={styles.loyaltyHint}>
-            Puntos disponibles: {loyaltyAccount.points} ({loyaltyAccount.tier})
-          </Text>
-        ) : null}
-        <Input
-          label="Puntos a canjear"
-          value={loyaltyPoints}
-          onChangeText={setLoyaltyPoints}
-          keyboardType="number-pad"
-          containerStyle={styles.field}
-        />
+        <NeoEnterFromBottom delay={320}>
+          {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-
-        {isProcessing ? (
-          <ActivityIndicator size="large" color="#171717" style={styles.loader} />
-        ) : (
-          <Button
-            onPress={handleCheckout}
-            disabled={!isFormValid}
-            size="lg"
-          >
-            Pagar {formatPrice(estimatedTotal)}
-          </Button>
-        )}
+          {isProcessing ? (
+            <ActivityIndicator size="large" color="#171717" style={styles.loader} />
+          ) : (
+            <Button
+              onPress={handleCheckout}
+              disabled={!isFormValid}
+              size="lg"
+            >
+              Pagar {formatPrice(estimatedTotal)}
+            </Button>
+          )}
+        </NeoEnterFromBottom>
       </ScrollView>
-    </SafeAreaView>
+    </NeoScreen>
   );
 }
 

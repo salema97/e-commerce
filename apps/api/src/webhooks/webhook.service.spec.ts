@@ -6,6 +6,8 @@ import { ConversationService } from '../conversations/conversation.service.js';
 import { MessageService } from '../messages/message.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ConversationOrchestrator } from '../ai/orchestrator/conversation-orchestrator.interface.js';
+import { WhatsAppProvider } from '../whatsapp/whatsapp-provider.interface.js';
+import { RedisIdempotencyService } from '../common/redis/idempotency.service.js';
 
 describe('WebhookService', () => {
   let service: WebhookService;
@@ -20,6 +22,12 @@ describe('WebhookService', () => {
   };
   let prisma: {
     user: { updateMany: ReturnType<typeof vi.fn> };
+  };
+  let whatsappProvider: {
+    verifyWebhookSignature: ReturnType<typeof vi.fn>;
+  };
+  let idempotency: {
+    claim: ReturnType<typeof vi.fn>;
   };
 
   function mockConversationService() {
@@ -77,6 +85,8 @@ describe('WebhookService', () => {
     conversationService.update.mockResolvedValue({ id: 'c1' });
     messageService = mockMessageService();
     prisma = mockPrisma();
+    whatsappProvider = { verifyWebhookSignature: vi.fn().mockReturnValue(true) };
+    idempotency = { claim: vi.fn().mockResolvedValue(true) };
 
     const module = await Test.createTestingModule({
       providers: [
@@ -88,10 +98,73 @@ describe('WebhookService', () => {
           provide: ConversationOrchestrator,
           useValue: { handleInbound: vi.fn().mockResolvedValue(undefined) },
         },
+        { provide: WhatsAppProvider, useValue: whatsappProvider },
+        { provide: RedisIdempotencyService, useValue: idempotency },
       ],
     }).compile();
 
     service = module.get(WebhookService);
+  });
+
+  describe('receiveEvolutionWebhook', () => {
+    it('rejects requests with missing signature', async () => {
+      const rawBody = Buffer.from(JSON.stringify({ event: 'messages.upsert', data: {} }));
+
+      await expect(
+        service.receiveEvolutionWebhook('messages.upsert', rawBody, undefined),
+      ).rejects.toMatchObject({ name: 'UnauthorizedException' });
+    });
+
+    it('rejects requests with missing raw body', async () => {
+      await expect(
+        service.receiveEvolutionWebhook('messages.upsert', undefined, 'sig'),
+      ).rejects.toMatchObject({ name: 'UnauthorizedException' });
+    });
+
+    it('rejects requests with invalid signature', async () => {
+      whatsappProvider.verifyWebhookSignature.mockReturnValue(false);
+      const rawBody = Buffer.from(JSON.stringify({ event: 'messages.upsert', data: {} }));
+
+      await expect(
+        service.receiveEvolutionWebhook('messages.upsert', rawBody, 'bad-sig'),
+      ).rejects.toMatchObject({ name: 'UnauthorizedException' });
+    });
+
+    it('rejects requests with invalid JSON payload', async () => {
+      const rawBody = Buffer.from('not-valid-json');
+
+      await expect(
+        service.receiveEvolutionWebhook('messages.upsert', rawBody, 'sig'),
+      ).rejects.toMatchObject({ name: 'UnauthorizedException' });
+    });
+
+    it('rejects requests with an invalid webhook payload shape', async () => {
+      const rawBody = Buffer.from(JSON.stringify({ event: 'unknown.event', data: {} }));
+
+      await expect(
+        service.receiveEvolutionWebhook('messages.upsert', rawBody, 'sig'),
+      ).rejects.toMatchObject({ name: 'BadRequestException' });
+    });
+
+    it('returns early on duplicate payloads', async () => {
+      idempotency.claim.mockResolvedValue(false);
+      const rawBody = Buffer.from(JSON.stringify({ event: 'messages.upsert', data: {} }));
+      const handleEventSpy = vi.spyOn(service, 'handleEvent').mockResolvedValue(undefined);
+
+      await service.receiveEvolutionWebhook('messages.upsert', rawBody, 'sig');
+
+      expect(handleEventSpy).not.toHaveBeenCalled();
+    });
+
+    it('processes valid inbound message events', async () => {
+      const payload = { event: 'messages.upsert' as const, data: { key: { id: 'm1' } } };
+      const rawBody = Buffer.from(JSON.stringify(payload));
+      const handleEventSpy = vi.spyOn(service, 'handleEvent').mockResolvedValue(undefined);
+
+      await service.receiveEvolutionWebhook('messages.upsert', rawBody, 'sig');
+
+      expect(handleEventSpy).toHaveBeenCalledWith('messages.upsert', payload);
+    });
   });
 
   describe('handleInboundMessage', () => {

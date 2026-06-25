@@ -9,7 +9,7 @@ import { UpdateConversationDto } from './dto/update-conversation.dto.js';
 export class ConversationService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: {
+  create(data: {
     remoteJid: string;
     instance?: string;
     contactName?: string;
@@ -30,7 +30,7 @@ export class ConversationService {
     });
   }
 
-  async findByRemoteJid(remoteJid: string, instance: string) {
+  findByRemoteJid(remoteJid: string, instance: string) {
     return this.prisma.conversation.findFirst({
       where: { remoteJid, instance },
     });
@@ -113,7 +113,7 @@ export class ConversationService {
     });
   }
 
-  async touch(id: string, direction: 'INBOUND' | 'OUTBOUND') {
+  touch(id: string, direction: 'INBOUND' | 'OUTBOUND') {
     const update: Prisma.ConversationUpdateInput = {
       lastMessageAt: new Date(),
     };

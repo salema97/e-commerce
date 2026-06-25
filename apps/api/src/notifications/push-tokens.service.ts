@@ -10,8 +10,8 @@ export class PushTokensService {
     private readonly userProvisioning: UserProvisioningService,
   ) {}
 
-  async register(clerkUserId: string, dto: RegisterPushTokenDto) {
-    const user = await this.userProvisioning.ensureByClerkUserId(clerkUserId);
+  async register(userId: string, dto: RegisterPushTokenDto) {
+    const user = await this.userProvisioning.ensureByUserId(userId);
 
     return this.prisma.pushDeviceToken.upsert({
       where: { token: dto.token },
@@ -27,18 +27,9 @@ export class PushTokensService {
     });
   }
 
-  async remove(clerkUserId: string, token: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({
-      where: { clerkUserId },
-      select: { id: true },
-    });
-
-    if (!user) {
-      return;
-    }
-
+  async remove(userId: string, token: string): Promise<void> {
     await this.prisma.pushDeviceToken.deleteMany({
-      where: { userId: user.id, token },
+      where: { userId, token },
     });
   }
 }

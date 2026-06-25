@@ -4,7 +4,7 @@ import type { LlmCompletionOptions, LlmCompletionResult, LlmMessage } from '../l
 
 @Injectable()
 export class ConsoleLlmProvider extends LlmProvider {
-  async complete(
+  complete(
     messages: LlmMessage[],
     _options?: LlmCompletionOptions,
   ): Promise<LlmCompletionResult> {
@@ -12,22 +12,22 @@ export class ConsoleLlmProvider extends LlmProvider {
     const query = lastUser?.content ?? '';
 
     if (/agente|humano|persona/i.test(query)) {
-      return {
+      return Promise.resolve({
         text: 'Te conecto con un agente humano en breve.',
         confidence: 0.2,
-      };
+      });
     }
 
     if (/pedido|orden|ORD-/i.test(query)) {
-      return {
+      return Promise.resolve({
         text: 'Puedo ayudarte con el estado de tu pedido. Comparte tu número de orden (ej. ORD-123) y verifico el estado.',
         confidence: 0.85,
-      };
+      });
     }
 
-    return {
+    return Promise.resolve({
       text: 'Gracias por escribirnos. Soy el asistente virtual de la tienda. ¿En qué puedo ayudarte hoy?',
       confidence: 0.75,
-    };
+    });
   }
 }

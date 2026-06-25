@@ -9,6 +9,7 @@ import {
   type TextStyle,
   type StyleProp,
 } from 'react-native';
+import { neo } from './theme.js';
 
 export interface InputProps extends Omit<TextInputProps, 'style'> {
   label?: string;
@@ -41,7 +42,7 @@ export const Input = React.forwardRef<TextInput, InputProps>(
         <TextInput
           ref={ref}
           editable={editable}
-          placeholderTextColor="#a3a3a3"
+          placeholderTextColor="rgba(17,17,17,0.45)"
           style={[
             styles.input,
             error ? styles.inputError : null,
@@ -68,35 +69,39 @@ const styles = StyleSheet.create({
   },
   label: {
     marginBottom: 6,
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#171717',
+    fontSize: 12,
+    fontWeight: '700',
+    color: neo.onyx,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#e5e5e5',
-    borderRadius: 8,
+    borderWidth: 3,
+    borderColor: neo.onyx,
+    borderRadius: 0,
     paddingVertical: 12,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: '#171717',
-    backgroundColor: '#ffffff',
+    fontWeight: '600',
+    color: neo.onyx,
+    backgroundColor: neo.white,
   },
   inputError: {
-    borderColor: '#ef4444',
+    borderColor: neo.scarlet,
   },
   inputDisabled: {
-    backgroundColor: '#f5f5f5',
-    color: '#737373',
+    backgroundColor: neo.bg,
+    color: neo.muted,
   },
   error: {
     marginTop: 6,
     fontSize: 13,
-    color: '#ef4444',
+    color: neo.scarlet,
+    fontWeight: '600',
   },
   helper: {
     marginTop: 6,
     fontSize: 13,
-    color: '#737373',
+    color: neo.muted,
   },
 });

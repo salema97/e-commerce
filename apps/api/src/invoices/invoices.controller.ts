@@ -25,6 +25,7 @@ import { CreditNoteResponseDto } from './dto/credit-note-response.dto.js';
 import { Roles } from '../auth/roles.decorator.js';
 import { Role } from '../auth/role.enum.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
+import { Audit } from '../audit/audit.decorator.js';
 
 @ApiTags('Invoices')
 @ApiBearerAuth()
@@ -71,7 +72,7 @@ export class InvoicesController {
   ): Promise<InvoiceResponseDto> {
     const invoice = await this.invoicesService.findById(id);
     this.invoicesService.assertInvoiceAccess(invoice, {
-      clerkUserId: user.userId,
+      userId: user.userId,
       role: user.role,
     });
     return invoice;
@@ -79,6 +80,7 @@ export class InvoicesController {
 
   @Post(':id/retry')
   @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE)
+  @Audit({ resource: 'invoice', action: 'retry' })
   @ApiOperation({ summary: 'Retry a failed or rejected invoice' })
   @ApiResponse({ status: 200, description: 'Retry enqueued', type: InvoiceResponseDto })
   async retry(@Param('id') id: string): Promise<InvoiceResponseDto> {
@@ -96,7 +98,7 @@ export class InvoicesController {
   ): Promise<void> {
     const invoice = await this.invoicesService.findById(id);
     this.invoicesService.assertInvoiceAccess(invoice, {
-      clerkUserId: user.userId,
+      userId: user.userId,
       role: user.role,
     });
     const url = await this.invoicesService.getSignedXmlUrl(id);
@@ -114,7 +116,7 @@ export class InvoicesController {
   ): Promise<void> {
     const invoice = await this.invoicesService.findById(id);
     this.invoicesService.assertInvoiceAccess(invoice, {
-      clerkUserId: user.userId,
+      userId: user.userId,
       role: user.role,
     });
     const url = await this.invoicesService.getSignedPdfUrl(id);
@@ -123,26 +125,28 @@ export class InvoicesController {
 
   @Post()
   @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE)
+  @Audit({ resource: 'invoice', action: 'issue' })
   @ApiOperation({ summary: 'Issue an SRI invoice for a paid order' })
   @ApiResponse({ status: 201, description: 'Invoice issued', type: InvoiceResponseDto })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async issueInvoice(
     @Body() dto: IssueInvoiceDto,
-    @CurrentUser('userId') clerkUserId: string,
+    @CurrentUser('userId') userId: string,
   ): Promise<InvoiceResponseDto> {
-    return this.invoicesService.issueInvoice(dto, clerkUserId);
+    return this.invoicesService.issueInvoice(dto, userId);
   }
 
   @Post('credit-notes')
   @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE)
+  @Audit({ resource: 'credit_note', action: 'issue' })
   @ApiOperation({ summary: 'Issue an SRI credit note (04) for a return request' })
   @ApiResponse({ status: 201, description: 'Credit note issued', type: CreditNoteResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid input or no original invoice' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async issueCreditNote(
     @Body() dto: IssueCreditNoteDto,
-    @CurrentUser('userId') clerkUserId: string,
+    @CurrentUser('userId') userId: string,
   ): Promise<CreditNoteResponseDto> {
-    return this.invoicesService.issueCreditNote(dto, clerkUserId);
+    return this.invoicesService.issueCreditNote(dto, userId);
   }
 }

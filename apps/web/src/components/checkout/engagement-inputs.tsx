@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { Input } from '@/components/ui/input';
 import { useApiQueryHooks } from '@/lib/client-api';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from '@/contexts/auth-context';
 
 interface EngagementInputsProps {
   subtotal: number;
@@ -20,11 +20,11 @@ export function EngagementInputs({
   loyaltyPoints,
   onLoyaltyPointsChange,
 }: EngagementInputsProps) {
-  const { isSignedIn } = useAuth();
+  const { user } = useAuth();
   const { useLoyaltyAccount, useLoyaltyRedemptionQuote } = useApiQueryHooks();
-  const accountQuery = useLoyaltyAccount({ enabled: isSignedIn });
+  const accountQuery = useLoyaltyAccount({ enabled: Boolean(user) });
   const quoteQuery = useLoyaltyRedemptionQuote(subtotal, loyaltyPoints || undefined, {
-    enabled: isSignedIn && subtotal > 0,
+    enabled: Boolean(user) && subtotal > 0,
   });
 
   React.useEffect(() => {
@@ -35,7 +35,7 @@ export function EngagementInputs({
     }
   }, [onReferralCodeChange, referralCode]);
 
-  if (!isSignedIn) {
+  if (!user) {
     return (
       <div className="space-y-3">
         <label className="text-sm font-medium" htmlFor="referralCode">

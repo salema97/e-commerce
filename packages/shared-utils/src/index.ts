@@ -3,4 +3,7 @@ export * from './formatters/index.js';
 export * from './validators/index.js';
 export * from './schemas/index.js';
 export * from './slug.js';
+export * from './product-image.js';
+export * from './neo-motion.js';
 export * from './email-templates.js';
+export * from './cms-slugs.js';

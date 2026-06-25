@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getServerApiClient } from '@/lib/api';
+import type { Shipment } from '@repo/shared-types';
 import OrderDetail from './order-detail';
 
 interface AdminOrderDetailPageProps {
@@ -9,13 +10,15 @@ interface AdminOrderDetailPageProps {
 export default async function AdminOrderDetailPage({
   params,
 }: AdminOrderDetailPageProps) {
-  const { id } = await params;
-  const api = getServerApiClient();
+  const [{ id }, api] = await Promise.all([params, getServerApiClient()]);
+  const [order, initialShipments] = await Promise.all([
+    api.orders.findOne(id).catch(() => null),
+    api.fulfillment.listShipments(id).catch(() => [] as Shipment[]),
+  ]);
 
-  try {
-    const order = await api.orders.findOne(id);
-    return <OrderDetail order={order} />;
-  } catch {
+  if (!order) {
     notFound();
   }
+
+  return <OrderDetail order={order} initialShipments={initialShipments} />;
 }

@@ -11,8 +11,8 @@ import {
   RefundResult,
   CheckoutSessionResult,
 } from '../payment-provider.interface.js';
-import { PaymentStatus } from '../entities/payment-status.enum.js';
-import { PlaceToPayWebhookDto } from '../dto/provider-webhook.dto.js';
+import { PaymentStatus } from '../public-api.js';
+import { PlaceToPayWebhookDto } from '../public-api.js';
 
 interface PlaceToPayAuth {
   login: string;
@@ -97,18 +97,18 @@ export class PlaceToPayProvider extends PaymentProvider {
     return data;
   }
 
-  async capturePayment(): Promise<void> {
+  capturePayment(): Promise<void> {
     throw new Error('PlaceToPay capturePayment is not implemented');
   }
 
-  async confirmPayment(externalId: string): Promise<PaymentResult> {
-    return {
+  confirmPayment(externalId: string): Promise<PaymentResult> {
+    return Promise.resolve({
       providerTransactionId: externalId,
       status: PaymentStatus.PENDING,
-    };
+    });
   }
 
-  async refund(): Promise<RefundResult> {
+  refund(): Promise<RefundResult> {
     throw new Error('PlaceToPay refund is not implemented');
   }
 
@@ -116,13 +116,13 @@ export class PlaceToPayProvider extends PaymentProvider {
     return constantTimeCompare(signature, secret);
   }
 
-  async parseWebhookPayload(payload: unknown): Promise<ProviderPaymentResult> {
+  parseWebhookPayload(payload: unknown): Promise<ProviderPaymentResult> {
     const dto = payload as PlaceToPayWebhookDto;
-    return {
+    return Promise.resolve({
       providerTransactionId: String(dto.requestId ?? dto.reference ?? ''),
       status: mapPlaceToPayStatus(dto.status),
       metadata: dto as Record<string, unknown>,
-    };
+    });
   }
 }
 

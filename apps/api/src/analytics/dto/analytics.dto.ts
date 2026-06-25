@@ -1,4 +1,5 @@
 import { IsIn, IsObject, IsOptional, IsString, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
 
 const ANALYTICS_EVENTS = [
   'product_view',
@@ -12,10 +13,12 @@ const ANALYTICS_EVENTS = [
 
 export class TrackAnalyticsEventDto {
   @IsIn(ANALYTICS_EVENTS as unknown as string[])
+  @Type(() => String)
   event!: (typeof ANALYTICS_EVENTS)[number];
 
   @IsOptional()
   @IsObject()
+  @Type(() => Object)
   properties?: Record<string, unknown>;
 
   @IsOptional()
@@ -30,6 +33,7 @@ export class TrackAnalyticsEventDto {
 
   @IsOptional()
   @IsIn(['web', 'mobile', 'api'])
+  @Type(() => String)
   source?: 'web' | 'mobile' | 'api';
 }
 
@@ -45,5 +49,6 @@ export class ReportClientErrorDto {
 
   @IsOptional()
   @IsObject()
+  @Type(() => Object)
   context?: Record<string, unknown>;
 }

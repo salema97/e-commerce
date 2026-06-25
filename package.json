@@ -15,13 +15,17 @@
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e",
     "typecheck": "turbo run typecheck",
+    "health:web": "pnpm --filter @repo/web health:react",
+    "health:api": "pnpm --filter @repo/api health:nest",
+    "health:mobile": "pnpm --filter @repo/mobile health:expo",
+    "health": "pnpm health:web && pnpm health:api && pnpm health:mobile",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,mjs,cjs,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,mjs,cjs,md,yml,yaml}\"",
     "clean": "turbo run clean && rm -rf node_modules .turbo"
   },
   "devDependencies": {
-    "turbo": "2.9.18",
     "prettier": "catalog:",
+    "turbo": "2.9.18",
     "typescript": "catalog:"
   }
 }

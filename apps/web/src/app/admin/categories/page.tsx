@@ -10,28 +10,36 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 
 export default async function AdminCategoriesPage() {
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
   const categories = await api.categories.findAll().catch(() => []);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Categories</h1>
-        <Link href="/admin/categories/new">
-          <Button>Add category</Button>
-        </Link>
-      </div>
-
-      <div className="rounded-md border">
-        <Table>
+    <AnimatedPageShell
+      className="flex min-h-0 flex-1 flex-col gap-6"
+      header={
+        <AdminPageHeader
+          title="Categorías"
+          subtitle="Organización del catálogo"
+          showNetworkStatus={false}
+          actions={
+            <Link href="/admin/categories/new">
+              <Button className="font-anton text-lg uppercase">Agregar categoría</Button>
+            </Link>
+          }
+        />
+      }
+    >
+      <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Slug</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Nombre</TableHead>
+              <TableHead>URL amigable</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -41,19 +49,18 @@ export default async function AdminCategoriesPage() {
                 <TableCell>{category.slug}</TableCell>
                 <TableCell>
                   <Badge variant={category.isActive ? 'default' : 'secondary'}>
-                    {category.isActive ? 'Active' : 'Inactive'}
+                    {category.isActive ? 'Activa' : 'Inactiva'}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <Link href={`/admin/categories/${category.id}`}>
-                    <Button variant="outline" size="sm">Edit</Button>
+                    <Button variant="outline" size="sm">Editar</Button>
                   </Link>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      </div>
-    </div>
+    </AnimatedPageShell>
   );
 }

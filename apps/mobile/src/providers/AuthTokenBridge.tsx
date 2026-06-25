@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
-import { useAuth } from '@clerk/clerk-expo';
 import { setGetAuthToken } from '../lib/api.js';
+import { useAuth } from './AuthProvider.js';
 
 export function AuthTokenBridge(): null {
-  const { getToken } = useAuth();
+  const { accessToken } = useAuth();
 
   useEffect(() => {
-    setGetAuthToken(() => getToken());
-  }, [getToken]);
+    setGetAuthToken(async () => accessToken);
+  }, [accessToken]);
 
   return null;
 }

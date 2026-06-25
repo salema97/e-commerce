@@ -13,23 +13,12 @@ import { MercadoPagoProvider } from '../src/payments/mercadopago/mercadopago.pro
 import { PlaceToPayProvider } from '../src/payments/placetopay/placetopay.provider.js';
 import { PaymentProviderFactory } from '../src/payments/payment-provider.factory.js';
 import { OrderStatus, PaymentProvider, PaymentStatus } from '@prisma/client';
-
-vi.mock('@clerk/backend', async () => ({
-  ...(await vi.importActual('@clerk/backend') as object),
-  verifyToken: vi.fn(() => Promise.resolve({ sub: 'user_1', public_metadata: { role: 'CUSTOMER' } })),
-}));
+import { BASE_TEST_CONFIG } from './test-config.js';
 
 const TEST_CONFIG = {
-  NODE_ENV: 'test', PORT: 3001, DATABASE_URL: 'postgresql://localhost:5432/test', REDIS_URL: 'redis://localhost:6379',
-  CLERK_SECRET_KEY: 'sk_test_xxx', CLERK_WEBHOOK_SECRET: 'whsec_xxx',
-  STRIPE_SECRET_KEY: 'sk_test_xxx', STRIPE_WEBHOOK_SECRET: 'whsec_xxx',
-  STRIPE_SUCCESS_URL: 'https://example.com/success', STRIPE_CANCEL_URL: 'https://example.com/cancel',
-  KUSHKI_PRIVATE_KEY: 'kushki_private_test', KUSHKI_WEBHOOK_SECRET: 'kushki_webhook_secret',
-  PAYPHONE_TOKEN: 'payphone_token_test', PAYPHONE_STORE_ID: 'payphone_store_test',
-  MERCADOPAGO_ACCESS_TOKEN: 'mp_token_test', MERCADOPAGO_WEBHOOK_SECRET: 'mp_webhook_secret',
-  PLACETOPAY_LOGIN: 'ptp_login_test', PLACETOPAY_SECRET_KEY: 'ptp_secret_test', PLACETOPAY_BASE_URL: 'https://ptp.test',
-  SRI_MODE: 'direct', SRI_RUC: '1792146739001', SRI_SOL_KEY: 'test', SRI_DIGITAL_CERTIFICATE_PATH: 'data:test',
-  SRI_DIGITAL_CERTIFICATE_PASSWORD: 'test', SRI_ESTABLISHMENT_CODE: '001', SRI_EMISSION_POINT_CODE: '001', SRI_TEST_ENVIRONMENT: 'true', SRI_QUEUE_ENABLED: 'false',
+  ...BASE_TEST_CONFIG,
+  STRIPE_SUCCESS_URL: 'https://example.com/success',
+  STRIPE_CANCEL_URL: 'https://example.com/cancel',
 };
 
 describe('Payments (e2e)', () => {

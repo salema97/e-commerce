@@ -2,13 +2,16 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
+import { FormSelect } from '@/components/ui/form-select';
 import { Textarea } from '@/components/ui/textarea';
-import { Skeleton } from '@/components/ui/skeleton';
 import { MessageBubble } from './message-bubble';
 import { QuickReplyPicker } from './quick-reply-picker';
 import { ConversationStatusBadge } from './conversation-status-badge';
 import { formatDateTime } from '@repo/shared-utils';
 import type { Conversation, ConversationStatus, Message, QuickReply } from '@repo/shared-types';
+
+const EMPTY_MESSAGES: Message[] = [];
+const EMPTY_QUICK_REPLIES: QuickReply[] = [];
 
 const STATUS_OPTIONS: { value: ConversationStatus; label: string }[] = [
   { value: 'OPEN', label: 'Abierto' },
@@ -20,7 +23,6 @@ const STATUS_OPTIONS: { value: ConversationStatus; label: string }[] = [
 interface ConversationDetailProps {
   conversation: Conversation;
   messages?: Message[];
-  isLoadingMessages?: boolean;
   quickReplies?: QuickReply[];
   currentUserId?: string;
   onSendMessage: (content: string) => void | Promise<void>;
@@ -31,9 +33,8 @@ interface ConversationDetailProps {
 
 export function ConversationDetail({
   conversation,
-  messages = [],
-  isLoadingMessages,
-  quickReplies = [],
+  messages = EMPTY_MESSAGES,
+  quickReplies = EMPTY_QUICK_REPLIES,
   currentUserId,
   onSendMessage,
   onUpdateConversation,
@@ -67,29 +68,29 @@ export function ConversationDetail({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-start justify-between border-b p-4">
+      <div className="flex items-start justify-between border-b-[3px] border-neo-onyx bg-white p-4">
         <div>
-          <h2 className="text-lg font-semibold">
+          <h2 className="font-anton text-xl uppercase">
             {conversation.contactName || conversation.remoteJid}
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm font-medium text-muted-foreground">
             {conversation.contactName ? conversation.remoteJid : `Cliente · ${formatDateTime(conversation.createdAt)}`}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <select
-            aria-label="Estado de la conversación"
-            className="h-9 rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+          <FormSelect
+            ariaLabel="Estado de la conversación"
             value={conversation.status}
+            onValueChange={(status) =>
+              onUpdateConversation({ status: status as ConversationStatus })
+            }
             disabled={isUpdating}
-            onChange={(e) => onUpdateConversation({ status: e.target.value as ConversationStatus })}
-          >
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            triggerClassName="h-9"
+            options={STATUS_OPTIONS.map((option) => ({
+              value: option.value,
+              label: option.label,
+            }))}
+          />
           <Button
             type="button"
             variant="outline"
@@ -103,13 +104,7 @@ export function ConversationDetail({
       </div>
 
       <div className="flex-1 overflow-auto p-4">
-        {isLoadingMessages ? (
-          <div className="flex flex-col gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-16 w-2/3" />
-            ))}
-          </div>
-        ) : messages.length === 0 ? (
+        {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
             No hay mensajes aún. Envía una respuesta para iniciar la conversación.
           </div>
@@ -123,7 +118,7 @@ export function ConversationDetail({
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="border-t p-4">
+      <form onSubmit={handleSubmit} className="border-t-[3px] border-neo-onyx bg-neo-lace p-4">
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <QuickReplyPicker

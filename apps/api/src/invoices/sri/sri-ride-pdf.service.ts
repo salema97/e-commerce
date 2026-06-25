@@ -46,13 +46,17 @@ interface ParsedDocument {
  */
 @Injectable()
 export class SriRidePdfService {
-  async generateFromAuthorizedXml(
+  generateFromAuthorizedXml(
     xml: string,
     authorizationNumber?: string,
     authorizationDate?: Date,
   ): Promise<Buffer> {
-    const parsed = this.parseXml(xml);
-    return this.buildPdf(parsed, authorizationNumber, authorizationDate);
+    try {
+      const parsed = this.parseXml(xml);
+      return this.buildPdf(parsed, authorizationNumber, authorizationDate);
+    } catch (error) {
+      return Promise.reject(error);
+    }
   }
 
   private parseXml(xml: string): ParsedDocument {

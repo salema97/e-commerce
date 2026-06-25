@@ -1,8 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { ClerkProvider } from '@clerk/nextjs';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@/contexts/auth-context';
+import { AnalyticsProvider } from '@/components/analytics/analytics-provider';
+import { NeoMotionProvider } from '@/components/motion/neo-motion-provider';
 
 function makeQueryClient() {
   return new QueryClient({
@@ -31,14 +33,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
 
   return (
-    <ClerkProvider
-      appearance={{
-        variables: {
-          colorPrimary: 'hsl(var(--primary))',
-        },
-      }}
-    >
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    </ClerkProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <NeoMotionProvider>
+          <AnalyticsProvider>{children}</AnalyticsProvider>
+        </NeoMotionProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

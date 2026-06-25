@@ -6,16 +6,17 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { resolveStorageConfig } from './storage-config.js';
 
 export interface UploadResult {
   key: string;
 }
 
 /**
- * Cloudflare R2 / S3-compatible storage service.
+ * S3-compatible storage service (AWS S3 or MinIO).
  *
  * Stores arbitrary buffers in a private bucket and generates time-limited
- * signed URLs for secure downloads. Never exposes public URLs.
+ * signed URLs for secure downloads.
  */
 @Injectable()
 export class StorageService {
@@ -23,26 +24,13 @@ export class StorageService {
   private readonly bucket: string;
 
   constructor(private readonly config: ConfigService) {
-    const accountId = this.config.getOrThrow<string>('R2_ACCOUNT_ID');
-    const accessKeyId = this.config.getOrThrow<string>('R2_ACCESS_KEY_ID');
-    const secretAccessKey = this.config.getOrThrow<string>(
-      'R2_SECRET_ACCESS_KEY',
-    );
-
-    this.bucket = this.config.getOrThrow<string>('R2_BUCKET_NAME');
-
-    this.client = new S3Client({
-      region: 'auto',
-      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-      credentials: {
-        accessKeyId,
-        secretAccessKey,
-      },
-    });
+    const storage = resolveStorageConfig(config);
+    this.bucket = storage.bucket;
+    this.client = new S3Client(storage.client);
   }
 
   /**
-   * Upload a buffer to R2.
+   * Upload a buffer to object storage.
    *
    * @param key Object key (path inside the bucket).
    * @param buffer File content.
@@ -72,7 +60,7 @@ export class StorageService {
    * @param key Object key.
    * @param expiresInSeconds URL lifetime in seconds (default 300 = 5 minutes).
    */
-  async getSignedUrl(
+  getSignedUrl(
     key: string,
     expiresInSeconds = 300,
   ): Promise<string> {

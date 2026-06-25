@@ -14,15 +14,15 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   function statusIcon() {
     if (message.status === 'FAILED') {
-      return <AlertCircle className="size-3 text-destructive" />;
+      return <AlertCircle className="size-3 text-neo-scarlet" strokeWidth={3} />;
     }
     if (message.status === 'READ') {
-      return <CheckCheck className="size-3 text-primary" />;
+      return <CheckCheck className="size-3 text-neo-gold" strokeWidth={3} />;
     }
     if (message.status === 'DELIVERED') {
-      return <CheckCheck className="size-3 text-muted-foreground" />;
+      return <CheckCheck className="size-3 text-muted-foreground" strokeWidth={3} />;
     }
-    return <Check className="size-3 text-muted-foreground" />;
+    return <Check className="size-3 text-muted-foreground" strokeWidth={3} />;
   }
 
   return (
@@ -31,22 +31,28 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       data-testid={`message-${message.id}`}
     >
       <div
-        className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
+        className={`max-w-[80%] border-[3px] border-neo-onyx px-4 py-2 text-sm shadow-[4px_4px_0_0_#111111] ${
           isOutbound
             ? isBot
-              ? 'bg-violet-600 text-white rounded-br-none'
-              : 'bg-primary text-primary-foreground rounded-br-none'
-            : 'bg-muted text-foreground rounded-bl-none'
+              ? 'bg-violet-600 text-white'
+              : 'bg-neo-onyx text-white'
+            : 'bg-white text-neo-onyx'
         }`}
       >
-        {isBot ? <p className="mb-1 text-[10px] font-medium uppercase opacity-80">Bot</p> : null}
-        <p className="whitespace-pre-wrap">{message.content}</p>
-        <div className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${isOutbound ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+        {isBot ? (
+          <p className="mb-1 text-[10px] font-bold uppercase opacity-80">Bot</p>
+        ) : null}
+        <p className="whitespace-pre-wrap font-medium">{message.content}</p>
+        <div
+          className={`mt-1 flex items-center justify-end gap-1 text-[10px] font-bold uppercase ${
+            isOutbound ? 'text-white/70' : 'text-muted-foreground'
+          }`}
+        >
           <span>{message.sentAt ? formatDateTime(message.sentAt) : formatDateTime(message.createdAt)}</span>
           {isOutbound ? statusIcon() : null}
         </div>
         {message.errorMessage ? (
-          <p className="mt-1 text-[10px] text-destructive">{message.errorMessage}</p>
+          <p className="mt-1 text-[10px] font-bold text-neo-scarlet">{message.errorMessage}</p>
         ) : null}
       </div>
     </div>

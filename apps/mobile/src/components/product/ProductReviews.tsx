@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Input, Card } from '@repo/shared-ui';
 import { api } from '../../lib/api.js';
-import { useAuth } from '@clerk/clerk-expo';
+import { useAuth } from '../../providers/AuthProvider.js';
 
 interface ProductReviewsProps {
   productId: string;
 }
 
 export function ProductReviews({ productId }: ProductReviewsProps): React.ReactElement {
-  const { isSignedIn } = useAuth();
+  const { user } = useAuth();
   const { data: reviews } = api.hooks.useProductReviews(productId);
   const { data: summary } = api.hooks.useProductReviewSummary(productId);
   const createReview = api.hooks.useCreateProductReview();
@@ -46,7 +46,7 @@ export function ProductReviews({ productId }: ProductReviewsProps): React.ReactE
         </Card>
       ))}
 
-      {isSignedIn ? (
+      {user ? (
         <View style={styles.form}>
           <Input label="Valoración (1-5)" value={rating} onChangeText={setRating} keyboardType="number-pad" />
           <Input

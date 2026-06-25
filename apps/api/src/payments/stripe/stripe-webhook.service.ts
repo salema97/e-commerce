@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { StripeProvider } from './stripe.provider.js';
-import { PaymentStatus } from '../entities/payment-status.enum.js';
+import { PaymentStatus } from '../public-api.js';
 import { OrderStatus, PaymentProvider } from '@prisma/client';
 import { SriQueueService } from '../../invoices/sri/sri-queue.service.js';
 import { InventoryReservationService } from '../../inventory/inventory-reservation.service.js';
@@ -280,7 +280,7 @@ export class StripeWebhookService {
   }
 
   private enqueueInvoice(orderId: string): void {
-    this.sriQueue
+    void this.sriQueue
       .addIssueInvoiceJob(orderId)
       .then(() => {
         this.logger.log(`SRI invoice job enqueued for order ${orderId}`);
@@ -330,7 +330,7 @@ export class StripeWebhookService {
     outcome: string,
   ): Promise<void> {
     await this.auditLogService.log({
-      actorClerkUserId: 'system',
+      actorId: 'system',
       resource: 'stripe-webhook',
       action: 'processed',
       resourceId: eventId,
@@ -345,7 +345,7 @@ export class StripeWebhookService {
     metadata: Record<string, unknown>,
   ): Promise<void> {
     await this.auditLogService.log({
-      actorClerkUserId: 'system',
+      actorId: 'system',
       resource: 'payment',
       action,
       resourceId: paymentId,

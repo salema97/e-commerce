@@ -19,8 +19,8 @@ export class NotificationPreferencesService {
     private readonly userProvisioning: UserProvisioningService,
   ) {}
 
-  async getByClerkUserId(clerkUserId: string): Promise<NotificationPreferences> {
-    const user = await this.userProvisioning.ensureByClerkUserId(clerkUserId);
+  async getByUserId(userId: string): Promise<NotificationPreferences> {
+    const user = await this.userProvisioning.ensureByUserId(userId);
     return {
       emailOptOut: user.emailOptOut,
       marketingEmailOptOut: user.marketingEmailOptOut,
@@ -28,11 +28,11 @@ export class NotificationPreferencesService {
     };
   }
 
-  async updateByClerkUserId(
-    clerkUserId: string,
+  async updateByUserId(
+    userId: string,
     data: Partial<NotificationPreferences>,
   ): Promise<NotificationPreferences> {
-    const user = await this.userProvisioning.ensureByClerkUserId(clerkUserId);
+    const user = await this.userProvisioning.ensureByUserId(userId);
     const updated = await this.prisma.user.update({
       where: { id: user.id },
       data: {
@@ -98,7 +98,7 @@ export class NotificationPreferencesService {
   private unsubscribeSecret(): string {
     return (
       this.configService.get<string>('NOTIFICATION_UNSUBSCRIBE_SECRET') ??
-      this.configService.getOrThrow<string>('CLERK_WEBHOOK_SECRET')
+      this.configService.getOrThrow<string>('AUTH_JWT_ACCESS_SECRET')
     );
   }
 }

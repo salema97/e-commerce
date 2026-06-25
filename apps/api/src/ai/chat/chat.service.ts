@@ -12,7 +12,7 @@ export class ChatService {
     private readonly orchestrator: ConversationOrchestrator,
   ) {}
 
-  async createSession(contactName?: string) {
+  createSession(contactName?: string) {
     const webSessionId = randomUUID();
     return this.prisma.conversation.create({
       data: {

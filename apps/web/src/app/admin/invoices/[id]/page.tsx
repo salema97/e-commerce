@@ -1,24 +1,34 @@
-import { redirect } from 'next/navigation';
-import { auth } from '@clerk/nextjs/server';
-import { getCurrentRole, financeRoles } from '@/lib/auth';
-import { getTestAuthSession } from '@/lib/test-auth';
+import { redirect, notFound } from 'next/navigation';
+import { getCurrentUser, financeRoles } from '@/lib/auth';
+import { getServerApiClient } from '@/lib/api';
 import { InvoiceDetailView } from './invoice-detail-view';
+import type { InvoiceResponseDto, Order } from '@repo/shared-types';
 
 interface AdminInvoiceDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function AdminInvoiceDetailPage({ params }: AdminInvoiceDetailPageProps) {
-  const { id } = await params;
-  const { userId } = await auth();
-  const role = await getCurrentRole();
-  const testSession = await getTestAuthSession();
-  const effectiveRole = role ?? testSession?.role;
-  const effectiveUserId = userId ?? testSession?.userId;
+  const [{ id }, session, api] = await Promise.all([
+    params,
+    getCurrentUser(),
+    getServerApiClient(),
+  ]);
 
-  if (!effectiveUserId || !effectiveRole || !financeRoles.includes(effectiveRole)) {
+  if (!session || !financeRoles.includes(session.role)) {
     redirect('/sign-in?redirect_url=/admin/invoices');
   }
 
-  return <InvoiceDetailView id={id} />;
+  let invoice: InvoiceResponseDto | null = await api.invoices.findOne(id).catch(() => null);
+  let order: Order | null = null;
+
+  if (invoice?.orderId) {
+    order = await api.orders.findOne(invoice.orderId).catch(() => null);
+  }
+
+  if (!invoice) {
+    notFound();
+  }
+
+  return <InvoiceDetailView id={id} initialInvoice={invoice} initialOrder={order} />;
 }

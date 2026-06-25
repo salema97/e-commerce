@@ -21,6 +21,7 @@ import { CreateReturnDto } from './dto/create-return.dto.js';
 import { CreateGuestReturnRequestDto } from './dto/create-guest-return-request.dto.js';
 import { UpdateReturnStatusDto } from './dto/update-return-status.dto.js';
 import { ResolveReturnDto } from './dto/resolve-return.dto.js';
+import { Role } from '../auth/role.enum.js';
 import { UpdateReturnShippingDto } from './dto/update-return-shipping.dto.js';
 
 /**
@@ -132,7 +133,7 @@ export class ReturnsService {
     });
 
     await this.auditLog.log({
-      actorClerkUserId: input.userId ?? 'guest',
+      actorId: input.userId ?? 'guest',
       resource: 'ReturnRequest',
       action: 'CREATE',
       resourceId: created.id,
@@ -211,7 +212,7 @@ export class ReturnsService {
     });
 
     await this.auditLog.log({
-      actorClerkUserId: 'guest',
+      actorId: 'guest',
       resource: 'ReturnRequest',
       action: 'CREATE_GUEST',
       resourceId: created.id,
@@ -223,7 +224,7 @@ export class ReturnsService {
     return created;
   }
 
-  async listReturns(filter: ListReturnsFilter = {}) {
+  listReturns(filter: ListReturnsFilter = {}) {
     const where: Prisma.ReturnRequestWhereInput = {};
     if (filter.status) where.status = filter.status;
     if (filter.orderId) where.orderId = filter.orderId;
@@ -252,10 +253,23 @@ export class ReturnsService {
     return record;
   }
 
+  async getReturnForActor(
+    id: string,
+    user?: { userId: string; role: Role },
+  ) {
+    const record = await this.getReturn(id);
+    if (user?.role === Role.CUSTOMER) {
+      if (!record.userId || record.userId !== user.userId) {
+        throw new ForbiddenException('Cannot access another customer return');
+      }
+    }
+    return record;
+  }
+
   async updateReturnShipping(
     id: string,
     dto: UpdateReturnShippingDto,
-    actorClerkUserId: string,
+    actorId: string,
   ) {
     const current = await this.getReturn(id);
     const updated = await this.prisma.returnRequest.update({
@@ -268,7 +282,7 @@ export class ReturnsService {
     });
 
     await this.auditLog.log({
-      actorClerkUserId,
+      actorId,
       action: 'UPDATE',
       resource: 'ReturnRequest',
       resourceId: id,
@@ -296,7 +310,7 @@ export class ReturnsService {
   async updateStatus(
     id: string,
     dto: UpdateReturnStatusDto,
-    actorClerkUserId: string,
+    actorId: string,
   ) {
     const current = await this.getReturn(id);
     const from = current.status;
@@ -322,8 +336,8 @@ export class ReturnsService {
       status: to,
     };
 
-    if (to === ReturnStatus.APPROVED) patch.approvedById = actorClerkUserId;
-    if (to === ReturnStatus.REJECTED) patch.rejectedById = actorClerkUserId;
+    if (to === ReturnStatus.APPROVED) patch.approvedById = actorId;
+    if (to === ReturnStatus.REJECTED) patch.rejectedById = actorId;
     if (to === ReturnStatus.INSPECTION) patch.inspectedAt = new Date();
     if (to === ReturnStatus.RESOLVED || to === ReturnStatus.RESOLUTION_PENDING_CREDIT_NOTE) {
       patch.resolvedAt = new Date();
@@ -339,7 +353,7 @@ export class ReturnsService {
     });
 
     await this.auditLog.log({
-      actorClerkUserId,
+      actorId,
       resource: 'ReturnRequest',
       action: 'STATUS_CHANGE',
       resourceId: id,
@@ -365,7 +379,7 @@ export class ReturnsService {
   async resolveReturn(
     id: string,
     dto: ResolveReturnDto,
-    actorClerkUserId: string,
+    actorId: string,
   ) {
     const current = await this.prisma.returnRequest.findUnique({
       where: { id },
@@ -399,7 +413,7 @@ export class ReturnsService {
         type: totalAmount >= Number(current.order.total) ? 'full' : 'partial',
         reason: current.reason,
         returnRequestId: current.id,
-        requestedById: actorClerkUserId,
+        requestedById: actorId,
         parentInvoiceAccessKey: current.order.invoice?.accessKey,
       });
     } else if (dto.refundMethod === RefundMethod.STORE_CREDIT) {
@@ -449,7 +463,7 @@ export class ReturnsService {
     }
 
     await this.auditLog.log({
-      actorClerkUserId,
+      actorId,
       resource: 'ReturnRequest',
       action: 'RESOLVE',
       resourceId: id,

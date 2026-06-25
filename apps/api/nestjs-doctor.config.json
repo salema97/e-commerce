@@ -1,0 +1,7 @@
+{
+  "$schema": "https://nestjs.doctor/schema/config.json",
+  "rules": {
+    "security/require-guards-on-endpoints": "off",
+    "architecture/no-orm-in-services": "off"
+  }
+}

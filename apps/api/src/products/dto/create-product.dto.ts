@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsNumber, IsBoolean, IsUUID, IsIn, Min } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsBoolean, IsUUID, IsIn, Min, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 const productStatuses = ['DRAFT', 'ACTIVE', 'ARCHIVED'] as const;
@@ -67,6 +68,7 @@ export class CreateProductDto {
   @ApiPropertyOptional({ enum: productStatuses, example: 'ACTIVE' })
   @IsOptional()
   @IsIn(productStatuses)
+  @Type(() => String)
   status?: ProductStatus;
 
   @ApiProperty({ example: 49.99 })
@@ -103,13 +105,19 @@ export class CreateProductDto {
 
   @ApiPropertyOptional({ type: [CreateProductVariantDto] })
   @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => CreateProductVariantDto)
   variants?: CreateProductVariantDto[];
 
   @ApiPropertyOptional({ type: [CreateProductAttributeDto] })
   @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => CreateProductAttributeDto)
   attributes?: CreateProductAttributeDto[];
 
   @ApiPropertyOptional({ type: [CreateProductImageDto] })
   @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => CreateProductImageDto)
   images?: CreateProductImageDto[];
 }

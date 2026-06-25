@@ -9,9 +9,11 @@ export class LabelService {
     private readonly config: ConfigService,
   ) {}
 
-  async buildLabelUrl(shipmentId: string): Promise<string> {
+  buildLabelUrl(shipmentId: string): Promise<string> {
     const base = this.config.get<string>('API_PUBLIC_URL') ?? 'http://localhost:3001';
-    return `${base.replace(/\/$/, '')}/v1/fulfillment/shipments/${shipmentId}/label`;
+    return Promise.resolve(
+      `${base.replace(/\/$/, '')}/v1/fulfillment/shipments/${shipmentId}/label`,
+    );
   }
 
   async renderLabelHtml(shipmentId: string): Promise<string> {

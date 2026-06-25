@@ -80,7 +80,7 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
       'SRI_DIGITAL_CERTIFICATE_PASSWORD',
     );
 
-    const p12Buffer = this.signerService.loadCertificateFileAsBuffer(certificatePath);
+    const p12Buffer = await this.signerService.loadCertificateFileAsBuffer(certificatePath);
     const signedXml = this.signerService.sign(
       xml,
       p12Buffer,
@@ -202,7 +202,7 @@ export class DirectSriInvoiceProvider implements InvoiceProvider {
       'SRI_DIGITAL_CERTIFICATE_PASSWORD',
     );
 
-    const p12Buffer = this.signerService.loadCertificateFileAsBuffer(certificatePath);
+    const p12Buffer = await this.signerService.loadCertificateFileAsBuffer(certificatePath);
     const signedXml = this.signerService.sign(xml, p12Buffer, certificatePassword);
 
     const reception = await this.soapClient.submit(signedXml);

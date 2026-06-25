@@ -217,6 +217,14 @@ export class MarketingAutomationService {
     return { sent };
   }
 
+  listActivePromotions(): Promise<Array<{ id: string; name: string }>> {
+    return this.prisma.promotion.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+  }
+
   private storefrontUrl(): string {
     return this.configService.get<string>('STOREFRONT_URL') ?? 'http://localhost:3000';
   }

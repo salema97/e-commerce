@@ -22,6 +22,7 @@ import type {
   AddCartItemDto,
   UpdateCartItemDto,
   User,
+  AuthUser,
   Supplier,
   CreateSupplierDto,
   UpdateSupplierDto,
@@ -46,10 +47,32 @@ import type {
   PaginatedConversations,
   PaginatedMessages,
   QuickReply,
+  Income,
+  CreateIncomeDto,
+  UpdateIncomeDto,
+  ExpenseCategory,
+  CreateExpenseCategoryDto,
+  UpdateExpenseCategoryDto,
+  Expense,
+  CreateExpenseDto,
+  UpdateExpenseDto,
+  UploadExpenseReceiptDto,
+  CashFlowReport,
+  AdminStoreCredit,
   SearchResultItem,
   Faq,
+  CreateFaqDto,
+  UpdateFaqDto,
+  CmsPage,
+  CreateCmsPageDto,
+  UpdateCmsPageDto,
   ProductContentDraft,
   ChatSession,
+  Promotion,
+  DistributePromoDto,
+  DistributePromoResponse,
+  AnalyticsOverviewReport,
+  CohortRetentionReport,
   CatalogResponse,
   CatalogQuery,
   ProductReview,
@@ -61,8 +84,6 @@ import type {
   LoyaltyRedemptionQuote,
   ReferralCode,
   ReferralPerformanceReport,
-  PayoutReferralDto,
-  ExternalReviewSummary,
 } from '@repo/shared-types';
 import type { ApiClient } from './client.js';
 
@@ -93,6 +114,14 @@ export const queryKeys = {
   invoice: (id: string) => ['invoices', id] as const,
   creditNotes: (filters?: Record<string, string | number | undefined>) => ['credit-notes', filters ?? {}] as const,
   creditNote: (id: string) => ['credit-notes', id] as const,
+  financeIncomes: (filters?: Record<string, string | number | undefined>) =>
+    ['finance', 'incomes', filters ?? {}] as const,
+  financeIncome: (id: string) => ['finance', 'incomes', id] as const,
+  financeExpenseCategories: ['finance', 'expense-categories'] as const,
+  financeExpenses: (filters?: Record<string, string | number | undefined>) =>
+    ['finance', 'expenses', filters ?? {}] as const,
+  financeCashFlow: (from: string, to: string) => ['finance', 'cash-flow', from, to] as const,
+  financeStoreCredits: ['finance', 'store-credits'] as const,
   notificationPreferences: ['notifications', 'preferences'] as const,
   search: (query: string) => ['search', query] as const,
   catalog: (filters?: Record<string, string | number | boolean | undefined>) =>
@@ -100,6 +129,13 @@ export const queryKeys = {
   chatMessages: (sessionId: string) => ['chat', sessionId, 'messages'] as const,
   productContentDraft: (productId: string) => ['ai', 'products', productId, 'draft'] as const,
   faqs: ['ai', 'faqs'] as const,
+  adminFaqs: ['ai', 'faqs', 'admin'] as const,
+  adminCmsPages: ['ai', 'cms-pages', 'admin'] as const,
+  cmsPageBySlug: (slug: string) => ['ai', 'cms-page', slug] as const,
+  marketingPromotions: ['marketing', 'promotions'] as const,
+  analyticsOverview: (days: number) => ['analytics', 'overview', days] as const,
+  analyticsFunnel: (days: number) => ['analytics', 'funnel', days] as const,
+  analyticsCohorts: (weeks: number) => ['analytics', 'cohorts', weeks] as const,
   productReviews: (productId: string) => ['reviews', productId] as const,
   productReviewSummary: (productId: string) => ['reviews', productId, 'summary'] as const,
   pendingReviews: ['reviews', 'pending'] as const,
@@ -111,7 +147,7 @@ export const queryKeys = {
 
 export function createQueryHooks(client: ApiClient) {
   return {
-    useMe: (options?: Omit<UseQueryOptions<User, Error>, 'queryKey' | 'queryFn'>) =>
+    useMe: (options?: Omit<UseQueryOptions<AuthUser, Error>, 'queryKey' | 'queryFn'>) =>
       useQuery({
         queryKey: queryKeys.me,
         queryFn: () => client.auth.getMe(),
@@ -483,6 +519,17 @@ export function createQueryHooks(client: ApiClient) {
       });
     },
 
+    useApproveRefund: (options?: UseMutationOptions<Refund, Error, string>) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (refundId) => client.refunds.approve(refundId),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.orders() });
+        },
+        ...options,
+      });
+    },
+
     useListRefunds: (
       orderId: string,
       options?: Omit<UseQueryOptions<Refund[], Error>, 'queryKey' | 'queryFn'>,
@@ -675,6 +722,29 @@ export function createQueryHooks(client: ApiClient) {
         ...options,
       }),
 
+    useFinanceIncomes: (
+      filters?: Record<string, string | number | undefined>,
+      options?: Omit<UseQueryOptions<Income[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.financeIncomes(filters),
+        queryFn: () => client.finance.incomes.findAll(filters),
+        ...options,
+      }),
+
+    useCreateFinanceIncome: (
+      options?: UseMutationOptions<Income, Error, CreateIncomeDto>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.finance.incomes.create(data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['finance', 'incomes'] });
+        },
+        ...options,
+      });
+    },
+
     useNotificationPreferences: (
       options?: Omit<
         UseQueryOptions<
@@ -710,6 +780,72 @@ export function createQueryHooks(client: ApiClient) {
         ...options,
       });
     },
+
+    useFinanceExpenseCategories: (
+      options?: Omit<UseQueryOptions<ExpenseCategory[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.financeExpenseCategories,
+        queryFn: () => client.finance.expenseCategories.findAll(),
+        ...options,
+      }),
+
+    useCreateFinanceExpenseCategory: (
+      options?: UseMutationOptions<ExpenseCategory, Error, CreateExpenseCategoryDto>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.finance.expenseCategories.create(data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.financeExpenseCategories });
+        },
+        ...options,
+      });
+    },
+
+    useFinanceExpenses: (
+      filters?: Record<string, string | number | undefined>,
+      options?: Omit<UseQueryOptions<Expense[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.financeExpenses(filters),
+        queryFn: () => client.finance.expenses.findAll(filters),
+        ...options,
+      }),
+
+    useCreateFinanceExpense: (
+      options?: UseMutationOptions<Expense, Error, CreateExpenseDto>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.finance.expenses.create(data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['finance', 'expenses'] });
+        },
+        ...options,
+      });
+    },
+
+    useFinanceCashFlow: (
+      from: string,
+      to: string,
+      options?: Omit<UseQueryOptions<CashFlowReport, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.financeCashFlow(from, to),
+        queryFn: () => client.finance.reports.cashFlow(from, to),
+        enabled: Boolean(from && to),
+        ...options,
+      }),
+
+    useFinanceStoreCredits: (
+      options?: Omit<UseQueryOptions<AdminStoreCredit[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.financeStoreCredits,
+        queryFn: () => client.finance.storeCredits.findAll(),
+        ...options,
+      }),
 
     useSubscribeBackInStock: (
       options?: UseMutationOptions<
@@ -835,6 +971,198 @@ export function createQueryHooks(client: ApiClient) {
       useQuery({
         queryKey: queryKeys.faqs,
         queryFn: () => client.ai.faqs.findPublished(),
+        ...options,
+      }),
+
+    useAdminFaqs: (
+      options?: Omit<UseQueryOptions<Faq[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.adminFaqs,
+        queryFn: () => client.ai.faqs.findAllAdmin(),
+        ...options,
+      }),
+
+    useCreateFaq: (options?: UseMutationOptions<Faq, Error, CreateFaqDto>) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.ai.faqs.create(data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminFaqs });
+          queryClient.invalidateQueries({ queryKey: queryKeys.faqs });
+        },
+        ...options,
+      });
+    },
+
+    useUpdateFaq: (
+      options?: UseMutationOptions<Faq, Error, { id: string; data: UpdateFaqDto }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, data }) => client.ai.faqs.update(id, data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminFaqs });
+          queryClient.invalidateQueries({ queryKey: queryKeys.faqs });
+        },
+        ...options,
+      });
+    },
+
+    useDeleteFaq: (options?: UseMutationOptions<{ success: boolean }, Error, string>) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (id) => client.ai.faqs.remove(id),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminFaqs });
+          queryClient.invalidateQueries({ queryKey: queryKeys.faqs });
+        },
+        ...options,
+      });
+    },
+
+    useCmsPageBySlug: (
+      slug: string,
+      options?: Omit<UseQueryOptions<CmsPage, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.cmsPageBySlug(slug),
+        queryFn: () => client.ai.cmsPages.findBySlug(slug),
+        enabled: Boolean(slug),
+        ...options,
+      }),
+
+    useAdminCmsPages: (
+      options?: Omit<UseQueryOptions<CmsPage[], Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.adminCmsPages,
+        queryFn: () => client.ai.cmsPages.findAllAdmin(),
+        ...options,
+      }),
+
+    useCreateCmsPage: (options?: UseMutationOptions<CmsPage, Error, CreateCmsPageDto>) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data) => client.ai.cmsPages.create(data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminCmsPages });
+        },
+        ...options,
+      });
+    },
+
+    useUpdateCmsPage: (
+      options?: UseMutationOptions<CmsPage, Error, { id: string; data: UpdateCmsPageDto }>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ id, data }) => client.ai.cmsPages.update(id, data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminCmsPages });
+        },
+        ...options,
+      });
+    },
+
+    useDeleteCmsPage: (
+      options?: UseMutationOptions<{ success: boolean }, Error, string>,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (id) => client.ai.cmsPages.remove(id),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: queryKeys.adminCmsPages });
+        },
+        ...options,
+      });
+    },
+
+    useMarketingPromotions: (
+      options?: Omit<
+        UseQueryOptions<Array<Pick<Promotion, 'id' | 'name'>>, Error>,
+        'queryKey' | 'queryFn'
+      >,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.marketingPromotions,
+        queryFn: () => client.marketing.listPromotions(),
+        ...options,
+      }),
+
+    useDistributePromo: (
+      options?: UseMutationOptions<DistributePromoResponse, Error, DistributePromoDto>,
+    ) =>
+      useMutation({
+        mutationFn: (data) => client.marketing.distributePromo(data),
+        ...options,
+      }),
+
+    useUploadExpenseReceipt: (
+      options?: UseMutationOptions<
+        { key: string },
+        Error,
+        { expenseId: string; data: UploadExpenseReceiptDto }
+      >,
+    ) => {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: ({ expenseId, data }) =>
+          client.finance.expenses.uploadReceipt(expenseId, data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['finance', 'expenses'] });
+        },
+        ...options,
+      });
+    },
+
+    useRegisterPushToken: (
+      options?: UseMutationOptions<
+        { id: string; token: string; platform: string },
+        Error,
+        { token: string; platform: 'ios' | 'android' | 'web' }
+      >,
+    ) =>
+      useMutation({
+        mutationFn: (data) => client.notifications.pushTokens.register(data),
+        ...options,
+      }),
+
+    useRemovePushToken: (
+      options?: UseMutationOptions<void, Error, string>,
+    ) =>
+      useMutation({
+        mutationFn: (token) => client.notifications.pushTokens.remove(token),
+        ...options,
+      }),
+
+    useAnalyticsOverview: (
+      days = 30,
+      options?: Omit<UseQueryOptions<AnalyticsOverviewReport, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.analyticsOverview(days),
+        queryFn: () => client.analytics.getOverview(days),
+        ...options,
+      }),
+
+    useAnalyticsFunnel: (
+      days = 30,
+      options?: Omit<UseQueryOptions<Record<string, number>, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.analyticsFunnel(days),
+        queryFn: () => client.analytics.getFunnel(days),
+        ...options,
+      }),
+
+    useAnalyticsCohorts: (
+      weeks = 8,
+      options?: Omit<UseQueryOptions<CohortRetentionReport, Error>, 'queryKey' | 'queryFn'>,
+    ) =>
+      useQuery({
+        queryKey: queryKeys.analyticsCohorts(weeks),
+        queryFn: () => client.analytics.getCohorts(weeks),
         ...options,
       }),
 

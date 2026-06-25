@@ -4,7 +4,13 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useApiClient } from '@/lib/client-api';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert } from '@/components/ui/alert';
+import { AlertDescription } from '@/components/ui/alert-description';
+import { AnimatedPageShell, NeoItem, NeoStagger } from '@/components/motion/neo-page-transition';
+import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { formatPrice } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
 
@@ -13,39 +19,103 @@ interface ReturnRequestFormProps {
   isGuest?: boolean;
 }
 
+function combineReturnReasons(
+  selected: Record<string, { qty: number; reason: string }>,
+): string {
+  const reasons = Object.values(selected).flatMap((item) => (item.reason ? [item.reason] : []));
+  return reasons.join('; ') || 'Devolución del cliente';
+}
+
+type ReturnFormState = {
+  selected: Record<string, { qty: number; reason: string }>;
+  email: string;
+  isSubmitting: boolean;
+  error: string;
+  submitted: boolean;
+};
+
+type ReturnFormAction =
+  | { type: 'toggle_item'; itemId: string; maxQty: number }
+  | { type: 'set_item_qty'; itemId: string; qty: number }
+  | { type: 'set_item_reason'; itemId: string; reason: string }
+  | { type: 'set_email'; value: string }
+  | { type: 'submit_start' }
+  | { type: 'submit_success' }
+  | { type: 'submit_error'; message: string };
+
+const returnFormInitialState: ReturnFormState = {
+  selected: {},
+  email: '',
+  isSubmitting: false,
+  error: '',
+  submitted: false,
+};
+
+function returnFormReducer(state: ReturnFormState, action: ReturnFormAction): ReturnFormState {
+  switch (action.type) {
+    case 'toggle_item': {
+      if (state.selected[action.itemId]) {
+        const { [action.itemId]: _, ...rest } = state.selected;
+        return { ...state, selected: rest };
+      }
+      return {
+        ...state,
+        selected: { ...state.selected, [action.itemId]: { qty: action.maxQty, reason: '' } },
+      };
+    }
+    case 'set_item_qty':
+      return {
+        ...state,
+        selected: {
+          ...state.selected,
+          [action.itemId]: { ...state.selected[action.itemId], qty: action.qty },
+        },
+      };
+    case 'set_item_reason':
+      return {
+        ...state,
+        selected: {
+          ...state.selected,
+          [action.itemId]: { ...state.selected[action.itemId], reason: action.reason },
+        },
+      };
+    case 'set_email':
+      return { ...state, email: action.value };
+    case 'submit_start':
+      return { ...state, isSubmitting: true, error: '' };
+    case 'submit_success':
+      return { ...state, isSubmitting: false, submitted: true };
+    case 'submit_error':
+      return { ...state, isSubmitting: false, error: action.message };
+    default:
+      return state;
+  }
+}
+
 export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequestFormProps) {
   const router = useRouter();
   const api = useApiClient();
-  const [selected, setSelected] = React.useState<Record<string, { qty: number; reason: string }>>({});
-  const [email, setEmail] = React.useState('');
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [error, setError] = React.useState('');
+  const authReady = useAuthApiReady();
+  const [form, dispatch] = React.useReducer(returnFormReducer, returnFormInitialState);
+  const { selected, email, isSubmitting, error, submitted } = form;
 
   const windowDays = 30;
   const isWithinWindow =
     new Date(order.createdAt).getTime() + windowDays * 24 * 60 * 60 * 1000 >= Date.now();
 
   function toggleItem(itemId: string, maxQty: number) {
-    setSelected((prev) => {
-      if (prev[itemId]) {
-        const { [itemId]: _, ...rest } = prev;
-        return rest;
-      }
-      return { ...prev, [itemId]: { qty: maxQty, reason: '' } };
-    });
+    dispatch({ type: 'toggle_item', itemId, maxQty });
   }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setIsSubmitting(true);
-    setError('');
+    dispatch({ type: 'submit_start' });
     const items = Object.entries(selected).map(([itemId, value]) => {
       const orderItem = order.items.find((i) => i.id === itemId)!;
       return {
         productId: orderItem.productId,
-        variantId: orderItem.variantId ?? undefined,
+        productVariantId: orderItem.variantId ?? undefined,
         quantity: value.qty,
-        reason: value.reason,
       };
     });
 
@@ -55,43 +125,58 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
           orderId: order.id,
           email,
           items,
-          reason: items.map((i) => i.reason).join('; ') || 'Customer return',
+          reason: combineReturnReasons(selected),
         });
       } else {
         await api.returns.createForOrder(order.id, {
           items,
-          reason: items.map((i) => i.reason).join('; ') || 'Customer return',
+          reason: combineReturnReasons(selected),
         });
+        router.push(`/orders/${order.id}`);
+        router.refresh();
       }
-      router.push(`/orders/${order.id}`);
-      router.refresh();
+      dispatch({ type: 'submit_success' });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit return request');
-    } finally {
-      setIsSubmitting(false);
+      dispatch({
+        type: 'submit_error',
+        message: err instanceof Error ? err.message : 'No se pudo enviar la solicitud de devolución',
+      });
     }
   }
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">Request return for order {order.orderNumber}</h1>
+  if (submitted && isGuest) {
+    return (
+      <AnimatedPageShell className="container mx-auto px-4 py-8">
+        <h1 className="mb-4 text-2xl font-bold">Solicitud de devolución enviada</h1>
+        <p className="text-muted-foreground">
+          Recibimos tu solicitud de devolución para el pedido {order.orderNumber}. Estado: Solicitada.
+        </p>
+      </AnimatedPageShell>
+    );
+  }
 
+  return (
+    <AnimatedPageShell
+      className="container mx-auto px-4 py-8"
+      header={
+        <h1 className="mb-6 text-2xl font-bold">Solicitar devolución del pedido {order.orderNumber}</h1>
+      }
+    >
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {isGuest ? (
           <Card>
             <CardHeader>
-              <CardTitle>Order email</CardTitle>
+              <CardTitle>Correo del pedido</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
-              <label htmlFor="email" className="text-sm font-medium">Email address associated with this order</label>
-              <input
+              <Label htmlFor="email">Correo electrónico asociado a este pedido</Label>
+              <Input
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => dispatch({ type: 'set_email', value: e.target.value })}
                 required
-                className="rounded-md border px-3 py-2 text-sm"
-                placeholder="customer@example.com"
+                placeholder="cliente@ejemplo.com"
               />
             </CardContent>
           </Card>
@@ -99,88 +184,103 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
 
         <Card>
           <CardHeader>
-            <CardTitle>Select items</CardTitle>
+            <CardTitle>Seleccionar artículos</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
+            <NeoStagger className="flex flex-col gap-4">
             {order.items.map((item) => (
-              <div key={item.id} className="rounded-md border p-4">
-                <label className="flex cursor-pointer items-center gap-3">
-                  <input
-                    type="checkbox"
+              <NeoItem key={item.id}>
+              <div className="border-[3px] border-neo-onyx bg-white p-4 shadow-[4px_4px_0_0_#111111]">
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id={`item-${item.id}`}
                     checked={Boolean(selected[item.id])}
-                    onChange={() => toggleItem(item.id, item.quantity)}
+                    onCheckedChange={() => toggleItem(item.id, item.quantity)}
                   />
-                  <div className="flex-1">
-                    <p className="font-medium">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">
+                  <Label htmlFor={`item-${item.id}`} className="flex flex-1 cursor-pointer flex-col gap-1 normal-case">
+                    <span className="font-bold">{item.name}</span>
+                    <span className="text-sm font-medium text-muted-foreground">
                       SKU: {item.sku} · {formatPrice(item.price * item.quantity)}
-                    </p>
-                  </div>
-                </label>
+                    </span>
+                  </Label>
+                </div>
 
                 {selected[item.id] ? (
-                  <div className="mt-4 grid gap-3">
-                    <div className="grid gap-1">
-                      <label className="text-sm font-medium">Quantity</label>
-                      <input
+                  <div className="mt-4 flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor={`qty-${item.id}`}>Cantidad</Label>
+                      <Input
+                        id={`qty-${item.id}`}
                         type="number"
                         min={1}
                         max={item.quantity}
                         value={selected[item.id].qty}
                         onChange={(e) =>
-                          setSelected((prev) => ({
-                            ...prev,
-                            [item.id]: {
-                              ...prev[item.id],
-                              qty: Math.min(
-                                Math.max(1, Number(e.target.value)),
-                                item.quantity,
-                              ),
-                            },
-                          }))
+                          dispatch({
+                            type: 'set_item_qty',
+                            itemId: item.id,
+                            qty: Math.min(
+                              Math.max(1, Number(e.target.value)),
+                              item.quantity,
+                            ),
+                          })
                         }
-                        className="w-24 rounded-md border px-3 py-2 text-sm"
+                        className="w-24"
                       />
                     </div>
-                    <div className="grid gap-1">
-                      <label className="text-sm font-medium">Reason</label>
-                      <input
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor={`reason-${item.id}`}>Motivo</Label>
+                      <Input
+                        id={`reason-${item.id}`}
                         type="text"
                         value={selected[item.id].reason}
                         onChange={(e) =>
-                          setSelected((prev) => ({
-                            ...prev,
-                            [item.id]: { ...prev[item.id], reason: e.target.value },
-                          }))
+                          dispatch({
+                            type: 'set_item_reason',
+                            itemId: item.id,
+                            reason: e.target.value,
+                          })
                         }
-                        className="rounded-md border px-3 py-2 text-sm"
-                        placeholder="Reason for returning this item"
+                        placeholder="Motivo de la devolución de este artículo"
+                        className="normal-case"
                       />
                     </div>
                   </div>
                 ) : null}
               </div>
+              </NeoItem>
             ))}
+            </NeoStagger>
           </CardContent>
         </Card>
 
         {error ? (
-          <p className="text-sm text-destructive">{error}</p>
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         ) : null}
 
         <Button
           type="submit"
-          disabled={isSubmitting || Object.keys(selected).length === 0 || !isWithinWindow || (isGuest && !email)}
+          disabled={
+            isSubmitting
+            || Object.keys(selected).length === 0
+            || !isWithinWindow
+            || (isGuest && !email)
+            || (!isGuest && !authReady)
+          }
         >
-          {isSubmitting ? 'Submitting...' : 'Submit return request'}
+          {isSubmitting ? 'Enviando…' : 'Enviar solicitud de devolución'}
         </Button>
 
         {!isWithinWindow ? (
-          <p className="text-sm text-destructive">
-            The return window for this order has closed.
-          </p>
+          <Alert variant="destructive">
+            <AlertDescription>
+              El plazo de devolución para este pedido ha finalizado.
+            </AlertDescription>
+          </Alert>
         ) : null}
       </form>
-    </div>
+    </AnimatedPageShell>
   );
 }

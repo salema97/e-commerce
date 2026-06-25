@@ -6,16 +6,17 @@ import { ProductAnalyticsProvider } from './product-analytics-provider.interface
 export class ConsoleProductAnalyticsProvider extends ProductAnalyticsProvider {
   private readonly logger = new Logger(ConsoleProductAnalyticsProvider.name);
 
-  async capture(
+  capture(
     distinctId: string,
     event: string,
     properties?: Record<string, unknown>,
   ): Promise<void> {
     this.logger.debug({ distinctId, event, properties }, 'Product analytics event');
+    return Promise.resolve();
   }
 
-  async isFeatureEnabled(): Promise<boolean> {
-    return false;
+  isFeatureEnabled(_flag: string, _distinctId: string): Promise<boolean> {
+    return Promise.resolve(false);
   }
 }
 
@@ -43,21 +44,22 @@ export class PostHogProductAnalyticsProvider extends ProductAnalyticsProvider {
     }
   }
 
-  async capture(
+  capture(
     distinctId: string,
     event: string,
     properties?: Record<string, unknown>,
   ): Promise<void> {
     if (!this.client) {
-      return;
+      return Promise.resolve();
     }
     this.client.capture({ distinctId, event, properties });
+    return Promise.resolve();
   }
 
-  async isFeatureEnabled(flag: string, distinctId: string): Promise<boolean> {
+  isFeatureEnabled(flag: string, distinctId: string): Promise<boolean> {
     if (!this.client) {
-      return false;
+      return Promise.resolve(false);
     }
-    return Boolean(this.client.isFeatureEnabled(flag, distinctId));
+    return Promise.resolve(Boolean(this.client.isFeatureEnabled(flag, distinctId)));
   }
 }

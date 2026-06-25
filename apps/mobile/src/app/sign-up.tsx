@@ -1,47 +1,30 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useSignUp } from '@clerk/clerk-expo';
 import { useRouter, Link } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Input } from '@repo/shared-ui';
+import { NeoScreen } from '../components/neo-screen.js';
+import { NeoScaleIn } from '../components/neo-animated.js';
+import { useAuth } from '../providers/AuthProvider.js';
 
 export default function SignUpScreen(): React.ReactElement {
   const router = useRouter();
-  const { signUp, setActive, isLoaded } = useSignUp();
+  const { signUp } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSignUp = async (): Promise<void> => {
-    if (!isLoaded || !signUp) {
-      return;
-    }
-
     setLoading(true);
     setError('');
 
     try {
-      const result = await signUp.create({
-        emailAddress: email,
-        password,
-        firstName,
-        lastName,
-      });
-
-      if (result.status === 'complete') {
-        await setActive({ session: result.createdSessionId });
-        router.replace('/(tabs)');
-      } else if (result.status === 'missing_requirements') {
-        setError('Please verify your email to continue.');
-      } else {
-        setError('Sign-up step not complete. Please try again.');
-      }
+      await signUp(email, password, name || undefined);
+      router.replace('/(tabs)');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Sign-up failed';
+      const message = err instanceof Error ? err.message : 'Error al registrarse';
       setError(message);
     } finally {
       setLoading(false);
@@ -49,24 +32,16 @@ export default function SignUpScreen(): React.ReactElement {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+    <NeoScreen style={styles.container}>
+      <NeoScaleIn style={styles.content}>
         <Text style={styles.title}>Crear cuenta</Text>
 
-        <View style={styles.row}>
-          <Input
-            label="Nombre"
-            value={firstName}
-            onChangeText={setFirstName}
-            containerStyle={[styles.field, styles.halfField]}
-          />
-          <Input
-            label="Apellido"
-            value={lastName}
-            onChangeText={setLastName}
-            containerStyle={[styles.field, styles.halfField]}
-          />
-        </View>
+        <Input
+          label="Nombre"
+          value={name}
+          onChangeText={setName}
+          containerStyle={styles.field}
+        />
 
         <Input
           label="Correo electrónico"
@@ -104,8 +79,8 @@ export default function SignUpScreen(): React.ReactElement {
             <Text style={styles.link}>Inicia sesión</Text>
           </Link>
         </View>
-      </View>
-    </SafeAreaView>
+      </NeoScaleIn>
+    </NeoScreen>
   );
 }
 
@@ -125,15 +100,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     color: '#171717',
   },
-  row: {
-    flexDirection: 'row',
-    gap: 12,
-  },
   field: {
     marginBottom: 16,
-  },
-  halfField: {
-    flex: 1,
   },
   button: {
     marginTop: 8,

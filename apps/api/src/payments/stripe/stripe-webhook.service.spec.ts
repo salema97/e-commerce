@@ -5,7 +5,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import { StripeWebhookService } from './stripe-webhook.service.js';
 import { StripeProvider } from './stripe.provider.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { PaymentStatus } from '../entities/payment-status.enum.js';
+import { PaymentStatus } from '../public-api.js';
 import { OrderStatus } from '@prisma/client';
 import { SriQueueService } from '../../invoices/sri/sri-queue.service.js';
 import { InventoryReservationService } from '../../inventory/inventory-reservation.service.js';

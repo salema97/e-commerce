@@ -10,7 +10,7 @@ export type DeliveryStatus = 'DELIVERED' | 'FAILED' | 'PENDING' | 'SKIPPED';
 
 /**
  * Orchestrates delivery of authorized SRI documents to customers via WhatsApp
- * and email. Uses signed R2 URLs so documents remain private.
+ * and email. Uses signed S3 URLs so documents remain private.
  */
 @Injectable()
 export class SriDeliveryService {

@@ -1,4 +1,12 @@
-import type { OrderStatus, PaymentStatus, RefundStatus, ReturnStatus, RefundMethod } from '@repo/shared-types';
+import type {
+  OrderStatus,
+  PaymentStatus,
+  RefundStatus,
+  ReturnStatus,
+  RefundMethod,
+  IncomeSource,
+  ExpenseStatus,
+} from '@repo/shared-types';
 
 const DEFAULT_CURRENCY = 'USD';
 const DEFAULT_LOCALE = 'es-EC';
@@ -49,57 +57,75 @@ export function formatPriceWithoutCurrency(
 
 export function orderStatusLabel(status: OrderStatus): string {
   const labels: Record<OrderStatus, string> = {
-    PENDING: 'Pending',
-    PAYMENT_PENDING: 'Payment pending',
-    PAYMENT_FAILED: 'Payment failed',
-    PROCESSING: 'Processing',
-    PARTIALLY_SHIPPED: 'Partially shipped',
-    SHIPPED: 'Shipped',
-    DELIVERED: 'Delivered',
-    CANCELLED: 'Cancelled',
-    REFUNDED: 'Refunded',
-    PARTIALLY_REFUNDED: 'Partially refunded',
+    PENDING: 'Pendiente',
+    PAYMENT_PENDING: 'Pago pendiente',
+    PAYMENT_FAILED: 'Pago fallido',
+    PROCESSING: 'En proceso',
+    PARTIALLY_SHIPPED: 'Envío parcial',
+    SHIPPED: 'Enviado',
+    DELIVERED: 'Entregado',
+    CANCELLED: 'Cancelado',
+    REFUNDED: 'Reembolsado',
+    PARTIALLY_REFUNDED: 'Reembolso parcial',
   };
   return labels[status] ?? status;
 }
 
 export function paymentStatusLabel(status: PaymentStatus): string {
   const labels: Record<PaymentStatus, string> = {
-    PENDING: 'Pending',
-    COMPLETED: 'Paid',
-    FAILED: 'Failed',
-    REFUNDED: 'Refunded',
+    PENDING: 'Pendiente',
+    COMPLETED: 'Pagado',
+    FAILED: 'Fallido',
+    REFUNDED: 'Reembolsado',
   };
   return labels[status] ?? status;
 }
 
 export function refundStatusLabel(status: RefundStatus): string {
   const labels: Record<RefundStatus, string> = {
-    PENDING: 'Pending',
-    COMPLETED: 'Completed',
-    REJECTED: 'Rejected',
+    PENDING: 'Pendiente',
+    COMPLETED: 'Completado',
+    REJECTED: 'Rechazado',
   };
   return labels[status] ?? status;
 }
 
 export function returnStatusLabel(status: ReturnStatus): string {
   const labels: Record<ReturnStatus, string> = {
-    REQUESTED: 'Requested',
-    APPROVED: 'Approved',
-    REJECTED: 'Rejected',
-    INSPECTION: 'Inspection',
-    RESOLVED: 'Resolved',
-    RESOLUTION_PENDING_CREDIT_NOTE: 'Pending credit note',
-    CLOSED: 'Closed',
+    REQUESTED: 'Solicitada',
+    APPROVED: 'Aprobada',
+    REJECTED: 'Rechazada',
+    INSPECTION: 'En inspección',
+    RESOLVED: 'Resuelta',
+    RESOLUTION_PENDING_CREDIT_NOTE: 'Pendiente nota de crédito',
+    CLOSED: 'Cerrada',
   };
   return labels[status] ?? status;
 }
 
 export function refundMethodLabel(method: RefundMethod): string {
   const labels: Record<RefundMethod, string> = {
-    ORIGINAL_PAYMENT: 'Original payment',
-    STORE_CREDIT: 'Store credit',
-    EXCHANGE: 'Exchange',
+    ORIGINAL_PAYMENT: 'Pago original',
+    STORE_CREDIT: 'Crédito en tienda',
+    EXCHANGE: 'Cambio',
   };
   return labels[method] ?? method;
+}
+
+export function incomeSourceLabel(source: IncomeSource): string {
+  const labels: Record<IncomeSource, string> = {
+    ORDER: 'Pedido',
+    INVESTMENT: 'Inversión',
+    OTHER: 'Otro',
+  };
+  return labels[source] ?? source;
+}
+
+export function expenseStatusLabel(status: ExpenseStatus): string {
+  const labels: Record<ExpenseStatus, string> = {
+    PENDING: 'Pendiente',
+    PAID: 'Pagado',
+    CANCELLED: 'Cancelado',
+  };
+  return labels[status] ?? status;
 }

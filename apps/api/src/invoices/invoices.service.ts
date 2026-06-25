@@ -37,7 +37,7 @@ export interface ListCreditNotesFilter {
 }
 
 export interface InvoiceAccessContext {
-  clerkUserId: string;
+  userId: string;
   role: Role;
 }
 
@@ -54,7 +54,7 @@ export class InvoicesService {
 
   async issueInvoice(
     dto: IssueInvoiceDto,
-    actorClerkUserId: string,
+    actorUserId: string,
   ): Promise<InvoiceResponseDto> {
     const order = await this.prisma.order.findUnique({
       where: { id: dto.orderId },
@@ -97,7 +97,7 @@ export class InvoicesService {
         invoiceId: invoice.id,
         accessKey: invoice.accessKey,
         status: invoice.status,
-        actorClerkUserId,
+        actorUserId,
       },
       'Invoice issued',
     );
@@ -163,7 +163,7 @@ export class InvoicesService {
 
   async issueCreditNote(
     dto: IssueCreditNoteDto,
-    actorClerkUserId: string,
+    actorUserId: string,
     skipStatusCheck = false,
   ): Promise<CreditNoteResponseDto> {
     const returnRequest = await this.prisma.returnRequest.findUnique({
@@ -212,7 +212,7 @@ export class InvoicesService {
         creditNoteId: creditNote.id,
         accessKey: creditNote.accessKey,
         status: creditNote.status,
-        actorClerkUserId,
+        actorUserId,
       },
       'Credit note issued',
     );
@@ -331,7 +331,7 @@ export class InvoicesService {
       order: {
         id: string;
         orderNumber: string;
-        user: { clerkUserId: string } | null;
+        user: { id: string } | null;
       };
     }
   > {
@@ -342,7 +342,7 @@ export class InvoicesService {
           select: {
             id: true,
             orderNumber: true,
-            user: { select: { clerkUserId: true } },
+            user: { select: { id: true } },
           },
         },
       },
@@ -477,7 +477,7 @@ export class InvoicesService {
 
   assertInvoiceAccess(
     invoice: {
-      order: { user: { clerkUserId: string } | null };
+      order: { user: { id: string } | null };
     },
     context: InvoiceAccessContext,
   ): void {
@@ -486,8 +486,8 @@ export class InvoicesService {
       return;
     }
 
-    const ownerId = invoice.order.user?.clerkUserId;
-    if (context.role === Role.CUSTOMER && ownerId === context.clerkUserId) {
+    const ownerId = invoice.order.user?.id;
+    if (context.role === Role.CUSTOMER && ownerId === context.userId) {
       return;
     }
 

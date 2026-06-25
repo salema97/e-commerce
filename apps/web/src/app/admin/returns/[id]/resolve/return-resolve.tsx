@@ -5,7 +5,12 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useApiClient } from '@/lib/client-api';
+import { Label } from '@/components/ui/label';
+import { FormSelect } from '@/components/ui/form-select';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
+import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import {
   formatPrice,
   returnStatusLabel,
@@ -15,14 +20,55 @@ import type { ReturnRequest, RefundMethod, Product, ProductVariant } from '@repo
 
 const METHODS: RefundMethod[] = ['ORIGINAL_PAYMENT', 'STORE_CREDIT', 'EXCHANGE'];
 
+type ResolveFormState = {
+  method: RefundMethod;
+  notes: string;
+  isSubmitting: boolean;
+  exchangeProductId: string;
+  exchangeVariantId: string;
+};
+
+type ResolveFormAction =
+  | { type: 'set_method'; value: RefundMethod }
+  | { type: 'set_notes'; value: string }
+  | { type: 'set_exchange_product'; productId: string }
+  | { type: 'set_exchange_variant'; variantId: string }
+  | { type: 'submit_start' }
+  | { type: 'submit_end' };
+
+const resolveFormInitialState: ResolveFormState = {
+  method: 'ORIGINAL_PAYMENT',
+  notes: '',
+  isSubmitting: false,
+  exchangeProductId: '',
+  exchangeVariantId: '',
+};
+
+function resolveFormReducer(state: ResolveFormState, action: ResolveFormAction): ResolveFormState {
+  switch (action.type) {
+    case 'set_method':
+      return { ...state, method: action.value };
+    case 'set_notes':
+      return { ...state, notes: action.value };
+    case 'set_exchange_product':
+      return { ...state, exchangeProductId: action.productId, exchangeVariantId: '' };
+    case 'set_exchange_variant':
+      return { ...state, exchangeVariantId: action.variantId };
+    case 'submit_start':
+      return { ...state, isSubmitting: true };
+    case 'submit_end':
+      return { ...state, isSubmitting: false };
+    default:
+      return state;
+  }
+}
+
 export default function ResolveReturnPage({ returnRequest }: { returnRequest: ReturnRequest }) {
   const router = useRouter();
   const api = useApiClient();
-  const [method, setMethod] = React.useState<RefundMethod>('ORIGINAL_PAYMENT');
-  const [notes, setNotes] = React.useState('');
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [exchangeProductId, setExchangeProductId] = React.useState('');
-  const [exchangeVariantId, setExchangeVariantId] = React.useState('');
+  const authReady = useAuthApiReady();
+  const [form, dispatch] = React.useReducer(resolveFormReducer, resolveFormInitialState);
+  const { method, notes, isSubmitting, exchangeProductId, exchangeVariantId } = form;
   const [products, setProducts] = React.useState<Product[]>([]);
 
   React.useEffect(() => {
@@ -37,12 +83,11 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
   );
 
   function handleProductChange(productId: string) {
-    setExchangeProductId(productId);
-    setExchangeVariantId('');
+    dispatch({ type: 'set_exchange_product', productId });
   }
 
   function handleVariantChange(variantId: string) {
-    setExchangeVariantId(variantId);
+    dispatch({ type: 'set_exchange_variant', variantId });
   }
 
   function getSelectedVariant(): ProductVariant | undefined {
@@ -58,12 +103,12 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
     const variant = getSelectedVariant();
     const totalQuantity = returnRequest.items.reduce((sum, item) => sum + item.quantity, 0);
     const label = variant ? `${selectedProduct.name} — ${variant.name}` : selectedProduct.name;
-    return `${label} (Qty: ${totalQuantity})`;
+    return `${label} (Cantidad: ${totalQuantity})`;
   }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    setIsSubmitting(true);
+    dispatch({ type: 'submit_start' });
     try {
       const payload: { refundMethod: RefundMethod; notes?: string; exchangeProductId?: string; exchangeVariantId?: string } = {
         refundMethod: method,
@@ -71,7 +116,7 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
       };
       if (method === 'EXCHANGE') {
         if (!exchangeProductId) {
-          throw new Error('Select a replacement product for exchange');
+          throw new Error('Selecciona un producto de reemplazo para el cambio');
         }
         payload.exchangeProductId = exchangeProductId;
         if (exchangeVariantId) payload.exchangeVariantId = exchangeVariantId;
@@ -80,28 +125,32 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
       router.push(`/admin/returns/${returnRequest.id}`);
       router.refresh();
     } finally {
-      setIsSubmitting(false);
+      dispatch({ type: 'submit_end' });
     }
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-bold">Resolve Return</h1>
-        <Badge variant="outline">{returnStatusLabel(returnRequest.status)}</Badge>
-      </div>
-
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">Resolver devolución</h1>
+          <Badge variant="outline">{returnStatusLabel(returnRequest.status)}</Badge>
+        </div>
+      }
+    >
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+        <NeoReveal>
+          <Card>
           <CardHeader>
-            <CardTitle>Items to resolve</CardTitle>
+            <CardTitle>Artículos a resolver</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             {returnRequest.items.map((item) => (
               <div key={item.id} className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">{item.productId}</p>
-                  <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                  <p className="text-sm text-muted-foreground">Cantidad: {item.quantity}</p>
                 </div>
                 <span className="font-semibold">
                   {formatPrice((item.refundValue ?? 0) * item.quantity)}
@@ -109,72 +158,70 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
               </div>
             ))}
             <div className="flex justify-between border-t pt-4 font-semibold">
-              <span>Total refund value</span>
+              <span>Valor total del reembolso</span>
               <span>{formatPrice(total)}</span>
             </div>
           </CardContent>
         </Card>
+        </NeoReveal>
 
-        <Card>
+        <NeoReveal delay={0.08}>
+          <Card>
           <CardHeader>
-            <CardTitle>Resolution method</CardTitle>
+            <CardTitle>Método de resolución</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-              <div className="flex flex-col gap-3">
+              <RadioGroup
+                value={method}
+                onValueChange={(value) => dispatch({ type: 'set_method', value: value as RefundMethod })}
+                className="flex flex-col gap-3"
+              >
                 {METHODS.map((m) => (
-                  <label
+                  <Label
                     key={m}
-                    className="flex cursor-pointer items-center gap-3 rounded-md border p-3 hover:bg-muted/50"
+                    htmlFor={`method-${m}`}
+                    className="flex cursor-pointer items-center gap-3 border-[3px] border-neo-onyx bg-white p-3 shadow-[4px_4px_0_0_#111111] transition-colors hover:bg-neo-gold normal-case"
                   >
-                    <input
-                      type="radio"
-                      name="refundMethod"
-                      value={m}
-                      checked={method === m}
-                      onChange={() => setMethod(m)}
-                    />
-                    <span className="font-medium">{refundMethodLabel(m)}</span>
-                  </label>
+                    <RadioGroupItem value={m} id={`method-${m}`} />
+                    <span className="font-bold">{refundMethodLabel(m)}</span>
+                  </Label>
                 ))}
-              </div>
+              </RadioGroup>
 
               {method === 'EXCHANGE' ? (
-                <div className="grid gap-3">
-                  <div className="grid gap-2">
-                    <label htmlFor="exchangeProduct" className="text-sm font-medium">Replacement product</label>
-                    <select
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="exchangeProduct">Producto de reemplazo</Label>
+                    <FormSelect
                       id="exchangeProduct"
                       value={exchangeProductId}
-                      onChange={(e) => handleProductChange(e.target.value)}
-                      className="rounded-md border px-3 py-2 text-sm"
+                      onValueChange={handleProductChange}
+                      placeholder="Seleccionar un producto"
                       required
-                    >
-                      <option value="" disabled>Select a product</option>
-                      {products?.map((product: Product) => (
-                        <option key={product.id} value={product.id}>
-                          {product.name}
-                        </option>
-                      ))}
-                    </select>
+                      options={products.map((product: Product) => ({
+                        value: product.id,
+                        label: product.name,
+                      }))}
+                    />
                   </div>
 
                   {selectedProduct && selectedProduct.variants && selectedProduct.variants.length > 0 ? (
-                    <div className="grid gap-2">
-                      <label htmlFor="exchangeVariant" className="text-sm font-medium">Variant</label>
-                      <select
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="exchangeVariant">Variante</Label>
+                      <FormSelect
                         id="exchangeVariant"
                         value={exchangeVariantId}
-                        onChange={(e) => handleVariantChange(e.target.value)}
-                        className="rounded-md border px-3 py-2 text-sm"
-                      >
-                        <option value="">Default variant</option>
-                        {selectedProduct.variants.map((variant: ProductVariant) => (
-                          <option key={variant.id} value={variant.id}>
-                            {variant.name} ({variant.sku})
-                          </option>
-                        ))}
-                      </select>
+                        onValueChange={handleVariantChange}
+                        placeholder="Variante predeterminada"
+                        options={[
+                          { value: '', label: 'Variante predeterminada' },
+                          ...selectedProduct.variants.map((variant: ProductVariant) => ({
+                            value: variant.id,
+                            label: `${variant.name} (${variant.sku})`,
+                          })),
+                        ]}
+                      />
                     </div>
                   ) : null}
 
@@ -184,24 +231,24 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
                 </div>
               ) : null}
 
-              <div className="grid gap-2">
-                <label htmlFor="notes" className="text-sm font-medium">Notes</label>
-                <textarea
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="notes">Notas</Label>
+                <Textarea
                   id="notes"
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="rounded-md border px-3 py-2 text-sm"
+                  onChange={(e) => dispatch({ type: 'set_notes', value: e.target.value })}
                   rows={3}
                 />
               </div>
 
-              <Button type="submit" disabled={isSubmitting || returnRequest.status !== 'INSPECTION' || (method === 'EXCHANGE' && !exchangeProductId)}>
-                {isSubmitting ? 'Resolving...' : 'Confirm resolution'}
+              <Button type="submit" disabled={isSubmitting || !authReady || returnRequest.status !== 'INSPECTION' || (method === 'EXCHANGE' && !exchangeProductId)}>
+                {isSubmitting ? 'Resolviendo…' : 'Confirmar resolución'}
               </Button>
             </form>
           </CardContent>
         </Card>
+        </NeoReveal>
       </div>
-    </div>
+    </AnimatedPageShell>
   );
 }

@@ -2,8 +2,8 @@
 
 import * as React from 'react';
 import { Input } from '@/components/ui/input';
+import { FormSelect } from '@/components/ui/form-select';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ConversationStatusBadge } from './conversation-status-badge';
 import { formatRelativeDate } from '@repo/shared-utils';
 import type { Conversation, ConversationStatus } from '@repo/shared-types';
@@ -19,7 +19,6 @@ const STATUS_OPTIONS: { value: ConversationStatus | ''; label: string }[] = [
 interface ConversationListProps {
   conversations: Conversation[];
   selectedId?: string | null;
-  isLoading?: boolean;
   filter: {
     search: string;
     status: ConversationStatus | '';
@@ -32,32 +31,32 @@ interface ConversationListProps {
 export function ConversationList({
   conversations,
   selectedId,
-  isLoading,
   filter,
   onFilterChange,
   onSelect,
 }: ConversationListProps) {
   return (
-    <div className="flex h-full flex-col border-r bg-muted/30">
-      <div className="flex flex-col gap-3 border-b p-4">
+    <div className="flex h-full flex-col border-r-[3px] border-neo-onyx bg-neo-lace">
+      <div className="flex flex-col gap-3 border-b-[3px] border-neo-onyx bg-white p-4">
         <Input
           placeholder="Buscar teléfono o nombre..."
           value={filter.search}
           onChange={(e) => onFilterChange({ search: e.target.value })}
         />
         <div className="flex items-center gap-2">
-          <select
-            aria-label="Filtrar por estado"
-            className="h-9 flex-1 rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+          <FormSelect
+            ariaLabel="Filtrar por estado"
             value={filter.status}
-            onChange={(e) => onFilterChange({ status: e.target.value as ConversationStatus | '' })}
-          >
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            onValueChange={(value) =>
+              onFilterChange({ status: value as ConversationStatus | '' })
+            }
+            placeholder="Todos"
+            triggerClassName="h-9 flex-1"
+            options={STATUS_OPTIONS.map((option) => ({
+              value: option.value,
+              label: option.label,
+            }))}
+          />
           <Button
             type="button"
             variant={filter.assignedToMe ? 'default' : 'outline'}
@@ -70,13 +69,7 @@ export function ConversationList({
       </div>
 
       <div className="flex-1 overflow-auto">
-        {isLoading ? (
-          <div className="flex flex-col gap-3 p-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
-            ))}
-          </div>
-        ) : conversations.length === 0 ? (
+        {conversations.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground">
             No hay conversaciones que coincidan con los filtros.
           </div>
@@ -86,13 +79,12 @@ export function ConversationList({
               const isSelected = conversation.id === selectedId;
               return (
                 <li key={conversation.id}>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
                     onClick={() => onSelect(conversation)}
-                    className={`w-full border-b p-4 text-left transition-colors ${
-                      isSelected
-                        ? 'bg-primary/10'
-                        : 'hover:bg-muted'
+                    className={`h-auto w-full justify-start rounded-none border-b-[3px] border-neo-onyx px-4 py-4 text-left normal-case ${
+                      isSelected ? 'bg-neo-gold' : 'hover:bg-neo-gold/40'
                     }`}
                     data-testid={`conversation-item-${conversation.id}`}
                   >
@@ -126,7 +118,7 @@ export function ConversationList({
                         </span>
                       ) : null}
                     </div>
-                  </button>
+                  </Button>
                 </li>
               );
             })}

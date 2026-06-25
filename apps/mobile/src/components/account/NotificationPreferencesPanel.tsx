@@ -69,8 +69,9 @@ export function NotificationPreferencesPanel(): React.ReactElement {
 
       {message ? <Text style={styles.message}>{message}</Text> : null}
 
-      <Text style={styles.clerkNote}>
-        El restablecimiento de contraseña y la verificación de cuenta se gestionan con Clerk.
+      <Text style={styles.accountNote}>
+        Para cambiar tu contraseña, cierra sesión y usa «¿Olvidaste tu contraseña?» en el inicio de
+        sesión de la tienda web.
       </Text>
     </View>
   );
@@ -111,7 +112,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#525252',
   },
-  clerkNote: {
+  accountNote: {
     fontSize: 12,
     color: '#737373',
     lineHeight: 18,

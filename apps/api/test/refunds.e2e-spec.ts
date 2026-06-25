@@ -9,40 +9,12 @@ import { PrismaService } from '../src/prisma/prisma.service.js';
 import { DirectSriInvoiceProvider } from '../src/invoices/sri/sri-invoice.provider.js';
 import { StripeProvider } from '../src/payments/stripe/stripe.provider.js';
 import { OrderStatus, PaymentStatus, RefundStatus, PaymentProvider, OrderChannel } from '@prisma/client';
-
-vi.mock('@clerk/backend', async () => {
-  const actual = await vi.importActual('@clerk/backend');
-  return {
-    ...(actual as object),
-    verifyToken: vi.fn(() =>
-      Promise.resolve({
-        sub: 'user_admin',
-        public_metadata: { role: 'ADMIN' },
-      }),
-    ),
-  };
-});
+import { BASE_TEST_CONFIG, bearerAuth } from './test-config.js';
 
 const TEST_CONFIG = {
-  NODE_ENV: 'test',
-  PORT: 3001,
-  DATABASE_URL: 'postgresql://localhost:5432/test',
-  REDIS_URL: 'redis://localhost:6379',
-  CLERK_SECRET_KEY: 'sk_test_xxx',
-  CLERK_WEBHOOK_SECRET: 'whsec_xxx',
-  STRIPE_SECRET_KEY: 'sk_test_xxx',
-  STRIPE_WEBHOOK_SECRET: 'whsec_xxx',
+  ...BASE_TEST_CONFIG,
   STRIPE_SUCCESS_URL: 'https://example.com/success',
   STRIPE_CANCEL_URL: 'https://example.com/cancel',
-  SRI_MODE: 'direct',
-  SRI_RUC: '1792146739001',
-  SRI_SOL_KEY: 'test',
-  SRI_DIGITAL_CERTIFICATE_PATH: 'data:test',
-  SRI_DIGITAL_CERTIFICATE_PASSWORD: 'test',
-  SRI_ESTABLISHMENT_CODE: '001',
-  SRI_EMISSION_POINT_CODE: '001',
-  SRI_TEST_ENVIRONMENT: 'true',
-  SRI_QUEUE_ENABLED: 'false',
 };
 
 describe('Refunds (e2e)', () => {
@@ -157,7 +129,7 @@ describe('Refunds (e2e)', () => {
 
     const res = await request(app.getHttpServer())
       .post('/v1/orders/o1/refunds')
-      .set('Authorization', 'Bearer valid-admin-token')
+      .set(bearerAuth('user_admin', 'ADMIN'))
       .send({ amount: 100, type: 'full', reason: 'customer request' })
       .expect(201);
 
@@ -169,7 +141,7 @@ describe('Refunds (e2e)', () => {
     expect(prismaMock.auditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          actorClerkUserId: 'user_admin',
+          actorId: 'user_admin',
           resource: 'Refund',
           action: 'CREATE',
           resourceId: 'r1',
@@ -191,7 +163,7 @@ describe('Refunds (e2e)', () => {
 
     const res = await request(app.getHttpServer())
       .get('/v1/orders/o1/refunds')
-      .set('Authorization', 'Bearer valid-admin-token')
+      .set(bearerAuth('user_admin', 'ADMIN'))
       .expect(200);
 
     expect(res.body).toHaveLength(1);
@@ -212,7 +184,7 @@ describe('Refunds (e2e)', () => {
 
     const res = await request(app.getHttpServer())
       .patch('/v1/refunds/r2/approve')
-      .set('Authorization', 'Bearer valid-admin-token')
+      .set(bearerAuth('user_admin', 'ADMIN'))
       .expect(200);
 
     expect(res.body.status).toBe(RefundStatus.COMPLETED);
@@ -246,7 +218,7 @@ describe('Refunds (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/v1/orders/o1/refunds')
-      .set('Authorization', 'Bearer valid-admin-token')
+      .set(bearerAuth('user_admin', 'ADMIN'))
       .send({ amount: 50, type: 'partial' })
       .expect(400);
   });
@@ -268,7 +240,7 @@ describe('Refunds (e2e)', () => {
 
     const res = await request(app.getHttpServer())
       .post('/v1/orders/o1/receipt')
-      .set('Authorization', 'Bearer valid-admin-token')
+      .set(bearerAuth('user_admin', 'ADMIN'))
       .expect(201);
 
     expect(res.body.id).toBe('rc1');

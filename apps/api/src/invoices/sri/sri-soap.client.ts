@@ -86,7 +86,7 @@ export class SriSoapClient {
     return this.parseAuthorizationResponse(result);
   }
 
-  private async createClient(url: string): Promise<soap.Client> {
+  private createClient(url: string): Promise<soap.Client> {
     return new Promise((resolve, reject) => {
       soap.createClient(
         url,
@@ -99,7 +99,7 @@ export class SriSoapClient {
     });
   }
 
-  private async callWithTimeout<T>(promise: Promise<T>): Promise<T> {
+  private callWithTimeout<T>(promise: Promise<T>): Promise<T> {
     const timeout = new Promise<never>((_, reject) =>
       setTimeout(
         () => reject(new Error(`SRI SOAP call timed out after ${SOAP_TIMEOUT_MS}ms`)),

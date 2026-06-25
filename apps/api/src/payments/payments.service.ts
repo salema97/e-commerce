@@ -153,7 +153,7 @@ export class PaymentsService {
     return this.providerFactory.getProviderName(provider) ?? PaymentProviderEnum.STRIPE;
   }
 
-  private async findExistingPayment(idempotencyKey: string) {
+  private findExistingPayment(idempotencyKey: string) {
     return this.prisma.payment.findFirst({
       where: {
         idempotencyKey,
@@ -164,11 +164,11 @@ export class PaymentsService {
     });
   }
 
-  private async resolveCustomer(dto: CreatePaymentIntentDto): Promise<string | undefined> {
+  private resolveCustomer(dto: CreatePaymentIntentDto): Promise<string | undefined> {
     if (dto.customerEmail && !dto.customerId) {
       return this.stripeCustomerService.findOrCreateEphemeralCustomer(dto.customerEmail);
     }
-    return dto.customerId;
+    return Promise.resolve(dto.customerId);
   }
 
   private async ensureOrderOwnership(orderId: string, actorUserId: string): Promise<void> {

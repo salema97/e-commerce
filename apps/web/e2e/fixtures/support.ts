@@ -1,15 +1,6 @@
 import { APIRequestContext } from '@playwright/test';
 import { createHmac } from 'crypto';
-
-function requireWebhookSecret(): string {
-  const secret = process.env.EVOLUTION_WEBHOOK_SECRET;
-  if (!secret) {
-    throw new Error('EVOLUTION_WEBHOOK_SECRET is required for webhook E2E fixtures');
-  }
-  return secret;
-}
-
-const WEBHOOK_SECRET = requireWebhookSecret();
+import { getEvolutionWebhookSecret } from './webhook-secret.js';
 
 export interface CreateConversationResult {
   remoteJid: string;
@@ -25,7 +16,7 @@ export async function createConversationViaWebhook(
     contactName?: string;
   } = {},
 ): Promise<CreateConversationResult> {
-  const remoteJid = overrides.remoteJid ?? '+593991234567@s.whatsapp.net';
+  const remoteJid = overrides.remoteJid ?? `+5939${String(Date.now()).slice(-8)}@s.whatsapp.net`;
   const externalMessageId = overrides.externalMessageId ?? `msg-${Date.now()}`;
   const content = overrides.content ?? 'Hola, necesito ayuda';
   const contactName = overrides.contactName ?? 'Test Customer';
@@ -42,7 +33,7 @@ export async function createConversationViaWebhook(
   };
 
   const body = JSON.stringify(payload);
-  const signature = createHmac('sha256', WEBHOOK_SECRET).update(body).digest('hex');
+  const signature = createHmac('sha256', getEvolutionWebhookSecret()).update(body).digest('hex');
 
   const response = await request.post('http://localhost:3001/v1/webhooks/evolution/messages.upsert', {
     data: body,

@@ -7,6 +7,7 @@ import {
   IsEmail,
   Min,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { PaymentProvider } from '../payment-provider.enum.js';
 
 export class CreatePaymentIntentDto {
@@ -46,5 +47,6 @@ export class CreatePaymentIntentDto {
   channel?: string;
 
   @IsOptional()
+  @Type(() => Object)
   metadata?: Record<string, string>;
 }

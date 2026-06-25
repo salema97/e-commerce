@@ -5,6 +5,7 @@ import {
   Patch,
   Param,
   Body,
+  Query,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -18,7 +19,8 @@ import { OrdersService } from './orders.service.js';
 import { RefundService } from '../payments/refund.service.js';
 import { ReceiptService } from '../receipts/receipt.service.js';
 import { CreateOrderDto, UpdateOrderStatusDto } from './dto/create-order.dto.js';
-import { CreateRefundDto } from '../payments/dto/create-refund.dto.js';
+import { ListOrdersQueryDto } from './dto/list-orders.query.dto.js';
+import { CreateRefundDto } from '../payments/public-api.js';
 
 @ApiTags('Orders')
 @Controller('orders')
@@ -42,6 +44,16 @@ export class OrdersController {
     return this.ordersService.createOrder(userId, dto);
   }
 
+  @Get()
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE, Role.SUPPORT)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List orders (admin)' })
+  @ApiResponse({ status: 200, description: 'Paginated orders' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  listOrders(@Query() query: ListOrdersQueryDto) {
+    return this.ordersService.listOrders(query);
+  }
+
   @Get(':id/tracking')
   @Public()
   @ApiOperation({ summary: 'Get public order tracking' })
@@ -51,6 +63,7 @@ export class OrdersController {
   }
 
   @Get(':id')
+  @Public()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get an order by id' })
   @ApiResponse({ status: 200, description: 'Order found' })

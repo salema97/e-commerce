@@ -76,7 +76,7 @@ describe('Audit logging (e2e)', () => {
     expect(auditLogCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          actorClerkUserId: 'system',
+          actorId: null,
           resource: 'audit-test',
           action: 'create',
           resourceId: 'audit_1',

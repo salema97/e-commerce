@@ -49,12 +49,11 @@ describe('StripeCustomerService', () => {
 
   it('creates a Stripe customer and stores the id when user has none', async () => {
     prisma.user.findUnique.mockResolvedValue({
-      id: 'u1',
-      clerkUserId: 'user_123',
+      id: 'user_123',
       stripeCustomerId: null,
     });
     stripeMock.customers.create.mockResolvedValue({ id: 'cus_123' });
-    prisma.user.update.mockResolvedValue({ id: 'u1', stripeCustomerId: 'cus_123' });
+    prisma.user.update.mockResolvedValue({ id: 'user_123', stripeCustomerId: 'cus_123' });
 
     const result = await service.createOrUpdateCustomer(
       'user_123',
@@ -65,10 +64,10 @@ describe('StripeCustomerService', () => {
     expect(stripeMock.customers.create).toHaveBeenCalledWith({
       email: 'customer@example.com',
       name: 'John Doe',
-      metadata: { clerkUserId: 'user_123' },
+      metadata: { userId: 'user_123' },
     });
     expect(prisma.user.update).toHaveBeenCalledWith({
-      where: { clerkUserId: 'user_123' },
+      where: { id: 'user_123' },
       data: { stripeCustomerId: 'cus_123' },
     });
     expect(result).toBe('cus_123');
@@ -76,8 +75,7 @@ describe('StripeCustomerService', () => {
 
   it('updates existing Stripe customer when user already has one', async () => {
     prisma.user.findUnique.mockResolvedValue({
-      id: 'u1',
-      clerkUserId: 'user_123',
+      id: 'user_123',
       stripeCustomerId: 'cus_existing',
     });
     stripeMock.customers.update.mockResolvedValue({ id: 'cus_existing' });
@@ -98,8 +96,7 @@ describe('StripeCustomerService', () => {
 
   it('returns undefined and does not throw when Stripe create fails', async () => {
     prisma.user.findUnique.mockResolvedValue({
-      id: 'u1',
-      clerkUserId: 'user_123',
+      id: 'user_123',
       stripeCustomerId: null,
     });
     stripeMock.customers.create.mockRejectedValue(new Error('Stripe down'));

@@ -8,15 +8,17 @@ import {
 export class ConsoleMarketingEmailProvider extends MarketingEmailProvider {
   private readonly logger = new Logger(ConsoleMarketingEmailProvider.name);
 
-  async trackEvent(
+  trackEvent(
     email: string,
     event: string,
     properties?: Record<string, string | number | boolean | undefined>,
   ): Promise<void> {
     this.logger.log({ email, event, properties }, 'Marketing event tracked (console)');
+    return Promise.resolve();
   }
 
-  async syncContact(email: string, profile: MarketingContactProfile): Promise<void> {
+  syncContact(email: string, profile: MarketingContactProfile): Promise<void> {
     this.logger.log({ email, profile }, 'Marketing contact synced (console)');
+    return Promise.resolve();
   }
 }

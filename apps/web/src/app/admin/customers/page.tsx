@@ -10,24 +10,32 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import type { User } from '@repo/shared-types';
 
 export default async function AdminCustomersPage() {
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
   const users = await api.users.findAll().catch(() => []);
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Customers</h1>
-
-      <div className="rounded-md border">
-        <Table>
+    <AnimatedPageShell
+      className="flex min-h-0 flex-1 flex-col gap-6"
+      header={
+        <AdminPageHeader
+          title="Clientes"
+          subtitle="Cuentas y roles de usuario"
+          showNetworkStatus={false}
+        />
+      }
+    >
+      <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Correo electrónico</TableHead>
+              <TableHead>Teléfono</TableHead>
+              <TableHead>Rol</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -40,14 +48,13 @@ export default async function AdminCustomersPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   <Link href={`/admin/customers/${user.id}`}>
-                    <Button variant="outline" size="sm">View</Button>
+                    <Button variant="outline" size="sm">Ver</Button>
                   </Link>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      </div>
-    </div>
+    </AnimatedPageShell>
   );
 }

@@ -2,7 +2,7 @@
 
 ## Decisions Log (defaults assumed)
 
-- **Auth**: Clerk (fastest secure setup, MFA/SSO ready).
+- **Auth**: Native JWT (email/password, access + refresh tokens). Clerk is not used at runtime.
 - **Admin panel**: inside the web app under `/admin`.
 - **Mobile**: Expo development build (required for Stripe/push notifications).
 - **API style**: REST + OpenAPI, client generated for web/mobile.
@@ -33,13 +33,13 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 | Phase 5.5 — Returns, Warranties & RMA | ✅ Yes | Linked to SRI credit notes; complex business flow. |
 | Phase 6 — WhatsApp Integration | ✅ Yes | Webhooks, signatures, human/bot handoff. |
 | Phase 7 — SRI Direct Integration | ✅ Yes | Legal/compliance; XML/XSD/SOAP/firm digital exact behavior. |
-| Phase 8 — Financial Module | ✅ Yes | Accounting impact, audit trails, cash flow. |
+| Phase 8 — Financial Module | ✅ Yes | Incomes, expenses, cash-flow, admin UI merged. |
 | Phase 9 — Email/Push/Marketing | ✅ | Resend/Loops, push Expo/OneSignal, marketing automation, consent UI. |
 | Phase 10 — AI & Conversational | ✅ Yes | Guardrails, RAG, human escalation. |
-| Phase 11 — Advanced Analytics | ❌ | Standard event tracking. |
+| Phase 11 — Advanced Analytics | ✅ | Merged `12427aa`; UI wiring verified post-merge. |
 | Phase 12 — Shipping/Fulfillment | ✅ Yes | Carrier/WMS abstractions + Ecuador defaults implemented. |
 | Phase 13 — Search/Filters | ❌ | Standard Meilisearch usage. |
-| Phase 14 — Reviews/Referrals/Loyalty | ❌ | Common low-risk features. |
+| Phase 14 — Reviews/Referrals/Loyalty | ✅ | Reviews, referrals, loyalty, pre-order flags, back-in-stock. |
 | Phase 15 — Multi-marketplace/ERP/B2B | ✅ Yes | External channel sync, B2B quotes. |
 | Phase 16 — Compliance/Security/Production | ✅ Yes | Security hardening, disaster recovery, compliance workflows. |
 | Phase 17 — POS/Subscriptions/Dropshipping/Marketplace | ✅ Yes | Business-model-changing features. |
@@ -68,7 +68,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [ ] Bootstrap NestJS 11 app inside `apps/api` (Node 20+).
 - [ ] Configure Prisma with PostgreSQL.
 - [ ] Define initial schema:
-  - [ ] `User` (with `clerkUserId`, email, `role`, phone)
+  - [ ] `User` (with native auth fields: email, `role`, phone, password hash)
   - [ ] `Category`
   - [ ] `Product`, `ProductVariant`, `ProductImage`, `ProductAttribute`
   - [ ] `Inventory`
@@ -82,12 +82,12 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
   - [ ] `Conversation`, `Message` (for WhatsApp support inbox)
   - [ ] `Supplier`
   - [ ] `Income`, `Expense`, `ExpenseCategory` (financial module)
-- [ ] Add indexes on `slug`, `categoryId`, `status`, `userId`, `clerkUserId`, `createdAt`, `customerPhone`.
+- [ ] Add indexes on `slug`, `categoryId`, `status`, `userId`, `createdAt`, `customerPhone`.
 - [ ] Run initial migration and seed script with sample data.
 - [ ] Implement feature modules:
-  - [ ] Auth (Clerk JWT guard, public route decorator, role guard)
-  - [ ] RBAC: `@Roles()` decorator + global RolesGuard reading `public_metadata.role` from Clerk JWT
-  - [ ] Users (sync via Clerk webhooks, including `role` field)
+  - [ ] Auth (native JWT guard, public route decorator, role guard)
+  - [ ] RBAC: `@Roles()` decorator + global RolesGuard reading `role` from JWT
+  - [ ] Users (register/login, refresh tokens, `role` field in Prisma)
   - [ ] Categories (CRUD)
   - [ ] Products (CRUD with variants, attributes, images)
   - [ ] Inventory (stock levels, reservations, oversell prevention)
@@ -97,7 +97,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [ ] Add Swagger/OpenAPI documentation and publish public versioned docs at `/v1/docs`.
 - [ ] Add API versioning prefix (`/v1`) to the NestJS global route prefix.
 - [ ] Version the generated `@repo/api-client` with API versions and publish change log / migration guides.
-- [ ] Add Cloudflare R2 image upload endpoint (signed URLs).
+- [ ] Add S3 image upload endpoint (signed URLs).
 - [ ] Add global exception filter, validation pipes, and health check endpoint.
 - [ ] Implement granular rate limiting:
   - [ ] Per endpoint, per IP, per user, and per API key.
@@ -122,7 +122,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 ## Phase 3 — Web App (`apps/web`)
 
 - [ ] Bootstrap Next.js 15 with App Router, Tailwind, shadcn/ui.
-- [ ] Setup Clerk auth provider; configure `middleware.ts` route protection.
+- [ ] Setup native JWT auth provider; configure `middleware.ts` route protection.
 - [ ] Landing page (`/`).
 - [ ] Customer store:
   - [ ] Catalog page (`/store`) with filters, sorting, and Meilisearch integration.
@@ -152,7 +152,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 - [ ] Bootstrap Expo SDK 52 with development build.
 - [ ] Setup Expo Router with tab navigation.
-- [ ] Setup Clerk auth (`@clerk/expo` compatible with SDK 52).
+- [ ] Setup native JWT auth (`expo-secure-store` for tokens).
 - [ ] Screens:
   - [ ] Home / landing
   - [ ] Catalog with search and filters
@@ -337,39 +337,38 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 ## Phase 8 — Financial Module
 
-> **SDD phase**: required. Accounting impact, audit trails, and cash-flow logic must be specified before implementation.
+> **SDD phase**: completed (merged to `main`). Accounting impact, audit trails, and cash-flow logic implemented for MVP scope.
 > Accessible by **Super Admin**, **Admin**, and **Finance** roles only.
 
 ### 8.1 Domain Model
 
-- [ ] Refine Prisma schema:
-  - [ ] `Supplier` (name, RUC/ID, contact, address, payment terms)
-  - [ ] `Income` (source, amount, date, related order, notes)
-  - [ ] `Expense` (category, supplier, amount, date, status, attachments)
-  - [ ] `ExpenseCategory` (name, description)
-  - [ ] `PurchaseOrder` (optional: link to supplier and inventory)
-  - [ ] `GiftCard` / `StoreCredit` (code, balance, expiry, owner, status)
-- [ ] Add indexes for date ranges and status.
+- [x] Prisma schema (existing models used): `Supplier`, `Income`, `Expense`, `ExpenseCategory`
+- [x] `Income.relatedOrderId` FK → `Order` (migration `20260629000000_phase8_income_order_fk`)
+- [ ] `PurchaseOrder` (optional — deferred)
+- [x] `StoreCredit` read-only listing in finance reports (existing returns module)
+- [ ] `GiftCard` CRUD (deferred)
 
 ### 8.2 Backend (NestJS)
 
-- [ ] `FinanceModule` with services and controllers.
-- [ ] CRUD endpoints for suppliers, incomes, expenses.
-- [ ] Basic cash-flow report (income vs expenses by period).
-- [ ] Attachments stored in Cloudflare R2.
-- [ ] RBAC protection: only `finance`, `admin`, `super_admin` can access.
-- [ ] Gift card / store credit CRUD and balance management.
-- [ ] Bulk import/export for products, orders, customers, and suppliers via CSV/Excel with validation and row-level error reporting.
+- [x] `FinanceModule` with incomes, expense categories, expenses, reports, store credits
+- [x] CRUD endpoints for incomes, expenses, expense categories
+- [x] Cash-flow report `GET /v1/finance/reports/cash-flow`
+- [x] Expense receipt upload to S3 (base64)
+- [x] RBAC: `SUPER_ADMIN`, `ADMIN`, `FINANCE`; suppliers GET restricted
+- [x] Audit logging on finance mutations
+- [ ] Gift card / store credit CRUD (deferred — read-only list only)
+- [ ] Bulk import/export CSV (deferred)
 
 ### 8.3 Admin Panel (Next.js)
 
-- [ ] `/admin/finance/incomes` — income CRUD and listing.
-- [ ] `/admin/finance/expenses` — expense CRUD and listing.
-- [ ] `/admin/finance/suppliers` — supplier CRUD.
-- [ ] `/admin/finance/reports` — cash-flow dashboard with charts.
-- [ ] `/admin/finance/categories` — expense categories.
-- [ ] Route-level role checks in middleware and page-level auth.
-- [ ] Hide finance menu items for non-finance roles.
+- [x] `/admin/finance` — hub with section cards (neo admin shell)
+- [x] `/admin/finance/incomes` — income CRUD and listing (SSR + `initialData`)
+- [x] `/admin/finance/expenses` — expense CRUD and listing
+- [x] `/admin/finance/suppliers` — supplier listing (read)
+- [x] `/admin/finance/reports` — cash-flow + store credit table
+- [x] `/admin/finance/categories` — expense categories
+- [x] Route-level RBAC via `finance/layout.tsx` + native JWT auth
+- [x] Finance menu in `admin-nav.ts` (sidebar icon: Finanzas)
 
 ## Phase 9 — Email, Push Notifications & Marketing Automation
 
@@ -388,7 +387,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] Delivery confirmation.
 - [x] Payment failure / retry.
 - [x] Refund confirmation.
-- [x] Password reset and account verification (via Clerk or custom).
+- [x] Password reset and account verification (native JWT flow).
 - [x] Abandoned-cart reminder.
 - [x] Back-in-stock alert emails for subscribed customers.
 
@@ -514,19 +513,20 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] Implement order allocation, pick/pack/ship workflows — manual provider + split shipments.
 - [x] Sync inventory levels from WMS to Prisma — admin + webhook endpoints.
 - [x] Import tracking numbers and fulfillment events from 3PL — webhook + admin import.
-- [x] Admin panel: fulfillments list, create shipment, print labels, RMA handling.
+- [x] Admin panel: fulfillments list, create shipment, print labels, RMA handling — fulfillments por pedido en `ShipmentPanel`; lista global/backorders solo API.
 
 ## Phase 13 — Search, Filters & Performance
 
 - [x] Index products in Meilisearch.
 - [x] Configure `searchableAttributes`, `filterableAttributes`, `sortableAttributes`, `rankingRules`.
-- [x] Build faceted filters (category, price range, brand, rating, attributes).
-- [x] Typo tolerance and synonyms.
-- [x] Optimize images with Next.js Image and CDN transforms.
-- [x] Add Redis caching for hot queries.
-- [x] Add database query optimization and N+1 prevention.
-- [x] Add bundle analysis for web/mobile.
-- [x] Core Web Vitals optimization.
+- [x] Build faceted filters (category, price range, brand, attributes) — rating deferred to Phase 14.
+- [x] Typo tolerance and synonyms (Meilisearch index settings).
+- [x] Optimize images with Next.js Image (AVIF/WebP) and CDN transforms.
+- [x] Add Redis caching for hot catalog queries (`CATALOG_CACHE_TTL_SECONDS`).
+- [x] Catalog browse with Prisma fallback when Meilisearch unavailable.
+- [x] Add bundle analysis for web (`pnpm --filter @repo/web analyze`).
+- [ ] Core Web Vitals CI / Lighthouse pipeline — image config only for now.
+- [ ] Mobile bundle analysis — deferred.
 
 ## Phase 14 — Reviews, Referrals & Loyalty
 
@@ -608,7 +608,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [ ] Privacy policy, Terms of Service, Refund/Return policies.
 - [ ] GDPR data-subject rights workflow (export/delete user data).
 - [ ] CCPA opt-out workflow.
-- [ ] DPAs with Clerk, Stripe, Vercel, Cloudflare, Evolution API, email, push, and analytics vendors.
+- [ ] DPAs with Stripe, Vercel, Cloudflare, Evolution API, email, push, and analytics vendors.
 - [ ] WCAG 2.1 AA audit and fixes.
 - [ ] Cookie consent banner with granular preferences.
 
@@ -642,7 +642,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 - [ ] Define RPO (Recovery Point Objective) and RTO (Recovery Time Objective).
 - [ ] Automated PostgreSQL backups with point-in-time recovery (PITR).
-- [ ] R2/S3 object versioning for media and attachments.
+- [ ] S3 object versioning for media and attachments.
 - [ ] Infrastructure-as-code for quick environment rebuild.
 - [ ] Runbooks for common incidents: DB failure, API outage, webhook provider down.
 
@@ -689,7 +689,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 |------|---------------|
 | PCI DSS scope reduction | Card data must never touch your servers; use Stripe tokenization. |
 | Stripe webhook signature verification | Missing verification lets attackers fake payment events. |
-| Clerk JWT validation in API + Server Actions | Prevents auth bypass and data leaks. |
+| JWT validation in API + Server Actions | Prevents auth bypass and data leaks. |
 | Granular rate limiting on login/register/checkout/webhooks | Prevents credential stuffing, carding, and abuse. |
 | Evolution API webhook signature verification | Prevents fake inbound messages. |
 | **SRI Ecuador e-invoicing (for Ecuador orders)** | Ecuadorian law requires authorized electronic invoices for every paid order; missing this blocks legal fulfillment. |
@@ -714,7 +714,7 @@ The minimum set of capabilities required to launch the Ecuador e-commerce operat
 - SRI electronic invoicing for every paid Ecuador order (Phase 7).
 - Basic admin panel: products, categories, orders, invoices (Phases 1, 3, 7).
 - Transactional WhatsApp and email notifications (Phases 6, 8).
-- Clerk authentication with role-based admin access (Phases 1, 3).
+- Native JWT authentication with role-based admin access (Phases 1, 3).
 - Security baseline: HTTPS, JWT validation, webhook signature verification, granular rate limiting (Phases 1 and 16).
 
 Stripe is the MVP payment method. Local Ecuador payment methods (Kushki, PayPhone, MercadoPago, PlaceToPay) should be added before full public launch if the primary target market is Ecuador.

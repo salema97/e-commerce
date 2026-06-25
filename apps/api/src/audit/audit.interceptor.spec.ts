@@ -1,16 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ExecutionContext, CallHandler } from '@nestjs/common';
-import { Reflector, ModuleRef } from '@nestjs/core';
+import { Reflector } from '@nestjs/core';
 import { of, lastValueFrom } from 'rxjs';
 import 'reflect-metadata';
 import { AuditInterceptor } from './audit.interceptor.js';
 import { AuditLogService } from './audit-log.service.js';
+import { AuditBeforeStateRegistry } from './audit-before-state.registry.js';
 import { AUDIT_KEY } from './audit.decorator.js';
-import { AuthenticatedRequest } from '../auth/clerk-jwt.guard.js';
-
-interface MockController {
-  categoriesService: { findOne: ReturnType<typeof vi.fn> };
-}
+import { AuthenticatedRequest } from '../auth/jwt-auth.guard.js';
 
 function decorateHandler(handler: object, metadata: { resource: string; action: string }) {
   Reflect.defineMetadata(AUDIT_KEY, metadata, handler);
@@ -18,30 +15,29 @@ function decorateHandler(handler: object, metadata: { resource: string; action: 
 
 function createExecutionContext(
   request: Partial<AuthenticatedRequest>,
-  controller: MockController,
   handler: object,
 ): ExecutionContext {
   return {
     switchToHttp: () => ({ getRequest: () => request }),
     getHandler: () => handler,
-    getClass: () => controller as unknown as new (...args: unknown[]) => unknown,
+    getClass: () => class MockController {},
   } as ExecutionContext;
 }
 
 describe('AuditInterceptor', () => {
   let interceptor: AuditInterceptor;
   let auditLogService: { log: ReturnType<typeof vi.fn> };
-  let moduleRef: { get: ReturnType<typeof vi.fn> };
+  let auditBeforeState: { load: ReturnType<typeof vi.fn> };
   let reflector: Reflector;
 
   beforeEach(() => {
     auditLogService = { log: vi.fn() };
-    moduleRef = { get: vi.fn() };
+    auditBeforeState = { load: vi.fn().mockResolvedValue(null) };
     reflector = new Reflector();
 
     interceptor = new AuditInterceptor(
       reflector,
-      moduleRef as unknown as ModuleRef,
+      auditBeforeState as unknown as AuditBeforeStateRegistry,
       auditLogService as unknown as AuditLogService,
     );
   });
@@ -53,9 +49,7 @@ describe('AuditInterceptor', () => {
       params: {},
     };
     const handler = {};
-    const context = createExecutionContext(request, {
-      categoriesService: { findOne: vi.fn() },
-    }, handler);
+    const context = createExecutionContext(request, handler);
     const next: CallHandler = {
       handle: () => of({ id: 'cat_1' }),
     };
@@ -75,9 +69,7 @@ describe('AuditInterceptor', () => {
       params: {},
       user: { userId: 'user_123', role: 'ADMIN' as any },
     };
-    const context = createExecutionContext(request, {
-      categoriesService: { findOne: vi.fn() },
-    }, handler);
+    const context = createExecutionContext(request, handler);
     const next: CallHandler = {
       handle: () => of({ id: 'cat_1', name: 'Electronics' }),
     };
@@ -87,7 +79,7 @@ describe('AuditInterceptor', () => {
 
     expect(auditLogService.log).toHaveBeenCalledWith(
       expect.objectContaining({
-        actorClerkUserId: 'user_123',
+        actorId: 'user_123',
         resource: 'category',
         action: 'create',
         resourceId: 'cat_1',
@@ -97,7 +89,7 @@ describe('AuditInterceptor', () => {
     );
   });
 
-  it('logs an update event with before state loaded from service', async () => {
+  it('logs an update event with before state loaded from registry', async () => {
     const handler = {};
     decorateHandler(handler, { resource: 'category', action: 'update' });
     const request: Partial<AuthenticatedRequest> = {
@@ -106,13 +98,8 @@ describe('AuditInterceptor', () => {
       params: { id: 'cat_1' },
       user: { userId: 'user_123', role: 'ADMIN' as any },
     };
-    const controller: MockController = {
-      categoriesService: {
-        findOne: vi.fn().mockResolvedValue({ id: 'cat_1', name: 'Old Name' }),
-      },
-    };
-    moduleRef.get.mockReturnValue(controller);
-    const context = createExecutionContext(request, controller, handler);
+    auditBeforeState.load.mockResolvedValue({ id: 'cat_1', name: 'Old Name' });
+    const context = createExecutionContext(request, handler);
     const next: CallHandler = {
       handle: () => of({ id: 'cat_1', name: 'New Name' }),
     };
@@ -120,10 +107,10 @@ describe('AuditInterceptor', () => {
     const observable = await interceptor.intercept(context, next);
     await lastValueFrom(observable);
 
-    expect(controller.categoriesService.findOne).toHaveBeenCalledWith('cat_1');
+    expect(auditBeforeState.load).toHaveBeenCalledWith('category', 'cat_1');
     expect(auditLogService.log).toHaveBeenCalledWith(
       expect.objectContaining({
-        actorClerkUserId: 'user_123',
+        actorId: 'user_123',
         resource: 'category',
         action: 'update',
         resourceId: 'cat_1',
@@ -142,13 +129,8 @@ describe('AuditInterceptor', () => {
       params: { id: 'cat_1' },
       user: { userId: 'user_123', role: 'ADMIN' as any },
     };
-    const controller: MockController = {
-      categoriesService: {
-        findOne: vi.fn().mockResolvedValue({ id: 'cat_1', name: 'Old Name' }),
-      },
-    };
-    moduleRef.get.mockReturnValue(controller);
-    const context = createExecutionContext(request, controller, handler);
+    auditBeforeState.load.mockResolvedValue({ id: 'cat_1', name: 'Old Name' });
+    const context = createExecutionContext(request, handler);
     const next: CallHandler = {
       handle: () => of({ id: 'cat_1' }),
     };
@@ -158,7 +140,7 @@ describe('AuditInterceptor', () => {
 
     expect(auditLogService.log).toHaveBeenCalledWith(
       expect.objectContaining({
-        actorClerkUserId: 'user_123',
+        actorId: 'user_123',
         resource: 'category',
         action: 'delete',
         resourceId: 'cat_1',
@@ -176,9 +158,7 @@ describe('AuditInterceptor', () => {
       path: '/categories',
       params: {},
     };
-    const context = createExecutionContext(request, {
-      categoriesService: { findOne: vi.fn() },
-    }, handler);
+    const context = createExecutionContext(request, handler);
     const next: CallHandler = {
       handle: () => of({ id: 'cat_1' }),
     };
@@ -188,7 +168,7 @@ describe('AuditInterceptor', () => {
 
     expect(auditLogService.log).toHaveBeenCalledWith(
       expect.objectContaining({
-        actorClerkUserId: 'system',
+        actorId: null,
         metadata: expect.objectContaining({ actorType: 'system' }),
       }),
     );

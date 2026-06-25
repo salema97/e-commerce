@@ -1,32 +1,52 @@
 import { notFound } from 'next/navigation';
+import { Card, CardContent } from '@/components/ui/card';
+import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
+import { MarkdownContent } from '@/components/content/markdown-content';
 import { getServerApiClient } from '@/lib/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface BlogPageProps {
   params: Promise<{ slug: string }>;
 }
 
+function formatSlugTitle(slug: string): string {
+  return slug
+    .split('-')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 export async function generateMetadata({ params }: BlogPageProps) {
-  const { slug } = await params;
-  return { title: `Blog: ${slug}` };
+  const [{ slug }, api] = await Promise.all([params, getServerApiClient()]);
+  const page = await api.ai.cmsPages.findBySlug(slug).catch(() => null);
+  const title = page?.title ?? formatSlugTitle(slug);
+  return { title: `Artículo: ${title}` };
 }
 
 export default async function BlogPostPage({ params }: BlogPageProps) {
-  const { slug } = await params;
+  const [{ slug }, api] = await Promise.all([params, getServerApiClient()]);
+
+  if (!slug) {
+    notFound();
+  }
+
+  const page = await api.ai.cmsPages.findBySlug(slug).catch(() => null);
+
+  if (!page) {
+    notFound();
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl capitalize">{slug.replace(/-/g, ' ')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            CMS-driven blog content placeholder. The content for this post will
-            be loaded from the CMS once Phase 3 CMS integration is completed.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+    <AnimatedPageShell
+      className="container mx-auto max-w-3xl px-4 py-8"
+      header={<h1 className="text-3xl font-bold">{page.title}</h1>}
+    >
+      <NeoReveal>
+        <Card className="mt-6 brutalist-card">
+          <CardContent className="pt-6">
+            <MarkdownContent markdown={page.bodyMarkdown} />
+          </CardContent>
+        </Card>
+      </NeoReveal>
+    </AnimatedPageShell>
   );
 }

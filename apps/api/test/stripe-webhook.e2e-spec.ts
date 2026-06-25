@@ -11,6 +11,7 @@ import { RedisService } from '../src/common/redis/redis.service.js';
 import { StripeProvider } from '../src/payments/stripe/stripe.provider.js';
 import { SriQueueService } from '../src/invoices/sri/sri-queue.service.js';
 import { PaymentStatus } from '../src/payments/entities/payment-status.enum.js';
+import { BASE_TEST_CONFIG } from './test-config.js';
 
 const TEST_STRIPE_WEBHOOK_SECRET = 'whsec_testsecret';
 
@@ -103,23 +104,8 @@ describe('Stripe Webhook (e2e)', () => {
     };
 
     const configMock = new ConfigService({
-      NODE_ENV: 'test',
-      PORT: 3001,
-      DATABASE_URL: 'postgresql://localhost:5432/test',
-      REDIS_URL: 'redis://localhost:6379',
-      CLERK_SECRET_KEY: 'sk_test_xxx',
-      CLERK_WEBHOOK_SECRET: 'whsec_xxx',
-      STRIPE_SECRET_KEY: 'sk_test_xxx',
+      ...BASE_TEST_CONFIG,
       STRIPE_WEBHOOK_SECRET: TEST_STRIPE_WEBHOOK_SECRET,
-      SRI_MODE: 'direct',
-      SRI_RUC: '1792146739001',
-      SRI_SOL_KEY: 'test',
-      SRI_DIGITAL_CERTIFICATE_PATH: 'data:test',
-      SRI_DIGITAL_CERTIFICATE_PASSWORD: 'test',
-      SRI_ESTABLISHMENT_CODE: '001',
-      SRI_EMISSION_POINT_CODE: '001',
-      SRI_TEST_ENVIRONMENT: 'true',
-      SRI_QUEUE_ENABLED: 'false',
     });
 
     const stripeProviderMock = {

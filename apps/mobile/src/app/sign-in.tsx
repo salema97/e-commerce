@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useSignIn } from '@clerk/clerk-expo';
 import { useRouter, Link } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Input } from '@repo/shared-ui';
+import { NeoScreen } from '../components/neo-screen.js';
+import { NeoScaleIn } from '../components/neo-animated.js';
+import { useAuth } from '../providers/AuthProvider.js';
 
 export default function SignInScreen(): React.ReactElement {
   const router = useRouter();
-  const { signIn, setActive, isLoaded } = useSignIn();
+  const { signIn } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,27 +16,14 @@ export default function SignInScreen(): React.ReactElement {
   const [error, setError] = useState('');
 
   const handleSignIn = async (): Promise<void> => {
-    if (!isLoaded || !signIn) {
-      return;
-    }
-
     setLoading(true);
     setError('');
 
     try {
-      const result = await signIn.create({
-        identifier: email,
-        password,
-      });
-
-      if (result.status === 'complete') {
-        await setActive({ session: result.createdSessionId });
-        router.replace('/(tabs)');
-      } else {
-        setError('Sign-in step not complete. Please try again.');
-      }
+      await signIn(email, password);
+      router.replace('/(tabs)');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Sign-in failed';
+      const message = err instanceof Error ? err.message : 'Error al iniciar sesión';
       setError(message);
     } finally {
       setLoading(false);
@@ -43,8 +31,8 @@ export default function SignInScreen(): React.ReactElement {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+    <NeoScreen style={styles.container}>
+      <NeoScaleIn style={styles.content}>
         <Text style={styles.title}>Iniciar sesión</Text>
 
         <Input
@@ -83,8 +71,8 @@ export default function SignInScreen(): React.ReactElement {
             <Text style={styles.link}>Regístrate</Text>
           </Link>
         </View>
-      </View>
-    </SafeAreaView>
+      </NeoScaleIn>
+    </NeoScreen>
   );
 }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +12,7 @@ interface ProductReviewsProps {
 }
 
 export function ProductReviews({ productId }: ProductReviewsProps) {
-  const { isSignedIn } = useAuth();
+  const { user } = useAuth();
   const {
     useProductReviews,
     useProductReviewSummary,
@@ -70,7 +70,7 @@ export function ProductReviews({ productId }: ProductReviewsProps) {
         ) : null}
       </div>
 
-      {isSignedIn ? (
+      {user ? (
         <form onSubmit={(event) => void submitReview(event)} className="space-y-3 rounded-lg border p-4">
           <h3 className="font-medium">Escribe tu reseña</h3>
           <Input

@@ -11,7 +11,7 @@ import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { Public } from '../../auth/public.decorator.js';
 import { StripeWebhookService } from './stripe-webhook.service.js';
-import { PaymentWebhookResponseDto } from '../dto/payment-webhook.dto.js';
+import { PaymentWebhookResponseDto } from '../public-api.js';
 
 interface RawBodyRequest extends Request {
   rawBody?: Buffer;

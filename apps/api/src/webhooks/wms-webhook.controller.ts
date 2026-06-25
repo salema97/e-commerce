@@ -11,7 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from '../auth/public.decorator.js';
 import { WmsIntegrationService } from '../fulfillment/wms-integration.service.js';
-import { WmsImportTrackingDto, WmsSyncInventoryDto } from '../fulfillment/dto/wms-sync.dto.js';
+import { WmsImportTrackingDto, WmsSyncInventoryDto } from '../fulfillment/public-api.js';
 
 @ApiTags('Webhooks')
 @Controller('webhooks/wms')

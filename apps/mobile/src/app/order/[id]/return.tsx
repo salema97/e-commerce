@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card, Button } from '@repo/shared-ui';
+import { Card, Button, Input, Textarea } from '@repo/shared-ui';
+import { NeoScreen } from '../../../components/neo-screen.js';
+import { NeoStaggeredItem } from '../../../components/neo-animated.js';
 import { api } from '../../../lib/api.js';
 import { formatPrice } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
@@ -25,24 +26,16 @@ export default function ReturnRequestScreen(): React.ReactElement {
   const params = useLocalSearchParams<{ id: string }>();
   const orderId = params.id;
 
-  const { data: order, isLoading, isError } = api.hooks.useOrder(orderId);
+  const { data: order, isError } = api.hooks.useOrder(orderId);
   const createReturn = api.hooks.useCreateReturnRequest();
   const [selected, setSelected] = React.useState<Record<string, { qty: number; reason: string }>>({});
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.center}>
-        <Text style={styles.muted}>Loading order...</Text>
-      </SafeAreaView>
-    );
-  }
-
   if (isError || !order) {
     return (
-      <SafeAreaView style={styles.center}>
-        <Text style={styles.error}>Could not load order.</Text>
-        <Button onPress={() => router.back()}>Go back</Button>
-      </SafeAreaView>
+      <NeoScreen style={styles.center}>
+        <Text style={styles.error}>No se pudo cargar el pedido.</Text>
+        <Button onPress={() => router.back()}>Volver</Button>
+      </NeoScreen>
     );
   }
 
@@ -77,44 +70,51 @@ export default function ReturnRequestScreen(): React.ReactElement {
       orderId: currentOrder.id,
       data: {
         items,
-        reason: items.map((i) => i.reason).join('; ') || 'Customer return',
+        reason: items.map((i) => i.reason).join('; ') || 'Devolución del cliente',
       },
     });
     router.replace(`/order/${orderId}`);
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <NeoScreen style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Request return</Text>
-        <Text style={styles.subtitle}>Order #{currentOrder.orderNumber}</Text>
+        <Text style={styles.title}>Solicitar devolución</Text>
+        <Text style={styles.subtitle}>Pedido #{currentOrder.orderNumber}</Text>
 
         {!isDelivered ? (
-          <Card style={styles.banner}>
-            <Text style={styles.bannerTitle}>Order not delivered</Text>
-            <Text style={styles.bannerText}>
-              You can request a return after the order has been delivered.
-            </Text>
-          </Card>
+          <NeoStaggeredItem index={0}>
+            <Card style={styles.banner}>
+              <Text style={styles.bannerTitle}>Pedido no entregado</Text>
+              <Text style={styles.bannerText}>
+                Puedes solicitar una devolución después de que el pedido haya sido entregado.
+              </Text>
+            </Card>
+          </NeoStaggeredItem>
         ) : null}
 
         {isDelivered && !isWithinWindow ? (
-          <Card style={styles.banner}>
-            <Text style={styles.bannerTitle}>Return window closed</Text>
-            <Text style={styles.bannerText}>
-              The return window for this order has expired.
-            </Text>
-          </Card>
+          <NeoStaggeredItem index={0}>
+            <Card style={styles.banner}>
+              <Text style={styles.bannerTitle}>Plazo de devolución cerrado</Text>
+              <Text style={styles.bannerText}>
+                El plazo de devolución para este pedido ha expirado.
+              </Text>
+            </Card>
+          </NeoStaggeredItem>
         ) : null}
 
         {isDelivered && isWithinWindow ? (
           <Text style={styles.windowText}>
-            Return window: {remainingDays} day{remainingDays === 1 ? '' : 's'} remaining
+            {remainingDays === 1
+              ? 'Plazo de devolución: queda 1 día'
+              : `Plazo de devolución: quedan ${remainingDays} días`}
           </Text>
         ) : null}
 
-        {currentOrder.items.map((item) => (
-          <Card key={item.id} style={styles.itemCard}>
+        {currentOrder.items.map((item, index) => (
+          <NeoStaggeredItem key={item.id} index={index + 1}>
+            <Card style={styles.itemCard}>
             <View style={styles.row}>
               <Text style={styles.itemName}>{item.name}</Text>
               <Button
@@ -123,7 +123,7 @@ export default function ReturnRequestScreen(): React.ReactElement {
                 onPress={() => toggleItem(item.id, item.quantity)}
                 disabled={!canRequestReturn}
               >
-                {selected[item.id] ? 'Selected' : 'Select'}
+                {selected[item.id] ? 'Seleccionado' : 'Seleccionar'}
               </Button>
             </View>
             <Text style={styles.meta}>
@@ -132,9 +132,8 @@ export default function ReturnRequestScreen(): React.ReactElement {
 
             {selected[item.id] ? (
               <View style={styles.inputs}>
-                <Text style={styles.label}>Quantity (max {item.quantity})</Text>
-                <TextInput
-                  style={[styles.input, !canRequestReturn && styles.inputDisabled]}
+                <Input
+                  label={`Cantidad (máx. ${item.quantity})`}
                   keyboardType="numeric"
                   value={String(selected[item.id].qty)}
                   onChangeText={(text) =>
@@ -151,9 +150,8 @@ export default function ReturnRequestScreen(): React.ReactElement {
                   }
                   editable={canRequestReturn}
                 />
-                <Text style={styles.label}>Reason</Text>
-                <TextInput
-                  style={[styles.input, !canRequestReturn && styles.inputDisabled]}
+                <Textarea
+                  label="Motivo"
                   value={selected[item.id].reason}
                   onChangeText={(text) =>
                     setSelected((prev) => ({
@@ -161,23 +159,26 @@ export default function ReturnRequestScreen(): React.ReactElement {
                       [item.id]: { ...prev[item.id], reason: text },
                     }))
                   }
-                  placeholder="Reason for returning this item"
+                  placeholder="Motivo de la devolución de este artículo"
                   editable={canRequestReturn}
                 />
               </View>
             ) : null}
-          </Card>
+            </Card>
+          </NeoStaggeredItem>
         ))}
 
-        <Button
-          onPress={handleSubmit}
-          disabled={createReturn.isPending || Object.keys(selected).length === 0 || !canRequestReturn}
-          size="lg"
-        >
-          {createReturn.isPending ? 'Submitting...' : 'Submit return request'}
-        </Button>
+        <NeoStaggeredItem index={currentOrder.items.length + 1}>
+          <Button
+            onPress={handleSubmit}
+            disabled={createReturn.isPending || Object.keys(selected).length === 0 || !canRequestReturn}
+            size="lg"
+          >
+            {createReturn.isPending ? 'Enviando...' : 'Enviar solicitud de devolución'}
+          </Button>
+        </NeoStaggeredItem>
       </ScrollView>
-    </SafeAreaView>
+    </NeoScreen>
   );
 }
 

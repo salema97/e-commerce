@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { PlaceToPayProvider } from './placetopay.provider.js';
-import { PaymentStatus } from '../entities/payment-status.enum.js';
+import { PaymentStatus } from '../public-api.js';
 
 const TEST_CONFIG = {
   PLACETOPAY_LOGIN: 'ptp_login_test',

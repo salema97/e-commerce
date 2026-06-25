@@ -7,19 +7,12 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
-
-vi.mock('@clerk/backend', async () => ({
-  ...(await vi.importActual('@clerk/backend') as object),
-  verifyToken: vi.fn(() => Promise.resolve({ sub: 'user_1', public_metadata: { role: 'CUSTOMER' } })),
-}));
+import { BASE_TEST_CONFIG, bearerAuth } from './test-config.js';
 
 const TEST_CONFIG = {
-  NODE_ENV: 'test', PORT: 3001, DATABASE_URL: 'postgresql://localhost:5432/test', REDIS_URL: 'redis://localhost:6379',
-  CLERK_SECRET_KEY: 'sk_test_xxx', CLERK_WEBHOOK_SECRET: 'whsec_xxx',
-  STRIPE_SECRET_KEY: 'sk_test_xxx', STRIPE_WEBHOOK_SECRET: 'whsec_xxx',
-  STRIPE_SUCCESS_URL: 'https://example.com/success', STRIPE_CANCEL_URL: 'https://example.com/cancel',
-  SRI_MODE: 'direct', SRI_RUC: '1792146739001', SRI_SOL_KEY: 'test', SRI_DIGITAL_CERTIFICATE_PATH: 'data:test',
-  SRI_DIGITAL_CERTIFICATE_PASSWORD: 'test', SRI_ESTABLISHMENT_CODE: '001', SRI_EMISSION_POINT_CODE: '001', SRI_TEST_ENVIRONMENT: 'true', SRI_QUEUE_ENABLED: 'false',
+  ...BASE_TEST_CONFIG,
+  STRIPE_SUCCESS_URL: 'https://example.com/success',
+  STRIPE_CANCEL_URL: 'https://example.com/cancel',
 };
 
 describe('Orders (e2e)', () => {
@@ -37,7 +30,7 @@ describe('Orders (e2e)', () => {
       user: { findUnique: vi.fn().mockResolvedValue({ id: 'user_1', email: 'user@example.com' }) },
       product: { findUnique: vi.fn().mockResolvedValue({ id: 'p1', name: 'Product', sku: 'SKU', variants: [] }) },
       order: {
-        findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn(),
+        findUnique: vi.fn(), findMany: vi.fn(), count: vi.fn(), update: vi.fn(),
         create: vi.fn().mockResolvedValue({
           id: 'o1', orderNumber: 'ORD-1', status: OrderStatus.PAYMENT_PENDING, channel: OrderChannel.WEB,
           subtotal: 39.98, taxAmount: 0, shippingAmount: 0, discountAmount: 0, total: 39.98, couponCode: null,
@@ -81,7 +74,40 @@ describe('Orders (e2e)', () => {
       subtotal: 39.98, taxAmount: 0, shippingAmount: 0, discountAmount: 0, total: 39.98, couponCode: null,
       reservationExpiresAt: new Date('2026-06-22T01:00:00Z'), items: [], statusHistory: [],
     });
-    const res = await request(app.getHttpServer()).get('/v1/orders/o1').set('Authorization', 'Bearer token').expect(200);
+    const res = await request(app.getHttpServer()).get('/v1/orders/o1').set(bearerAuth('user_1', 'CUSTOMER')).expect(200);
     expect(res.body.id).toBe('o1');
+  });
+
+  it('GET /v1/orders lists orders for admin', async () => {
+    prismaMock.order.findMany.mockResolvedValue([
+      {
+        id: 'o1',
+        orderNumber: 'ORD-1',
+        userId: null,
+        customerEmail: 'guest@example.com',
+        customerPhone: null,
+        customerName: null,
+        status: OrderStatus.PAYMENT_PENDING,
+        channel: OrderChannel.WEB,
+        subtotal: 39.98,
+        taxAmount: 0,
+        shippingAmount: 0,
+        discountAmount: 0,
+        total: 39.98,
+        createdAt: new Date('2026-06-22T01:00:00Z'),
+        updatedAt: new Date('2026-06-22T01:00:00Z'),
+        items: [],
+      },
+    ]);
+    prismaMock.order.count.mockResolvedValue(1);
+
+    const res = await request(app.getHttpServer())
+      .get('/v1/orders')
+      .set(bearerAuth('admin_1', 'ADMIN'))
+      .expect(200);
+
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].orderNumber).toBe('ORD-1');
+    expect(res.body.meta.total).toBe(1);
   });
 });

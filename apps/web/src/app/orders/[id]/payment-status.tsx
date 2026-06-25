@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useApiClient } from '@/lib/client-api';
 import { paymentStatusLabel } from '@repo/shared-utils';
 import type { Payment, PaymentStatus } from '@repo/shared-types';
@@ -50,25 +51,26 @@ export function PaymentStatus({ orderId, payments }: PaymentStatusProps) {
     <div className="flex flex-col gap-3">
       {primaryPayment ? (
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Payment</span>
+          <span className="text-sm text-muted-foreground">Pago</span>
           <Badge variant={statusVariant(primaryPayment.status)}>
             {paymentStatusLabel(primaryPayment.status)}
           </Badge>
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">No payment recorded yet.</p>
+        <p className="text-sm text-muted-foreground">Aún no hay pago registrado.</p>
       )}
 
-      <button
+      <Button
         type="button"
+        variant="link"
         onClick={handleDownloadReceipt}
         disabled={isGenerating}
-        className="self-start text-sm font-medium text-primary underline-offset-4 hover:underline disabled:opacity-50"
+        className="self-start normal-case"
       >
-        {isGenerating ? 'Preparing receipt...' : 'Download receipt'}
-      </button>
+        {isGenerating ? 'Preparando recibo…' : 'Descargar recibo'}
+      </Button>
       {receiptUrl ? (
-        <p className="text-xs text-muted-foreground">Receipt URL: {receiptUrl}</p>
+        <p className="text-xs text-muted-foreground">URL del recibo: {receiptUrl}</p>
       ) : null}
     </div>
   );

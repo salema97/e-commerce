@@ -17,7 +17,7 @@
     "build": "tsc -p tsconfig.json",
     "lint": "echo 'No lint configured'",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {

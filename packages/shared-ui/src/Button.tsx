@@ -7,6 +7,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { neo } from './theme.js';
 
 export interface ButtonProps {
   children: React.ReactNode;
@@ -41,7 +42,7 @@ export const Button: React.FC<ButtonProps> = ({
     <TouchableOpacity
       onPress={onPress}
       disabled={isDisabled}
-      activeOpacity={0.8}
+      activeOpacity={0.9}
       testID={testID}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
@@ -57,7 +58,7 @@ export const Button: React.FC<ButtonProps> = ({
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={variant === 'primary' || variant === 'destructive' ? '#ffffff' : '#171717'}
+          color={variant === 'primary' || variant === 'destructive' ? neo.white : neo.onyx}
         />
       ) : (
         <Text style={[styles.text, variantStyles.text, sizeStyles.text, textStyle]}>
@@ -72,29 +73,46 @@ function getVariantStyles(variant: ButtonProps['variant']) {
   switch (variant) {
     case 'secondary':
       return {
-        container: { backgroundColor: '#f5f5f5' },
-        text: { color: '#171717' },
+        container: {
+          backgroundColor: neo.gold,
+          borderColor: neo.onyx,
+        },
+        text: { color: neo.onyx },
       };
     case 'outline':
       return {
-        container: { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#e5e5e5' },
-        text: { color: '#171717' },
+        container: {
+          backgroundColor: neo.white,
+          borderColor: neo.onyx,
+        },
+        text: { color: neo.onyx },
       };
     case 'ghost':
       return {
-        container: { backgroundColor: 'transparent' },
-        text: { color: '#171717' },
+        container: {
+          backgroundColor: 'transparent',
+          borderColor: 'transparent',
+          shadowOpacity: 0,
+          elevation: 0,
+        },
+        text: { color: neo.onyx },
       };
     case 'destructive':
       return {
-        container: { backgroundColor: '#ef4444' },
-        text: { color: '#ffffff' },
+        container: {
+          backgroundColor: neo.scarlet,
+          borderColor: neo.onyx,
+        },
+        text: { color: neo.white },
       };
     case 'primary':
     default:
       return {
-        container: { backgroundColor: '#171717' },
-        text: { color: '#ffffff' },
+        container: {
+          backgroundColor: neo.onyx,
+          borderColor: neo.onyx,
+        },
+        text: { color: neo.white },
       };
   }
 }
@@ -102,12 +120,12 @@ function getVariantStyles(variant: ButtonProps['variant']) {
 function getSizeStyles(size: ButtonProps['size']) {
   switch (size) {
     case 'sm':
-      return { container: { paddingVertical: 8, paddingHorizontal: 12 }, text: { fontSize: 14 } };
+      return { container: { paddingVertical: 8, paddingHorizontal: 12 }, text: { fontSize: 12 } };
     case 'lg':
       return { container: { paddingVertical: 16, paddingHorizontal: 24 }, text: { fontSize: 18 } };
     case 'md':
     default:
-      return { container: { paddingVertical: 12, paddingHorizontal: 16 }, text: { fontSize: 16 } };
+      return { container: { paddingVertical: 12, paddingHorizontal: 16 }, text: { fontSize: 15 } };
   }
 }
 
@@ -115,12 +133,20 @@ const styles = StyleSheet.create({
   base: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 8,
+    borderRadius: 0,
+    borderWidth: 3,
     flexDirection: 'row',
     gap: 8,
+    shadowColor: neo.onyx,
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
   },
   text: {
-    fontWeight: '500',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   disabled: {
     opacity: 0.5,

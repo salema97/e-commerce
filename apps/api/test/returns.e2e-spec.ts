@@ -16,40 +16,12 @@ import {
   ReturnStatus,
   CreditNoteStatus,
 } from '@prisma/client';
-
-vi.mock('@clerk/backend', async () => {
-  const actual = await vi.importActual('@clerk/backend');
-  return {
-    ...(actual as object),
-    verifyToken: vi.fn((token: string) =>
-      Promise.resolve({
-        sub: token.includes('admin') ? 'user_admin' : 'user_customer',
-        public_metadata: { role: token.includes('admin') ? 'ADMIN' : 'CUSTOMER' },
-      }),
-    ),
-  };
-});
+import { BASE_TEST_CONFIG, bearerAuth } from './test-config.js';
 
 const TEST_CONFIG = {
-  NODE_ENV: 'test',
-  PORT: 3001,
-  DATABASE_URL: 'postgresql://localhost:5432/test',
-  REDIS_URL: 'redis://localhost:6379',
-  CLERK_SECRET_KEY: 'sk_test_xxx',
-  CLERK_WEBHOOK_SECRET: 'whsec_xxx',
-  STRIPE_SECRET_KEY: 'sk_test_xxx',
-  STRIPE_WEBHOOK_SECRET: 'whsec_xxx',
+  ...BASE_TEST_CONFIG,
   STRIPE_SUCCESS_URL: 'https://example.com/success',
   STRIPE_CANCEL_URL: 'https://example.com/cancel',
-  SRI_MODE: 'direct',
-  SRI_RUC: '1792146739001',
-  SRI_SOL_KEY: 'test',
-  SRI_DIGITAL_CERTIFICATE_PATH: 'data:test',
-  SRI_DIGITAL_CERTIFICATE_PASSWORD: 'test',
-  SRI_ESTABLISHMENT_CODE: '001',
-  SRI_EMISSION_POINT_CODE: '001',
-  SRI_TEST_ENVIRONMENT: 'true',
-  SRI_QUEUE_ENABLED: 'false',
 };
 
 describe('Returns (e2e)', () => {
@@ -272,7 +244,7 @@ describe('Returns (e2e)', () => {
 
     const res = await request(app.getHttpServer())
       .post('/v1/orders/o1/returns')
-      .set('Authorization', 'Bearer valid-customer-token')
+      .set(bearerAuth('user_customer', 'CUSTOMER'))
       .send({
         items: [{ productId: 'p1', quantity: 1 }],
         reason: 'Damaged',
@@ -302,7 +274,7 @@ describe('Returns (e2e)', () => {
 
     await request(app.getHttpServer())
       .patch('/v1/returns/rr1/status')
-      .set('Authorization', 'Bearer valid-admin-token')
+      .set(bearerAuth('user_admin', 'ADMIN'))
       .send({ status: ReturnStatus.APPROVED })
       .expect(200);
 
@@ -320,7 +292,7 @@ describe('Returns (e2e)', () => {
 
     await request(app.getHttpServer())
       .patch('/v1/returns/rr1/status')
-      .set('Authorization', 'Bearer valid-admin-token')
+      .set(bearerAuth('user_admin', 'ADMIN'))
       .send({ status: ReturnStatus.INSPECTION })
       .expect(200);
 
@@ -377,7 +349,7 @@ describe('Returns (e2e)', () => {
 
     const res = await request(app.getHttpServer())
       .post('/v1/returns/rr1/resolve')
-      .set('Authorization', 'Bearer valid-admin-token')
+      .set(bearerAuth('user_admin', 'ADMIN'))
       .send({ refundMethod: 'ORIGINAL_PAYMENT' })
       .expect(200);
 
@@ -434,7 +406,7 @@ describe('Returns (e2e)', () => {
 
     const res = await request(app.getHttpServer())
       .post('/v1/returns/rr2/resolve')
-      .set('Authorization', 'Bearer valid-admin-token')
+      .set(bearerAuth('user_admin', 'ADMIN'))
       .send({ refundMethod: 'ORIGINAL_PAYMENT' })
       .expect(200);
 
@@ -446,7 +418,7 @@ describe('Returns (e2e)', () => {
   it('returns 403 when a customer tries to resolve a return', async () => {
     await request(app.getHttpServer())
       .post('/v1/returns/rr1/resolve')
-      .set('Authorization', 'Bearer valid-customer-token')
+      .set(bearerAuth('user_customer', 'CUSTOMER'))
       .send({ refundMethod: 'ORIGINAL_PAYMENT' })
       .expect(403);
   });

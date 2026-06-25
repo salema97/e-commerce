@@ -69,3 +69,18 @@ export interface PromotionResult {
   appliedPromotionIds: string[];
   appliedCouponCode?: string;
 }
+
+export type MarketingSegment =
+  | 'ALL_CUSTOMERS'
+  | 'HAS_ACTIVE_CART'
+  | 'RECENT_BUYERS'
+  | 'INACTIVE_BUYERS';
+
+export interface DistributePromoDto {
+  segment: MarketingSegment;
+  promotionId: string;
+}
+
+export interface DistributePromoResponse {
+  status: 'queued';
+}

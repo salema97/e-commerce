@@ -1,49 +1,49 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { getServerApiClient } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { ProductImage } from '@/components/store/product-image';
 import { AddToCartButton } from '@/components/cart/add-to-cart-button';
+import { ProductViewTracker } from '@/components/analytics/product-view-tracker';
 import { WishlistButton } from '@/components/wishlist/wishlist-button';
 import { BackInStockForm } from '@/components/product/back-in-stock-form';
 import { ProductReviews } from '@/components/product/product-reviews';
-import { ProductViewTracker } from '@/components/analytics/product-view-tracker';
-import { formatPrice } from '@repo/shared-utils';
+import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
+import {
+  formatPrice,
+  getProductPrimaryImageAlt,
+  getProductPrimaryImageUrl,
+} from '@repo/shared-utils';
 import { getProductAvailableQuantity } from '@/lib/product-stock';
-import type { Product } from '@repo/shared-types';
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: ProductPageProps) {
-  const { slug } = await params;
-  const api = getServerApiClient();
-  try {
-    const product = await api.products.findBySlug(slug);
-    return {
-      title: product.name,
-      description: product.description ?? `Buy ${product.name}`,
-    };
-  } catch {
-    return { title: 'Product not found' };
+  const [{ slug }, api] = await Promise.all([params, getServerApiClient()]);
+  const product = await api.products.findBySlug(slug).catch(() => null);
+
+  if (!product) {
+    return { title: 'Producto no encontrado' };
   }
+
+  return {
+    title: product.name,
+    description: product.description ?? `Comprar ${product.name}`,
+  };
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const { slug } = await params;
-  const api = getServerApiClient();
+  const [{ slug }, api] = await Promise.all([params, getServerApiClient()]);
+  const product = await api.products.findBySlug(slug).catch(() => null);
 
-  let product: Product;
-  try {
-    product = await api.products.findBySlug(slug);
-  } catch {
+  if (!product) {
     notFound();
   }
 
-  const image = product.images?.[0];
+  const imageUrl = getProductPrimaryImageUrl(product);
   const variants = product.variants ?? [];
   const availableQuantity = getProductAvailableQuantity(product.inventory);
   const isOutOfStock = availableQuantity <= 0;
@@ -56,7 +56,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   try {
     reviewSummary = await api.reviews.summary(product.id);
   } catch {
-    // Reviews may be unavailable before migration.
+    // Reseñas pueden no estar disponibles antes de migrar.
   }
 
   const jsonLd = {
@@ -70,9 +70,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
       '@type': 'Offer',
       price: product.price,
       priceCurrency: 'USD',
-      availability: isOutOfStock && !isPreOrder
-        ? 'https://schema.org/OutOfStock'
-        : 'https://schema.org/InStock',
+      availability:
+        isOutOfStock && !isPreOrder
+          ? 'https://schema.org/OutOfStock'
+          : 'https://schema.org/InStock',
     },
     ...(reviewSummary.reviewCount > 0
       ? {
@@ -86,97 +87,118 @@ export default async function ProductPage({ params }: ProductPageProps) {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <AnimatedPageShell
+      className="container mx-auto px-4 py-8"
+      header={
+        <header className="mb-6 border-b-[6px] border-neo-onyx pb-4">
+          <Link
+            href="/store"
+            className="text-sm font-bold uppercase underline-offset-4 hover:underline"
+          >
+            ← Volver a la tienda
+          </Link>
+        </header>
+      }
+    >
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <ProductViewTracker productId={product.id} productName={product.name} />
-      <div className="grid gap-8 lg:grid-cols-2">
-        <div className="relative aspect-square overflow-hidden rounded-xl border bg-muted">
-          {image ? (
-            <Image
-              src={image.url}
-              alt={image.alt ?? product.name}
-              fill
-              className="object-cover"
+      <NeoReveal>
+        <div className="grid gap-8 border-[3px] border-neo-onyx bg-white shadow-[10px_10px_0_0_#111111] lg:grid-cols-12">
+          <div className="relative lg:col-span-7">
+            <ProductImage
+              url={imageUrl}
+              alt={getProductPrimaryImageAlt(product)}
+              variant="detail"
               sizes="(max-width: 1024px) 100vw, 50vw"
               priority
             />
-          ) : (
-            <div className="flex h-full items-center justify-center text-muted-foreground">
-              No image
+            <div className="absolute top-4 right-4 rotate-[-2deg] border-[3px] border-neo-onyx bg-neo-scarlet px-4 py-2 font-anton text-2xl text-white shadow-[4px_4px_0_#111]">
+              {formatPrice(product.price)}
             </div>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap gap-2">
-            {product.isFeatured ? <Badge>Featured</Badge> : null}
-            {product.compareAtPrice ? <Badge variant="secondary">Sale</Badge> : null}
-            {isPreOrder ? <Badge variant="outline">Pre-orden</Badge> : null}
           </div>
 
-          <h1 className="text-3xl font-bold">{product.name}</h1>
+          <div className="flex flex-col gap-6 p-6 lg:col-span-5 lg:p-10">
+            <div className="flex flex-wrap gap-2">
+              {product.isFeatured ? <Badge variant="secondary">Destacado</Badge> : null}
+              {product.compareAtPrice ? <Badge variant="destructive">Oferta</Badge> : null}
+              {isPreOrder ? <Badge variant="outline">Pre-orden</Badge> : null}
+              <Badge variant="outline">
+                {isOutOfStock && !isPreOrder ? 'Sin stock' : 'En stock'}
+              </Badge>
+            </div>
 
-          {reviewSummary.reviewCount > 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {reviewSummary.averageRating.toFixed(1)} ★ ({reviewSummary.reviewCount} reseñas)
-            </p>
-          ) : null}
+            <h1 className="font-anton text-4xl uppercase leading-[0.9] md:text-5xl">{product.name}</h1>
 
-          <div className="flex items-baseline gap-3">
-            <span className="text-2xl font-semibold">{formatPrice(product.price)}</span>
-            {product.compareAtPrice ? (
-              <span className="text-lg text-muted-foreground line-through">
-                {formatPrice(product.compareAtPrice)}
-              </span>
+            {reviewSummary.reviewCount > 0 ? (
+              <p className="text-sm font-bold text-muted-foreground">
+                {reviewSummary.averageRating.toFixed(1)} ★ ({reviewSummary.reviewCount} reseñas)
+              </p>
             ) : null}
+
+            <div className="flex items-end gap-3 border-b-4 border-neo-onyx pb-4">
+              <span className="font-anton text-5xl">{formatPrice(product.price)}</span>
+              {product.compareAtPrice ? (
+                <span className="text-lg font-bold text-muted-foreground line-through">
+                  {formatPrice(product.compareAtPrice)}
+                </span>
+              ) : null}
+            </div>
+
+            {product.description ? (
+              <p className="text-base font-bold leading-relaxed text-muted-foreground">
+                {product.description}
+              </p>
+            ) : null}
+
+            {isPreOrder && product.preOrderReleaseDate ? (
+              <p className="text-sm font-bold text-muted-foreground">
+                Disponible a partir del{' '}
+                {new Date(product.preOrderReleaseDate).toLocaleDateString('es-EC')}
+                {product.preOrderChargeTiming === 'AT_SHIPPING'
+                  ? ' · Cobro al enviar'
+                  : ' · Cobro al confirmar'}
+              </p>
+            ) : null}
+
+            {variants.length > 0 ? (
+              <div>
+                <p className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                  Variantes
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {variants.map((variant) => (
+                    <Badge key={variant.id} variant="outline">
+                      {variant.name}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <Separator className="border-neo-onyx" />
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+              <div className="flex-1">
+                <AddToCartButton product={product} disabled={isOutOfStock && !isPreOrder} />
+              </div>
+              <WishlistButton
+                productId={product.id}
+                name={product.name}
+                slug={product.slug}
+                imageUrl={getProductPrimaryImageUrl(product)}
+              />
+            </div>
+
+            {isOutOfStock && !isPreOrder ? <BackInStockForm productId={product.id} /> : null}
           </div>
-
-          <p className="text-muted-foreground">
-            {product.description ?? 'No description available.'}
-          </p>
-
-          {isPreOrder && product.preOrderReleaseDate ? (
-            <p className="text-sm text-muted-foreground">
-              Disponible a partir del{' '}
-              {new Date(product.preOrderReleaseDate).toLocaleDateString('es-EC')}
-              {product.preOrderChargeTiming === 'AT_SHIPPING'
-                ? ' · Cobro al enviar'
-                : ' · Cobro al confirmar'}
-            </p>
-          ) : null}
-
-          <AddToCartButton product={product} disabled={isOutOfStock && !isPreOrder} />
-          {isOutOfStock ? <BackInStockForm productId={product.id} /> : null}
-          <WishlistButton productId={product.id} name={product.name} slug={product.slug} />
         </div>
-      </div>
+      </NeoReveal>
 
-      <Separator className="my-10" />
-
-      {variants.length > 0 ? (
-        <section>
-          <h2 className="text-xl font-semibold mb-4">Variants</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {variants.map((variant) => (
-              <Card key={variant.id}>
-                <CardContent className="p-4">
-                  <p className="font-medium">{variant.name}</p>
-                  <p className="text-sm text-muted-foreground">SKU: {variant.sku}</p>
-                  {variant.price ? (
-                    <p className="mt-2 font-semibold">{formatPrice(variant.price)}</p>
-                  ) : null}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      <Separator className="my-10" />
+      <Separator className="my-10 border-neo-onyx" />
       <ProductReviews productId={product.id} />
-    </div>
+    </AnimatedPageShell>
   );
 }

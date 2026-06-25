@@ -7,13 +7,12 @@ interface AdminReturnDetailPageProps {
 }
 
 export default async function AdminReturnDetailPage({ params }: AdminReturnDetailPageProps) {
-  const { id } = await params;
-  const api = getServerApiClient();
+  const [{ id }, api] = await Promise.all([params, getServerApiClient()]);
+  const returnRequest = await api.returns.findOne(id).catch(() => null);
 
-  try {
-    const returnRequest = await api.returns.findOne(id);
-    return <ReturnDetail returnRequest={returnRequest} />;
-  } catch {
+  if (!returnRequest) {
     notFound();
   }
+
+  return <ReturnDetail returnRequest={returnRequest} />;
 }

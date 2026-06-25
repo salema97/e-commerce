@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { StorageService } from './storage.service.js';
 
 /**
- * R2 / S3-compatible storage module.
+ * S3-compatible storage module (AWS S3 or MinIO).
  *
  * Exposes {@link StorageService} for uploading buffers and generating signed
  * download URLs.

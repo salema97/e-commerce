@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 export interface AuditLogEvent {
-  actorClerkUserId: string;
+  actorId?: string | null;
   resource: string;
   action: string;
   resourceId?: string | null;
@@ -29,7 +29,7 @@ export class AuditLogService {
       const diff = this.buildDiff(event.before, event.after);
       await this.prisma.auditLog.create({
         data: {
-          actorClerkUserId: event.actorClerkUserId,
+          actorId: event.actorId ?? null,
           resource: event.resource,
           action: event.action,
           resourceId: event.resourceId ?? null,

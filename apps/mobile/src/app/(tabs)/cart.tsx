@@ -4,35 +4,79 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card, Button } from '@repo/shared-ui';
+import { Card, Button, neo, ProductImage } from '@repo/shared-ui';
+import { NeoScreen } from '../../components/neo-screen.js';
+import { NeoStaggeredItem } from '../../components/neo-animated.js';
 import { useCart } from '../../lib/cart.js';
 import { formatPrice } from '@repo/shared-utils';
+import { trackMobileEvent } from '../../lib/analytics.js';
+import { useAuth } from '../../providers/AuthProvider.js';
 
 export default function CartScreen(): React.ReactElement {
   const router = useRouter();
+  const { user } = useAuth();
   const { items, updateQuantity, removeItem, total, itemCount } = useCart();
 
-  const renderItem = ({ item }: { item: import('../../lib/cart.js').CartItem }) => (
-    <Card style={styles.itemCard} padding="sm">
+  function handleRemoveItem(productId: string, variantId?: string): void {
+    const item = items.find(
+      (entry) => entry.productId === productId && entry.variantId === variantId,
+    );
+    removeItem(productId, variantId);
+    if (item) {
+      void trackMobileEvent(
+        'remove_from_cart',
+        {
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+          price: item.price,
+        },
+        user?.id,
+      );
+    }
+  }
+
+  function handleUpdateQuantity(
+    productId: string,
+    quantity: number,
+    variantId?: string,
+  ): void {
+    if (quantity <= 0) {
+      handleRemoveItem(productId, variantId);
+      return;
+    }
+    updateQuantity(productId, quantity, variantId);
+  }
+
+  const renderItem = ({
+    item,
+    index,
+  }: {
+    item: import('../../lib/cart.js').CartItem;
+    index: number;
+  }) => (
+    <NeoStaggeredItem index={index}>
+      <Card style={styles.itemCard} padding="sm">
       <View style={styles.row}>
+        <ProductImage url={item.imageUrl} alt={item.name} variant="thumbnail" />
         <View style={styles.info}>
-          <Text style={styles.name} numberOfLines={2}>{item.name}</Text>
+          <Text style={styles.name} numberOfLines={2}>
+            {item.name}
+          </Text>
           <Text style={styles.price}>{formatPrice(item.price)}</Text>
         </View>
-        <TouchableOpacity onPress={() => removeItem(item.productId, item.variantId)}>
-          <Text style={styles.remove}>Eliminar</Text>
-        </TouchableOpacity>
+        <Button variant="ghost" size="sm" onPress={() => handleRemoveItem(item.productId, item.variantId)}>
+          Eliminar
+        </Button>
       </View>
 
       <View style={styles.quantityRow}>
         <Button
           variant="outline"
           size="sm"
-          onPress={() => updateQuantity(item.productId, item.quantity - 1, item.variantId)}
+          onPress={() => handleUpdateQuantity(item.productId, item.quantity - 1, item.variantId)}
         >
           -
         </Button>
@@ -40,17 +84,21 @@ export default function CartScreen(): React.ReactElement {
         <Button
           variant="outline"
           size="sm"
-          onPress={() => updateQuantity(item.productId, item.quantity + 1, item.variantId)}
+          onPress={() => handleUpdateQuantity(item.productId, item.quantity + 1, item.variantId)}
         >
           +
         </Button>
       </View>
-    </Card>
+      </Card>
+    </NeoStaggeredItem>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Carrito ({itemCount})</Text>
+    <NeoScreen style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.seasonLabel}>Pago</Text>
+        <Text style={styles.title}>CARRITO ({itemCount})</Text>
+      </View>
 
       {items.length === 0 ? (
         <View style={styles.empty}>
@@ -79,32 +127,45 @@ export default function CartScreen(): React.ReactElement {
           </Button>
         </View>
       ) : null}
-    </SafeAreaView>
+    </NeoScreen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: neo.bg,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  seasonLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    color: neo.muted,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#171717',
-    padding: 24,
-    paddingBottom: 12,
+    fontSize: 32,
+    fontWeight: '900',
+    color: neo.onyx,
+    textTransform: 'uppercase',
+    letterSpacing: -1,
   },
   list: {
     padding: 16,
-    paddingBottom: 180,
+    paddingBottom: 200,
   },
   itemCard: {
     marginBottom: 12,
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
   },
   info: {
     flex: 1,
@@ -112,17 +173,21 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#171717',
+    fontWeight: '800',
+    color: neo.onyx,
+    textTransform: 'uppercase',
   },
   price: {
     fontSize: 14,
-    color: '#525252',
+    color: neo.muted,
     marginTop: 4,
+    fontWeight: '600',
   },
   remove: {
-    color: '#ef4444',
-    fontSize: 13,
+    color: neo.scarlet,
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   quantityRow: {
     flexDirection: 'row',
@@ -131,10 +196,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   quantity: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
     minWidth: 28,
     textAlign: 'center',
+    color: neo.onyx,
   },
   empty: {
     flex: 1,
@@ -144,8 +210,9 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#737373',
+    color: neo.muted,
     marginBottom: 16,
+    fontWeight: '600',
   },
   emptyButton: {
     minWidth: 180,
@@ -155,25 +222,29 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 24,
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#e5e5e5',
+    padding: 20,
+    backgroundColor: neo.bg,
+    borderTopWidth: 3,
+    borderTopColor: neo.onyx,
   },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
+    borderBottomWidth: 3,
+    borderBottomColor: neo.onyx,
+    paddingBottom: 12,
   },
   totalLabel: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#171717',
+    fontSize: 16,
+    fontWeight: '800',
+    color: neo.onyx,
+    textTransform: 'uppercase',
   },
   totalValue: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#171717',
+    fontSize: 24,
+    fontWeight: '900',
+    color: neo.onyx,
   },
 });

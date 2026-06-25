@@ -10,8 +10,9 @@ import {
   RefundResult,
   PaymentOrder,
   CheckoutSessionResult,
-} from '../payment-provider.interface.js';
-import { PaymentStatus, RefundStatus } from '../entities/payment-status.enum.js';
+  PaymentStatus,
+  RefundStatus,
+} from '../public-api.js';
 
 @Injectable()
 export class StripeProvider extends PaymentProvider {
@@ -132,7 +133,7 @@ export class StripeProvider extends PaymentProvider {
     }
   }
 
-  async parseWebhookPayload(payload: unknown): Promise<ProviderPaymentResult> {
+  parseWebhookPayload(payload: unknown): Promise<ProviderPaymentResult> {
     const event = payload as {
       type?: string;
       data?: { object?: { id?: string; status?: string } };
@@ -145,11 +146,11 @@ export class StripeProvider extends PaymentProvider {
       status = PaymentStatus.FAILED;
     }
 
-    return {
+    return Promise.resolve({
       providerTransactionId: event.data?.object?.id ?? '',
       status,
       metadata: event as Record<string, unknown>,
-    };
+    });
   }
 
   private mapPaymentIntentStatus(status: Stripe.PaymentIntent.Status): PaymentStatus {

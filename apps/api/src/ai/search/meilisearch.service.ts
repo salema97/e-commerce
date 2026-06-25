@@ -243,7 +243,7 @@ export class MeilisearchService implements OnModuleInit {
     }
 
     const task = await this.client.index(this.indexName).deleteAllDocuments();
-    await this.client.waitForTask(task.taskUid);
+    await this.client.tasks.waitForTask(task.taskUid);
 
     const active = docs.filter((doc) => doc.status === 'ACTIVE');
     if (active.length === 0) {
@@ -251,7 +251,7 @@ export class MeilisearchService implements OnModuleInit {
     }
 
     const addTask = await this.client.index(this.indexName).addDocuments(active);
-    await this.client.waitForTask(addTask.taskUid);
+    await this.client.tasks.waitForTask(addTask.taskUid);
     return active.length;
   }
 

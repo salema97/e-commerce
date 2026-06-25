@@ -17,11 +17,11 @@ export default function ErrorPage({
 
   return (
     <div className="container mx-auto flex flex-1 flex-col items-center justify-center px-4 py-16 text-center">
-      <h2 className="text-2xl font-semibold">Something went wrong</h2>
+      <h2 className="text-2xl font-semibold">Algo salió mal</h2>
       <p className="mt-2 text-muted-foreground">
-        An unexpected error occurred. Please try again.
+        Ocurrió un error inesperado. Por favor, inténtalo de nuevo.
       </p>
-      <Button onClick={reset} className="mt-6">Try again</Button>
+      <Button onClick={reset} className="mt-6">Reintentar</Button>
     </div>
   );
 }

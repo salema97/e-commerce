@@ -6,6 +6,7 @@ import { PaymentWebhookService } from './payment-webhook.service.js';
 import { PaymentWebhookController } from './webhook.controller.js';
 import { PaymentsController } from './payments.controller.js';
 import { TestPaymentsController } from './test-payments.controller.js';
+import { TestPaymentsService } from './test-payments.service.js';
 import { StripeProvider } from './stripe/stripe.provider.js';
 import { StripeWebhookController } from './stripe/stripe-webhook.controller.js';
 import { StripeWebhookService } from './stripe/stripe-webhook.service.js';
@@ -20,7 +21,7 @@ import { AuditModule } from '../audit/audit.module.js';
 import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
 import { NotificationsModule } from '../notifications/notifications.module.js';
 import { SriQueueModule } from '../invoices/sri/sri-queue.module.js';
-import { isTestAuthEnabled } from '../auth/test-auth.js';
+import { isNonProduction } from '../common/is-non-production.js';
 
 @Module({
   imports: [
@@ -35,10 +36,11 @@ import { isTestAuthEnabled } from '../auth/test-auth.js';
     StripeWebhookController,
     PaymentWebhookController,
     PaymentsController,
-    ...(isTestAuthEnabled() ? [TestPaymentsController] : []),
+    ...(isNonProduction() ? [TestPaymentsController] : []),
   ],
   providers: [
     PaymentsService,
+    TestPaymentsService,
     RefundService,
     PaymentProviderFactory,
     PaymentWebhookService,

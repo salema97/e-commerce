@@ -8,7 +8,7 @@ import {
 export class ConsolePushNotificationProvider extends PushNotificationProvider {
   private readonly logger = new Logger(ConsolePushNotificationProvider.name);
 
-  async sendToTokens(
+  sendToTokens(
     tokens: string[],
     payload: PushNotificationPayload,
   ): Promise<void> {
@@ -16,5 +16,6 @@ export class ConsolePushNotificationProvider extends PushNotificationProvider {
       { tokenCount: tokens.length, title: payload.title },
       'Console push provider would send notification',
     );
+    return Promise.resolve();
   }
 }

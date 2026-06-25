@@ -1,42 +1,56 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { getTestAuthSession, isTestAuthEnabled } from './lib/test-auth';
+import type { NextRequest } from 'next/server';
+import { jwtVerify } from 'jose';
+import type { Role } from '@repo/shared-types';
+import { ACCESS_TOKEN_COOKIE } from '@/lib/auth-cookies';
+import { canAccessAdminPath } from '@/lib/admin-nav';
 
-const isAdminRoute = createRouteMatcher(['/admin(.*)']);
-const isSupportRoute = createRouteMatcher(['/admin/support(.*)']);
+const ROLES: Role[] = [
+  'SUPER_ADMIN',
+  'ADMIN',
+  'FINANCE',
+  'INVENTORY',
+  'SUPPORT',
+  'CUSTOMER',
+];
 
-const ADMIN_ROLES = new Set(['SUPER_ADMIN', 'ADMIN']);
-const SUPPORT_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'SUPPORT']);
+function isRole(value: string): value is Role {
+  return ROLES.includes(value as Role);
+}
 
-export default clerkMiddleware(async (auth, req) => {
-  if (isAdminRoute(req)) {
-    const { userId, sessionClaims } = await auth();
-    const metadata = sessionClaims?.public_metadata as { role?: string } | undefined;
-    const role = metadata?.role;
+async function readSession(request: NextRequest) {
+  const token = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
+  const secret = process.env.AUTH_JWT_ACCESS_SECRET;
+  if (!token || !secret) return null;
 
-    const allowedRoles = isSupportRoute(req) ? SUPPORT_ROLES : ADMIN_ROLES;
-    let isAuthenticatedAdmin = Boolean(userId && typeof role === 'string' && allowedRoles.has(role));
+  try {
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(secret));
+    if (payload.type !== 'access' || typeof payload.sub !== 'string') return null;
+    const role = String(payload.role);
+    if (!isRole(role)) return null;
+    return { userId: payload.sub, role };
+  } catch {
+    return null;
+  }
+}
 
-    if (!isAuthenticatedAdmin && isTestAuthEnabled() && process.env.NODE_ENV !== 'production') {
-      const testSession = await getTestAuthSession();
-      if (testSession && allowedRoles.has(testSession.role)) {
-        isAuthenticatedAdmin = true;
-      }
-    }
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  if (!pathname.startsWith('/admin')) {
+    return NextResponse.next();
+  }
 
-    if (!isAuthenticatedAdmin) {
-      const signInUrl = new URL('/sign-in', req.url);
-      signInUrl.searchParams.set('redirect_url', req.url);
-      return NextResponse.redirect(signInUrl);
-    }
+  const session = await readSession(request);
+
+  if (!session || !canAccessAdminPath(session.role, pathname)) {
+    const signInUrl = new URL('/sign-in', request.url);
+    signInUrl.searchParams.set('redirect_url', pathname);
+    return NextResponse.redirect(signInUrl);
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
-  matcher: [
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    '/(api|trpc)(.*)',
-  ],
+  matcher: ['/admin/:path*'],
 };

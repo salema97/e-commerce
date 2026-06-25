@@ -10,14 +10,15 @@ import type { ReturnRequest, ReturnStatus } from '@prisma/client';
 export class ReturnNotificationService {
   private readonly logger = new Logger(ReturnNotificationService.name);
 
-  async onReturnRequested(req: ReturnRequest): Promise<void> {
+  onReturnRequested(req: ReturnRequest): Promise<void> {
     this.logger.log(
       { returnId: req.id, orderId: req.orderId },
       'NOTIFY: return requested (no-op)',
     );
+    return Promise.resolve();
   }
 
-  async onReturnStatusChanged(
+  onReturnStatusChanged(
     req: ReturnRequest,
     from: ReturnStatus,
     to: ReturnStatus,
@@ -26,5 +27,6 @@ export class ReturnNotificationService {
       { returnId: req.id, from, to },
       'NOTIFY: return status changed (no-op)',
     );
+    return Promise.resolve();
   }
 }

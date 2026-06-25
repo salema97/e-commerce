@@ -17,7 +17,7 @@ import {
 export class ConsoleEmailProvider extends EmailProvider {
   private readonly logger = new Logger(ConsoleEmailProvider.name);
 
-  async sendTemplate(
+  sendTemplate(
     to: string,
     template: string,
     vars: Record<string, string>,
@@ -37,5 +37,6 @@ export class ConsoleEmailProvider extends EmailProvider {
       },
       'Console email provider would send templated email',
     );
+    return Promise.resolve();
   }
 }

@@ -14,23 +14,24 @@ import { UsersModule } from './users/users.module.js';
 import { CartModule } from './cart/cart.module.js';
 import { OrdersModule } from './orders/orders.module.js';
 import { AuthModule } from './auth/auth.module.js';
-import { ClerkModule } from './clerk/clerk.module.js';
 import { AuditModule } from './audit/audit.module.js';
 import { PaymentsModule } from './payments/payments.module.js';
 import { InvoicesModule } from './invoices/invoices.module.js';
 import { ReturnsModule } from './returns/returns.module.js';
-import { ClerkJwtGuard } from './auth/clerk-jwt.guard.js';
+import { JwtAuthGuard } from './auth/jwt-auth.guard.js';
 import { RolesGuard } from './auth/roles.guard.js';
 import { AuditInterceptor } from './audit/audit.interceptor.js';
+import { AuditBootstrapModule } from './audit/audit-bootstrap.module.js';
 import { WhatsAppModule } from './whatsapp/whatsapp.module.js';
 import { ConversationModule } from './conversations/conversation.module.js';
 import { MessageModule } from './messages/message.module.js';
 import { WebhooksModule } from './webhooks/webhooks.module.js';
 import { RedisModule } from './common/redis/redis.module.js';
+import { FinanceModule } from './finance/finance.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { AiModule } from './ai/ai.module.js';
-import { EventBusModule } from './event-bus/event-bus.module.js';
 import { AnalyticsModule } from './analytics/analytics.module.js';
+import { EventBusModule } from './event-bus/event-bus.module.js';
 import { ShippingModule } from './shipping/shipping.module.js';
 import { TaxModule } from './tax/tax.module.js';
 import { FulfillmentModule } from './fulfillment/fulfillment.module.js';
@@ -63,8 +64,8 @@ import { EngagementModule } from './engagement/engagement.module.js';
       ],
     }),
     AuthModule,
-    ClerkModule,
     AuditModule,
+    AuditBootstrapModule,
     PrismaModule,
     HealthModule,
     CategoriesModule,
@@ -82,10 +83,11 @@ import { EngagementModule } from './engagement/engagement.module.js';
     MessageModule,
     WebhooksModule,
     RedisModule,
-    EventBusModule,
+    FinanceModule,
     NotificationsModule,
     AiModule,
     AnalyticsModule,
+    EventBusModule,
     ShippingModule,
     TaxModule,
     FulfillmentModule,
@@ -102,7 +104,7 @@ import { EngagementModule } from './engagement/engagement.module.js';
     },
     {
       provide: APP_GUARD,
-      useClass: ClerkJwtGuard,
+      useClass: JwtAuthGuard,
     },
     {
       provide: APP_GUARD,

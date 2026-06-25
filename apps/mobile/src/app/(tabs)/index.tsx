@@ -3,48 +3,71 @@ import {
   View,
   Text,
   FlatList,
-  TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card, Button } from '@repo/shared-ui';
+import { Button, PressableCard, ProductImage, neo } from '@repo/shared-ui';
+import { NeoScreen } from '../../components/neo-screen.js';
 import { api } from '../../lib/api.js';
-import { formatPrice } from '@repo/shared-utils';
+import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
 import type { Product } from '@repo/shared-types';
+import {
+  NeoEnterFromBottom,
+  NeoEnterFromTop,
+  NeoPulse,
+  NeoScaleIn,
+  NeoStaggeredItem,
+} from '../../components/neo-animated.js';
 
 export default function HomeScreen(): React.ReactElement {
   const router = useRouter();
-  const { data: products, isLoading, error } = api.hooks.useProducts();
+  const { data: products, error } = api.hooks.useProducts();
 
   const featuredProducts = React.useMemo(() => {
     if (!products) return [];
-    return products.filter((p) => p.isFeatured).slice(0, 6);
+    const featured = products.filter((p) => p.isFeatured);
+    return (featured.length > 0 ? featured : products).slice(0, 6);
   }, [products]);
 
-  const renderProduct = ({ item }: { item: Product }) => (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={() => router.push({ pathname: '/(tabs)/product/[id]', params: { id: item.id } })}
-    >
-      <Card style={styles.productCard}>
-        <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
-        <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
-      </Card>
-    </TouchableOpacity>
+  const renderProduct = ({ item, index }: { item: Product; index: number }) => (
+    <NeoStaggeredItem index={index} style={styles.productTouchable}>
+      <PressableCard
+        cardStyle={styles.productCard}
+        padding="none"
+        onPress={() => router.push({ pathname: '/(tabs)/product/[id]', params: { id: item.id } })}
+      >
+        <NeoScaleIn delay={120}>
+          <ProductImage
+            url={getProductPrimaryImageUrl(item)}
+            alt={getProductPrimaryImageAlt(item)}
+            variant="card"
+            style={styles.productImage}
+          />
+        </NeoScaleIn>
+        <View style={styles.productBody}>
+          <View style={styles.productTop}>
+            <Text style={styles.productName} numberOfLines={2}>
+              {item.name}
+            </Text>
+            {item.isFeatured ? <View style={styles.featuredDot} /> : null}
+          </View>
+          <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
+        </View>
+      </PressableCard>
+    </NeoStaggeredItem>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.heading}>Bienvenido</Text>
-        <Text style={styles.subheading}>Descubre nuestros productos destacados</Text>
-      </View>
+    <NeoScreen style={styles.container} entrance={false}>
+      <NeoEnterFromTop>
+        <View style={styles.header}>
+          <Text style={styles.seasonLabel}>Colección</Text>
+          <Text style={styles.heading}>DESCUBRE</Text>
+          <Text style={styles.subheading}>Productos destacados de la tienda</Text>
+        </View>
+      </NeoEnterFromTop>
 
-      {isLoading ? (
-        <ActivityIndicator size="large" color="#171717" style={styles.loader} />
-      ) : error ? (
+      {error ? (
         <View style={styles.center}>
           <Text style={styles.error}>No se pudieron cargar los productos.</Text>
           <Text style={styles.errorDetail}>{error.message}</Text>
@@ -63,33 +86,49 @@ export default function HomeScreen(): React.ReactElement {
         />
       )}
 
-      <View style={styles.footer}>
-        <Button onPress={() => router.push('/(tabs)/store')} size="lg">
-          Explorar tienda
-        </Button>
-      </View>
-    </SafeAreaView>
+      <NeoEnterFromBottom delay={120}>
+        <View style={styles.footer}>
+          <NeoPulse>
+            <Button onPress={() => router.push('/(tabs)/store')} size="lg">
+              Explorar tienda
+            </Button>
+          </NeoPulse>
+        </View>
+      </NeoEnterFromBottom>
+    </NeoScreen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: neo.bg,
   },
   header: {
-    padding: 24,
-    paddingBottom: 12,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  seasonLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    color: neo.muted,
   },
   heading: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#171717',
+    fontSize: 40,
+    fontWeight: '900',
+    color: neo.onyx,
+    textTransform: 'uppercase',
+    letterSpacing: -1,
+    lineHeight: 40,
   },
   subheading: {
-    fontSize: 16,
-    color: '#737373',
-    marginTop: 4,
+    fontSize: 14,
+    fontWeight: '600',
+    color: neo.muted,
+    marginTop: 6,
   },
   loader: {
     marginTop: 40,
@@ -101,52 +140,79 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   error: {
-    color: '#ef4444',
+    color: neo.scarlet,
     textAlign: 'center',
+    fontWeight: '700',
   },
   errorDetail: {
-    color: '#737373',
+    color: neo.muted,
     textAlign: 'center',
     marginTop: 8,
   },
   list: {
     padding: 16,
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   row: {
     justifyContent: 'space-between',
     marginBottom: 12,
   },
-  productCard: {
+  productTouchable: {
     flex: 1,
     marginHorizontal: 6,
-    minHeight: 120,
+  },
+  productCard: {
+    minHeight: 180,
+    overflow: 'hidden',
+  },
+  productImage: {
+    borderBottomWidth: 0,
+  },
+  productBody: {
+    padding: 12,
+    flex: 1,
     justifyContent: 'space-between',
   },
+  productTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   productName: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#171717',
-    marginBottom: 8,
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '800',
+    color: neo.onyx,
+    textTransform: 'uppercase',
+    lineHeight: 18,
+  },
+  featuredDot: {
+    width: 10,
+    height: 10,
+    backgroundColor: neo.scarlet,
+    borderWidth: 2,
+    borderColor: neo.onyx,
   },
   productPrice: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#171717',
+    fontSize: 18,
+    fontWeight: '900',
+    color: neo.onyx,
+    marginTop: 10,
   },
   empty: {
     textAlign: 'center',
-    color: '#737373',
+    color: neo.muted,
     marginTop: 24,
+    fontWeight: '600',
   },
   footer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 24,
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#e5e5e5',
+    padding: 20,
+    backgroundColor: neo.bg,
+    borderTopWidth: 3,
+    borderTopColor: neo.onyx,
   },
 });

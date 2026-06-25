@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getServerApiClient } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
 import type { User } from '@repo/shared-types';
 
 interface AdminCustomerDetailPageProps {
@@ -11,43 +12,43 @@ interface AdminCustomerDetailPageProps {
 export default async function AdminCustomerDetailPage({
   params,
 }: AdminCustomerDetailPageProps) {
-  const { id } = await params;
-  const api = getServerApiClient();
+  const [{ id }, api] = await Promise.all([params, getServerApiClient()]);
 
-  let user: User;
-  try {
-    user = await api.users.findOne(id);
-  } catch {
+  const user = await api.users.findOne(id).catch(() => null);
+  if (!user) {
     notFound();
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Customer Details</h1>
-
-      <Card>
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={<h1 className="text-2xl font-bold">Detalles del cliente</h1>}
+    >
+      <NeoReveal>
+        <Card>
         <CardHeader>
           <CardTitle>{user.email}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-muted-foreground">Phone</p>
+              <p className="text-sm text-muted-foreground">Teléfono</p>
               <p className="font-medium">{user.phone ?? '-'}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Role</p>
+              <p className="text-sm text-muted-foreground">Rol</p>
               <Badge variant="secondary">{user.role}</Badge>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Joined</p>
+              <p className="text-sm text-muted-foreground">Registro</p>
               <p className="font-medium">
-                {new Date(user.createdAt).toLocaleDateString()}
+                {new Date(user.createdAt).toLocaleDateString('es-EC')}
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
-    </div>
+      </NeoReveal>
+    </AnimatedPageShell>
   );
 }

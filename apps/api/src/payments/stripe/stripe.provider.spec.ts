@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { StripeProvider } from './stripe.provider.js';
-import { PaymentStatus, RefundStatus } from '../entities/payment-status.enum.js';
+import { PaymentStatus, RefundStatus } from '../public-api.js';
 
 function createStripeMock() {
   return {

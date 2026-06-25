@@ -1,19 +1,24 @@
 import { redirect } from 'next/navigation';
-import { auth } from '@clerk/nextjs/server';
-import { getCurrentRole, financeRoles } from '@/lib/auth';
-import { getTestAuthSession } from '@/lib/test-auth';
+import { getCurrentUser, financeRoles } from '@/lib/auth';
+import { getServerApiClient } from '@/lib/api';
 import { InvoiceListView } from './invoice-list-view';
+import type { InvoiceResponseDto } from '@repo/shared-types';
 
 export default async function AdminInvoicesPage() {
-  const { userId } = await auth();
-  const role = await getCurrentRole();
-  const testSession = await getTestAuthSession();
-  const effectiveRole = role ?? testSession?.role;
-  const effectiveUserId = userId ?? testSession?.userId;
+  const session = await getCurrentUser();
 
-  if (!effectiveUserId || !effectiveRole || !financeRoles.includes(effectiveRole)) {
+  if (!session || !financeRoles.includes(session.role)) {
     redirect('/sign-in?redirect_url=/admin/invoices');
   }
 
-  return <InvoiceListView />;
+  const api = await getServerApiClient();
+  let initialInvoices: InvoiceResponseDto[] = [];
+
+  try {
+    initialInvoices = await api.invoices.findAll({ limit: 20, offset: 0 });
+  } catch {
+    initialInvoices = [];
+  }
+
+  return <InvoiceListView initialInvoices={initialInvoices} />;
 }

@@ -1,0 +1,55 @@
+'use client';
+
+import * as React from 'react';
+import { useApiQueryHooks, useAuthApiReady } from '@/lib/client-api';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import type { Supplier } from '@repo/shared-types';
+
+export function SuppliersView({ initialSuppliers }: { initialSuppliers: Supplier[] }) {
+  const hooks = useApiQueryHooks();
+  const authReady = useAuthApiReady();
+
+  const { data: suppliers } = hooks.useSuppliers({
+    initialData: initialSuppliers,
+    enabled: authReady,
+  });
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
+      <AdminPageHeader
+        title="Proveedores"
+        subtitle="Finanzas / Proveedores"
+        showNetworkStatus={false}
+      />
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nombre</TableHead>
+            <TableHead>Contacto</TableHead>
+            <TableHead>Correo</TableHead>
+            <TableHead>Teléfono</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {(suppliers ?? []).map((supplier) => (
+            <TableRow key={supplier.id}>
+              <TableCell className="font-medium">{supplier.name}</TableCell>
+              <TableCell>{supplier.contactName ?? '—'}</TableCell>
+              <TableCell>{supplier.email ?? '—'}</TableCell>
+              <TableCell>{supplier.phone ?? '—'}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}

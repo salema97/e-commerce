@@ -13,6 +13,7 @@ import { SriDocumentStorageService } from '../src/invoices/sri/sri-document-stor
 import { DirectSriInvoiceProvider } from '../src/invoices/sri/sri-invoice.provider.js';
 import { PaymentStatus } from '../src/payments/entities/payment-status.enum.js';
 import { InvoiceStatus } from '../src/invoices/invoice-status.enum.js';
+import { BASE_TEST_CONFIG, bearerAuth } from './test-config.js';
 
 const TEST_STRIPE_WEBHOOK_SECRET = 'whsec_testsecret';
 
@@ -28,40 +29,12 @@ function signStripeWebhook(
   return { signature: `t=${timestamp},v1=${signature}`, body };
 }
 
-vi.mock('@clerk/backend', async () => {
-  const actual = await vi.importActual('@clerk/backend');
-  return {
-    ...(actual as object),
-    verifyToken: vi.fn(() =>
-      Promise.resolve({
-        sub: 'user_admin',
-        public_metadata: { role: 'ADMIN' },
-      }),
-    ),
-  };
-});
-
 const TEST_CONFIG = {
-  NODE_ENV: 'test',
-  PORT: 3001,
-  DATABASE_URL: 'postgresql://localhost:5432/test',
-  REDIS_URL: 'redis://localhost:6379',
-  CLERK_SECRET_KEY: 'sk_test_xxx',
-  CLERK_WEBHOOK_SECRET: 'whsec_xxx',
-  STRIPE_SECRET_KEY: 'sk_test_xxx',
+  ...BASE_TEST_CONFIG,
   STRIPE_WEBHOOK_SECRET: TEST_STRIPE_WEBHOOK_SECRET,
-  SRI_MODE: 'direct',
-  SRI_RUC: '1792146739001',
-  SRI_SOL_KEY: 'test',
-  SRI_DIGITAL_CERTIFICATE_PATH: 'data:test',
-  SRI_DIGITAL_CERTIFICATE_PASSWORD: 'test',
-  SRI_ESTABLISHMENT_CODE: '001',
-  SRI_EMISSION_POINT_CODE: '001',
-  SRI_TEST_ENVIRONMENT: 'true',
   SRI_COMPANY_NAME: 'Empresa E-commerce',
   SRI_COMPANY_TRADE_NAME: 'E-commerce',
   SRI_COMPANY_ADDRESS: 'Direccion matriz',
-  SRI_QUEUE_ENABLED: 'false',
 };
 
 const SIGNED_XML_URL = 'https://signed.example.com/invoices/inv_1.xml?sig=abc';
@@ -287,7 +260,7 @@ describe('SRI invoice flow (e2e)', () => {
 
     const response = await request(app.getHttpServer())
       .post(`/v1/invoices/${invoiceId}/retry`)
-      .set('Authorization', 'Bearer valid-admin-token')
+      .set(bearerAuth('user_admin', 'ADMIN'))
       .expect(201);
 
     expect(response.body.status).toBe(InvoiceStatus.DRAFT);
@@ -322,20 +295,20 @@ describe('SRI invoice flow (e2e)', () => {
       order: {
         id: 'order_flow_1',
         orderNumber: 'ORD-FLOW-001',
-        user: { clerkUserId: 'user_admin' },
+        user: { id: 'user_admin' },
       },
     });
 
     const xmlResponse = await request(app.getHttpServer())
       .get(`/v1/invoices/${invoiceId}/xml`)
-      .set('Authorization', 'Bearer valid-admin-token')
+      .set(bearerAuth('user_admin', 'ADMIN'))
       .expect(HttpStatus.FOUND);
 
     expect(xmlResponse.headers.location).toBe(SIGNED_XML_URL);
 
     const pdfResponse = await request(app.getHttpServer())
       .get(`/v1/invoices/${invoiceId}/pdf`)
-      .set('Authorization', 'Bearer valid-admin-token')
+      .set(bearerAuth('user_admin', 'ADMIN'))
       .expect(HttpStatus.FOUND);
 
     expect(pdfResponse.headers.location).toBe(SIGNED_PDF_URL);

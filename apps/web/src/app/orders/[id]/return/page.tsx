@@ -1,7 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
-import { auth } from '@clerk/nextjs/server';
 import { getServerApiClient } from '@/lib/api';
-import { getTestAuthSession } from '@/lib/test-auth';
+import { getSession } from '@/lib/session';
 import ReturnRequestForm from './return-request-form';
 
 interface ReturnRequestPageProps {
@@ -9,17 +8,16 @@ interface ReturnRequestPageProps {
 }
 
 export default async function ReturnRequestPage({ params }: ReturnRequestPageProps) {
-  const { userId } = await auth();
-  const testSession = await getTestAuthSession();
-  const isAuthenticated = Boolean(userId || testSession);
+  const [session, { id }, api] = await Promise.all([
+    getSession(),
+    params,
+    getServerApiClient(),
+  ]);
+  const isAuthenticated = Boolean(session);
 
-  const { id } = await params;
-  const api = getServerApiClient();
+  const order = await api.orders.findOne(id).catch(() => null);
 
-  let order;
-  try {
-    order = await api.orders.findOne(id);
-  } catch {
+  if (!order) {
     notFound();
   }
 

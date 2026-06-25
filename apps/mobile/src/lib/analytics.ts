@@ -1,7 +1,9 @@
 import type { EcommerceAnalyticsEventName } from '@repo/shared-types';
+import { getApiBaseUrl } from './env.js';
+import { hasAnalyticsConsent } from './analytics-consent.js';
 import { captureMobileException } from './sentry.js';
 
-const API_BASE = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3001/v1';
+const API_BASE = getApiBaseUrl();
 
 let sessionId: string | null = null;
 
@@ -18,6 +20,11 @@ export async function trackMobileEvent(
   userId?: string,
 ): Promise<void> {
   try {
+    const consented = await hasAnalyticsConsent();
+    if (!consented) {
+      return;
+    }
+
     await fetch(`${API_BASE}/analytics/events`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

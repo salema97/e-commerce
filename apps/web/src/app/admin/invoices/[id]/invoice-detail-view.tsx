@@ -3,89 +3,93 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useApiClient } from '@/lib/client-api';
+import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Alert } from '@/components/ui/alert';
+import { AlertDescription } from '@/components/ui/alert-description';
+import { AlertTitle } from '@/components/ui/alert-title';
 import { InvoiceStatusBadge } from '@/components/admin/invoices/invoice-status-badge';
 import { InvoiceActions } from '@/components/admin/invoices/invoice-actions';
+import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
 import { formatDateTime, formatPrice } from '@repo/shared-utils';
+import type { InvoiceResponseDto, Order } from '@repo/shared-types';
 
 interface InvoiceDetailViewProps {
   id: string;
+  initialInvoice: InvoiceResponseDto;
+  initialOrder: Order | null;
 }
 
-export function InvoiceDetailView({ id }: InvoiceDetailViewProps) {
+export function InvoiceDetailView({ id, initialInvoice, initialOrder }: InvoiceDetailViewProps) {
   const api = useApiClient();
+  const authReady = useAuthApiReady();
   const queryClient = useQueryClient();
 
-  const invoiceQuery = useQuery({
+  const { data: invoice } = useQuery({
     queryKey: ['invoices', id],
     queryFn: () => api.invoices.findOne(id),
+    initialData: initialInvoice,
+    enabled: authReady,
     refetchInterval: 15_000,
   });
 
-  const orderQuery = useQuery({
-    queryKey: ['orders', invoiceQuery.data?.orderId],
-    queryFn: () => api.orders.findOne(invoiceQuery.data!.orderId),
-    enabled: Boolean(invoiceQuery.data?.orderId),
+  const { data: order } = useQuery({
+    queryKey: ['orders', invoice?.orderId],
+    queryFn: () => api.orders.findOne(invoice!.orderId),
+    initialData: initialOrder ?? undefined,
+    enabled: authReady && Boolean(invoice?.orderId),
   });
-
-  const invoice = invoiceQuery.data;
-  const order = orderQuery.data;
 
   function handleRetry() {
     queryClient.invalidateQueries({ queryKey: ['invoices'] });
     queryClient.invalidateQueries({ queryKey: ['invoices', id] });
   }
 
-  if (invoiceQuery.isLoading) {
-    return (
-      <div className="flex flex-col gap-6">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
-  }
-
   if (!invoice) {
     return (
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold">Factura no encontrada</h1>
+      <AnimatedPageShell
+        className="flex flex-col gap-4"
+        header={<h1 className="neo-page-title">Factura no encontrada</h1>}
+      >
         <Link href="/admin/invoices">
           <Button variant="outline">Volver al listado</Button>
         </Link>
-      </div>
+      </AnimatedPageShell>
     );
   }
 
   const showError = invoice.status === 'FAILED' || invoice.status === 'REJECTED';
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">Factura SRI</h1>
-          <InvoiceStatusBadge status={invoice.status} />
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="neo-page-title">Factura SRI</h1>
+            <InvoiceStatusBadge status={invoice.status} />
+          </div>
+          <Link href="/admin/invoices">
+            <Button variant="outline">Volver</Button>
+          </Link>
         </div>
-        <Link href="/admin/invoices">
-          <Button variant="outline">Volver</Button>
-        </Link>
-      </div>
-
+      }
+    >
       {showError ? (
-        <div className="rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive">
-          <p className="font-medium">La emisión de esta factura falló o fue rechazada por el SRI.</p>
-          <p>
-            Revisa la información e intenta reenviarla. Si el problema persiste, contacta al
-            administrador del sistema.
-          </p>
-        </div>
+        <Alert variant="destructive">
+          <AlertTitle>Error de facturación SRI</AlertTitle>
+          <AlertDescription>
+            La emisión de esta factura falló o fue rechazada por el SRI. Revisa la información e
+            intenta reenviarla. Si el problema persiste, contacta al administrador del sistema.
+          </AlertDescription>
+        </Alert>
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <Card>
+          <NeoReveal>
+            <Card>
             <CardHeader>
               <CardTitle>Detalles del documento</CardTitle>
             </CardHeader>
@@ -112,17 +116,17 @@ export function InvoiceDetailView({ id }: InvoiceDetailViewProps) {
               </div>
             </CardContent>
           </Card>
+          </NeoReveal>
         </div>
 
         <div className="flex flex-col gap-6">
-          <Card>
+          <NeoReveal delay={0.04}>
+            <Card>
             <CardHeader>
               <CardTitle>Orden asociada</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3">
-              {orderQuery.isLoading ? (
-                <Skeleton className="h-20 w-full" />
-              ) : order ? (
+              {order ? (
                 <>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Orden</span>
@@ -147,21 +151,24 @@ export function InvoiceDetailView({ id }: InvoiceDetailViewProps) {
               )}
             </CardContent>
           </Card>
+          </NeoReveal>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Acciones</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <InvoiceActions
-                id={invoice.id}
-                status={invoice.status}
-                onRetry={handleRetry}
-              />
-            </CardContent>
-          </Card>
+          <NeoReveal delay={0.08}>
+            <Card>
+              <CardHeader>
+                <CardTitle>Acciones</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <InvoiceActions
+                  id={invoice.id}
+                  status={invoice.status}
+                  onRetry={handleRetry}
+                />
+              </CardContent>
+            </Card>
+          </NeoReveal>
         </div>
       </div>
-    </div>
+    </AnimatedPageShell>
   );
 }

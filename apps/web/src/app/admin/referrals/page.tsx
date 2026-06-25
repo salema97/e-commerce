@@ -4,7 +4,7 @@ import { formatPrice } from '@repo/shared-utils';
 import { ReferralsAdminPanel } from './referrals-admin-panel';
 
 export default async function AdminReferralsPage() {
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
   const report = await api.referrals.adminPerformance();
 
   return (

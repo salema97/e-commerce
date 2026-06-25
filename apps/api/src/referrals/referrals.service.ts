@@ -109,7 +109,6 @@ export class ReferralsService {
       await this.storeCredit.issue({
         userId: conversion.referralCode.userId,
         amount: Number(conversion.commissionAmount),
-        reason: `referral:${conversion.id}`,
       });
     }
 

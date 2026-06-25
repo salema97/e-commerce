@@ -42,10 +42,34 @@ import type {
   PaginatedConversations,
   PaginatedMessages,
   QuickReply,
+  AuthResponse,
+  LoginDto,
+  RegisterDto,
+  AuthUser,
+  Income,
+  CreateIncomeDto,
+  UpdateIncomeDto,
+  ExpenseCategory,
+  CreateExpenseCategoryDto,
+  UpdateExpenseCategoryDto,
+  Expense,
+  CreateExpenseDto,
+  UpdateExpenseDto,
+  UploadExpenseReceiptDto,
+  CashFlowReport,
+  AdminStoreCredit,
   SearchResultItem,
   Faq,
+  CreateFaqDto,
+  UpdateFaqDto,
+  CmsPage,
+  CreateCmsPageDto,
+  UpdateCmsPageDto,
   ProductContentDraft,
   ChatSession,
+  Promotion,
+  DistributePromoDto,
+  DistributePromoResponse,
   AnalyticsOverviewReport,
   CohortRetentionReport,
   ShippingQuote,
@@ -65,14 +89,14 @@ import type {
   ProductReviewSummary,
   CreateProductReviewDto,
   UpdateReviewStatusDto,
+  ExternalReviewSummary,
   LoyaltyAccount,
   LoyaltyTransaction,
   LoyaltyRedemptionQuote,
   ReferralCode,
+  ReferralConversion,
   ReferralPerformanceReport,
   PayoutReferralDto,
-  ReferralConversion,
-  ExternalReviewSummary,
 } from '@repo/shared-types';
 
 export interface ApiClientOptions {
@@ -104,7 +128,9 @@ async function parseResponse(response: Response): Promise<unknown> {
 }
 
 function buildURL(baseURL: string, path: string, query?: Record<string, string | number | boolean | undefined>): string {
-  const url = new URL(path, baseURL);
+  const normalizedBase = baseURL.endsWith('/') ? baseURL : `${baseURL}/`;
+  const normalizedPath = path.startsWith('/') ? path.slice(1) : path;
+  const url = new URL(normalizedPath, normalizedBase);
 
   if (query) {
     for (const [key, value] of Object.entries(query)) {
@@ -165,7 +191,13 @@ export function createApiClient(options: ApiClientOptions) {
 
   return {
     auth: {
-      getMe: () => request<User>('GET', '/auth/me'),
+      login: (data: LoginDto) => request<AuthResponse>('POST', '/auth/login', data),
+      register: (data: RegisterDto) => request<AuthResponse>('POST', '/auth/register', data),
+      logout: (refreshToken?: string) =>
+        request<{ ok: boolean }>('POST', '/auth/logout', refreshToken ? { refreshToken } : undefined),
+      refresh: (refreshToken: string) =>
+        request<AuthResponse['tokens']>('POST', '/auth/refresh', { refreshToken }),
+      getMe: () => request<AuthUser>('GET', '/auth/me'),
     },
     users: {
       findAll: () => request<User[]>('GET', '/users'),
@@ -329,6 +361,61 @@ export function createApiClient(options: ApiClientOptions) {
     whatsapp: {
       getQuickReplies: () => request<QuickReply[]>('GET', '/whatsapp/quick-replies'),
     },
+    finance: {
+      incomes: {
+        findAll: (query?: {
+          source?: string;
+          from?: string;
+          to?: string;
+          relatedOrderId?: string;
+          limit?: number;
+          offset?: number;
+        }) => request<Income[]>('GET', '/finance/incomes', undefined, query),
+        findOne: (id: string) => request<Income>('GET', `/finance/incomes/${id}`),
+        create: (data: CreateIncomeDto) => request<Income>('POST', '/finance/incomes', data),
+        update: (id: string, data: UpdateIncomeDto) =>
+          request<Income>('PATCH', `/finance/incomes/${id}`, data),
+        remove: (id: string) => request<Income>('DELETE', `/finance/incomes/${id}`),
+      },
+      expenseCategories: {
+        findAll: () => request<ExpenseCategory[]>('GET', '/finance/expense-categories'),
+        findOne: (id: string) =>
+          request<ExpenseCategory>('GET', `/finance/expense-categories/${id}`),
+        create: (data: CreateExpenseCategoryDto) =>
+          request<ExpenseCategory>('POST', '/finance/expense-categories', data),
+        update: (id: string, data: UpdateExpenseCategoryDto) =>
+          request<ExpenseCategory>('PATCH', `/finance/expense-categories/${id}`, data),
+        remove: (id: string) =>
+          request<ExpenseCategory>('DELETE', `/finance/expense-categories/${id}`),
+      },
+      expenses: {
+        findAll: (query?: {
+          categoryId?: string;
+          supplierId?: string;
+          status?: string;
+          from?: string;
+          to?: string;
+          limit?: number;
+          offset?: number;
+        }) => request<Expense[]>('GET', '/finance/expenses', undefined, query),
+        findOne: (id: string) => request<Expense>('GET', `/finance/expenses/${id}`),
+        create: (data: CreateExpenseDto) => request<Expense>('POST', '/finance/expenses', data),
+        update: (id: string, data: UpdateExpenseDto) =>
+          request<Expense>('PATCH', `/finance/expenses/${id}`, data),
+        remove: (id: string) => request<Expense>('DELETE', `/finance/expenses/${id}`),
+        uploadReceipt: (id: string, data: UploadExpenseReceiptDto) =>
+          request<{ key: string }>('POST', `/finance/expenses/${id}/receipts`, data),
+        receiptDownloadUrl: (id: string, key: string) =>
+          buildURL(baseURL, `/finance/expenses/${id}/receipts/download`, { key }),
+      },
+      reports: {
+        cashFlow: (from: string, to: string) =>
+          request<CashFlowReport>('GET', '/finance/reports/cash-flow', undefined, { from, to }),
+      },
+      storeCredits: {
+        findAll: () => request<AdminStoreCredit[]>('GET', '/finance/store-credits'),
+      },
+    },
     notifications: {
       pushTokens: {
         register: (data: { token: string; platform: 'ios' | 'android' | 'web' }) =>
@@ -360,8 +447,10 @@ export function createApiClient(options: ApiClientOptions) {
       },
     },
     marketing: {
-      distributePromo: (data: { segment: string; promotionId: string }) =>
-        request<{ sent: number }>('POST', '/marketing/campaigns/promo', data),
+      listPromotions: () =>
+        request<Array<Pick<Promotion, 'id' | 'name'>>>('GET', '/marketing/promotions'),
+      distributePromo: (data: DistributePromoDto) =>
+        request<DistributePromoResponse>('POST', '/marketing/campaigns/promo', data),
     },
     search: {
       products: (query: string, limit?: number) =>
@@ -378,6 +467,21 @@ export function createApiClient(options: ApiClientOptions) {
           query as Record<string, string | number | boolean | undefined>,
         ),
     },
+    analytics: {
+      trackEvent: (data: {
+        event: string;
+        properties?: Record<string, unknown>;
+        sessionId?: string;
+        userId?: string;
+        source?: 'web' | 'mobile' | 'api';
+      }) => request<void>('POST', '/analytics/events', data),
+      getOverview: (days: number) =>
+        request<AnalyticsOverviewReport>('GET', '/analytics/overview', undefined, { days }),
+      getFunnel: (days: number) =>
+        request<Record<string, number>>('GET', '/analytics/funnel', undefined, { days }),
+      getCohorts: (weeks: number) =>
+        request<CohortRetentionReport>('GET', '/analytics/cohorts', undefined, { weeks }),
+    },
     chat: {
       createSession: (data?: { contactName?: string }) =>
         request<ChatSession>('POST', '/chat/sessions', data ?? {}),
@@ -389,6 +493,18 @@ export function createApiClient(options: ApiClientOptions) {
     ai: {
       faqs: {
         findPublished: () => request<Faq[]>('GET', '/ai/faqs'),
+        findAllAdmin: () => request<Faq[]>('GET', '/ai/faqs/admin'),
+        create: (data: CreateFaqDto) => request<Faq>('POST', '/ai/faqs', data),
+        update: (id: string, data: UpdateFaqDto) => request<Faq>('PATCH', `/ai/faqs/${id}`, data),
+        remove: (id: string) => request<{ success: boolean }>('DELETE', `/ai/faqs/${id}`),
+      },
+      cmsPages: {
+        findBySlug: (slug: string) => request<CmsPage>('GET', `/ai/cms-pages/${slug}`),
+        findAllAdmin: () => request<CmsPage[]>('GET', '/ai/cms-pages/admin/list'),
+        create: (data: CreateCmsPageDto) => request<CmsPage>('POST', '/ai/cms-pages', data),
+        update: (id: string, data: UpdateCmsPageDto) =>
+          request<CmsPage>('PATCH', `/ai/cms-pages/${id}`, data),
+        remove: (id: string) => request<{ success: boolean }>('DELETE', `/ai/cms-pages/${id}`),
       },
       products: {
         generateContent: (productId: string) =>
@@ -400,21 +516,6 @@ export function createApiClient(options: ApiClientOptions) {
         rejectDraft: (productId: string) =>
           request<{ success: boolean }>('POST', `/ai/products/${productId}/content-draft/reject`),
       },
-    },
-    analytics: {
-      trackEvent: (data: {
-        event: string;
-        properties?: Record<string, unknown>;
-        sessionId?: string;
-        userId?: string;
-        source?: 'web' | 'mobile' | 'api';
-      }) => request<void>('POST', '/analytics/events', data),
-      getOverview: (days?: number) =>
-        request<AnalyticsOverviewReport>('GET', '/analytics/overview', undefined, { days }),
-      getFunnel: (days?: number) =>
-        request<Record<string, number>>('GET', '/analytics/funnel', undefined, { days }),
-      getCohorts: (weeks?: number) =>
-        request<CohortRetentionReport>('GET', '/analytics/cohorts', undefined, { weeks }),
     },
     reviews: {
       listByProduct: (productId: string) =>
@@ -445,7 +546,11 @@ export function createApiClient(options: ApiClientOptions) {
       adminPerformance: () =>
         request<ReferralPerformanceReport>('GET', '/referrals/admin/performance'),
       payout: (conversionId: string, data: PayoutReferralDto) =>
-        request<ReferralConversion>('POST', `/referrals/admin/conversions/${conversionId}/payout`, data),
+        request<ReferralConversion>(
+          'POST',
+          `/referrals/admin/conversions/${conversionId}/payout`,
+          data,
+        ),
     },
   };
 }

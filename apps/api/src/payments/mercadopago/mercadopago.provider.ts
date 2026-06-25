@@ -11,8 +11,8 @@ import {
   RefundResult,
   CheckoutSessionResult,
 } from '../payment-provider.interface.js';
-import { PaymentStatus } from '../entities/payment-status.enum.js';
-import { MercadoPagoWebhookDto } from '../dto/provider-webhook.dto.js';
+import { PaymentStatus } from '../public-api.js';
+import { MercadoPagoWebhookDto } from '../public-api.js';
 
 @Injectable()
 export class MercadoPagoProvider extends PaymentProvider {
@@ -85,18 +85,18 @@ export class MercadoPagoProvider extends PaymentProvider {
     };
   }
 
-  async capturePayment(): Promise<void> {
+  capturePayment(): Promise<void> {
     throw new Error('MercadoPago capturePayment is not implemented');
   }
 
-  async confirmPayment(externalId: string): Promise<PaymentResult> {
-    return {
+  confirmPayment(externalId: string): Promise<PaymentResult> {
+    return Promise.resolve({
       providerTransactionId: externalId,
       status: PaymentStatus.PENDING,
-    };
+    });
   }
 
-  async refund(): Promise<RefundResult> {
+  refund(): Promise<RefundResult> {
     throw new Error('MercadoPago refund is not implemented');
   }
 
@@ -104,14 +104,14 @@ export class MercadoPagoProvider extends PaymentProvider {
     return constantTimeCompare(signature, secret);
   }
 
-  async parseWebhookPayload(payload: unknown): Promise<ProviderPaymentResult> {
+  parseWebhookPayload(payload: unknown): Promise<ProviderPaymentResult> {
     const dto = payload as MercadoPagoWebhookDto;
     const status = dto.type === 'payment.updated' ? PaymentStatus.COMPLETED : PaymentStatus.PENDING;
-    return {
+    return Promise.resolve({
       providerTransactionId: String(dto.data_id ?? dto.id ?? ''),
       status,
       metadata: dto as Record<string, unknown>,
-    };
+    });
   }
 }
 

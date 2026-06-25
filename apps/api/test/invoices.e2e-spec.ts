@@ -8,39 +8,9 @@ import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { DirectSriInvoiceProvider } from '../src/invoices/sri/sri-invoice.provider.js';
 import { InvoiceStatus } from '../src/invoices/invoice-status.enum.js';
+import { BASE_TEST_CONFIG, bearerAuth } from './test-config.js';
 
-vi.mock('@clerk/backend', async () => {
-  const actual = await vi.importActual('@clerk/backend');
-  return {
-    ...(actual as object),
-    verifyToken: vi.fn(() =>
-      Promise.resolve({
-        sub: 'user_admin',
-        public_metadata: { role: 'ADMIN' },
-      }),
-    ),
-  };
-});
-
-const TEST_CONFIG = {
-  NODE_ENV: 'test',
-  PORT: 3001,
-  DATABASE_URL: 'postgresql://localhost:5432/test',
-  REDIS_URL: 'redis://localhost:6379',
-  CLERK_SECRET_KEY: 'sk_test_xxx',
-  CLERK_WEBHOOK_SECRET: 'whsec_xxx',
-  STRIPE_SECRET_KEY: 'sk_test_xxx',
-  STRIPE_WEBHOOK_SECRET: 'whsec_xxx',
-  SRI_MODE: 'direct',
-  SRI_RUC: '1792146739001',
-  SRI_SOL_KEY: 'test',
-  SRI_DIGITAL_CERTIFICATE_PATH: 'data:test',
-  SRI_DIGITAL_CERTIFICATE_PASSWORD: 'test',
-  SRI_ESTABLISHMENT_CODE: '001',
-  SRI_EMISSION_POINT_CODE: '001',
-  SRI_TEST_ENVIRONMENT: 'true',
-  SRI_QUEUE_ENABLED: 'false',
-};
+const TEST_CONFIG = { ...BASE_TEST_CONFIG };
 
 describe('InvoicesController (e2e)', () => {
   let app: INestApplication;
@@ -140,7 +110,7 @@ describe('InvoicesController (e2e)', () => {
 
     const response = await request(app.getHttpServer())
       .post('/v1/invoices')
-      .set('Authorization', 'Bearer valid-admin-token')
+      .set(bearerAuth('user_admin', 'ADMIN'))
       .send({ orderId: 'order_1' })
       .expect(201);
 
@@ -155,7 +125,7 @@ describe('InvoicesController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/v1/invoices')
-      .set('Authorization', 'Bearer valid-admin-token')
+      .set(bearerAuth('user_admin', 'ADMIN'))
       .send({ orderId: 'order_2' })
       .expect(400);
   });

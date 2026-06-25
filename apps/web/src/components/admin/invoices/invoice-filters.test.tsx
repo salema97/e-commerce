@@ -56,9 +56,9 @@ describe('InvoiceFilters', () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText(/Filtrar por estado/i), {
-      target: { value: 'FAILED' },
-    });
+    fireEvent.click(screen.getByRole('combobox', { name: /Filtrar por estado/i }));
+    fireEvent.click(screen.getByRole('option', { name: /Fallida/i }));
+
     expect(onFilterChange).toHaveBeenCalledWith({ status: 'FAILED' });
   });
 

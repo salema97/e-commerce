@@ -63,8 +63,8 @@ export class CreateOrderDto {
   @ApiPropertyOptional()
   @IsOptional() @IsString() customerAddress?: string;
 
-  @ApiPropertyOptional() @IsOptional() shippingAddress?: Record<string, unknown>;
-  @ApiPropertyOptional() @IsOptional() billingAddress?: Record<string, unknown>;
+  @ApiPropertyOptional() @IsOptional() @Type(() => Object) shippingAddress?: Record<string, unknown>;
+  @ApiPropertyOptional() @IsOptional() @Type(() => Object) billingAddress?: Record<string, unknown>;
 }
 
 export class UpdateOrderStatusDto {

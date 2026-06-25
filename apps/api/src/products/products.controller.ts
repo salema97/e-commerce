@@ -17,8 +17,8 @@ import { CreateBackInStockAlertDto } from './dto/create-back-in-stock-alert.dto.
 import { ProductPublicQueryDto } from './dto/product-public-query.dto.js';
 import { Audit } from '../audit/audit.decorator.js';
 import { Roles } from '../auth/roles.decorator.js';
-import { Role } from '../auth/role.enum.js';
 import { Public } from '../auth/public.decorator.js';
+import { Role } from '../auth/role.enum.js';
 import { BackInStockAlertsService } from '../notifications/back-in-stock-alerts.service.js';
 
 @ApiTags('Products')
@@ -47,6 +47,7 @@ export class ProductsController {
   }
 
   @Get()
+  @Public()
   @ApiOperation({ summary: 'List all products' })
   @ApiResponse({ status: 200, description: 'Products returned' })
   findAll() {
@@ -55,12 +56,15 @@ export class ProductsController {
 
   @Get('slug/:slug')
   @Public()
-  @ApiOperation({ summary: 'Get a product by slug' })
+  @ApiOperation({ summary: 'Get an active product by slug' })
+  @ApiResponse({ status: 200, description: 'Product found' })
+  @ApiResponse({ status: 404, description: 'Product not found' })
   findBySlug(@Param('slug') slug: string) {
     return this.productsService.findBySlug(slug);
   }
 
   @Get(':id')
+  @Public()
   @ApiOperation({ summary: 'Get a product by id' })
   @ApiResponse({ status: 200, description: 'Product found' })
   @ApiResponse({ status: 404, description: 'Product not found' })

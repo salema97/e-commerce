@@ -7,13 +7,12 @@ interface ResolveReturnPageProps {
 }
 
 export default async function ResolveReturnPage({ params }: ResolveReturnPageProps) {
-  const { id } = await params;
-  const api = getServerApiClient();
+  const [{ id }, api] = await Promise.all([params, getServerApiClient()]);
+  const returnRequest = await api.returns.findOne(id).catch(() => null);
 
-  try {
-    const returnRequest = await api.returns.findOne(id);
-    return <ReturnResolve returnRequest={returnRequest} />;
-  } catch {
+  if (!returnRequest) {
     notFound();
   }
+
+  return <ReturnResolve returnRequest={returnRequest} />;
 }

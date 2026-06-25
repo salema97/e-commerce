@@ -3,8 +3,9 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useApiClient } from '@/lib/client-api';
+import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button-variants';
 import {
   Table,
   TableBody,
@@ -13,10 +14,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
 import { InvoiceFilters, InvoiceFiltersState } from '@/components/admin/invoices/invoice-filters';
 import { InvoiceStatusBadge } from '@/components/admin/invoices/invoice-status-badge';
 import { InvoiceActions } from '@/components/admin/invoices/invoice-actions';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 import { formatDateTime } from '@repo/shared-utils';
 import type { InvoiceResponseDto, InvoiceStatus } from '@repo/shared-types';
 
@@ -31,8 +33,9 @@ function matchesSearch(invoice: InvoiceResponseDto, search: string): boolean {
   );
 }
 
-export function InvoiceListView() {
+export function InvoiceListView({ initialInvoices }: { initialInvoices: InvoiceResponseDto[] }) {
   const api = useApiClient();
+  const authReady = useAuthApiReady();
   const queryClient = useQueryClient();
   const [filters, setFilters] = React.useState<InvoiceFiltersState>({
     search: '',
@@ -58,7 +61,7 @@ export function InvoiceListView() {
     return result;
   }, [appliedFilters, offset]);
 
-  const invoicesQuery = useQuery({
+  const { data: invoices, isError: invoicesError } = useQuery({
     queryKey: ['invoices', queryFilters],
     queryFn: () =>
       api.invoices.findAll(queryFilters as {
@@ -69,16 +72,20 @@ export function InvoiceListView() {
         offset?: number;
         orderId?: string;
       }),
+    initialData: offset === 0 && !appliedFilters.status && !appliedFilters.from && !appliedFilters.to && !appliedFilters.search
+      ? initialInvoices
+      : undefined,
+    enabled: authReady,
     refetchInterval: 15_000,
   });
 
   const filteredInvoices = React.useMemo(() => {
-    const invoices = invoicesQuery.data ?? [];
+    const list = invoices ?? [];
     if (!appliedFilters.search || appliedFilters.search.startsWith('ord_')) {
-      return invoices;
+      return list;
     }
-    return invoices.filter((invoice) => matchesSearch(invoice, appliedFilters.search));
-  }, [invoicesQuery.data, appliedFilters.search]);
+    return list.filter((invoice) => matchesSearch(invoice, appliedFilters.search));
+  }, [invoices, appliedFilters.search]);
 
   function handleApplyFilters() {
     setOffset(0);
@@ -90,17 +97,28 @@ export function InvoiceListView() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Facturación</h1>
-
+    <AnimatedPageShell
+      className="flex min-h-0 flex-1 flex-col gap-6"
+      header={
+        <AdminPageHeader
+          title="Facturación"
+          subtitle="Comprobantes electrónicos SRI"
+          showNetworkStatus={false}
+          actions={
+            <Link href="/admin/invoices/credit-notes" className={buttonVariants({ variant: 'outline' })}>
+              Notas de crédito
+            </Link>
+          }
+        />
+      }
+    >
       <InvoiceFilters
         filters={filters}
         onFilterChange={(changes) => setFilters((prev) => ({ ...prev, ...changes }))}
         onSearch={handleApplyFilters}
       />
 
-      <div className="rounded-md border">
-        <Table>
+      <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Clave de acceso</TableHead>
@@ -113,14 +131,12 @@ export function InvoiceListView() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {invoicesQuery.isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell colSpan={7}>
-                    <Skeleton className="h-8 w-full" />
-                  </TableCell>
-                </TableRow>
-              ))
+            {invoicesError ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-destructive">
+                  No se pudieron cargar las facturas. Recarga la página o vuelve a iniciar sesión.
+                </TableCell>
+              </TableRow>
             ) : filteredInvoices.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-muted-foreground">
@@ -136,7 +152,7 @@ export function InvoiceListView() {
                   <TableCell>
                     <Link
                       href={`/admin/orders/${invoice.orderId}`}
-                      className="text-primary hover:underline"
+                      className="font-bold uppercase text-neo-onyx underline-offset-4 hover:bg-neo-gold hover:underline"
                     >
                       {invoice.orderId.slice(0, 8)}
                     </Link>
@@ -164,7 +180,6 @@ export function InvoiceListView() {
             )}
           </TableBody>
         </Table>
-      </div>
 
       <div className="flex items-center justify-between">
         <Button
@@ -187,6 +202,6 @@ export function InvoiceListView() {
           Siguiente
         </Button>
       </div>
-    </div>
+    </AnimatedPageShell>
   );
 }

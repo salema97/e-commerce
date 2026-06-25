@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
+import { FormSelect } from '@/components/ui/form-select';
 import { useCartStore } from '@/lib/cart-store';
 import { trackEvent } from '@/lib/analytics/track';
+import { getProductPrimaryImageUrl } from '@repo/shared-utils';
 import type { Product } from '@repo/shared-types';
 
 export function AddToCartButton({
@@ -28,13 +29,14 @@ export function AddToCartButton({
       variantId: variantId || undefined,
       name: product.name,
       price: Number(product.price),
-      imageUrl: product.images?.[0]?.url,
+      imageUrl: getProductPrimaryImageUrl(product),
       quantity,
     });
     void trackEvent('add_to_cart', {
       productId: product.id,
       productName: product.name,
       quantity,
+      price: Number(product.price),
       variantId: variantId || undefined,
     });
     router.push('/cart');
@@ -44,23 +46,22 @@ export function AddToCartButton({
     <div className="flex flex-col gap-4">
       {product.variants && product.variants.length > 0 ? (
         <div className="flex flex-col gap-2">
-          <Label htmlFor="variant">Variant</Label>
-          <Select
+          <Label htmlFor="variant">Variante</Label>
+          <FormSelect
             id="variant"
             value={variantId}
-            onChange={(e) => setVariantId(e.target.value)}
-          >
-            {product.variants.map((variant) => (
-              <option key={variant.id} value={variant.id}>
-                {variant.name}
-              </option>
-            ))}
-          </Select>
+            onValueChange={setVariantId}
+            placeholder="Seleccionar variante"
+            options={product.variants.map((variant) => ({
+              value: variant.id,
+              label: variant.name,
+            }))}
+          />
         </div>
       ) : null}
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="quantity">Quantity</Label>
+        <Label htmlFor="quantity">Cantidad</Label>
         <Input
           id="quantity"
           type="number"
@@ -71,8 +72,8 @@ export function AddToCartButton({
         />
       </div>
 
-      <Button onClick={handleAdd} className="w-full sm:w-auto" disabled={disabled}>
-        {disabled ? 'Sin stock' : 'Add to cart'}
+      <Button onClick={handleAdd} className="w-full font-anton text-xl sm:w-auto" disabled={disabled}>
+        {disabled ? 'Sin stock' : 'Agregar al carrito'}
       </Button>
     </div>
   );

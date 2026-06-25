@@ -22,12 +22,12 @@ Full-stack e-commerce platform built as a TypeScript monorepo with integrated fi
 | Mobile | Expo SDK 56.0.12 + React Native 0.85.3 + Expo Router | RN 0.86 is NOT compatible with Expo 56 |
 | Shared | TypeScript 5.9.3 + Zod 4.4.3 | TS 6.x skipped until ecosystem catches up |
 | State | TanStack Query (server) + Zustand (client) | React Query v5 object API |
-| Auth | Clerk | Core 3 SDKs; `auth()` is async in Next.js 15 |
+| Auth | Native JWT + argon2 | Email/password login, refresh rotation in DB |
 | Payments | Stripe (default for international cards) | Node SDK v22; never expose secret keys |
 | Local payments (Ecuador) | Kushki / PayPhone / MercadoPago / PlaceToPay | Used for local bank cards, mobile money, and cash networks |
 | E-invoicing (Ecuador) | Direct SRI integration via SOAP/XML | Self-hosted signing with `.p12` certificate; no intermediary fees |
 | Search | Meilisearch | Engine 1.47+ |
-| Storage | Cloudflare R2 | S3-compatible, signed URLs |
+| Storage | AWS S3 / MinIO | S3-compatible, signed URLs |
 | Messaging | Evolution API + WhatsApp | Baileys provider (MVP) → WhatsApp Cloud API (scale) |
 | Email | Resend / Loops / SendGrid | Transactional + marketing templates |
 | Push notifications | Expo Notifications / OneSignal / Firebase Cloud Messaging | Segmentation and rich push |
@@ -45,7 +45,7 @@ Full-stack e-commerce platform built as a TypeScript monorepo with integrated fi
 - **Monorepo**: `apps/*` for deployable apps, `packages/*` for shared code. Apps depend on packages; packages never depend on apps.
 - **State ownership**: TanStack Query owns server state; Zustand owns client-only state (cart UI, filters, checkout step).
 - **API style**: REST + OpenAPI. `@repo/api-client` is generated from NestJS Swagger spec.
-- **Auth model**: Clerk handles identity; `clerkUserId` is synced to Prisma via webhooks; NestJS validates Clerk JWT in a global guard.
+- **Auth model**: Native JWT auth with argon2 password hashes. Access tokens (JWT) + refresh tokens stored hashed in `AuthSession`. NestJS validates JWT via global `JwtAuthGuard`; roles live on `User.role`.
 - **Checkout flow**: Stripe Checkout/Payment Element on web; Payment Intents on mobile. Fulfillment happens via verified webhooks only.
 - **Search sync**: Prisma is source of truth; Meilisearch is updated asynchronously on product mutations.
 - **Admin panel**: embedded inside the web app at `/admin` with role-based route protection. Includes WhatsApp support inbox.
@@ -66,7 +66,7 @@ Full-stack e-commerce platform built as a TypeScript monorepo with integrated fi
 - **Multi-currency**: conditional feature; only required if selling outside Ecuador. Plan for currency formatting, conversion strategy, and rounding rules from the start. The platform UI and copy remain Spanish-only.
 - **Granular rate limiting**: apply per endpoint, per IP, per user, and per API key using a sliding window or token bucket strategy. Public endpoints (login, register, forgot password, checkout, webhooks) get stricter limits than authenticated endpoints. Redis-backed counters with fallback to in-memory for local dev.
 - **Public API documentation**: publish a versioned OpenAPI/Swagger spec at `/v1/docs`. Align generated `@repo/api-client` versions with API versions. Maintain a public change log and migration guides for API consumers.
-- **Disaster recovery**: define RPO and RTO targets. Use automated PostgreSQL backups with point-in-time recovery (PITR), R2/S3 object versioning for media, infrastructure-as-code for rebuilds, and documented runbooks for DB failure, API outage, and webhook provider downtime.
+- **Disaster recovery**: define RPO and RTO targets. Use automated PostgreSQL backups with point-in-time recovery (PITR), S3 object versioning for media, infrastructure-as-code for rebuilds, and documented runbooks for DB failure, API outage, and webhook provider downtime.
 - **POS / BOPIS**: future omnichannel capability. Build a POS app/module for in-store sales with unified online/POS inventory, BOPIS checkout option, in-store pickup notifications, and receipt printing integration.
 - **Pre-orders and back-in-stock**: support pre-order reservations before a product release date with configurable charge timing (at shipping or upfront). Back-in-stock alerts notify customers when out-of-stock items return.
 - **Subscriptions / recurring billing**: integrate Stripe Billing. Support subscription products, plans, billing cycles, and customer self-service pause/cancel/upgrade. Generate invoices for recurring payments.
@@ -76,7 +76,7 @@ Full-stack e-commerce platform built as a TypeScript monorepo with integrated fi
 
 ## Roles & Permissions (RBAC)
 
-The platform uses a simple RBAC model. Clerk is the source of truth for roles; Prisma keeps a synced copy for relational queries.
+The platform uses a simple RBAC model. Roles are stored on `User.role` in Prisma.
 
 ### Roles
 
@@ -107,13 +107,12 @@ The platform uses a simple RBAC model. Clerk is the source of truth for roles; P
 | Reports | ✅ | ✅ | financial | inventory | ❌ | ❌ |
 | Settings / roles | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
-### Role management with Clerk
+### Role management
 
-- Roles are stored in Clerk user `publicMetadata` (`{ role: 'admin' }`).
-- Clerk webhooks sync the role to the `User.role` field in Prisma.
-- NestJS reads the role from the Clerk JWT claim (`public_metadata.role`) via a global guard.
+- Roles are stored on `User.role` in Prisma (seed assigns dev users per role).
+- NestJS reads `userId` and `role` from the signed access JWT via `JwtAuthGuard`.
 - Use a `@Roles(...)` decorator on controllers/methods to enforce access.
-- Next.js reads the role via `auth()` in Server Components/Actions/Route Handlers and validates before rendering/processing.
+- Next.js reads the session from httpOnly cookies + `jose` in middleware; Server Components use `getSession()`.
 - The UI may hide buttons/menus by role, but the backend always re-validates permissions.
 
 ## Third-party Integrations
@@ -240,17 +239,16 @@ pnpm test:e2e
 ## Security Notes
 
 - All API input must be validated (Zod + class-validator).
-- Authentication is handled by Clerk; verify JWTs on protected routes. Do not rely on client-provided `userId`.
+- Authentication uses native JWT access tokens (signed with `AUTH_JWT_ACCESS_SECRET`) and refresh tokens in `AuthSession`. Verify JWTs on protected routes; do not rely on client-provided `userId`.
 - Re-verify authentication inside every Next.js Server Action and Route Handler.
 - Granular rate limiting: per endpoint, per IP, per user, and per API key using sliding window / token bucket. Public endpoints (login, register, forgot password, checkout, webhooks) use stricter limits than authenticated endpoints.
 - Stripe webhooks must validate signatures using the raw request body.
-- Clerk webhooks must verify signatures with `verifyWebhook` or manual signature check.
 - Evolution API webhooks must validate the configured signature/token.
 - CORS must be explicit; use Helmet + HSTS in production.
 - Security headers: CSP, HSTS, X-Frame-Options, Referrer-Policy, X-Content-Type-Options.
 - Storage URLs must be signed or use strict access policies.
 - Store mobile auth tokens in `expo-secure-store`, never AsyncStorage.
-- Never expose `STRIPE_SECRET_KEY`, `CLERK_SECRET_KEY`, `EVOLUTION_API_KEY`, `SRI_INTERMEDIARY_API_KEY`, `SRI_DIGITAL_CERTIFICATE_PASSWORD`, or webhook secrets to clients.
+- Never expose `STRIPE_SECRET_KEY`, `AUTH_JWT_ACCESS_SECRET`, `EVOLUTION_API_KEY`, `SRI_INTERMEDIARY_API_KEY`, `SRI_DIGITAL_CERTIFICATE_PASSWORD`, or webhook secrets to clients.
 - Use HTTPS/TLS everywhere; validate env secrets at boot with Zod.
 - Dependency scanning and automated security patches in CI.
 
@@ -332,7 +330,7 @@ Introduce an `InvoiceProvider` port so the core e-commerce code does not depend 
 | Mobile | Jest + React Native Testing Library | Component behavior |
 
 - Use a separate test database for API E2E; reset between runs.
-- Mock external services (Stripe, Clerk, R2, Evolution API) in unit tests.
+- Mock external services (Stripe, S3, Evolution API) in unit tests.
 - Run E2E after build; disable Turborepo cache for E2E tasks.
 
 ## Deployment Notes
@@ -356,22 +354,21 @@ REDIS_URL=redis://localhost:6379
 MEILI_HOST=http://localhost:7700
 MEILI_API_KEY=dev-master-key
 
-# Auth
-CLERK_SECRET_KEY=sk_test_xxx
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx
-EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx
-CLERK_WEBHOOK_SECRET=whsec_xxx
+# Auth (native JWT — must match API AUTH_JWT_ACCESS_SECRET)
+AUTH_JWT_ACCESS_SECRET=change-me-to-a-long-random-secret-32chars
 
 # Payments
 STRIPE_SECRET_KEY=sk_test_xxx
 STRIPE_WEBHOOK_SECRET=whsec_xxx
 
-# Storage
-R2_ACCOUNT_ID=xxx
-R2_ACCESS_KEY_ID=xxx
-R2_SECRET_ACCESS_KEY=xxx
-R2_BUCKET_NAME=xxx
-R2_PUBLIC_URL=https://xxx.r2.dev
+# Storage (AWS S3 / MinIO)
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=xxx
+AWS_SECRET_ACCESS_KEY=xxx
+AWS_S3_BUCKET=e-commerce
+AWS_S3_ENDPOINT=https://s3.example.com
+AWS_S3_FORCE_PATH_STYLE=true
+AWS_S3_PUBLIC_URL=https://s3.example.com/e-commerce
 
 # Messaging (Evolution API)
 EVOLUTION_API_URL=http://localhost:8080
@@ -382,6 +379,20 @@ EVOLUTION_INSTANCE_NAME=ecommerce
 # Notifications / ops
 RESEND_API_KEY=re_xxx
 POSTHOG_KEY=phc_xxx
+
+# Shipping, taxes & fulfillment (Phase 12)
+SHIPPING_FREE_THRESHOLD=50
+SHIPPING_FLAT_RATE=5
+CARRIER_RATE_PROVIDER=zones
+TAX_PROVIDER=composite
+INTERNATIONAL_TAX_PROVIDER=stripe_tax
+STRIPE_TAX_ENABLED=false
+FULFILLMENT_PROVIDER=manual
+WMS_PROVIDER=manual
+ALLOW_BACKORDERS=false
+
+# Catalog cache (Phase 13)
+CATALOG_CACHE_TTL_SECONDS=120
 
 # SRI Ecuador e-invoicing (direct integration)
 SRI_MODE=direct

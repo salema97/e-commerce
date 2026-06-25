@@ -2,6 +2,8 @@
 
 import * as React from 'react';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { FormSelect } from '@/components/ui/form-select';
 import { Button } from '@/components/ui/button';
 import type { InvoiceStatus } from '@repo/shared-types';
 
@@ -31,9 +33,9 @@ export function InvoiceFilters({ filters, onFilterChange, onSearch }: InvoiceFil
   return (
     <div className="flex flex-col gap-3 md:flex-row md:items-end">
       <div className="flex-1">
-        <label htmlFor="invoice-search" className="mb-1 block text-sm font-medium">
+        <Label htmlFor="invoice-search" className="mb-1 block">
           Buscar
-        </label>
+        </Label>
         <Input
           id="invoice-search"
           placeholder="Clave de acceso o ID de orden..."
@@ -45,27 +47,28 @@ export function InvoiceFilters({ filters, onFilterChange, onSearch }: InvoiceFil
         />
       </div>
       <div>
-        <label htmlFor="invoice-status" className="mb-1 block text-sm font-medium">
+        <Label htmlFor="invoice-status" className="mb-1 block">
           Estado
-        </label>
-        <select
+        </Label>
+        <FormSelect
           id="invoice-status"
-          aria-label="Filtrar por estado"
-          className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm md:w-40"
+          ariaLabel="Filtrar por estado"
           value={filters.status}
-          onChange={(e) => onFilterChange({ status: e.target.value as InvoiceStatus | '' })}
-        >
-          {STATUS_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+          onValueChange={(value) =>
+            onFilterChange({ status: value as InvoiceStatus | '' })
+          }
+          placeholder="Todos"
+          triggerClassName="md:w-40"
+          options={STATUS_OPTIONS.map((option) => ({
+            value: option.value,
+            label: option.label,
+          }))}
+        />
       </div>
       <div>
-        <label htmlFor="invoice-from" className="mb-1 block text-sm font-medium">
+        <Label htmlFor="invoice-from" className="mb-1 block">
           Desde
-        </label>
+        </Label>
         <Input
           id="invoice-from"
           type="date"
@@ -74,9 +77,9 @@ export function InvoiceFilters({ filters, onFilterChange, onSearch }: InvoiceFil
         />
       </div>
       <div>
-        <label htmlFor="invoice-to" className="mb-1 block text-sm font-medium">
+        <Label htmlFor="invoice-to" className="mb-1 block">
           Hasta
-        </label>
+        </Label>
         <Input
           id="invoice-to"
           type="date"

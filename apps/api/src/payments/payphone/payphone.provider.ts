@@ -11,8 +11,8 @@ import {
   RefundResult,
   CheckoutSessionResult,
 } from '../payment-provider.interface.js';
-import { PaymentStatus } from '../entities/payment-status.enum.js';
-import { PayPhoneWebhookDto } from '../dto/provider-webhook.dto.js';
+import { PaymentStatus } from '../public-api.js';
+import { PayPhoneWebhookDto } from '../public-api.js';
 
 @Injectable()
 export class PayPhoneProvider extends PaymentProvider {
@@ -68,18 +68,18 @@ export class PayPhoneProvider extends PaymentProvider {
     };
   }
 
-  async capturePayment(): Promise<void> {
+  capturePayment(): Promise<void> {
     throw new Error('PayPhone capturePayment is not implemented');
   }
 
-  async confirmPayment(externalId: string): Promise<PaymentResult> {
-    return {
+  confirmPayment(externalId: string): Promise<PaymentResult> {
+    return Promise.resolve({
       providerTransactionId: externalId,
       status: PaymentStatus.PENDING,
-    };
+    });
   }
 
-  async refund(): Promise<RefundResult> {
+  refund(): Promise<RefundResult> {
     throw new Error('PayPhone refund is not implemented');
   }
 
@@ -87,7 +87,7 @@ export class PayPhoneProvider extends PaymentProvider {
     return constantTimeCompare(signature, secret);
   }
 
-  async parseWebhookPayload(payload: unknown): Promise<ProviderPaymentResult> {
+  parseWebhookPayload(payload: unknown): Promise<ProviderPaymentResult> {
     const dto = payload as PayPhoneWebhookDto;
     const rawStatus = dto.transactionStatus as number | string | undefined;
     const status =
@@ -97,11 +97,11 @@ export class PayPhoneProvider extends PaymentProvider {
           ? PaymentStatus.FAILED
           : PaymentStatus.PENDING;
 
-    return {
+    return Promise.resolve({
       providerTransactionId: String(dto.id ?? dto.reference ?? ''),
       status,
       metadata: dto as Record<string, unknown>,
-    };
+    });
   }
 }
 

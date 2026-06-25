@@ -9,28 +9,36 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
 
 export default async function AdminInventoryPage() {
-  const api = getServerApiClient();
+  const api = await getServerApiClient();
   const inventory = await api.inventory.findAll().catch(() => []);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Inventory</h1>
-        <Link href="/admin/inventory/new">
-          <Button>Add stock</Button>
-        </Link>
-      </div>
-
-      <div className="rounded-md border">
-        <Table>
+    <AnimatedPageShell
+      className="flex min-h-0 flex-1 flex-col gap-6"
+      header={
+        <AdminPageHeader
+          title="Inventario"
+          subtitle="Stock y reservas"
+          showNetworkStatus={false}
+          actions={
+            <Link href="/admin/inventory/new">
+              <Button className="font-anton text-lg uppercase">Agregar stock</Button>
+            </Link>
+          }
+        />
+      }
+    >
+      <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Product ID</TableHead>
-              <TableHead>Quantity</TableHead>
-              <TableHead>Reserved</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Producto</TableHead>
+              <TableHead>Cantidad</TableHead>
+              <TableHead>Reservado</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -45,14 +53,13 @@ export default async function AdminInventoryPage() {
                 <TableCell>{item.reservedQuantity ?? 0}</TableCell>
                 <TableCell className="text-right">
                   <Link href={`/admin/inventory/${item.id}`}>
-                    <Button variant="outline" size="sm">Edit</Button>
+                    <Button variant="outline" size="sm">Editar</Button>
                   </Link>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      </div>
-    </div>
+    </AnimatedPageShell>
   );
 }

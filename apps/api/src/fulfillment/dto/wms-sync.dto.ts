@@ -1,6 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import type { ShipmentStatus } from '@repo/shared-types';
+
+const SHIPMENT_STATUSES = [
+  'PENDING',
+  'LABEL_CREATED',
+  'IN_TRANSIT',
+  'DELIVERED',
+  'RETURNED',
+  'CANCELLED',
+] as const satisfies readonly ShipmentStatus[];
 
 export class WmsInventoryRecordDto {
   @ApiProperty()
@@ -40,10 +50,11 @@ export class WmsTrackingEventDto {
   @IsString()
   trackingUrl?: string;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, enum: SHIPMENT_STATUSES })
   @IsOptional()
-  @IsString()
-  status?: string;
+  @IsIn(SHIPMENT_STATUSES)
+  @Type(() => String)
+  status?: ShipmentStatus;
 }
 
 export class WmsImportTrackingDto {

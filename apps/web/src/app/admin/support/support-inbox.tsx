@@ -2,17 +2,21 @@
 
 import * as React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useApiClient } from '@/lib/client-api';
+import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { ConversationList } from '@/components/admin/support/conversation-list';
 import { ConversationDetail } from '@/components/admin/support/conversation-detail';
-import type { Conversation, ConversationStatus } from '@repo/shared-types';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
+import type { Conversation, ConversationStatus, PaginatedConversations } from '@repo/shared-types';
 
 interface SupportInboxProps {
   currentUserId: string;
+  initialConversations: PaginatedConversations;
 }
 
-export function SupportInbox({ currentUserId }: SupportInboxProps) {
+export function SupportInbox({ currentUserId, initialConversations }: SupportInboxProps) {
   const api = useApiClient();
+  const authReady = useAuthApiReady();
   const queryClient = useQueryClient();
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [filters, setFilters] = React.useState<{
@@ -25,37 +29,43 @@ export function SupportInbox({ currentUserId }: SupportInboxProps) {
     assignedToMe: false,
   });
 
-  const conversationsQuery = useQuery({
+  const { data: conversations, isError: conversationsError } = useQuery({
     queryKey: ['conversations', filters],
     queryFn: () => api.conversations.findAll({
       status: filters.status || undefined,
       assignedToMe: filters.assignedToMe ? 'true' : undefined,
       search: filters.search || undefined,
     }),
+    initialData:
+      filters.search === '' && filters.status === '' && !filters.assignedToMe
+        ? initialConversations
+        : undefined,
+    enabled: authReady,
     refetchInterval: 10_000,
   });
 
-  const selectedConversation = conversationsQuery.data?.data.find(
+  const selectedConversation = conversations?.data.find(
     (c) => c.id === selectedId,
   );
 
-  const conversationDetailQuery = useQuery({
+  const { data: conversationDetail } = useQuery({
     queryKey: ['conversations', selectedId],
     queryFn: () => api.conversations.findOne(selectedId!),
-    enabled: Boolean(selectedId),
+    enabled: authReady && Boolean(selectedId),
     refetchInterval: 10_000,
   });
 
-  const messagesQuery = useQuery({
+  const { data: messages } = useQuery({
     queryKey: ['conversations', selectedId, 'messages'],
     queryFn: () => api.messages.findAll(selectedId!),
-    enabled: Boolean(selectedId),
+    enabled: authReady && Boolean(selectedId),
     refetchInterval: 10_000,
   });
 
-  const quickRepliesQuery = useQuery({
+  const { data: quickReplies } = useQuery({
     queryKey: ['whatsapp', 'quick-replies'],
     queryFn: () => api.whatsapp.getQuickReplies(),
+    enabled: authReady,
   });
 
   const createMessage = useMutation({
@@ -82,7 +92,7 @@ export function SupportInbox({ currentUserId }: SupportInboxProps) {
     },
   });
 
-  const activeConversation = conversationDetailQuery.data ?? selectedConversation;
+  const activeConversation = conversationDetail ?? selectedConversation;
 
   function handleSelect(conversation: Conversation) {
     setSelectedId(conversation.id);
@@ -102,13 +112,25 @@ export function SupportInbox({ currentUserId }: SupportInboxProps) {
   }
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] flex-col gap-4">
-      <h1 className="text-2xl font-bold">Bandeja de soporte</h1>
-      <div className="grid flex-1 overflow-hidden rounded-lg border lg:grid-cols-[360px_1fr]">
+    <AnimatedPageShell
+      className="flex min-h-0 flex-1 flex-col gap-4"
+      header={
+        <AdminPageHeader
+          title="Soporte"
+          subtitle="Bandeja de conversaciones WhatsApp"
+          showNetworkStatus={false}
+        />
+      }
+    >
+      {conversationsError ? (
+        <p className="text-sm text-destructive">
+          No se pudieron cargar las conversaciones. Recarga la página o vuelve a iniciar sesión.
+        </p>
+      ) : null}
+      <div className="neo-panel grid min-h-[min(70vh,720px)] flex-1 overflow-hidden lg:grid-cols-[360px_1fr]">
         <ConversationList
-          conversations={conversationsQuery.data?.data ?? []}
+          conversations={conversations?.data ?? []}
           selectedId={selectedId}
-          isLoading={conversationsQuery.isLoading}
           filter={filters}
           onFilterChange={(changes) => setFilters((prev) => ({ ...prev, ...changes }))}
           onSelect={handleSelect}
@@ -116,9 +138,8 @@ export function SupportInbox({ currentUserId }: SupportInboxProps) {
         {activeConversation ? (
           <ConversationDetail
             conversation={activeConversation}
-            messages={messagesQuery.data?.data ?? []}
-            isLoadingMessages={messagesQuery.isLoading}
-            quickReplies={quickRepliesQuery.data ?? []}
+            messages={messages?.data ?? []}
+            quickReplies={quickReplies ?? []}
             currentUserId={currentUserId}
             onSendMessage={handleSendMessage}
             onUpdateConversation={handleUpdateConversation}
@@ -131,6 +152,6 @@ export function SupportInbox({ currentUserId }: SupportInboxProps) {
           </div>
         )}
       </div>
-    </div>
+    </AnimatedPageShell>
   );
 }

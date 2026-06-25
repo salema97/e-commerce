@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { useApiClient } from '@/lib/client-api';
 import type { Inventory } from '@repo/shared-types';
 
@@ -31,17 +32,19 @@ export default function EditInventoryPage({ item }: { item: Inventory }) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Edit Inventory</h1>
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={<h1 className="text-2xl font-bold">Editar inventario</h1>}
+    >
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Stock Entry</CardTitle>
+            <CardTitle>Entrada de stock</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="grid grid-cols-3 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="quantity">Quantity</Label>
+                <Label htmlFor="quantity">Cantidad</Label>
                 <Input
                   id="quantity"
                   name="quantity"
@@ -51,7 +54,7 @@ export default function EditInventoryPage({ item }: { item: Inventory }) {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="reservedQuantity">Reserved</Label>
+                <Label htmlFor="reservedQuantity">Reservado</Label>
                 <Input
                   id="reservedQuantity"
                   name="reservedQuantity"
@@ -60,7 +63,7 @@ export default function EditInventoryPage({ item }: { item: Inventory }) {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="lowStockThreshold">Low stock threshold</Label>
+                <Label htmlFor="lowStockThreshold">Umbral de stock bajo</Label>
                 <Input
                   id="lowStockThreshold"
                   name="lowStockThreshold"
@@ -73,13 +76,13 @@ export default function EditInventoryPage({ item }: { item: Inventory }) {
         </Card>
         <div className="flex gap-4">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save changes'}
+            {isSubmitting ? 'Guardando…' : 'Guardar cambios'}
           </Button>
           <Button type="button" variant="outline" onClick={() => router.back()}>
-            Cancel
+            Cancelar
           </Button>
         </div>
       </form>
-    </div>
+    </AnimatedPageShell>
   );
 }

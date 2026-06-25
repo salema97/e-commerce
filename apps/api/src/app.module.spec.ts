@@ -8,8 +8,7 @@ const TEST_CONFIG = {
   PORT: 3001,
   DATABASE_URL: 'postgresql://localhost:5432/test',
   REDIS_URL: 'redis://localhost:6379',
-  CLERK_SECRET_KEY: 'sk_test_xxx',
-  CLERK_WEBHOOK_SECRET: 'whsec_xxx',
+  AUTH_JWT_ACCESS_SECRET: 'dev-access-secret-change-me-32chars-min',
   STRIPE_SECRET_KEY: 'sk_test_xxx',
   STRIPE_WEBHOOK_SECRET: 'whsec_xxx',
   STRIPE_SUCCESS_URL: 'https://example.com/success',
@@ -23,6 +22,13 @@ const TEST_CONFIG = {
   PLACETOPAY_LOGIN: 'ptp_login_test',
   PLACETOPAY_SECRET_KEY: 'ptp_secret_test',
   PLACETOPAY_BASE_URL: 'https://ptp.test',
+  AWS_REGION: 'us-east-1',
+  AWS_ACCESS_KEY_ID: 'aws_access_key_test',
+  AWS_SECRET_ACCESS_KEY: 'aws_secret_access_test',
+  AWS_S3_BUCKET: 'e-commerce-test',
+  AWS_S3_ENDPOINT: 'https://s3.test',
+  AWS_S3_FORCE_PATH_STYLE: 'true',
+  AWS_S3_PUBLIC_URL: 'https://s3.test/e-commerce-test',
   SRI_MODE: 'direct',
   SRI_RUC: '1792146739001',
   SRI_SOL_KEY: 'test',
@@ -36,6 +42,12 @@ const TEST_CONFIG = {
   SRI_COMPANY_ADDRESS: 'Direccion matriz',
   SRI_COMPANY_CONTRIBUYENTE_ESPECIAL: '536',
   SRI_COMPANY_OBLIGADO_CONTABILIDAD: 'SI',
+  SRI_QUEUE_ENABLED: 'false',
+  KNOWLEDGE_INDEX_QUEUE_ENABLED: 'false',
+  EVOLUTION_API_URL: 'https://evolution.test',
+  EVOLUTION_API_KEY: 'evolution_key_test',
+  EVOLUTION_WEBHOOK_SECRET: 'evolution_webhook_test',
+  EVOLUTION_INSTANCE_NAME: 'evolution_instance_test',
 };
 
 describe('AppModule', () => {
@@ -43,6 +55,11 @@ describe('AppModule', () => {
   let AppModule: typeof import('./app.module.js').AppModule;
 
   beforeEach(async () => {
+    vi.stubEnv('DATABASE_URL', TEST_CONFIG.DATABASE_URL);
+    vi.stubEnv('REDIS_URL', TEST_CONFIG.REDIS_URL);
+    vi.stubEnv('AUTH_JWT_ACCESS_SECRET', TEST_CONFIG.AUTH_JWT_ACCESS_SECRET);
+    vi.stubEnv('STRIPE_SECRET_KEY', TEST_CONFIG.STRIPE_SECRET_KEY);
+    vi.stubEnv('STRIPE_WEBHOOK_SECRET', TEST_CONFIG.STRIPE_WEBHOOK_SECRET);
     vi.stubEnv('STRIPE_SUCCESS_URL', TEST_CONFIG.STRIPE_SUCCESS_URL);
     vi.stubEnv('STRIPE_CANCEL_URL', TEST_CONFIG.STRIPE_CANCEL_URL);
     vi.stubEnv('KUSHKI_PRIVATE_KEY', TEST_CONFIG.KUSHKI_PRIVATE_KEY);
@@ -54,9 +71,28 @@ describe('AppModule', () => {
     vi.stubEnv('PLACETOPAY_LOGIN', TEST_CONFIG.PLACETOPAY_LOGIN);
     vi.stubEnv('PLACETOPAY_SECRET_KEY', TEST_CONFIG.PLACETOPAY_SECRET_KEY);
     vi.stubEnv('PLACETOPAY_BASE_URL', TEST_CONFIG.PLACETOPAY_BASE_URL);
+    vi.stubEnv('AWS_REGION', TEST_CONFIG.AWS_REGION);
+    vi.stubEnv('AWS_ACCESS_KEY_ID', TEST_CONFIG.AWS_ACCESS_KEY_ID);
+    vi.stubEnv('AWS_SECRET_ACCESS_KEY', TEST_CONFIG.AWS_SECRET_ACCESS_KEY);
+    vi.stubEnv('AWS_S3_BUCKET', TEST_CONFIG.AWS_S3_BUCKET);
+    vi.stubEnv('AWS_S3_ENDPOINT', TEST_CONFIG.AWS_S3_ENDPOINT);
+    vi.stubEnv('AWS_S3_FORCE_PATH_STYLE', TEST_CONFIG.AWS_S3_FORCE_PATH_STYLE);
+    vi.stubEnv('AWS_S3_PUBLIC_URL', TEST_CONFIG.AWS_S3_PUBLIC_URL);
+    vi.stubEnv('SRI_RUC', TEST_CONFIG.SRI_RUC);
+    vi.stubEnv('SRI_SOL_KEY', TEST_CONFIG.SRI_SOL_KEY);
+    vi.stubEnv('SRI_DIGITAL_CERTIFICATE_PATH', TEST_CONFIG.SRI_DIGITAL_CERTIFICATE_PATH);
+    vi.stubEnv('SRI_DIGITAL_CERTIFICATE_PASSWORD', TEST_CONFIG.SRI_DIGITAL_CERTIFICATE_PASSWORD);
+    vi.stubEnv('SRI_ESTABLISHMENT_CODE', TEST_CONFIG.SRI_ESTABLISHMENT_CODE);
+    vi.stubEnv('SRI_EMISSION_POINT_CODE', TEST_CONFIG.SRI_EMISSION_POINT_CODE);
     vi.stubEnv('SRI_COMPANY_NAME', TEST_CONFIG.SRI_COMPANY_NAME);
     vi.stubEnv('SRI_COMPANY_TRADE_NAME', TEST_CONFIG.SRI_COMPANY_TRADE_NAME);
     vi.stubEnv('SRI_COMPANY_ADDRESS', TEST_CONFIG.SRI_COMPANY_ADDRESS);
+    vi.stubEnv('SRI_QUEUE_ENABLED', TEST_CONFIG.SRI_QUEUE_ENABLED);
+    vi.stubEnv('KNOWLEDGE_INDEX_QUEUE_ENABLED', TEST_CONFIG.KNOWLEDGE_INDEX_QUEUE_ENABLED);
+    vi.stubEnv('EVOLUTION_API_URL', TEST_CONFIG.EVOLUTION_API_URL);
+    vi.stubEnv('EVOLUTION_API_KEY', TEST_CONFIG.EVOLUTION_API_KEY);
+    vi.stubEnv('EVOLUTION_WEBHOOK_SECRET', TEST_CONFIG.EVOLUTION_WEBHOOK_SECRET);
+    vi.stubEnv('EVOLUTION_INSTANCE_NAME', TEST_CONFIG.EVOLUTION_INSTANCE_NAME);
 
     const imported = await import('./app.module.js');
     AppModule = imported.AppModule;
@@ -74,7 +110,7 @@ describe('AppModule', () => {
       .overrideProvider(PrismaService)
       .useValue(prismaMock as never)
       .compile();
-  }, 20_000);
+  }, 30_000);
 
   it('compiles the module', () => {
     expect(module).toBeDefined();

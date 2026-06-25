@@ -14,18 +14,18 @@ export class NotificationPreferencesController {
   @Get('preferences')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get notification consent preferences for the current user' })
-  getPreferences(@CurrentUser('userId') clerkUserId: string) {
-    return this.preferencesService.getByClerkUserId(clerkUserId);
+  getPreferences(@CurrentUser('userId') userId: string) {
+    return this.preferencesService.getByUserId(userId);
   }
 
   @Patch('preferences')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update notification consent preferences' })
   updatePreferences(
-    @CurrentUser('userId') clerkUserId: string,
+    @CurrentUser('userId') userId: string,
     @Body() dto: UpdateNotificationPreferencesDto,
   ) {
-    return this.preferencesService.updateByClerkUserId(clerkUserId, dto);
+    return this.preferencesService.updateByUserId(userId, dto);
   }
 
   @Get('unsubscribe')

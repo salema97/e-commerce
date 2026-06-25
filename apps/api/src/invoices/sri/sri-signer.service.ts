@@ -4,10 +4,10 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import * as forge from 'node-forge';
-import { DOMParser } from '@xmldom/xmldom';
+import { DOMParser, XMLSerializer } from '@xmldom/xmldom';
 import * as XmlDSigJs from 'xmldsigjs';
 import crypto from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 
 const DSIG_NAMESPACE = 'http://www.w3.org/2000/09/xmldsig#';
 const XADES_NAMESPACE = 'http://uri.etsi.org/01903/v1.3.2#';
@@ -41,12 +41,12 @@ export class SriSignerService {
    * Data URIs are useful in tests; production certificates are read from the
    * path configured in SRI_DIGITAL_CERTIFICATE_PATH.
    */
-  loadCertificateFileAsBuffer(path: string): Buffer {
+  async loadCertificateFileAsBuffer(path: string): Promise<Buffer> {
     if (path.startsWith('data:')) {
       const base64 = path.split(',')[1] ?? '';
       return Buffer.from(base64, 'base64');
     }
-    return readFileSync(path);
+    return await readFile(path);
   }
 
   /**
@@ -508,19 +508,18 @@ ${xadesObjectXml}
     doc: ReturnType<DOMParser['parseFromString']>,
   ): ReturnType<DOMParser['parseFromString']> | null {
     const signature = this.findElement(doc, 'Signature');
-    if (!signature?.parentNode) {
+    if (!signature) {
       return doc;
     }
 
-    // Remove trailing whitespace text node left by the signature insertion
-    // so the canonicalized document matches the original pre-signature XML.
-    const nextSibling = signature.nextSibling;
-    if (nextSibling?.nodeType === 3 && /^\s*$/.test(nextSibling.nodeValue ?? '')) {
-      signature.parentNode.removeChild(nextSibling);
-    }
+    const serializer = new XMLSerializer();
+    const xml = serializer.serializeToString(doc);
+    const unsignedXml = xml.replace(
+      /<(?:\w+:)?Signature\b[^>]*>[\s\S]*?<\/(?:\w+:)?Signature>\s*/g,
+      '',
+    );
 
-    signature.parentNode.removeChild(signature);
-    return doc;
+    return new DOMParser().parseFromString(unsignedXml, 'text/xml');
   }
 
   private getCertificateDer(certificate: forge.pki.Certificate): Buffer {

@@ -9,18 +9,9 @@ import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { WhatsAppProvider } from '../src/whatsapp/whatsapp-provider.interface.js';
 import { RedisIdempotencyService } from '../src/common/redis/idempotency.service.js';
+import { BASE_TEST_CONFIG, bearerAuth } from './test-config.js';
 
 const TEST_WEBHOOK_SECRET = 'whsec_evolution_test';
-
-vi.mock('@clerk/backend', async () => ({
-  ...(await vi.importActual('@clerk/backend') as object),
-  verifyToken: vi.fn(() =>
-    Promise.resolve({
-      sub: 'support_agent_1',
-      public_metadata: { role: 'SUPPORT' },
-    }),
-  ),
-}));
 
 function signEvolutionWebhook(payload: object): { signature: string; body: string } {
   const body = JSON.stringify(payload);
@@ -118,14 +109,7 @@ describe('WhatsApp integration (e2e)', () => {
     idempotencyClaim = vi.fn().mockResolvedValue(true);
 
     const configMock = new ConfigService({
-      NODE_ENV: 'test',
-      PORT: 3001,
-      DATABASE_URL: 'postgresql://localhost:5432/test',
-      REDIS_URL: 'redis://localhost:6379',
-      CLERK_SECRET_KEY: 'sk_test_xxx',
-      CLERK_WEBHOOK_SECRET: 'whsec_xxx',
-      STRIPE_SECRET_KEY: 'sk_test_xxx',
-      STRIPE_WEBHOOK_SECRET: 'whsec_xxx',
+      ...BASE_TEST_CONFIG,
       EVOLUTION_API_URL: 'http://localhost:8080',
       EVOLUTION_API_KEY: 'evolution-test-key',
       EVOLUTION_WEBHOOK_SECRET: TEST_WEBHOOK_SECRET,
@@ -250,7 +234,7 @@ describe('WhatsApp integration (e2e)', () => {
 
     const res = await request(app.getHttpServer())
       .post('/v1/conversations/c1/messages')
-      .set('Authorization', 'Bearer token')
+      .set(bearerAuth('support_agent_1', 'SUPPORT'))
       .send({ content: 'Gracias por contactarnos' })
       .expect(201);
 
@@ -266,7 +250,7 @@ describe('WhatsApp integration (e2e)', () => {
 
     const res = await request(app.getHttpServer())
       .post('/v1/conversations/c1/messages')
-      .set('Authorization', 'Bearer token')
+      .set(bearerAuth('support_agent_1', 'SUPPORT'))
       .send({ content: 'Mensaje que falla' })
       .expect(201);
 
@@ -283,7 +267,7 @@ describe('WhatsApp integration (e2e)', () => {
 
     const res = await request(app.getHttpServer())
       .patch('/v1/conversations/c1')
-      .set('Authorization', 'Bearer token')
+      .set(bearerAuth('support_agent_1', 'SUPPORT'))
       .send({ status: 'RESOLVED', assignedAgentId: 'support_agent_1' })
       .expect(200);
 

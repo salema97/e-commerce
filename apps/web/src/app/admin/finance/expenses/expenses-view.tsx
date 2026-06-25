@@ -1,0 +1,207 @@
+'use client';
+
+import * as React from 'react';
+import { useApiQueryHooks, useAuthApiReady } from '@/lib/client-api';
+import { AdminPageHeader } from '@/components/admin/admin-page-header';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { FormSelect } from '@/components/ui/form-select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { formatDateTime, expenseStatusLabel, formatPrice } from '@repo/shared-utils';
+import type { Expense, ExpenseCategory, ExpenseStatus } from '@repo/shared-types';
+
+export function ExpensesView({
+  initialExpenses,
+  initialCategories,
+}: {
+  initialExpenses: Expense[];
+  initialCategories: ExpenseCategory[];
+}) {
+  const hooks = useApiQueryHooks();
+  const authReady = useAuthApiReady();
+  const [amount, setAmount] = React.useState('');
+  const [description, setDescription] = React.useState('');
+  const [categoryId, setCategoryId] = React.useState<string>('');
+  const [status, setStatus] = React.useState<ExpenseStatus>('PENDING');
+
+  const { data: categories } = hooks.useFinanceExpenseCategories({
+    initialData: initialCategories,
+    enabled: authReady,
+  });
+
+  const { data: expenses } = hooks.useFinanceExpenses(
+    { limit: 50 },
+    {
+      initialData: initialExpenses,
+      enabled: authReady,
+    },
+  );
+
+  const createMutation = hooks.useCreateFinanceExpense({
+    onSuccess: () => {
+      setAmount('');
+      setDescription('');
+    },
+  });
+
+  const uploadReceiptMutation = hooks.useUploadExpenseReceipt();
+
+  async function handleReceiptUpload(expenseId: string, file: File): Promise<void> {
+    const arrayBuffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = '';
+    for (let index = 0; index < bytes.length; index += 1) {
+      binary += String.fromCharCode(bytes[index] ?? 0);
+    }
+    await uploadReceiptMutation.mutateAsync({
+      expenseId,
+      data: {
+        fileName: file.name,
+        contentBase64: btoa(binary),
+        contentType: file.type || 'application/octet-stream',
+      },
+    });
+  }
+
+  const categoryMap = React.useMemo(() => {
+    const map = new Map<string, string>();
+    for (const category of categories ?? []) {
+      map.set(category.id, category.name);
+    }
+    return map;
+  }, [categories]);
+
+  function handleCreateExpense(): void {
+    if (!amount || Number(amount) <= 0) return;
+    createMutation.mutate({
+      amount: Number(amount),
+      description: description || undefined,
+      categoryId: categoryId || undefined,
+      status,
+    });
+  }
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
+      <AdminPageHeader
+        title="Gastos"
+        subtitle="Finanzas / Gastos"
+        showNetworkStatus={false}
+      />
+
+      <div className="neo-panel grid gap-4 p-4 md:grid-cols-4">
+        <div className="space-y-2">
+          <Label htmlFor="amount">Monto</Label>
+          <Input
+            id="amount"
+            type="number"
+            min="0.01"
+            step="0.01"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="category">Categoría</Label>
+          <FormSelect
+            id="category"
+            value={categoryId}
+            onValueChange={setCategoryId}
+            placeholder="Opcional"
+            options={[
+              { value: '', label: 'Opcional' },
+              ...(categories ?? []).map((category: ExpenseCategory) => ({
+                value: category.id,
+                label: category.name,
+              })),
+            ]}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="status">Estado</Label>
+          <FormSelect
+            id="status"
+            value={status}
+            onValueChange={(value) => setStatus(value as ExpenseStatus)}
+            options={[
+              { value: 'PENDING', label: expenseStatusLabel('PENDING') },
+              { value: 'PAID', label: expenseStatusLabel('PAID') },
+              { value: 'CANCELLED', label: expenseStatusLabel('CANCELLED') },
+            ]}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="description">Descripción</Label>
+          <Input
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+        <div className="md:col-span-4">
+          <Button type="button" disabled={createMutation.isPending} onClick={handleCreateExpense}>
+            Registrar gasto
+          </Button>
+        </div>
+      </div>
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Fecha</TableHead>
+            <TableHead>Categoría</TableHead>
+            <TableHead>Estado</TableHead>
+            <TableHead>Monto</TableHead>
+            <TableHead>Descripción</TableHead>
+            <TableHead>Adjuntos</TableHead>
+            <TableHead>Recibo</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {(expenses ?? []).map((expense: Expense) => (
+            <TableRow key={expense.id}>
+              <TableCell>{formatDateTime(expense.date)}</TableCell>
+              <TableCell>
+                {expense.categoryId
+                  ? (categoryMap.get(expense.categoryId) ?? expense.categoryId)
+                  : '—'}
+              </TableCell>
+              <TableCell>{expenseStatusLabel(expense.status)}</TableCell>
+              <TableCell>{formatPrice(expense.amount)}</TableCell>
+              <TableCell className="text-muted-foreground">
+                {expense.description ?? '—'}
+              </TableCell>
+              <TableCell>{expense.attachmentKeys?.length ?? 0}</TableCell>
+              <TableCell>
+                <label className="cursor-pointer text-xs font-bold uppercase underline">
+                  Subir
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    className="sr-only"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) {
+                        void handleReceiptUpload(expense.id, file);
+                      }
+                      event.target.value = '';
+                    }}
+                  />
+                </label>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}

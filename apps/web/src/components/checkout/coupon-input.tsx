@@ -26,7 +26,7 @@ export function CouponInput({ couponCode, onCouponCodeChange }: CouponInputProps
 
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor="couponCode">Coupon code</Label>
+      <Label htmlFor="couponCode">Código de cupón</Label>
       <div className="flex gap-2">
         <Input
           id="couponCode"
@@ -35,12 +35,12 @@ export function CouponInput({ couponCode, onCouponCodeChange }: CouponInputProps
             onCouponCodeChange(e.target.value);
             if (applied) setApplied(false);
           }}
-          placeholder="Enter coupon code"
+          placeholder="Ingresa el código de cupón"
           disabled={applied}
         />
         {applied ? (
           <Button type="button" variant="outline" onClick={handleRemove}>
-            Remove
+            Eliminar
           </Button>
         ) : (
           <Button
@@ -49,13 +49,13 @@ export function CouponInput({ couponCode, onCouponCodeChange }: CouponInputProps
             onClick={handleApply}
             disabled={!couponCode.trim()}
           >
-            Apply
+            Aplicar
           </Button>
         )}
       </div>
       {applied ? (
         <p className="text-sm text-muted-foreground">
-          Coupon &quot;{couponCode}&quot; will be validated at checkout.
+          El cupón &quot;{couponCode}&quot; se validará al finalizar la compra.
         </p>
       ) : null}
     </div>

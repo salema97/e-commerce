@@ -103,9 +103,8 @@ describe('ConversationDetail', () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText(/Estado de la conversación/i), {
-      target: { value: 'RESOLVED' },
-    });
+    fireEvent.click(screen.getByRole('combobox', { name: /Estado de la conversación/i }));
+    fireEvent.click(screen.getByRole('option', { name: /Resuelto/i }));
 
     expect(onUpdateConversation).toHaveBeenCalledWith({ status: 'RESOLVED' });
   });
@@ -122,9 +121,8 @@ describe('ConversationDetail', () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText(/Respuestas rápidas/i), {
-      target: { value: 'greeting' },
-    });
+    fireEvent.click(screen.getByRole('combobox', { name: /Respuestas rápidas/i }));
+    fireEvent.click(screen.getByRole('option', { name: /Saludo/i }));
 
     expect(screen.getByDisplayValue('Hola, ¿cómo estás?')).toBeInTheDocument();
   });
@@ -145,12 +143,11 @@ describe('ConversationDetail', () => {
     expect(screen.getByRole('button', { name: /Enviando/i })).toBeDisabled();
   });
 
-  it('shows loading skeleton when messages are loading', () => {
+  it('shows empty state when there are no messages', () => {
     render(
       <ConversationDetail
         conversation={makeConversation()}
         messages={[]}
-        isLoadingMessages
         quickReplies={[]}
         currentUserId="u1"
         onSendMessage={vi.fn()}
@@ -158,6 +155,6 @@ describe('ConversationDetail', () => {
       />,
     );
 
-    expect(document.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
+    expect(screen.getByText(/No hay mensajes aún/i)).toBeInTheDocument();
   });
 });

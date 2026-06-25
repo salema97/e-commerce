@@ -3,15 +3,16 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Select } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { FormSelect } from '@/components/ui/form-select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
 import { useApiClient } from '@/lib/client-api';
 import { formatPrice, orderStatusLabel } from '@repo/shared-utils';
-import type { Order, OrderStatus } from '@repo/shared-types';
+import type { Order, OrderStatus, Shipment } from '@repo/shared-types';
 import { RefundPanel } from './refund-panel';
 import { ShipmentPanel } from './shipment-panel';
 
@@ -28,7 +29,13 @@ const ORDER_STATUSES: OrderStatus[] = [
   'PARTIALLY_REFUNDED',
 ];
 
-export default function AdminOrderDetailPage({ order }: { order: Order }) {
+export default function AdminOrderDetailPage({
+  order,
+  initialShipments,
+}: {
+  order: Order;
+  initialShipments: Shipment[];
+}) {
   const router = useRouter();
   const api = useApiClient();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -49,17 +56,21 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Order {order.orderNumber}</h1>
-        <Badge variant="outline">{orderStatusLabel(order.status)}</Badge>
-      </div>
-
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Pedido {order.orderNumber}</h1>
+          <Badge variant="outline">{orderStatusLabel(order.status)}</Badge>
+        </div>
+      }
+    >
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <Card>
+          <NeoReveal>
+            <Card>
             <CardHeader>
-              <CardTitle>Items</CardTitle>
+              <CardTitle>Artículos</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               {order.items.map((item) => (
@@ -70,7 +81,7 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
                   <div>
                     <p className="font-medium">{item.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      SKU: {item.sku} · Qty: {item.quantity}
+                      SKU: {item.sku} · Cantidad: {item.quantity}
                     </p>
                   </div>
                   <span className="font-semibold">
@@ -80,12 +91,14 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
               ))}
             </CardContent>
           </Card>
+          </NeoReveal>
         </div>
 
         <div className="flex flex-col gap-6">
-          <Card>
+          <NeoReveal delay={0.04}>
+            <Card>
             <CardHeader>
-              <CardTitle>Summary</CardTitle>
+              <CardTitle>Resumen</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
               <div className="flex justify-between text-sm">
@@ -94,16 +107,16 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
               </div>
               {Number(order.discountAmount) > 0 ? (
                 <div className="flex justify-between text-sm text-green-600">
-                  <span>Discount{order.couponCode ? ` (${order.couponCode})` : null}</span>
+                  <span>Descuento{order.couponCode ? ` (${order.couponCode})` : null}</span>
                   <span>-{formatPrice(order.discountAmount)}</span>
                 </div>
               ) : null}
               <div className="flex justify-between text-sm">
-                <span>Tax</span>
+                <span>IVA</span>
                 <span>{formatPrice(order.taxAmount)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Shipping</span>
+                <span>Envío</span>
                 <span>{formatPrice(order.shippingAmount)}</span>
               </div>
               <Separator />
@@ -113,39 +126,44 @@ export default function AdminOrderDetailPage({ order }: { order: Order }) {
               </div>
             </CardContent>
           </Card>
+          </NeoReveal>
 
           <RefundPanel order={order} />
 
-          <ShipmentPanel orderId={order.id} />
+          <ShipmentPanel orderId={order.id} initialShipments={initialShipments} />
 
-          <Card>
+          <NeoReveal delay={0.08}>
+            <Card>
             <CardHeader>
-              <CardTitle>Update Status</CardTitle>
+              <CardTitle>Actualizar estado</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleStatusUpdate} className="flex flex-col gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select id="status" name="status" defaultValue={order.status}>
-                    {ORDER_STATUSES.map((status) => (
-                      <option key={status} value={status}>
-                        {orderStatusLabel(status)}
-                      </option>
-                    ))}
-                  </Select>
+                  <Label htmlFor="status">Estado</Label>
+                  <FormSelect
+                    id="status"
+                    name="status"
+                    defaultValue={order.status}
+                    options={ORDER_STATUSES.map((status) => ({
+                      value: status,
+                      label: orderStatusLabel(status),
+                    }))}
+                  />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="notes">Notes</Label>
+                  <Label htmlFor="notes">Notas</Label>
                   <Textarea id="notes" name="notes" />
                 </div>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Updating...' : 'Update status'}
+                  {isSubmitting ? 'Actualizando…' : 'Actualizar estado'}
                 </Button>
               </form>
             </CardContent>
           </Card>
+          </NeoReveal>
         </div>
       </div>
-    </div>
+    </AnimatedPageShell>
   );
 }
