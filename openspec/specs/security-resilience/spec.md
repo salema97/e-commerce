@@ -18,6 +18,6 @@ Archived from change `4r-remediation` (2026-06-26).
 - Redis health uses PING.
 - Catalog falls back to Prisma when Meilisearch fails; Redis cache errors are non-fatal.
 
-## CI
+## Local verification
 
-- API e2e, shared-utils tests, vitest `forbidOnly` in CI.
+- Run `pnpm test`, `pnpm test:e2e`, and `pnpm typecheck` before releases.

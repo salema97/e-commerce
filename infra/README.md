@@ -25,4 +25,4 @@ docker run --env-file apps/api/.env -p 3001:3001 ecommerce-api:latest
 
 1. Conectar repo `apps/web` en Vercel.
 2. Variables: `CLERK_*`, `API_BASE_URL`, `NEXT_PUBLIC_*`.
-3. Deploy automático en push a `main` (workflow opcional en `.github/workflows/deploy-web.yml`).
+3. Deploy automático en push a `main` desde el dashboard de Vercel.

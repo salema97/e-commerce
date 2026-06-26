@@ -39,6 +39,6 @@ Health check MUST verify Redis connectivity via PING, not only env presence.
 
 Catalog browse MUST fall back to Prisma when Meilisearch errors at runtime. Redis cache failures MUST NOT fail the request.
 
-### REQ-CI-01 CI coverage
+### REQ-TEST-01 Local verification
 
-CI MUST run API e2e tests, shared-utils unit tests, and forbid `.only` in vitest when `CI=true`.
+Before release, developers MUST run `pnpm test`, `pnpm test:e2e`, and `pnpm typecheck` locally. The project does not use GitHub Actions or other CI pipelines.

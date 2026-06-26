@@ -539,7 +539,7 @@ Fases 8–10 cerraron con PRs encadenadas + UI closure; fase 11 con PR #5 + fixe
 
 | Gap | Estado | Nota |
 |-----|--------|------|
-| Core Web Vitals / Lighthouse CI | Pendiente | Optimización imágenes configurada; sin pipeline CI |
+| Core Web Vitals / Lighthouse | Pendiente | Optimización imágenes configurada; ejecutar Lighthouse localmente |
 | Sinónimos Meilisearch | API | Config en `meilisearch.service`; revisar en producción |
 
 ### Sprint G — Fase 14 (reviews / referrals / loyalty) ✅

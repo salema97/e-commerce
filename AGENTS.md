@@ -168,7 +168,6 @@ e-commerce/
 │   ├── shared-utils/         # Helpers, formatters, Zod schemas
 │   ├── shared-ui/            # Cross-platform UI primitives (react-native-web)
 │   └── api-client/           # Generated API client + React Query hooks
-├── .github/workflows/        # CI/CD
 ├── docker-compose.yml        # Postgres + Redis + Meilisearch + Evolution API for local dev
 ├── package.json
 ├── pnpm-workspace.yaml
@@ -250,7 +249,7 @@ pnpm test:e2e
 - Store mobile auth tokens in `expo-secure-store`, never AsyncStorage.
 - Never expose `STRIPE_SECRET_KEY`, `AUTH_JWT_ACCESS_SECRET`, `EVOLUTION_API_KEY`, `SRI_INTERMEDIARY_API_KEY`, `SRI_DIGITAL_CERTIFICATE_PASSWORD`, or webhook secrets to clients.
 - Use HTTPS/TLS everywhere; validate env secrets at boot with Zod.
-- Dependency scanning and automated security patches in CI.
+- Dependency scanning: run `pnpm audit` locally before releases.
 
 ## Compliance Notes
 
@@ -339,7 +338,6 @@ Introduce an `InvoiceProvider` port so the core e-commerce code does not depend 
 - API deploys as a Docker container or Node.js service; needs `DATABASE_URL` and `REDIS_URL`. Run migrations before starting new versions.
 - Mobile builds via EAS (Expo Application Services).
 - Evolution API deploys via Docker on a VPS or dedicated container service. Separate from the main API is recommended for production.
-- Use GitHub Actions with pnpm caching, affected targets (`--affected`), and path-filtered deploy workflows.
 - Use multi-stage Docker builds with `pnpm deploy --prod` for minimal production images.
 - Never copy `.env` files into Docker images.
 

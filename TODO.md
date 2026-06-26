@@ -58,8 +58,6 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [ ] Configure ESLint 9 flat config + Prettier + Husky + lint-staged.
 - [ ] Create `docker-compose.yml` with PostgreSQL, Redis, Meilisearch, and Evolution API.
 - [ ] Add root `.env.example` and per-app `.env.example` files.
-- [ ] Add GitHub Actions workflow: install, lint, typecheck, test, build on PR (with affected targets).
-- [ ] Add path-filtered deploy workflows for API, web, and mobile.
 
 ## Phase 1 — API Core (`apps/api`)
 
@@ -525,7 +523,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] Add Redis caching for hot catalog queries (`CATALOG_CACHE_TTL_SECONDS`).
 - [x] Catalog browse with Prisma fallback when Meilisearch unavailable.
 - [x] Add bundle analysis for web (`pnpm --filter @repo/web analyze`).
-- [ ] Core Web Vitals CI / Lighthouse pipeline — image config only for now.
+- [ ] Core Web Vitals / Lighthouse checks — image config only for now; run Lighthouse locally before releases.
 - [ ] Mobile bundle analysis — deferred.
 
 ## Phase 14 — Reviews, Referrals & Loyalty
@@ -620,7 +618,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] Fraud detection (Stripe Radar). *(guía `docs/ops/stripe-radar-mfa.md`)*
 - [x] Bot protection (reCAPTCHA Enterprise / hCaptcha) on public forms. *(hCaptcha opcional en checkout API)*
 - [x] Admin MFA enforcement. *(guía auth nativo + Stripe Radar en `docs/ops/stripe-radar-mfa.md`)*
-- [x] Dependency scanning and automated security patches in CI. *(pnpm audit en CI)*
+- [ ] Dependency scanning before releases (`pnpm audit --audit-level=high`).
 - [ ] Penetration test before public launch. *(pre-lanzamiento — checklist en ops docs)*
 
 ### 16.3 Production Readiness
@@ -628,11 +626,11 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] Environment-specific configs (dev/staging/prod). *(.env.staging.example / .env.production.example + APP_ENV)*
 - [x] Structured logging, monitoring, and alerting. *(pino + Sentry existentes; alertas en runbooks)*
 - [x] Database migration strategy for zero-downtime deploys. *(`docs/ops/zero-downtime-migrations.md`)*
-- [x] Deploy web to Vercel. *(workflow manual `deploy-web.yml` + guía infra)*
+- [x] Deploy web to Vercel. *(integración Git en dashboard Vercel + guía infra)*
 - [x] Deploy API to Railway/Render/Fly.io with Docker. *(Dockerfile + `infra/docker-compose.prod.yml`)*
 - [x] Deploy Evolution API to VPS/dedicated container service. *(`docs/ops/evolution-api-production.md`)*
 - [x] Configure EAS builds for mobile (dev + prod profiles). *(eas.json)*
-- [x] Run end-to-end smoke tests on staging. *(`e2e/smoke.spec.ts` + workflow `smoke.yml`)*
+- [x] Run end-to-end smoke tests on staging. *(`apps/web/e2e/smoke.spec.ts` — ejecutar local con Playwright)*
 - [x] Load test checkout, catalog, WhatsApp webhook, and SRI invoice endpoints. *(`scripts/load-test/smoke.mjs`)*
 - [x] Add CDN + caching strategy (Cloudflare + Redis) for static assets, product media, catalog, and search results. *(Redis catalog cache Fase 13; CDN config deferida)*
 - [x] Mobile app store compliance checklist: review policies, IAP rules for digital goods, location/notification permissions.

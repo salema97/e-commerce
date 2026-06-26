@@ -20,9 +20,7 @@ if (!authJwtSecret) {
 
 process.env.EVOLUTION_WEBHOOK_SECRET ??= E2E_EVOLUTION_WEBHOOK_SECRET;
 
-const forceFreshServer = process.env.PLAYWRIGHT_FORCE_FRESH_SERVER === '1';
-const reuseExistingServer =
-  !forceFreshServer && (!process.env.CI || process.env.PLAYWRIGHT_REUSE_EXISTING_SERVER === '1');
+const reuseExistingServer = process.env.PLAYWRIGHT_REUSE_EXISTING_SERVER !== '0';
 
 const e2eServerEnv = {
   AUTH_JWT_ACCESS_SECRET: authJwtSecret,
@@ -34,9 +32,8 @@ const e2eServerEnv = {
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
-  forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 2 : 1,
-  workers: process.env.PLAYWRIGHT_FORCE_FRESH_SERVER === '1' ? 2 : process.env.CI ? 1 : 4,
+  retries: 1,
+  workers: 4,
   reporter: 'list',
   use: {
     baseURL: `http://${E2E_HOST}:3000`,

@@ -33,12 +33,8 @@ En rutas duplicate (`payment.status === COMPLETED`), invocar `ensurePostPaymentS
 - `RedisThrottlerStorage` implementa `ThrottlerStorage` con INCR/PEXPIRE.
 - `RedisHealthIndicator` inyecta `RedisService` y ejecuta `PING`.
 
-## CI
-
-Ampliar `ci.yml`: shared-utils test, API e2e, vitest `forbidOnly` cuando `CI=true`.
-
 ## Deferido (P2+)
 
 - Split de monolitos (`hooks.ts`, seed, sri-queue).
 - Circuit breaker en Evolution (ya tiene retry exponencial; breaker genérico añadido como util reutilizable).
-- Playwright full en CI (requiere stack web+API; smoke sigue en workflow separado).
+- Playwright full suite local (`pnpm --filter @repo/web test:e2e`).
