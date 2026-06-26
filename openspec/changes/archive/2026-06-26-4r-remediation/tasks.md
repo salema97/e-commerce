@@ -14,9 +14,8 @@
 - [x] Catálogo: fallback Meili runtime + cache tolerante a fallos Redis
 - [x] `CircuitBreaker` util (base para integraciones externas)
 
-## P1 — CI / testing
+## P1 — Testing
 
-- [x] CI: `@repo/shared-utils test`, API e2e, vitest `forbidOnly` en CI
 - [x] Tests unitarios order-access, actualizar e2e orders
 - [x] Throttle en auth login/register/refresh
 - [x] Throttler storage Redis
@@ -27,18 +26,23 @@
 - [x] WMS webhooks: secret obligatorio en producción
 - [x] JWT web: token solo en httpOnly cookie + BFF `/api/v1/*` (sin accessToken en React state)
 - [x] Auth tests: login, refresh rotation, logout, register conflict
-- [x] Checkout E2E en CI (Playwright smoke + checkout.spec.ts)
 - [x] Mobile tests: vitest + checkout estimate spec
 - [x] Redis health PING
 - [x] Rate limit Redis storage
 - [x] Meilisearch runtime fallback
-- [x] IVA centralizado (`ECUADOR_IVA_RATE`) en marketplace/quotes/checkout
-- [x] Circuit breakers cableados (Evolution API via `resilientFetch`)
+- [x] IVA vía `TaxService` (marketplace, quotes, promotions) + `ECUADOR_IVA_RATE` en calculadora
+- [x] Circuit breakers cableados (Evolution, pagos locales, Stripe SDK, email, push, shipping, TaxJar, captcha)
+- [x] Mobile checkout: cotización envío API (`shipping.quote`)
 
-## Deferido (P2 legibilidad)
+## Removido (sin CI en el proyecto)
+
+- GitHub Actions workflows (`ci.yml`, `smoke.yml`, `deploy-web.yml`) eliminados por decisión del operador
+- Flags `process.env.CI` / `forbidOnly` / `PLAYWRIGHT_FORCE_FRESH_SERVER` retirados de configs de test
+
+## Deferido (P2 legibilidad / operacional)
 
 - [ ] Split `packages/api-client/src/hooks.ts`
 - [ ] Split `prisma/seed/index.ts` / `sri-queue.worker.ts`
-- [ ] Playwright E2E completo en CI job principal
 - [ ] React Doctor 100/100 web
 - [ ] JWT refresh en memoria móvil → secure-store audit
+- [ ] Rotación manual de secretos expuestos en historial git

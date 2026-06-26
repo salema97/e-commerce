@@ -25,11 +25,14 @@ Date: 2026-06-26
 - Circuit breaker en Evolution API
 - JWT web sin token en React state (BFF `/api/v1`)
 - Auth service tests
-- CI: API e2e, web/mobile unit, Playwright smoke+checkout
-- smoke.yml con Postgres/Redis/env
-- IVA DRY (marketplace, quotes, checkout helpers)
-- Mobile tests + deep-link types
+- IVA vía `TaxService.calculateStandardSubtotalTax` (marketplace, quotes, promotions)
+- Mobile checkout con `shipping.quote` API
+- Circuit breakers en todas las integraciones HTTP + Stripe SDK + Resend
 
-## Deferido (P2 legibilidad)
+## Sin CI (removido 2026-06-26)
 
-Monolitos (hooks.ts, seed, sri-queue), admin duplicado, React Doctor 100, Playwright suite completa (15 specs), rotación secretos históricos git.
+GitHub Actions y scripts/guards asociados eliminados. Verificación local: `pnpm test`, `pnpm test:e2e`, `pnpm typecheck`.
+
+## Deferido (P2 legibilidad / operacional)
+
+Monolitos (hooks.ts, seed, sri-queue), admin duplicado, React Doctor 100, rotación efectiva de secretos en proveedores (acción manual del operador).
