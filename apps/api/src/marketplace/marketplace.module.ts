@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from '../prisma/prisma.module.js';
 import { InventoryModule } from '../inventory/inventory.module.js';
+import { TaxModule } from '../tax/tax.module.js';
 import { MarketplaceController } from './marketplace.controller.js';
 import { MarketplaceService } from './marketplace.service.js';
 import { MarketplaceChannelFactory } from './marketplace.factory.js';
@@ -9,7 +10,7 @@ import { ConsoleMarketplaceAdapter } from './console-marketplace.adapter.js';
 import { MercadoLibreMarketplaceAdapter } from './mercado-libre-marketplace.adapter.js';
 
 @Module({
-  imports: [ConfigModule, PrismaModule, InventoryModule],
+  imports: [ConfigModule, PrismaModule, InventoryModule, TaxModule],
   controllers: [MarketplaceController],
   providers: [
     MarketplaceService,

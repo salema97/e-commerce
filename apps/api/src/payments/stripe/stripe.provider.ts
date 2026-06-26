@@ -13,11 +13,13 @@ import {
   PaymentStatus,
   RefundStatus,
 } from '../public-api.js';
+import { getCircuitBreaker } from '../../common/resilience/resilient-fetch.js';
 
 @Injectable()
 export class StripeProvider extends PaymentProvider {
   private readonly stripe: Stripe;
   private readonly configService: ConfigService;
+  private readonly stripeBreaker = getCircuitBreaker('payments.stripe');
 
   constructor(configService: ConfigService) {
     super();
@@ -30,21 +32,23 @@ export class StripeProvider extends PaymentProvider {
   async createPaymentIntent(
     order: CreatePaymentIntentOptions,
   ): Promise<PaymentIntentResult> {
-    const paymentIntent = await this.stripe.paymentIntents.create(
-      {
-        amount: order.amount,
-        currency: order.currency.toLowerCase(),
-        receipt_email: order.customerEmail,
-        customer: order.customerId,
-        metadata: {
-          orderId: order.orderId,
-          orderNumber: order.orderNumber,
-          ...order.metadata,
+    const paymentIntent = await this.withStripe(() =>
+      this.stripe.paymentIntents.create(
+        {
+          amount: order.amount,
+          currency: order.currency.toLowerCase(),
+          receipt_email: order.customerEmail,
+          customer: order.customerId,
+          metadata: {
+            orderId: order.orderId,
+            orderNumber: order.orderNumber,
+            ...order.metadata,
+          },
         },
-      },
-      {
-        idempotencyKey: order.idempotencyKey,
-      },
+        {
+          idempotencyKey: order.idempotencyKey,
+        },
+      ),
     );
 
     return {
@@ -55,34 +59,36 @@ export class StripeProvider extends PaymentProvider {
   }
 
   async createCheckoutSession(order: PaymentOrder): Promise<CheckoutSessionResult> {
-    const session = await this.stripe.checkout.sessions.create(
-      {
-        mode: 'payment',
-        line_items: [
-          {
-            price_data: {
-              currency: order.currency.toLowerCase(),
-              product_data: {
-                name: `Order ${order.orderNumber}`,
+    const session = await this.withStripe(() =>
+      this.stripe.checkout.sessions.create(
+        {
+          mode: 'payment',
+          line_items: [
+            {
+              price_data: {
+                currency: order.currency.toLowerCase(),
+                product_data: {
+                  name: `Order ${order.orderNumber}`,
+                },
+                unit_amount: order.amount,
               },
-              unit_amount: order.amount,
+              quantity: 1,
             },
-            quantity: 1,
+          ],
+          customer: order.customerId,
+          customer_email: order.customerId ? undefined : order.customerEmail,
+          metadata: {
+            orderId: order.orderId,
+            orderNumber: order.orderNumber,
+            ...order.metadata,
           },
-        ],
-        customer: order.customerId,
-        customer_email: order.customerId ? undefined : order.customerEmail,
-        metadata: {
-          orderId: order.orderId,
-          orderNumber: order.orderNumber,
-          ...order.metadata,
+          success_url: this.configService.getOrThrow<string>('STRIPE_SUCCESS_URL'),
+          cancel_url: this.configService.getOrThrow<string>('STRIPE_CANCEL_URL'),
         },
-        success_url: this.configService.getOrThrow<string>('STRIPE_SUCCESS_URL'),
-        cancel_url: this.configService.getOrThrow<string>('STRIPE_CANCEL_URL'),
-      },
-      {
-        idempotencyKey: `checkout-${order.orderId}`,
-      },
+        {
+          idempotencyKey: `checkout-${order.orderId}`,
+        },
+      ),
     );
 
     if (!session.url) {
@@ -96,11 +102,13 @@ export class StripeProvider extends PaymentProvider {
   }
 
   async capturePayment(externalId: string): Promise<void> {
-    await this.stripe.paymentIntents.capture(externalId);
+    await this.withStripe(() => this.stripe.paymentIntents.capture(externalId));
   }
 
   async confirmPayment(externalId: string): Promise<PaymentResult> {
-    const paymentIntent = await this.stripe.paymentIntents.retrieve(externalId);
+    const paymentIntent = await this.withStripe(() =>
+      this.stripe.paymentIntents.retrieve(externalId),
+    );
 
     return {
       providerTransactionId: paymentIntent.id,
@@ -117,10 +125,12 @@ export class StripeProvider extends PaymentProvider {
       };
     }
 
-    const refund = await this.stripe.refunds.create({
-      payment_intent: paymentId,
-      amount,
-    });
+    const refund = await this.withStripe(() =>
+      this.stripe.refunds.create({
+        payment_intent: paymentId,
+        amount,
+      }),
+    );
 
     return {
       providerRefundId: refund.id,
@@ -159,6 +169,10 @@ export class StripeProvider extends PaymentProvider {
       status,
       metadata: event as Record<string, unknown>,
     });
+  }
+
+  private withStripe<T>(operation: () => Promise<T>): Promise<T> {
+    return this.stripeBreaker.execute(operation);
   }
 
   private mapPaymentIntentStatus(status: Stripe.PaymentIntent.Status): PaymentStatus {

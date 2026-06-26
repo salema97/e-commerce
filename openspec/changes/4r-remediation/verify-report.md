@@ -27,9 +27,12 @@ Date: 2026-06-26
 - Auth service tests
 - CI: API e2e, web/mobile unit, Playwright smoke+checkout
 - smoke.yml con Postgres/Redis/env
-- IVA DRY (marketplace, quotes, checkout helpers)
-- Mobile tests + deep-link types
+- IVA vía `TaxService.calculateStandardSubtotalTax` (marketplace, quotes, promotions)
+- Mobile checkout con `shipping.quote` API
+- Circuit breakers en todas las integraciones HTTP + Stripe SDK + Resend
+- CI: Playwright suite completa (6 specs) + guard contra `.env.local` trackeados
+- Script operacional `scripts/verify-no-tracked-secrets.sh`
 
-## Deferido (P2 legibilidad)
+## Deferido (P2 legibilidad / operacional)
 
-Monolitos (hooks.ts, seed, sri-queue), admin duplicado, React Doctor 100, Playwright suite completa (15 specs), rotación secretos históricos git.
+Monolitos (hooks.ts, seed, sri-queue), admin duplicado, React Doctor 100, rotación efectiva de secretos en proveedores (requiere acción manual del operador; ver script).

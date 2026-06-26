@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { TaxCategory } from '@prisma/client';
+import { ECUADOR_IVA_RATE } from '@repo/shared-utils';
 import {
   TaxCalculator,
   TaxableLine,
@@ -7,7 +8,7 @@ import {
 } from './tax-calculator.interface.js';
 
 const RATES: Record<TaxCategory, number> = {
-  STANDARD: 0.15,
+  STANDARD: ECUADOR_IVA_RATE,
   REDUCED: 0.05,
   ZERO: 0,
   EXEMPT: 0,

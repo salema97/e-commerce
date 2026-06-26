@@ -4,6 +4,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PromotionService } from './promotion.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { TaxService } from '../tax/tax.service.js';
 import { PromotionType } from '@prisma/client';
 
 function buildCoupon(overrides: Partial<{
@@ -59,8 +60,15 @@ describe('PromotionService', () => {
     prisma = {
       coupon: { findUnique: vi.fn(), update: vi.fn().mockResolvedValue({}) },
     };
+    const taxService = {
+      calculateStandardSubtotalTax: (subtotal: number) => Number((subtotal * 0.15).toFixed(2)),
+    };
     const module = await Test.createTestingModule({
-      providers: [PromotionService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        PromotionService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: TaxService, useValue: taxService },
+      ],
     }).compile();
     service = module.get(PromotionService);
   });

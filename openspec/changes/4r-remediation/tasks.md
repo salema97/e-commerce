@@ -32,13 +32,16 @@
 - [x] Redis health PING
 - [x] Rate limit Redis storage
 - [x] Meilisearch runtime fallback
-- [x] IVA centralizado (`ECUADOR_IVA_RATE`) en marketplace/quotes/checkout
-- [x] Circuit breakers cableados (Evolution API via `resilientFetch`)
+- [x] IVA vía `TaxService` (marketplace, quotes, promotions) + `ECUADOR_IVA_RATE` en calculadora
+- [x] Circuit breakers cableados (Evolution, pagos locales, Stripe SDK, email, push, shipping, TaxJar, captcha)
+- [x] Mobile checkout: cotización envío API (`shipping.quote`)
+- [x] Playwright suite completa en CI
+- [x] CI bloquea `.env.local` trackeados + script `scripts/verify-no-tracked-secrets.sh`
 
-## Deferido (P2 legibilidad)
+## Deferido (P2 legibilidad / operacional)
 
 - [ ] Split `packages/api-client/src/hooks.ts`
 - [ ] Split `prisma/seed/index.ts` / `sri-queue.worker.ts`
-- [ ] Playwright E2E completo en CI job principal
 - [ ] React Doctor 100/100 web
 - [ ] JWT refresh en memoria móvil → secure-store audit
+- [ ] Rotación manual de secretos expuestos en historial git (runbook en `scripts/verify-no-tracked-secrets.sh`)

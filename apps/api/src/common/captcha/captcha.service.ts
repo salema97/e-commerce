@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { resilientFetch } from '../resilience/resilient-fetch.js';
 
 @Injectable()
 export class CaptchaService {
@@ -25,7 +26,7 @@ export class CaptchaService {
     }
 
     const body = new URLSearchParams({ secret, response: token });
-    const res = await fetch('https://hcaptcha.com/siteverify', {
+    const res = await resilientFetch('captcha.hcaptcha', 'https://hcaptcha.com/siteverify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body,

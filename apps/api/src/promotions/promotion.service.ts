@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma, PromotionType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { TaxService } from '../tax/tax.service.js';
 
 export interface CartItemInput {
   productId: string;
@@ -32,7 +33,6 @@ export interface AppliedPromotion {
   freeShipping: boolean;
 }
 
-const ECUADOR_IVA_RATE = 0.15;
 const DECIMAL_PRECISION = 2;
 
 function round2(value: number): number {
@@ -43,7 +43,10 @@ function round2(value: number): number {
 export class PromotionService {
   private readonly logger = new Logger(PromotionService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly taxService: TaxService,
+  ) {}
 
   async validateCoupon(
     code: string,
@@ -174,7 +177,7 @@ export class PromotionService {
   ): Promise<OrderTotals> {
     const discountTotals = await this.computeDiscountTotals(items, couponCode);
     const taxableAmount = Math.max(0, discountTotals.subtotal - discountTotals.discount);
-    const taxAmount = round2(taxableAmount * ECUADOR_IVA_RATE);
+    const taxAmount = this.taxService.calculateStandardSubtotalTax(taxableAmount);
     const shipping = 0;
     const total = round2(
       discountTotals.subtotal - discountTotals.discount + taxAmount + shipping,

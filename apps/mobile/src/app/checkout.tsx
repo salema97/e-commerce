@@ -35,12 +35,48 @@ export default function CheckoutScreen(): React.ReactElement {
   const [referralCode, setReferralCode] = useState('');
   const [loyaltyPoints, setLoyaltyPoints] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [shippingAmount, setShippingAmount] = useState<number | null>(null);
 
   const createOrder = api.hooks.useCreateOrder();
   const createPaymentIntent = api.hooks.useCreatePaymentIntent();
   const { data: loyaltyAccount } = api.hooks.useLoyaltyAccount();
 
-  const { shipping, tax, total: estimatedTotal } = estimateCheckoutTotals(cartTotal);
+  const addressReady = Boolean(recipientName && street && city && country);
+
+  useEffect(() => {
+    if (!addressReady || items.length === 0) {
+      setShippingAmount(null);
+      return;
+    }
+
+    let cancelled = false;
+    void api.client.shipping
+      .quote({
+        country,
+        province: state || undefined,
+        subtotal: cartTotal,
+        freeShipping: false,
+      })
+      .then((quote) => {
+        if (!cancelled) {
+          setShippingAmount(quote.amount);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setShippingAmount(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [addressReady, cartTotal, country, items.length, state]);
+
+  const fallbackTotals = estimateCheckoutTotals(cartTotal);
+  const shipping = shippingAmount ?? fallbackTotals.shipping;
+  const tax = fallbackTotals.tax;
+  const estimatedTotal = Number((cartTotal + shipping + tax).toFixed(2));
 
   const error = createOrder.error?.message ?? createPaymentIntent.error?.message ?? null;
 
