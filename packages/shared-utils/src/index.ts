@@ -9,3 +9,4 @@ export * from './email-templates.js';
 export * from './cms-slugs.js';
 export * from './json-ld.js';
 export * from './commerce/constants.js';
+export * from './commerce/checkout-totals.js';

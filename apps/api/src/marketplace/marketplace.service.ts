@@ -10,6 +10,7 @@ import {
   OrderChannel,
   OrderStatus,
 } from '@prisma/client';
+import { ECUADOR_IVA_RATE } from '@repo/shared-utils';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { InventoryReservationService } from '../inventory/inventory-reservation.service.js';
 import { MarketplaceChannelFactory } from './marketplace.factory.js';
@@ -111,7 +112,7 @@ export class MarketplaceService {
     );
 
     const subtotal = dto.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const taxAmount = Number((subtotal * 0.15).toFixed(2));
+    const taxAmount = Number((subtotal * ECUADOR_IVA_RATE).toFixed(2));
     const shippingAmount = 0;
     const total = Number((subtotal + taxAmount + shippingAmount).toFixed(2));
 

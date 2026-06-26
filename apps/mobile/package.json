@@ -14,6 +14,7 @@
     "build": "expo export",
     "lint": "echo 'No lint configured'",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
     "clean": "rm -rf dist .turbo node_modules/.cache"
   },
   "dependencies": {
@@ -45,7 +46,8 @@
     "@types/react": "catalog:",
     "babel-preset-expo": "~56.0.15",
     "expo-doctor": "1.19.10",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "expo": {
     "install": {

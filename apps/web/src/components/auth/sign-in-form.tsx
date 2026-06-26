@@ -38,8 +38,8 @@ export function SignInForm() {
       return;
     }
 
-    const data = (await res.json()) as { user: AuthUser; accessToken: string };
-    setSession(data.user, data.accessToken);
+    const data = (await res.json()) as { user: AuthUser };
+    setSession(data.user);
 
     const redirect =
       searchParams.get('redirect_url') ?? getStaffPanelHome(data.user.role) ?? '/';

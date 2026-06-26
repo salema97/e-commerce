@@ -24,10 +24,7 @@ export async function proxyAuth(
   }
 
   const data = payload as AuthResponse;
-  const response = NextResponse.json({
-    user: data.user,
-    accessToken: data.tokens.accessToken,
-  });
+  const response = NextResponse.json({ user: data.user });
   response.cookies.set(ACCESS_TOKEN_COOKIE, data.tokens.accessToken, {
     ...cookieOptions,
     maxAge: data.tokens.expiresIn,

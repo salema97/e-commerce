@@ -6,6 +6,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { NetPaymentTerms, OrderChannel, OrderStatus, QuoteStatus } from '@prisma/client';
+import { ECUADOR_IVA_RATE } from '@repo/shared-utils';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { B2bPricingService } from '../b2b/b2b-pricing.service.js';
 import { OrdersService } from '../orders/orders.service.js';
@@ -60,7 +61,7 @@ export class QuotesService {
     );
 
     const subtotal = lines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0);
-    const taxAmount = Number((subtotal * 0.15).toFixed(2));
+    const taxAmount = Number((subtotal * ECUADOR_IVA_RATE).toFixed(2));
     const total = Number((subtotal + taxAmount).toFixed(2));
     const quoteNumber = `QT-${Date.now().toString(36).toUpperCase()}`;
 

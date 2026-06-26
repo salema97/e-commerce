@@ -22,11 +22,20 @@
 - [x] Throttler storage Redis
 - [x] Swagger solo non-production
 
-## P1 — DRY checkout
+## P1 — Alta prioridad
 
-- [x] Constantes comercio en `@repo/shared-utils`; mobile + web checkout
+- [x] WMS webhooks: secret obligatorio en producción
+- [x] JWT web: token solo en httpOnly cookie + BFF `/api/v1/*` (sin accessToken en React state)
+- [x] Auth tests: login, refresh rotation, logout, register conflict
+- [x] Checkout E2E en CI (Playwright smoke + checkout.spec.ts)
+- [x] Mobile tests: vitest + checkout estimate spec
+- [x] Redis health PING
+- [x] Rate limit Redis storage
+- [x] Meilisearch runtime fallback
+- [x] IVA centralizado (`ECUADOR_IVA_RATE`) en marketplace/quotes/checkout
+- [x] Circuit breakers cableados (Evolution API via `resilientFetch`)
 
-## Deferido
+## Deferido (P2 legibilidad)
 
 - [ ] Split `packages/api-client/src/hooks.ts`
 - [ ] Split `prisma/seed/index.ts` / `sri-queue.worker.ts`

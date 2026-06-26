@@ -69,8 +69,8 @@ export function SignUpForm() {
       return;
     }
 
-    const data = (await res.json()) as { user: AuthUser; accessToken: string };
-    setSession(data.user, data.accessToken);
+    const data = (await res.json()) as { user: AuthUser };
+    setSession(data.user);
 
     router.push('/');
     router.refresh();
