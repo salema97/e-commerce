@@ -50,16 +50,20 @@ export class CatalogService implements OnModuleInit {
 
   private async browseUncached(query: CatalogQueryDto): Promise<CatalogResponse> {
     const params = this.toSearchParams(query);
-    const meiliResult = await this.meilisearch.searchCatalog(params);
 
-    if (meiliResult) {
-      return {
-        items: meiliResult.hits.map((hit) => this.mapMeiliHit(hit)),
-        total: meiliResult.total,
-        page: meiliResult.page,
-        limit: meiliResult.limit,
-        facets: this.mapFacets(meiliResult.facets),
-      };
+    try {
+      const meiliResult = await this.meilisearch.searchCatalog(params);
+      if (meiliResult) {
+        return {
+          items: meiliResult.hits.map((hit) => this.mapMeiliHit(hit)),
+          total: meiliResult.total,
+          page: meiliResult.page,
+          limit: meiliResult.limit,
+          facets: this.mapFacets(meiliResult.facets),
+        };
+      }
+    } catch {
+      // Meilisearch unavailable at runtime — fall back to Prisma.
     }
 
     return this.browseWithPrisma(query);

@@ -14,3 +14,5 @@ process.env.SRI_COMPANY_TRADE_NAME = process.env.SRI_COMPANY_TRADE_NAME ?? 'E-co
 process.env.SRI_COMPANY_ADDRESS = process.env.SRI_COMPANY_ADDRESS ?? 'Direccion matriz';
 process.env.SRI_RECONCILIATION_CRON = process.env.SRI_RECONCILIATION_CRON ?? '0 * * * *';
 process.env.SRI_QUEUE_ENABLED = process.env.SRI_QUEUE_ENABLED ?? 'false';
+delete process.env.MEILI_HOST;
+delete process.env.MEILI_API_KEY;

@@ -81,7 +81,15 @@ export class MeilisearchService implements OnModuleInit {
       // Index may already exist.
     }
 
-    await this.applyIndexSettings();
+    try {
+      await this.applyIndexSettings();
+    } catch (error) {
+      this.logger.warn(
+        { error },
+        'Meilisearch settings sync failed; catalog will use Prisma fallback',
+      );
+      this.client = null;
+    }
   }
 
   get isEnabled(): boolean {

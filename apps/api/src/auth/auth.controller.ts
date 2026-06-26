@@ -7,6 +7,7 @@ import {
   Req,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { Public } from './public.decorator.js';
@@ -22,6 +23,7 @@ export class AuthController {
 
   @Public()
   @Post('register')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @ApiOperation({ summary: 'Register a new customer account' })
   @ApiResponse({ status: 201, description: 'Account created' })
   register(@Body() dto: RegisterDto, @Req() req: Request) {
@@ -30,6 +32,7 @@ export class AuthController {
 
   @Public()
   @Post('login')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @HttpCode(200)
   @ApiOperation({ summary: 'Login with email and password' })
   login(@Body() dto: LoginDto, @Req() req: Request) {
@@ -38,6 +41,7 @@ export class AuthController {
 
   @Public()
   @Post('refresh')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @HttpCode(200)
   @ApiOperation({ summary: 'Rotate refresh token and issue new access token' })
   refresh(@Body() body: { refreshToken?: string }, @Req() req: Request) {

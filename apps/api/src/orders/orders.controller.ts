@@ -6,6 +6,7 @@ import {
   Param,
   Body,
   Query,
+  Headers,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -19,7 +20,9 @@ import { OrdersService } from './orders.service.js';
 import { RefundService } from '../payments/refund.service.js';
 import { ReceiptService } from '../receipts/receipt.service.js';
 import { CreateOrderDto, UpdateOrderStatusDto } from './dto/create-order.dto.js';
+import { CancelOrderDto } from './dto/cancel-order.dto.js';
 import { ListOrdersQueryDto } from './dto/list-orders.query.dto.js';
+import { OrderAccessService } from './order-access.service.js';
 import { CreateRefundDto } from '../payments/public-api.js';
 
 @ApiTags('Orders')
@@ -29,6 +32,7 @@ export class OrdersController {
     private readonly ordersService: OrdersService,
     private readonly refundService: RefundService,
     private readonly receiptService: ReceiptService,
+    private readonly orderAccess: OrderAccessService,
   ) {}
 
   @Post()
@@ -67,9 +71,16 @@ export class OrdersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get an order by id' })
   @ApiResponse({ status: 200, description: 'Order found' })
+  @ApiResponse({ status: 401, description: 'Authentication required' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Order not found' })
-  getOrderById(@Param('id') id: string) {
-    return this.ordersService.getOrderById(id);
+  getOrderById(
+    @Param('id') id: string,
+    @Query('guestEmail') guestEmail: string | undefined,
+    @Headers('authorization') authorization?: string,
+  ) {
+    const context = this.orderAccess.buildContext(authorization, guestEmail);
+    return this.ordersService.getOrderById(id, context);
   }
 
   @Patch(':id/status')
@@ -106,12 +117,16 @@ export class OrdersController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @ApiOperation({ summary: 'Cancel an order' })
   @ApiResponse({ status: 200, description: 'Order cancelled' })
+  @ApiResponse({ status: 401, description: 'Authentication required' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
   @HttpCode(HttpStatus.OK)
   cancelOrder(
     @Param('id') id: string,
-    @CurrentUser('userId') userId?: string,
+    @Body() dto: CancelOrderDto,
+    @Headers('authorization') authorization?: string,
   ) {
-    return this.ordersService.cancelOrder(id, userId);
+    const context = this.orderAccess.buildContext(authorization, dto.guestEmail);
+    return this.ordersService.cancelOrder(id, context);
   }
 
   @Post(':id/refunds')

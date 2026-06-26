@@ -5,5 +5,6 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['test/**/*.e2e-spec.ts', 'test/**/*.integration-spec.ts'],
+    ...(process.env.CI ? { forbidOnly: true } : {}),
   },
 });

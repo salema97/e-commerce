@@ -5,6 +5,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['src/**/*.spec.ts', 'test/**/*.spec.ts'],
+    pool: 'forks',
+    ...(process.env.CI ? { forbidOnly: true } : {}),
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],

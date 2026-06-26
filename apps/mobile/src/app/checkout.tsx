@@ -7,14 +7,10 @@ import { NeoScreen } from '../components/neo-screen.js';
 import { NeoEnterFromBottom, NeoStaggeredItem } from '../components/neo-animated.js';
 import { api } from '../lib/api.js';
 import { useCart } from '../lib/cart.js';
-import { formatPrice } from '@repo/shared-utils';
+import { formatPrice, DEFAULT_FREE_SHIPPING_THRESHOLD, DEFAULT_SHIPPING_FLAT_RATE, ECUADOR_IVA_RATE } from '@repo/shared-utils';
 import type { OrderAddress, CreateOrderDto, CreatePaymentIntentDto } from '@repo/shared-types';
 import { trackMobileEvent } from '../lib/analytics.js';
 import { useAuth } from '../providers/AuthProvider.js';
-
-const FREE_SHIPPING_THRESHOLD = 50;
-const SHIPPING_FLAT_RATE = 5;
-const TAX_RATE = 0.15;
 
 export default function CheckoutScreen(): React.ReactElement {
   const router = useRouter();
@@ -44,8 +40,8 @@ export default function CheckoutScreen(): React.ReactElement {
   const createPaymentIntent = api.hooks.useCreatePaymentIntent();
   const { data: loyaltyAccount } = api.hooks.useLoyaltyAccount();
 
-  const shipping = cartTotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT_RATE;
-  const tax = cartTotal * TAX_RATE;
+  const shipping = cartTotal >= DEFAULT_FREE_SHIPPING_THRESHOLD ? 0 : DEFAULT_SHIPPING_FLAT_RATE;
+  const tax = cartTotal * ECUADOR_IVA_RATE;
   const estimatedTotal = cartTotal + shipping + tax;
 
   const error = createOrder.error?.message ?? createPaymentIntent.error?.message ?? null;

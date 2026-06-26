@@ -1,10 +1,9 @@
 import './env.js';
+import { createE2eTestingModule } from './e2e-module.js';
 import { describe, it, beforeAll, afterAll, expect, vi } from 'vitest';
-import { Test } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import request from 'supertest';
-import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { StripeProvider } from '../src/payments/stripe/stripe.provider.js';
 import { KushkiProvider } from '../src/payments/kushki/kushki.provider.js';
@@ -81,7 +80,7 @@ describe('Payments (e2e)', () => {
         };
       }),
     };
-    const module = await Test.createTestingModule({ imports: [AppModule] })
+    const module = await createE2eTestingModule()
       .overrideProvider(ConfigService).useValue(new ConfigService(TEST_CONFIG))
       .overrideProvider(PrismaService).useValue(prismaMock as never)
       .overrideProvider(StripeProvider).useValue(stripeProviderMock)

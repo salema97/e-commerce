@@ -13,9 +13,12 @@ import { ShippingModule } from '../shipping/shipping.module.js';
 import { TaxModule } from '../tax/tax.module.js';
 import { LoyaltyModule } from '../loyalty/loyalty.module.js';
 import { BackorderService } from './backorder.service.js';
+import { OrderAccessService } from './order-access.service.js';
+import { AuthModule } from '../auth/auth.module.js';
 
 @Module({
   imports: [
+    AuthModule,
     PrismaModule,
     InventoryModule,
     PromotionsModule,
@@ -28,7 +31,7 @@ import { BackorderService } from './backorder.service.js';
     LoyaltyModule,
   ],
   controllers: [OrdersController, RefundsController],
-  providers: [OrdersService, BackorderService],
+  providers: [OrdersService, BackorderService, OrderAccessService],
   exports: [OrdersService],
 })
 export class OrdersModule {}

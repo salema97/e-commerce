@@ -15,5 +15,6 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     setupFiles: ['./vitest.setup.ts'],
     css: false,
+    ...(process.env.CI ? { forbidOnly: true } : {}),
   },
 });

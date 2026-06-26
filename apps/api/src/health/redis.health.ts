@@ -1,27 +1,33 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   HealthIndicator,
   HealthIndicatorResult,
   HealthCheckError,
 } from '@nestjs/terminus';
+import { RedisService } from '../common/redis/redis.service.js';
 
 @Injectable()
 export class RedisHealthIndicator extends HealthIndicator {
-  constructor(private readonly configService: ConfigService) {
+  constructor(private readonly redis: RedisService) {
     super();
   }
 
-  isHealthy(key: string): Promise<HealthIndicatorResult> {
-    const redisUrl = this.configService.get<string>('REDIS_URL');
-
-    if (!redisUrl) {
+  async isHealthy(key: string): Promise<HealthIndicatorResult> {
+    try {
+      const pong = await this.redis.client.ping();
+      if (pong !== 'PONG') {
+        throw new HealthCheckError(
+          'Redis ping failed',
+          this.getStatus(key, false, { message: `Unexpected ping response: ${pong}` }),
+        );
+      }
+      return this.getStatus(key, true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       throw new HealthCheckError(
-        'Redis URL is not configured',
-        this.getStatus(key, false, { message: 'REDIS_URL missing' }),
+        'Redis is not reachable',
+        this.getStatus(key, false, { message }),
       );
     }
-
-    return Promise.resolve(this.getStatus(key, true, { url: redisUrl }));
   }
 }

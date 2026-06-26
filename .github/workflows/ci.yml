@@ -74,6 +74,12 @@ jobs:
       - name: API unit tests
         run: pnpm --filter @repo/api test
 
+      - name: API e2e tests
+        run: pnpm --filter @repo/api test:e2e
+
+      - name: Shared utils tests
+        run: pnpm --filter @repo/shared-utils test
+
       - name: Web typecheck
         run: pnpm --filter @repo/web typecheck
 

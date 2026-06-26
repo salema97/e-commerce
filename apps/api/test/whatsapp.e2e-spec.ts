@@ -1,11 +1,10 @@
 import './env.js';
+import { createE2eTestingModule } from './e2e-module.js';
 import { describe, it, beforeAll, afterAll, beforeEach, expect, vi } from 'vitest';
-import { Test } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import request from 'supertest';
 import { createHmac } from 'crypto';
-import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { WhatsAppProvider } from '../src/whatsapp/whatsapp-provider.interface.js';
 import { RedisIdempotencyService } from '../src/common/redis/idempotency.service.js';
@@ -125,9 +124,7 @@ describe('WhatsApp integration (e2e)', () => {
       SRI_QUEUE_ENABLED: 'false',
     });
 
-    const module = await Test.createTestingModule({
-      imports: [AppModule],
-    })
+    const module = await createE2eTestingModule()
       .overrideProvider(ConfigService)
       .useValue(configMock)
       .overrideProvider(PrismaService)
