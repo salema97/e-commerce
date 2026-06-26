@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { usePushNotifications } from '../hooks/usePushNotifications.js';
 import { parseDeepLink } from '../lib/deep-links.js';
 
@@ -10,7 +10,10 @@ export function PushNotificationManager(): null {
     (url: string) => {
       const target = parseDeepLink(url);
       if (target) {
-        router.navigate({ pathname: target.pathname, params: target.params });
+        router.navigate({
+          pathname: target.pathname,
+          params: target.params,
+        } as Href);
       }
     },
     [router],

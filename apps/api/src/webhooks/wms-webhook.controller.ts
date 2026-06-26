@@ -52,7 +52,13 @@ export class WmsWebhookController {
 
   private verifySignature(signature: string | undefined) {
     const secret = this.config.get<string>('WMS_WEBHOOK_SECRET');
-    if (!secret) return;
+    const isProduction = this.config.get<string>('NODE_ENV') === 'production';
+    if (!secret) {
+      if (isProduction) {
+        throw new UnauthorizedException('WMS webhook secret is not configured');
+      }
+      return;
+    }
     if (!signature || signature !== secret) {
       throw new UnauthorizedException('Invalid WMS webhook signature');
     }

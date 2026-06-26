@@ -5,9 +5,9 @@ import type { AuthUser } from '@repo/shared-types';
 
 interface AuthContextValue {
   user: AuthUser | null;
-  accessToken: string | null;
+  isAuthenticated: boolean;
   loading: boolean;
-  setSession: (user: AuthUser, accessToken: string) => void;
+  setSession: (user: AuthUser) => void;
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -16,39 +16,41 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     const res = await fetch('/api/auth/me');
     if (!res.ok) {
       setUser(null);
-      setAccessToken(null);
       return;
     }
-    const data = (await res.json()) as { user: AuthUser; accessToken: string };
+    const data = (await res.json()) as { user: AuthUser };
     setUser(data.user);
-    setAccessToken(data.accessToken);
   }, []);
 
   useEffect(() => {
     void refresh().finally(() => setLoading(false));
   }, [refresh]);
 
-  const setSession = useCallback((nextUser: AuthUser, token: string) => {
+  const setSession = useCallback((nextUser: AuthUser) => {
     setUser(nextUser);
-    setAccessToken(token);
   }, []);
 
   const signOut = useCallback(async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     setUser(null);
-    setAccessToken(null);
   }, []);
 
   const value = useMemo(
-    () => ({ user, accessToken, loading, setSession, refresh, signOut }),
-    [user, accessToken, loading, setSession, refresh, signOut],
+    () => ({
+      user,
+      isAuthenticated: Boolean(user),
+      loading,
+      setSession,
+      refresh,
+      signOut,
+    }),
+    [user, loading, setSession, refresh, signOut],
   );
 
   return (

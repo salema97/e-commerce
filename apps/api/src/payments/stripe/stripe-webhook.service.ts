@@ -123,6 +123,7 @@ export class StripeWebhookService {
     const payment = await this.upsertPaymentForWebhook(orderId, ids, amount, currency);
 
     if (payment.status === PaymentStatus.COMPLETED) {
+      await this.ensurePostPaymentSideEffects(payment.orderId);
       await this.recordWebhookProcessed(eventId, payment.orderId, 'duplicate');
       return;
     }
@@ -145,6 +146,7 @@ export class StripeWebhookService {
     }
 
     if (payment.status === PaymentStatus.COMPLETED) {
+      await this.ensurePostPaymentSideEffects(payment.orderId);
       await this.recordWebhookProcessed(eventId, payment.orderId, 'duplicate');
       return;
     }
@@ -257,6 +259,14 @@ export class StripeWebhookService {
     eventId: string,
     source: string,
   ): Promise<void> {
+    const existing = await this.prisma.payment.findUnique({ where: { id: paymentId } });
+    if (existing?.status === PaymentStatus.COMPLETED) {
+      await this.ensurePostPaymentSideEffects(orderId);
+      return;
+    }
+
+    await this.ensurePostPaymentSideEffects(orderId);
+
     const payment = await this.prisma.payment.findUnique({ where: { id: paymentId } });
     const metadata = { ...(payment?.metadata as Record<string, unknown>), paidAt: new Date().toISOString() };
 
@@ -281,7 +291,6 @@ export class StripeWebhookService {
       });
     });
 
-    await this.reservationService.confirm(orderId);
     await this.recordWebhookProcessed(eventId, orderId, 'completed');
     await this.auditPayment(orderId, paymentId, 'payment_completed', {
       toStatus: PaymentStatus.COMPLETED,
@@ -293,6 +302,10 @@ export class StripeWebhookService {
 
     void this.eventBus.publish({ name: 'order.paid', payload: { orderId } });
     this.enqueueInvoice(orderId);
+  }
+
+  private async ensurePostPaymentSideEffects(orderId: string): Promise<void> {
+    await this.reservationService.confirm(orderId);
   }
 
   private enqueueInvoice(orderId: string): void {

@@ -15,11 +15,9 @@ import {
   checkoutReducer,
   createInitialCheckoutState,
 } from './checkout-state';
+import { estimateCheckoutTotals, ECUADOR_IVA_RATE } from '@repo/shared-utils';
 import { CheckoutFormStep } from './checkout-form-step';
 import { CheckoutPaymentStep } from './checkout-payment-step';
-
-const FALLBACK_SHIPPING_FLAT_RATE = 5;
-const FALLBACK_FREE_SHIPPING_THRESHOLD = 50;
 
 export function CheckoutContainer() {
   const router = useRouter();
@@ -62,10 +60,10 @@ export function CheckoutContainer() {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const discount = 0;
   const taxableBase = Math.max(0, subtotal - discount);
-  const taxRate = 0.15;
+  const taxRate = ECUADOR_IVA_RATE;
   const tax = taxableBase * taxRate;
-  const fallbackShipping =
-    subtotal >= FALLBACK_FREE_SHIPPING_THRESHOLD ? 0 : FALLBACK_SHIPPING_FLAT_RATE;
+  const fallbackEstimate = estimateCheckoutTotals(taxableBase);
+  const fallbackShipping = fallbackEstimate.shipping;
 
   React.useEffect(() => {
     void api.pos.listLocations(true).then(setPickupLocations).catch(() => setPickupLocations([]));

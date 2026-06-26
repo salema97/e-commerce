@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { TaxCategory } from '@prisma/client';
 import { TaxCalculator, TaxableLine, TaxLineResult } from './tax-calculator.interface.js';
 import { EcuadorIvaTaxCalculator } from './ecuador-iva.tax-calculator.js';
+import { resilientFetch } from '../common/resilience/resilient-fetch.js';
 
 export interface TaxJurisdictionContext {
   country?: string;
@@ -35,7 +36,7 @@ export class TaxJarTaxCalculator extends TaxCalculator {
 
     try {
       const subtotal = lines.reduce((sum, line) => sum + line.lineSubtotal, 0);
-      const response = await fetch('https://api.taxjar.com/v2/taxes', {
+      const response = await resilientFetch('tax.taxjar', 'https://api.taxjar.com/v2/taxes', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${apiKey}`,

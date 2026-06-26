@@ -3,11 +3,11 @@ import { render, waitFor } from '@testing-library/react';
 import { AuthProvider, useAuth } from '@/contexts/auth-context';
 
 function SessionProbe() {
-  const { user, accessToken } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   return (
     <div>
       <span data-testid="email">{user?.email ?? 'none'}</span>
-      <span data-testid="token">{accessToken ? 'present' : 'missing'}</span>
+      <span data-testid="auth">{isAuthenticated ? 'yes' : 'no'}</span>
     </div>
   );
 }
@@ -17,7 +17,7 @@ describe('AuthProvider', () => {
     vi.restoreAllMocks();
   });
 
-  it('restores user and access token from /api/auth/me', async () => {
+  it('restores user from /api/auth/me without exposing access token to JS', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -30,7 +30,6 @@ describe('AuthProvider', () => {
             role: 'ADMIN',
             phone: null,
           },
-          accessToken: 'test-access-token',
         }),
       }),
     );
@@ -43,7 +42,7 @@ describe('AuthProvider', () => {
 
     await waitFor(() => {
       expect(getByTestId('email').textContent).toBe('store-admin@example.com');
-      expect(getByTestId('token').textContent).toBe('present');
+      expect(getByTestId('auth').textContent).toBe('yes');
     });
   });
 });

@@ -4,6 +4,7 @@ import {
   PushNotificationProvider,
   type PushNotificationPayload,
 } from '../push-notification-provider.interface.js';
+import { resilientFetch } from '../../common/resilience/resilient-fetch.js';
 
 /**
  * OneSignal REST API adapter for scale deployments.
@@ -27,7 +28,7 @@ export class OneSignalPushNotificationProvider extends PushNotificationProvider 
       throw new Error('ONESIGNAL_APP_ID and ONESIGNAL_API_KEY are required');
     }
 
-    const response = await fetch('https://api.onesignal.com/notifications', {
+    const response = await resilientFetch('push.onesignal', 'https://api.onesignal.com/notifications', {
       method: 'POST',
       headers: {
         Authorization: `Key ${apiKey}`,

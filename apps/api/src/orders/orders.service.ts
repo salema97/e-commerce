@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
 import { Prisma, TaxCategory } from '@prisma/client';
 import { validateAddress } from '@repo/shared-utils';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -17,6 +17,7 @@ import { BackorderService, type ItemAllocation } from './backorder.service.js';
 import { EventBus } from '../event-bus/event-bus.interface.js';
 import { LoyaltyService } from '../loyalty/loyalty.service.js';
 import { CaptchaService } from '../common/captcha/captcha.service.js';
+import { OrderAccessService, type OrderAccessContext } from './order-access.service.js';
 
 export interface CreatedOrderResult {
   id: string;
@@ -47,6 +48,7 @@ export class OrdersService {
     private readonly pushNotificationService: PushNotificationService,
     private readonly loyaltyService: LoyaltyService,
     private readonly captchaService: CaptchaService,
+    private readonly orderAccess: OrderAccessService,
     @Inject(EventBus) private readonly eventBus: EventBus,
   ) {}
 
@@ -226,7 +228,13 @@ export class OrdersService {
     };
   }
 
-  async getOrderById(id: string) {
+  async getOrderById(id: string, context: OrderAccessContext) {
+    const order = await this.findOrderById(id);
+    this.orderAccess.assertOrderAccess(order, context);
+    return order;
+  }
+
+  private async findOrderById(id: string) {
     const order = await this.prisma.order.findUnique({
       where: { id },
       include: { items: true, statusHistory: true, shipments: true },
@@ -236,7 +244,25 @@ export class OrdersService {
   }
 
   async getOrderTracking(id: string) {
-    const order = await this.getOrderById(id);
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        shipments: {
+          select: {
+            id: true,
+            carrier: true,
+            trackingNumber: true,
+            status: true,
+            shippedAt: true,
+            deliveredAt: true,
+          },
+        },
+      },
+    });
+    if (!order) throw new NotFoundException(`Order ${id} not found`);
     return {
       orderId: order.id,
       orderNumber: order.orderNumber,
@@ -315,7 +341,7 @@ export class OrdersService {
   }
 
   async markReadyForPickup(id: string) {
-    const order = await this.getOrderById(id);
+    const order = await this.findOrderById(id);
     if (order.shippingMethod !== ShippingMethodType.PICKUP) {
       throw new BadRequestException('Order is not a pickup order');
     }
@@ -334,7 +360,7 @@ export class OrdersService {
   }
 
   async confirmPickup(id: string) {
-    const order = await this.getOrderById(id);
+    const order = await this.findOrderById(id);
     if (order.shippingMethod !== ShippingMethodType.PICKUP) {
       throw new BadRequestException('Order is not a pickup order');
     }
@@ -377,7 +403,7 @@ export class OrdersService {
   }
 
   async updateOrderStatus(id: string, status: OrderStatus) {
-    await this.getOrderById(id);
+    await this.findOrderById(id);
     await this.prisma.order.update({
       where: { id },
       data: { status, statusHistory: { create: { status, notes: 'Status updated by admin' } } },
@@ -386,11 +412,9 @@ export class OrdersService {
     return { id, status };
   }
 
-  async cancelOrder(id: string, userId?: string) {
-    const order = await this.getOrderById(id);
-    if (userId && order.userId && order.userId !== userId) {
-      throw new ForbiddenException("Cannot cancel another user's order");
-    }
+  async cancelOrder(id: string, context: OrderAccessContext) {
+    const order = await this.findOrderById(id);
+    this.orderAccess.assertOrderAccess(order, context);
     const cancellable: OrderStatus[] = [OrderStatus.PENDING, OrderStatus.PAYMENT_PENDING];
     if (!cancellable.includes(order.status)) throw new BadRequestException(`Cannot cancel order in status ${order.status}`);
     await this.reservationService.release(id);

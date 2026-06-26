@@ -1,10 +1,9 @@
 import './env.js';
+import { createE2eTestingModule } from './e2e-module.js';
 import { describe, it, beforeAll, afterAll, expect, vi } from 'vitest';
-import { Test } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import request from 'supertest';
-import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
 import { BASE_TEST_CONFIG, bearerAuth } from './test-config.js';
@@ -59,7 +58,7 @@ describe('Orders (e2e)', () => {
 
   beforeAll(async () => {
     prismaMock = mockPrisma();
-    const module = await Test.createTestingModule({ imports: [AppModule] })
+    const module = await createE2eTestingModule()
       .overrideProvider(ConfigService).useValue(new ConfigService(TEST_CONFIG))
       .overrideProvider(PrismaService).useValue(prismaMock as never)
       .compile();
@@ -83,13 +82,32 @@ describe('Orders (e2e)', () => {
     await request(app.getHttpServer()).post('/v1/orders').send({ items: [] }).expect(400);
   });
 
-  it('GET /v1/orders/:id returns an order', async () => {
+  it('GET /v1/orders/:id returns an order for owner', async () => {
     prismaMock.order.findUnique.mockResolvedValue({
-      id: 'o1', orderNumber: 'ORD-1', status: OrderStatus.PAYMENT_PENDING, channel: OrderChannel.WEB,
+      id: 'o1', orderNumber: 'ORD-1', userId: 'user_1', customerEmail: 'user@example.com',
+      status: OrderStatus.PAYMENT_PENDING, channel: OrderChannel.WEB,
       subtotal: 39.98, taxAmount: 0, shippingAmount: 0, discountAmount: 0, total: 39.98, couponCode: null,
-      reservationExpiresAt: new Date('2026-06-22T01:00:00Z'), items: [], statusHistory: [],
+      reservationExpiresAt: new Date('2026-06-22T01:00:00Z'), items: [], statusHistory: [], shipments: [],
     });
     const res = await request(app.getHttpServer()).get('/v1/orders/o1').set(bearerAuth('user_1', 'CUSTOMER')).expect(200);
+    expect(res.body.id).toBe('o1');
+  });
+
+  it('GET /v1/orders/:id rejects unauthenticated access', async () => {
+    await request(app.getHttpServer()).get('/v1/orders/o1').expect(401);
+  });
+
+  it('GET /v1/orders/:id allows guest email for guest orders', async () => {
+    prismaMock.order.findUnique.mockResolvedValue({
+      id: 'o1', orderNumber: 'ORD-1', userId: null, customerEmail: 'guest@example.com',
+      status: OrderStatus.PAYMENT_PENDING, channel: OrderChannel.WEB,
+      subtotal: 39.98, taxAmount: 0, shippingAmount: 0, discountAmount: 0, total: 39.98, couponCode: null,
+      reservationExpiresAt: new Date('2026-06-22T01:00:00Z'), items: [], statusHistory: [], shipments: [],
+    });
+    const res = await request(app.getHttpServer())
+      .get('/v1/orders/o1')
+      .query({ guestEmail: 'guest@example.com' })
+      .expect(200);
     expect(res.body.id).toBe('o1');
   });
 

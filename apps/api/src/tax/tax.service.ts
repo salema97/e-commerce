@@ -39,6 +39,14 @@ export class TaxService {
     private readonly avalaraCalculator: AvalaraTaxCalculator,
   ) {}
 
+  /** Standard Ecuador IVA on a single taxable subtotal (after discounts). */
+  calculateStandardSubtotalTax(subtotal: number): number {
+    return this.ecuadorCalculator.calculateLineTax({
+      lineSubtotal: subtotal,
+      taxCategory: TaxCategory.STANDARD,
+    }).taxAmount;
+  }
+
   async calculateForCart(input: CartTaxInput): Promise<CartTaxResult> {
     const lineSubtotals = input.items.map((item) => ({
       productId: item.productId,

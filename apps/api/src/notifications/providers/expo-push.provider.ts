@@ -4,6 +4,7 @@ import {
   PushNotificationProvider,
   type PushNotificationPayload,
 } from '../push-notification-provider.interface.js';
+import { resilientFetch } from '../../common/resilience/resilient-fetch.js';
 
 interface ExpoPushTicket {
   status: 'ok' | 'error';
@@ -35,7 +36,7 @@ export class ExpoPushNotificationProvider extends PushNotificationProvider {
       headers.Authorization = `Bearer ${this.accessToken}`;
     }
 
-    const response = await fetch('https://exp.host/--/api/v2/push/send', {
+    const response = await resilientFetch('push.expo', 'https://exp.host/--/api/v2/push/send', {
       method: 'POST',
       headers,
       body: JSON.stringify(

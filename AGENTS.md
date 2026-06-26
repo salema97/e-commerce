@@ -18,7 +18,7 @@ Full-stack e-commerce platform built as a TypeScript monorepo with integrated fi
 | Workspace | pnpm 10.34.3 + Turborepo 2.9.18 | pnpm 11 blocked by Prisma 7 engine constraint |
 | Runtime | Node.js 22.23.0 LTS | Satisfies all packages including Expo 56 |
 | API | NestJS 11.1.27 + Prisma 7.8.0 + PostgreSQL + Redis | Prisma 7 requires driver adapters and `prisma.config.ts` |
-| Web | Next.js 16.2.9 (App Router) + React 19.2.7 + Tailwind CSS 4.3.1 + shadcn/ui 4.11.0 | Async APIs, Turbopack default, `proxy.ts` replaces `middleware.ts` |
+| Web | Next.js 16.2.9 (App Router) + React 19.2.7 + Tailwind CSS 4.3.1 + shadcn/ui 4.11.0 | Async APIs, Turbopack default; auth/session via `middleware.ts` + httpOnly cookies |
 | Mobile | Expo SDK 56.0.12 + React Native 0.85.3 + Expo Router | RN 0.86 is NOT compatible with Expo 56 |
 | Shared | TypeScript 5.9.3 + Zod 4.4.3 | TS 6.x skipped until ecosystem catches up |
 | State | TanStack Query (server) + Zustand (client) | React Query v5 object API |
@@ -168,7 +168,6 @@ e-commerce/
 │   ├── shared-utils/         # Helpers, formatters, Zod schemas
 │   ├── shared-ui/            # Cross-platform UI primitives (react-native-web)
 │   └── api-client/           # Generated API client + React Query hooks
-├── .github/workflows/        # CI/CD
 ├── docker-compose.yml        # Postgres + Redis + Meilisearch + Evolution API for local dev
 ├── package.json
 ├── pnpm-workspace.yaml
@@ -250,7 +249,7 @@ pnpm test:e2e
 - Store mobile auth tokens in `expo-secure-store`, never AsyncStorage.
 - Never expose `STRIPE_SECRET_KEY`, `AUTH_JWT_ACCESS_SECRET`, `EVOLUTION_API_KEY`, `SRI_INTERMEDIARY_API_KEY`, `SRI_DIGITAL_CERTIFICATE_PASSWORD`, or webhook secrets to clients.
 - Use HTTPS/TLS everywhere; validate env secrets at boot with Zod.
-- Dependency scanning and automated security patches in CI.
+- Dependency scanning: run `pnpm audit` locally before releases.
 
 ## Compliance Notes
 
@@ -339,7 +338,6 @@ Introduce an `InvoiceProvider` port so the core e-commerce code does not depend 
 - API deploys as a Docker container or Node.js service; needs `DATABASE_URL` and `REDIS_URL`. Run migrations before starting new versions.
 - Mobile builds via EAS (Expo Application Services).
 - Evolution API deploys via Docker on a VPS or dedicated container service. Separate from the main API is recommended for production.
-- Use GitHub Actions with pnpm caching, affected targets (`--affected`), and path-filtered deploy workflows.
 - Use multi-stage Docker builds with `pnpm deploy --prod` for minimal production images.
 - Never copy `.env` files into Docker images.
 

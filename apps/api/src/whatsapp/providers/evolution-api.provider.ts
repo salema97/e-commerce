@@ -5,6 +5,7 @@ import type { SendWhatsAppResult, WhatsAppTemplate, MessageStatus } from '@repo/
 import { ecuadorPhoneSchema } from '@repo/shared-utils';
 import { WhatsAppProvider } from '../whatsapp-provider.interface.js';
 import { WhatsAppProviderError } from '../whatsapp-provider.error.js';
+import { resilientFetch } from '../../common/resilience/resilient-fetch.js';
 
 interface EvolutionSendResponse {
   key?: { id?: string };
@@ -143,7 +144,7 @@ export class EvolutionApiProvider extends WhatsAppProvider {
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
-        const response = await fetch(url, init);
+        const response = await resilientFetch('evolution-api', url, init);
 
         if (this.isRetryable(response.status) && attempt < MAX_RETRIES - 1) {
           await this.delay(this.backoffMs(attempt));

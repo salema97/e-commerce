@@ -4,6 +4,8 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { validate } from './config/env.validation.js';
+import { RedisService } from './common/redis/redis.service.js';
+import { RedisThrottlerStorage } from './common/throttler/redis-throttler.storage.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { HealthModule } from './health/health.module.js';
 import { CategoriesModule } from './categories/categories.module.js';
@@ -63,14 +65,19 @@ import { DropshipModule } from './dropship/dropship.module.js';
       },
       forRoutes: [{ path: '/*path', method: RequestMethod.ALL }],
     }),
-    ThrottlerModule.forRoot({
-      throttlers: [
-        {
-          name: 'default',
-          ttl: 60_000,
-          limit: 100,
-        },
-      ],
+    ThrottlerModule.forRootAsync({
+      imports: [RedisModule],
+      inject: [RedisService],
+      useFactory: (redis: RedisService) => ({
+        throttlers: [
+          {
+            name: 'default',
+            ttl: 60_000,
+            limit: 100,
+          },
+        ],
+        storage: new RedisThrottlerStorage(redis),
+      }),
     }),
     AuthModule,
     AuditModule,

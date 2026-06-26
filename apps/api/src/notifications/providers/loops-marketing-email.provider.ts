@@ -4,6 +4,7 @@ import {
   MarketingEmailProvider,
   type MarketingContactProfile,
 } from '../marketing-email-provider.interface.js';
+import { resilientFetch } from '../../common/resilience/resilient-fetch.js';
 
 @Injectable()
 export class LoopsMarketingEmailProvider extends MarketingEmailProvider {
@@ -23,7 +24,7 @@ export class LoopsMarketingEmailProvider extends MarketingEmailProvider {
       throw new Error('LOOPS_API_KEY is required when MARKETING_EMAIL_PROVIDER=loops');
     }
 
-    const response = await fetch('https://app.loops.so/api/v1/events/send', {
+    const response = await resilientFetch('email.loops', 'https://app.loops.so/api/v1/events/send', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -49,7 +50,7 @@ export class LoopsMarketingEmailProvider extends MarketingEmailProvider {
       throw new Error('LOOPS_API_KEY is required when MARKETING_EMAIL_PROVIDER=loops');
     }
 
-    const response = await fetch('https://app.loops.so/api/v1/contacts/update', {
+    const response = await resilientFetch('email.loops', 'https://app.loops.so/api/v1/contacts/update', {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${apiKey}`,

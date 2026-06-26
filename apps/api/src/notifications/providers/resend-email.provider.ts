@@ -7,6 +7,7 @@ import {
   EmailProvider,
   type SendEmailTemplateOptions,
 } from '../email-provider.interface.js';
+import { getCircuitBreaker } from '../../common/resilience/resilient-fetch.js';
 
 @Injectable()
 export class ResendEmailProvider extends EmailProvider {
@@ -38,22 +39,24 @@ export class ResendEmailProvider extends EmailProvider {
       vars as unknown as EmailTemplateContext,
     );
 
-    const { error } = await client.emails.send({
-      from: this.fromEmail,
-      to,
-      subject: options?.subject ?? rendered.subject,
-      html: rendered.html,
-      text: rendered.text,
-      attachments: options?.attachments?.map((attachment) => ({
-        filename: attachment.filename,
-        content: attachment.content,
-        contentType: attachment.contentType,
-      })),
-    });
+    await getCircuitBreaker('email.resend').execute(async () => {
+      const { error } = await client.emails.send({
+        from: this.fromEmail,
+        to,
+        subject: options?.subject ?? rendered.subject,
+        html: rendered.html,
+        text: rendered.text,
+        attachments: options?.attachments?.map((attachment) => ({
+          filename: attachment.filename,
+          content: attachment.content,
+          contentType: attachment.contentType,
+        })),
+      });
 
-    if (error) {
-      this.logger.error({ to, template, error }, 'Resend email send failed');
-      throw new Error(error.message);
-    }
+      if (error) {
+        this.logger.error({ to, template, error }, 'Resend email send failed');
+        throw new Error(error.message);
+      }
+    });
   }
 }

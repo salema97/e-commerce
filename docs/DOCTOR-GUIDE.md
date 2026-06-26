@@ -386,13 +386,13 @@ pnpm test                                  # unitarios
 
 ---
 
-## 7. CI sugerido (futuro)
+## 7. Chequeos locales (pre-release)
 
-```yaml
-# .github/workflows/health.yml
-- run: pnpm health:api -- --min-score 80    # nestjs-doctor
-- run: pnpm health:web                       # react-doctor (exit 1 si score < umbral)
-- run: pnpm health:mobile
+```bash
+pnpm health:api -- --min-score 80    # nestjs-doctor
+pnpm health:web                       # react-doctor
+pnpm health:mobile
+pnpm test && pnpm test:e2e && pnpm typecheck
 ```
 
 React Doctor: `npx react-doctor . --verbose --min-score 60` (subir umbral con el tiempo).

@@ -5,28 +5,28 @@ import { createApiClient, createQueryHooks } from '@repo/api-client';
 import { useAuth } from '@/contexts/auth-context';
 
 function getBaseURL(): string {
-  return process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001/v1';
+  if (typeof window !== 'undefined') {
+    return '/api/v1';
+  }
+  return process.env.API_BASE_URL ?? 'http://localhost:3001/v1';
 }
 
 export function useAuthApiReady(): boolean {
-  const { accessToken, loading } = useAuth();
-  return !loading && Boolean(accessToken);
+  const { isAuthenticated, loading } = useAuth();
+  return !loading && isAuthenticated;
 }
 
 export function useApiClient() {
-  const { accessToken } = useAuth();
-
   return useMemo(
     () =>
       createApiClient({
         baseURL: getBaseURL(),
-        getToken: () => accessToken,
         onError: (error) => {
           // eslint-disable-next-line no-console
           console.error('API error:', error.message);
         },
       }),
-    [accessToken],
+    [],
   );
 }
 

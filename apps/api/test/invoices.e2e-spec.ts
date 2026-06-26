@@ -1,10 +1,9 @@
 import './env.js';
+import { createE2eTestingModule } from './e2e-module.js';
 import { describe, it, beforeAll, afterAll, expect, vi } from 'vitest';
-import { Test } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import request from 'supertest';
-import { AppModule } from '../src/app.module.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { DirectSriInvoiceProvider } from '../src/invoices/sri/sri-invoice.provider.js';
 import { InvoiceStatus } from '../src/invoices/invoice-status.enum.js';
@@ -45,9 +44,7 @@ describe('InvoicesController (e2e)', () => {
       issueCreditNote: vi.fn(),
     };
 
-    const module = await Test.createTestingModule({
-      imports: [AppModule],
-    })
+    const module = await createE2eTestingModule()
       .overrideProvider(ConfigService)
       .useValue(configMock)
       .overrideProvider(PrismaService)

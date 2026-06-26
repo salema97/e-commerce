@@ -13,6 +13,7 @@ import {
 } from '../payment-provider.interface.js';
 import { PaymentStatus } from '../public-api.js';
 import { KushkiWebhookDto } from '../public-api.js';
+import { resilientFetch } from '../../common/resilience/resilient-fetch.js';
 
 @Injectable()
 export class KushkiProvider extends PaymentProvider {
@@ -27,7 +28,7 @@ export class KushkiProvider extends PaymentProvider {
   }
 
   async createPaymentIntent(order: CreatePaymentIntentOptions): Promise<PaymentIntentResult> {
-    const response = await fetch(`${this.baseUrl}/card/v1/charges`, {
+    const response = await resilientFetch('payments.kushki', `${this.baseUrl}/card/v1/charges`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -6,6 +6,7 @@ import {
   CarrierRateQuoteResult,
 } from './carrier-rate-provider.interface.js';
 import { ZoneFlatRateProvider } from './zone-flat-rate.provider.js';
+import { resilientFetch } from '../common/resilience/resilient-fetch.js';
 
 interface EasyPostRate {
   rate: string;
@@ -47,7 +48,7 @@ export class EasyPostCarrierRateProvider extends CarrierRateProvider {
         },
       };
 
-      const response = await fetch('https://api.easypost.com/v2/shipments', {
+      const response = await resilientFetch('shipping.easypost', 'https://api.easypost.com/v2/shipments', {
         method: 'POST',
         headers: {
           Authorization: `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`,

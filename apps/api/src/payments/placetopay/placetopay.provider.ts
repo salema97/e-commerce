@@ -13,6 +13,7 @@ import {
 } from '../payment-provider.interface.js';
 import { PaymentStatus } from '../public-api.js';
 import { PlaceToPayWebhookDto } from '../public-api.js';
+import { resilientFetch } from '../../common/resilience/resilient-fetch.js';
 
 interface PlaceToPayAuth {
   login: string;
@@ -72,7 +73,7 @@ export class PlaceToPayProvider extends PaymentProvider {
   }
 
   private async createSession(order: PaymentOrder): Promise<PlaceToPaySessionResponse> {
-    const response = await fetch(`${this.baseUrl}/api/session`, {
+    const response = await resilientFetch('payments.placetopay', `${this.baseUrl}/api/session`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

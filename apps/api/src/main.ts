@@ -85,7 +85,9 @@ async function bootstrap() {
     .addTag('Auth')
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('docs', app, document);
+  if (!isProduction) {
+    SwaggerModule.setup('docs', app, document);
+  }
 
   const port = parseInt(configService.get('PORT', '3001'), 10);
 

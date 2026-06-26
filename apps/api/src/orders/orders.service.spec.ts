@@ -15,6 +15,8 @@ import { EventBus } from '../event-bus/event-bus.interface.js';
 import { BackorderService } from './backorder.service.js';
 import { LoyaltyService } from '../loyalty/loyalty.service.js';
 import { CaptchaService } from '../common/captcha/captcha.service.js';
+import { OrderAccessService } from './order-access.service.js';
+import { Role } from '../auth/role.enum.js';
 import { OrderChannel, OrderStatus } from '@prisma/client';
 
 describe('OrdersService', () => {
@@ -34,6 +36,11 @@ describe('OrdersService', () => {
   let backorder: { isEnabled: ReturnType<typeof vi.fn>; allocateItems: ReturnType<typeof vi.fn> };
   let loyalty: { quoteRedemption: ReturnType<typeof vi.fn>; redeem: ReturnType<typeof vi.fn> };
   let eventBus: { publish: ReturnType<typeof vi.fn>; registerHandler: ReturnType<typeof vi.fn> };
+  let orderAccess: { assertOrderAccess: ReturnType<typeof vi.fn> };
+
+  function customerContext(userId = 'u1') {
+    return { userId, role: Role.CUSTOMER };
+  }
 
   function mockPrisma() {
     return {
@@ -83,6 +90,7 @@ describe('OrdersService', () => {
     emailNotificationService = { notify: vi.fn().mockResolvedValue(undefined) };
     pushNotificationService = { notifyForOrder: vi.fn().mockResolvedValue(undefined) };
     eventBus = { publish: vi.fn(), registerHandler: vi.fn() };
+    orderAccess = { assertOrderAccess: vi.fn() };
     const module = await Test.createTestingModule({
       providers: [
         OrdersService,
@@ -98,6 +106,7 @@ describe('OrdersService', () => {
         { provide: EmailNotificationService, useValue: emailNotificationService },
         { provide: PushNotificationService, useValue: pushNotificationService },
         { provide: EventBus, useValue: eventBus },
+        { provide: OrderAccessService, useValue: orderAccess },
       ],
     }).compile();
     service = module.get(OrdersService);
@@ -168,13 +177,15 @@ describe('OrdersService', () => {
   });
 
   it('gets order by id', async () => {
-    prisma.order.findUnique.mockResolvedValue({ id: 'o1', items: [], statusHistory: [], shipments: [] });
-    expect((await service.getOrderById('o1')).id).toBe('o1');
+    prisma.order.findUnique.mockResolvedValue({ id: 'o1', userId: 'u1', customerEmail: 'u@example.com', items: [], statusHistory: [], shipments: [] });
+    const ctx = customerContext();
+    expect((await service.getOrderById('o1', ctx)).id).toBe('o1');
+    expect(orderAccess.assertOrderAccess).toHaveBeenCalled();
   });
 
   it('throws when order not found', async () => {
     prisma.order.findUnique.mockResolvedValue(null);
-    await expect(service.getOrderById('missing')).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.getOrderById('missing', customerContext())).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('updates order status', async () => {
@@ -222,14 +233,14 @@ describe('OrdersService', () => {
   });
 
   it('cancels an order and releases reservation', async () => {
-    prisma.order.findUnique.mockResolvedValue({ id: 'o1', userId: 'u1', status: OrderStatus.PAYMENT_PENDING });
-    await service.cancelOrder('o1', 'u1');
+    prisma.order.findUnique.mockResolvedValue({ id: 'o1', userId: 'u1', customerEmail: 'u@example.com', status: OrderStatus.PAYMENT_PENDING });
+    await service.cancelOrder('o1', customerContext());
     expect(reservation.release).toHaveBeenCalledWith('o1');
     expect(prisma.order.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: OrderStatus.CANCELLED }) }));
   });
 
   it('prevents cancelling shipped orders', async () => {
-    prisma.order.findUnique.mockResolvedValue({ id: 'o1', userId: 'u1', status: OrderStatus.SHIPPED });
-    await expect(service.cancelOrder('o1', 'u1')).rejects.toBeInstanceOf(BadRequestException);
+    prisma.order.findUnique.mockResolvedValue({ id: 'o1', userId: 'u1', customerEmail: 'u@example.com', status: OrderStatus.SHIPPED });
+    await expect(service.cancelOrder('o1', customerContext())).rejects.toBeInstanceOf(BadRequestException);
   });
 });

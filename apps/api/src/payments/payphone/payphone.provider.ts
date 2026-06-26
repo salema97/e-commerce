@@ -13,6 +13,7 @@ import {
 } from '../payment-provider.interface.js';
 import { PaymentStatus } from '../public-api.js';
 import { PayPhoneWebhookDto } from '../public-api.js';
+import { resilientFetch } from '../../common/resilience/resilient-fetch.js';
 
 @Injectable()
 export class PayPhoneProvider extends PaymentProvider {
@@ -31,7 +32,7 @@ export class PayPhoneProvider extends PaymentProvider {
   }
 
   async createPaymentIntent(order: CreatePaymentIntentOptions): Promise<PaymentIntentResult> {
-    const response = await fetch(`${this.baseUrl}/api/transaction/create`, {
+    const response = await resilientFetch('payments.payphone', `${this.baseUrl}/api/transaction/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

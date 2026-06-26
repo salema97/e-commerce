@@ -6,6 +6,7 @@ import {
   CarrierRateQuoteResult,
 } from './carrier-rate-provider.interface.js';
 import { ZoneFlatRateProvider } from './zone-flat-rate.provider.js';
+import { resilientFetch } from '../common/resilience/resilient-fetch.js';
 
 @Injectable()
 export class ShipEngineCarrierRateProvider extends CarrierRateProvider {
@@ -45,7 +46,7 @@ export class ShipEngineCarrierRateProvider extends CarrierRateProvider {
         },
       };
 
-      const response = await fetch('https://api.shipengine.com/v1/rates', {
+      const response = await resilientFetch('shipping.shipengine', 'https://api.shipengine.com/v1/rates', {
         method: 'POST',
         headers: {
           'API-Key': apiKey,

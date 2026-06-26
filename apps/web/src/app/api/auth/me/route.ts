@@ -17,5 +17,5 @@ export async function GET() {
   });
 
   const body = await upstream.json();
-  return NextResponse.json({ user: body, accessToken: token }, { status: upstream.status });
+  return NextResponse.json({ user: body }, { status: upstream.status });
 }

@@ -6,6 +6,7 @@ import {
   CarrierRateQuoteResult,
 } from './carrier-rate-provider.interface.js';
 import { ZoneFlatRateProvider } from './zone-flat-rate.provider.js';
+import { resilientFetch } from '../common/resilience/resilient-fetch.js';
 
 interface ShippoRate {
   amount: string;
@@ -50,7 +51,7 @@ export class ShippoCarrierRateProvider extends CarrierRateProvider {
         async: false,
       };
 
-      const shipmentRes = await fetch('https://api.goshippo.com/shipments/', {
+      const shipmentRes = await resilientFetch('shipping.shippo', 'https://api.goshippo.com/shipments/', {
         method: 'POST',
         headers: {
           Authorization: `ShippoToken ${apiKey}`,

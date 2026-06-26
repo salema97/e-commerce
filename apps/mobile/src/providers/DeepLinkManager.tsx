@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import {
   addDeepLinkListener,
   parseDeepLink,
@@ -17,7 +17,10 @@ export function DeepLinkManager(): null {
 
     const target = parseDeepLink(initialUrl);
     if (target) {
-      router.navigate({ pathname: target.pathname, params: target.params });
+      router.navigate({
+        pathname: target.pathname,
+        params: target.params,
+      } as Href);
     }
   }, [initialUrl, router]);
 
@@ -25,7 +28,10 @@ export function DeepLinkManager(): null {
     const subscription = addDeepLinkListener((url) => {
       const target = parseDeepLink(url);
       if (target) {
-        router.navigate({ pathname: target.pathname, params: target.params });
+        router.navigate({
+        pathname: target.pathname,
+        params: target.params,
+      } as Href);
       }
     });
 

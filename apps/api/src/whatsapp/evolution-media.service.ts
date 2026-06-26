@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { resilientFetch } from '../common/resilience/resilient-fetch.js';
 
 export interface EvolutionMessageKey {
   id?: string;
@@ -34,7 +35,7 @@ export class EvolutionMediaService {
     convertToMp4 = false,
   ): Promise<{ base64: string; mimetype: string }> {
     const url = `${this.baseUrl}/chat/getBase64FromMediaMessage/${instance}`;
-    const response = await fetch(url, {
+    const response = await resilientFetch('evolution-api.media', url, {
       method: 'POST',
       headers: this.headers(),
       body: JSON.stringify({

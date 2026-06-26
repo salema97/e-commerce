@@ -12,6 +12,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { InventoryReservationService } from '../inventory/inventory-reservation.service.js';
+import { TaxService } from '../tax/tax.service.js';
 import { MarketplaceChannelFactory } from './marketplace.factory.js';
 import type { MarketplaceImportOrderDto } from './dto/marketplace.dto.js';
 
@@ -21,6 +22,7 @@ export class MarketplaceService {
     private readonly prisma: PrismaService,
     private readonly factory: MarketplaceChannelFactory,
     private readonly reservation: InventoryReservationService,
+    private readonly taxService: TaxService,
   ) {}
 
   listProfiles() {
@@ -111,7 +113,7 @@ export class MarketplaceService {
     );
 
     const subtotal = dto.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const taxAmount = Number((subtotal * 0.15).toFixed(2));
+    const taxAmount = this.taxService.calculateStandardSubtotalTax(subtotal);
     const shippingAmount = 0;
     const total = Number((subtotal + taxAmount + shippingAmount).toFixed(2));
 

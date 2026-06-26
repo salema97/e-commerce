@@ -7,14 +7,10 @@ import { NeoScreen } from '../components/neo-screen.js';
 import { NeoEnterFromBottom, NeoStaggeredItem } from '../components/neo-animated.js';
 import { api } from '../lib/api.js';
 import { useCart } from '../lib/cart.js';
-import { formatPrice } from '@repo/shared-utils';
+import { formatPrice, estimateCheckoutTotals } from '@repo/shared-utils';
 import type { OrderAddress, CreateOrderDto, CreatePaymentIntentDto } from '@repo/shared-types';
 import { trackMobileEvent } from '../lib/analytics.js';
 import { useAuth } from '../providers/AuthProvider.js';
-
-const FREE_SHIPPING_THRESHOLD = 50;
-const SHIPPING_FLAT_RATE = 5;
-const TAX_RATE = 0.15;
 
 export default function CheckoutScreen(): React.ReactElement {
   const router = useRouter();
@@ -39,14 +35,48 @@ export default function CheckoutScreen(): React.ReactElement {
   const [referralCode, setReferralCode] = useState('');
   const [loyaltyPoints, setLoyaltyPoints] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [shippingAmount, setShippingAmount] = useState<number | null>(null);
 
   const createOrder = api.hooks.useCreateOrder();
   const createPaymentIntent = api.hooks.useCreatePaymentIntent();
   const { data: loyaltyAccount } = api.hooks.useLoyaltyAccount();
 
-  const shipping = cartTotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FLAT_RATE;
-  const tax = cartTotal * TAX_RATE;
-  const estimatedTotal = cartTotal + shipping + tax;
+  const addressReady = Boolean(recipientName && street && city && country);
+
+  useEffect(() => {
+    if (!addressReady || items.length === 0) {
+      setShippingAmount(null);
+      return;
+    }
+
+    let cancelled = false;
+    void api.client.shipping
+      .quote({
+        country,
+        province: state || undefined,
+        subtotal: cartTotal,
+        freeShipping: false,
+      })
+      .then((quote) => {
+        if (!cancelled) {
+          setShippingAmount(quote.amount);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setShippingAmount(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [addressReady, cartTotal, country, items.length, state]);
+
+  const fallbackTotals = estimateCheckoutTotals(cartTotal);
+  const shipping = shippingAmount ?? fallbackTotals.shipping;
+  const tax = fallbackTotals.tax;
+  const estimatedTotal = Number((cartTotal + shipping + tax).toFixed(2));
 
   const error = createOrder.error?.message ?? createPaymentIntent.error?.message ?? null;
 
