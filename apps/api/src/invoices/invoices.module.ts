@@ -60,6 +60,6 @@ import { isNonProduction } from '../common/is-non-production.js';
     SriDeliveryService,
     SriQueueWorker,
   ],
-  exports: [InvoicesService],
+  exports: [InvoicesService, SriSupplementaryService],
 })
 export class InvoicesModule {}

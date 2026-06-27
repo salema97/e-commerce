@@ -79,8 +79,14 @@ export function ShipmentPanel({ orderId, initialShipments }: ShipmentPanelProps)
   async function handleCreateServientregaShipment() {
     dispatch({ type: 'servientrega_start' });
     try {
-      await api.fulfillment.createServientregaShipment(orderId);
+      const result = await api.fulfillment.createServientregaShipment(orderId);
       dispatch({ type: 'servientrega_success' });
+      if (result.sriRemission?.error) {
+        dispatch({
+          type: 'submit_error',
+          message: `Guía creada, pero SRI 06 falló: ${result.sriRemission.error}`,
+        });
+      }
       router.refresh();
     } catch (err) {
       dispatch({

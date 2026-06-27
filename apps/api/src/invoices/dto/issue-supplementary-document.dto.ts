@@ -25,4 +25,14 @@ export class IssueSupplementaryDocumentDto {
   @IsNumber()
   @Min(0)
   totalAmount?: number;
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  shipmentId?: string;
+
+  @ApiPropertyOptional({ description: 'Carrier guide number (e.g. Servientrega)' })
+  @IsOptional()
+  @IsString()
+  carrierGuideNumber?: string;
 }

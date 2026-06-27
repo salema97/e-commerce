@@ -1,0 +1,6 @@
+change: servientrega-sri-remission
+status: in_progress
+phase: verify
+created: 2026-06-27
+depends_on: servientrega-ecuador-fulfillment
+delivery: single-pr

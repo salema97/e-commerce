@@ -142,6 +142,8 @@ const envSchema = z.object({
   SERVIENTREGA_ORIGIN_CITY_NAME: z.string().optional(),
   SERVIENTREGA_ORIGIN_PROVINCE: z.string().optional(),
   SERVIENTREGA_ORIGIN_PHONE: z.string().optional(),
+  SERVIENTREGA_SRI_REMISSION_ENABLED: z.enum(['true', 'false']).default('false'),
+  SERVIENTREGA_VEHICLE_PLATE: z.string().optional(),
   TAX_PROVIDER: z.enum(['ecuador', 'stripe_tax', 'taxjar', 'avalara', 'composite']).default('composite'),
   INTERNATIONAL_TAX_PROVIDER: z.enum(['stripe_tax', 'taxjar', 'avalara']).default('stripe_tax'),
   STRIPE_TAX_ENABLED: z.enum(['true', 'false']).default('false'),

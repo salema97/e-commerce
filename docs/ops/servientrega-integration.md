@@ -70,19 +70,36 @@ POST /v1/fulfillment/shipments/:shipmentId/servientrega/sync-tracking
 POST /v1/fulfillment/servientrega/sync-tracking
 ```
 
-## 6. Cotización en checkout
+## 7. Guía SRI 06 (Fase 3)
+
+Tras generar guía Servientrega, opcionalmente emite guía de remisión SRI:
+
+```bash
+SERVIENTREGA_SRI_REMISSION_ENABLED=true
+SERVIENTREGA_VEHICLE_PLATE=ABC1234
+```
+
+- Se vincula `SriSupplementaryDocument` tipo `06` al `Shipment`
+- Si SRI falla, **el envío no se revierte** — revisar logs y reintentar vía `POST /v1/invoices/sri/supplementary`
+- Destinatario y dirección salen de `shippingAddress` del pedido
+- Ruta XML incluye número de guía Servientrega
+
+## 8. Cotización en checkout
 
 `POST /v1/shipping/quote` usa peso/dimensiones del carrito y `valorDeclarado` = subtotal.
 
 **Regla API:** HTTP 200 con `code !== 1` es error de negocio; la plataforma hace fallback a zonas.
 
-## 7. Próximas fases (no incluidas aún)
+## 9. Próximas fases
 
 - Generación de guías SOAP: implementado (`GeneracionGuias.asmx`)
 - Tracking SOAP: implementado (`wsRastreoEnvios`)
 - Guía SRI 06 al despachar
 
-## 8. Referencias
+- Cron job para tracking sync
+- PDF/XML storage para guías SRI 06 suplementarias
+
+## 10. Referencias
 
 - Tracking público: https://www.servientrega.com.ec/Tracking/
 - E-commerce Servientrega: https://www.servientrega.com.ec/
