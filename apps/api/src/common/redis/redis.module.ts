@@ -2,6 +2,7 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { RedisService } from './redis.service.js';
 import { RedisIdempotencyService } from './idempotency.service.js';
+import { CircuitBreakerRedisBootstrap } from './circuit-breaker-redis.bootstrap.js';
 
 /**
  * Global Redis module.
@@ -11,7 +12,7 @@ import { RedisIdempotencyService } from './idempotency.service.js';
 @Global()
 @Module({
   imports: [ConfigModule],
-  providers: [RedisService, RedisIdempotencyService],
+  providers: [RedisService, RedisIdempotencyService, CircuitBreakerRedisBootstrap],
   exports: [RedisService, RedisIdempotencyService],
 })
 export class RedisModule {}

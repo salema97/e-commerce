@@ -8,6 +8,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Public } from '../auth/public.decorator.js';
 import { PrismaHealthIndicator } from './prisma.health.js';
 import { RedisHealthIndicator } from './redis.health.js';
+import { MeilisearchHealthIndicator } from './meilisearch.health.js';
 
 @ApiTags('Health')
 @Public()
@@ -18,6 +19,7 @@ export class HealthController {
     private readonly health: HealthCheckService,
     private readonly prismaHealth: PrismaHealthIndicator,
     private readonly redisHealth: RedisHealthIndicator,
+    private readonly meilisearchHealth: MeilisearchHealthIndicator,
   ) {}
 
   @Get()
@@ -29,6 +31,7 @@ export class HealthController {
     return this.health.check([
       () => this.prismaHealth.isHealthy('prisma'),
       () => this.redisHealth.isHealthy('redis'),
+      () => this.meilisearchHealth.isHealthy('meilisearch'),
     ]);
   }
 }

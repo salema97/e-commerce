@@ -6,6 +6,7 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.spec.ts', 'test/**/*.spec.ts'],
     pool: 'forks',
+    forbidOnly: !!process.env.CI,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],

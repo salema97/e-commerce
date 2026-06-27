@@ -2,8 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { promisify } from 'node:util';
 import * as soap from 'soap';
+import { getCircuitBreaker } from '../../common/resilience/resilient-fetch.js';
 
 const SOAP_TIMEOUT_MS = 30_000;
+const SUBMIT_MAX_RETRIES = 3;
+const SUBMIT_RETRY_DELAYS_MS = [1_000, 2_000, 4_000];
 
 type SoapCreateClient = (
   url: string,
@@ -39,13 +42,32 @@ export class SriSoapClient {
   constructor(private readonly configService: ConfigService) {}
 
   async submit(xml: string): Promise<SriReceptionResponse> {
-    const client = await this.createClient(this.getRecepcionUrl());
-    const [result] = await this.callWithTimeout(
-      client.validarComprobanteAsync({
-        xml: Buffer.from(xml, 'utf8').toString('base64'),
-      }) as Promise<[unknown]>,
-    );
-    return this.parseReceptionResponse(this.unwrapSoapResult(result));
+    return getCircuitBreaker('sri.soap.submit').execute(() => this.submitWithRetry(xml));
+  }
+
+  private async submitWithRetry(xml: string): Promise<SriReceptionResponse> {
+    let lastError: unknown;
+
+    for (let attempt = 0; attempt < SUBMIT_MAX_RETRIES; attempt++) {
+      try {
+        const client = await this.createClient(this.getRecepcionUrl());
+        const [result] = await this.callWithTimeout(
+          client.validarComprobanteAsync({
+            xml: Buffer.from(xml, 'utf8').toString('base64'),
+          }) as Promise<[unknown]>,
+        );
+        return this.parseReceptionResponse(this.unwrapSoapResult(result));
+      } catch (error) {
+        lastError = error;
+        if (attempt < SUBMIT_MAX_RETRIES - 1) {
+          await this.sleep(SUBMIT_RETRY_DELAYS_MS[attempt] ?? 4_000);
+        }
+      }
+    }
+
+    throw lastError instanceof Error
+      ? lastError
+      : new Error('SRI SOAP submit failed after retries');
   }
 
   async poll(accessKey: string): Promise<SriAuthorizationResponse> {

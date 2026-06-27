@@ -8,6 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { timingSafeEqual } from 'node:crypto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from '../auth/public.decorator.js';
 import { WmsIntegrationService } from '../fulfillment/wms-integration.service.js';
@@ -59,8 +60,17 @@ export class WmsWebhookController {
       }
       return;
     }
-    if (!signature || signature !== secret) {
+    if (!signature || !this.safeEqual(signature, secret)) {
       throw new UnauthorizedException('Invalid WMS webhook signature');
     }
+  }
+
+  private safeEqual(provided: string, expected: string): boolean {
+    const providedBuf = Buffer.from(provided);
+    const expectedBuf = Buffer.from(expected);
+    if (providedBuf.length !== expectedBuf.length) {
+      return false;
+    }
+    return timingSafeEqual(providedBuf, expectedBuf);
   }
 }

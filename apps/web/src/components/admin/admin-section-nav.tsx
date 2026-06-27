@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+import { isNavItemActive } from '@/lib/admin-nav';
+
 export interface AdminSectionNavItem {
   href: string;
   label: string;
@@ -23,11 +25,7 @@ export function AdminSectionNav({ basePath, items }: AdminSectionNavProps) {
   }
 
   const activeHref =
-    items.find((item) =>
-      item.exact
-        ? pathname === item.href
-        : pathname === item.href || pathname.startsWith(`${item.href}/`),
-    )?.href ?? items[0]?.href;
+    items.find((item) => isNavItemActive(pathname, item.href, item.exact))?.href ?? items[0]?.href;
 
   return (
     <Tabs value={activeHref} className="w-full">

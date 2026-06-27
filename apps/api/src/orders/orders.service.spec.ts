@@ -22,7 +22,13 @@ import { OrderChannel, OrderStatus } from '@prisma/client';
 describe('OrdersService', () => {
   let service: OrdersService;
   let prisma: ReturnType<typeof mockPrisma>;
-  let reservation: { reserveItems: ReturnType<typeof vi.fn>; release: ReturnType<typeof vi.fn>; reservationExpiry: ReturnType<typeof vi.fn> };
+  let reservation: {
+    reserveItems: ReturnType<typeof vi.fn>;
+    releaseItems: ReturnType<typeof vi.fn>;
+    release: ReturnType<typeof vi.fn>;
+    cancelOrderReservation: ReturnType<typeof vi.fn>;
+    reservationExpiry: ReturnType<typeof vi.fn>;
+  };
   let promotion: {
     validateCoupon: ReturnType<typeof vi.fn>;
     computeDiscountTotals: ReturnType<typeof vi.fn>;
@@ -56,7 +62,13 @@ describe('OrdersService', () => {
 
   beforeEach(async () => {
     prisma = mockPrisma();
-    reservation = { reserveItems: vi.fn(), release: vi.fn(), reservationExpiry: vi.fn(() => new Date('2026-06-22T01:00:00Z')) };
+    reservation = {
+      reserveItems: vi.fn(),
+      releaseItems: vi.fn(),
+      release: vi.fn(),
+      cancelOrderReservation: vi.fn(),
+      reservationExpiry: vi.fn(() => new Date('2026-06-22T01:00:00Z')),
+    };
     promotion = {
       validateCoupon: vi.fn(),
       computeDiscountTotals: vi.fn(),
@@ -235,8 +247,7 @@ describe('OrdersService', () => {
   it('cancels an order and releases reservation', async () => {
     prisma.order.findUnique.mockResolvedValue({ id: 'o1', userId: 'u1', customerEmail: 'u@example.com', status: OrderStatus.PAYMENT_PENDING });
     await service.cancelOrder('o1', customerContext());
-    expect(reservation.release).toHaveBeenCalledWith('o1');
-    expect(prisma.order.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: OrderStatus.CANCELLED }) }));
+    expect(reservation.cancelOrderReservation).toHaveBeenCalledWith('o1');
   });
 
   it('prevents cancelling shipped orders', async () => {

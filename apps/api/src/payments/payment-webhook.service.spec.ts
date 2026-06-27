@@ -42,6 +42,7 @@ describe('PaymentWebhookService', () => {
       payment: { findFirst: vi.fn(), update: vi.fn() },
       order: { update: vi.fn(), findUnique: vi.fn() },
       orderStatusHistory: { create: vi.fn() },
+      $transaction: vi.fn(async (cb: (tx: typeof prisma) => Promise<unknown>) => cb(prisma as never)),
     };
     notificationService = { notify: vi.fn().mockResolvedValue(undefined) };
     emailNotificationService = { notify: vi.fn().mockResolvedValue(undefined) };

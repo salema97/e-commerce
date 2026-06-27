@@ -13,7 +13,7 @@ import {
 } from '../payment-provider.interface.js';
 import { PaymentStatus } from '../public-api.js';
 import { PayPhoneWebhookDto } from '../public-api.js';
-import { resilientFetch } from '../../common/resilience/resilient-fetch.js';
+import { resilientFetchWithRetry } from '../../common/resilience/resilient-fetch.js';
 import { requirePaymentMetadataToken } from '../payment-metadata.util.js';
 
 @Injectable()
@@ -38,7 +38,7 @@ export class PayPhoneProvider extends PaymentProvider {
       'payphoneToken',
       'PayPhone',
     );
-    const response = await resilientFetch('payments.payphone', `${this.baseUrl}/api/transaction/create`, {
+    const response = await resilientFetchWithRetry('payments.payphone', `${this.baseUrl}/api/transaction/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

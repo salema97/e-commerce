@@ -96,6 +96,15 @@ export class MeilisearchService implements OnModuleInit {
     return this.client !== null;
   }
 
+  async ping(): Promise<boolean> {
+    if (!this.client) {
+      return false;
+    }
+
+    const health = await this.client.health();
+    return health.status === 'available';
+  }
+
   async applyIndexSettings(): Promise<void> {
     if (!this.client) {
       return;

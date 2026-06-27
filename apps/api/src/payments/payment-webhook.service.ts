@@ -72,7 +72,7 @@ export class PaymentWebhookService {
       case PaymentProviderEnum.PLACETOPAY:
         return this.configService.getOrThrow<string>('PLACETOPAY_SECRET_KEY');
       default:
-        return '';
+        throw new BadRequestException(`Webhook secret not configured for provider ${provider}`);
     }
   }
 
@@ -95,26 +95,31 @@ export class PaymentWebhookService {
     if (result.status === PaymentStatus.COMPLETED) orderStatus = OrderStatus.PROCESSING;
     if (result.status === PaymentStatus.FAILED) orderStatus = OrderStatus.PAYMENT_FAILED;
 
-    await this.prisma.payment.update({
-      where: { id: payment.id },
-      data: {
-        status: result.status,
-        providerMetadata: (result.metadata ?? {}) as Prisma.InputJsonValue,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: result.status,
+          providerMetadata: (result.metadata ?? {}) as Prisma.InputJsonValue,
+        },
+      });
+
+      if (orderStatus) {
+        await tx.order.update({
+          where: { id: payment.orderId },
+          data: { status: orderStatus },
+        });
+        await tx.orderStatusHistory.create({
+          data: {
+            orderId: payment.orderId,
+            status: orderStatus,
+            notes: `Payment notification from ${provider}`,
+          },
+        });
+      }
     });
 
     if (orderStatus) {
-      await this.prisma.order.update({
-        where: { id: payment.orderId },
-        data: { status: orderStatus },
-      });
-      await this.prisma.orderStatusHistory.create({
-        data: {
-          orderId: payment.orderId,
-          status: orderStatus,
-          notes: `Payment notification from ${provider}`,
-        },
-      });
       await this.sendStatusNotification(payment.orderId, orderStatus);
 
       if (orderStatus === OrderStatus.PROCESSING) {

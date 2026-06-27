@@ -11,16 +11,24 @@ describe('InventoryReservationService', () => {
 
   function mockPrisma() {
     const inv = { id: 'inv_1', quantity: 10, reservedQuantity: 0 };
+    const order = {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      update: vi.fn(),
+    };
     const tx = {
       inventory: {
         findFirst: vi.fn().mockResolvedValue(inv),
         update: vi.fn().mockResolvedValue({ ...inv }),
       },
+      order,
+      $executeRaw: vi.fn().mockResolvedValue(1),
     };
     return {
-      order: { findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn() },
+      order,
       $transaction: vi.fn((cb: (t: typeof tx) => Promise<unknown>) => cb(tx)),
-      ...tx,
+      $executeRaw: tx.$executeRaw,
+      inventory: tx.inventory,
     };
   }
 
@@ -35,10 +43,11 @@ describe('InventoryReservationService', () => {
   it('reserves stock for an order', async () => {
     prisma.order.findUnique.mockResolvedValue({ id: 'o1', items: [{ productId: 'p1', variantId: null, quantity: 3 }] });
     await service.reserve('o1');
-    expect(prisma.inventory.update).toHaveBeenCalledWith(expect.objectContaining({ data: { reservedQuantity: { increment: 3 } } }));
+    expect(prisma.$executeRaw).toHaveBeenCalled();
   });
 
   it('throws when stock insufficient', async () => {
+    prisma.$executeRaw.mockResolvedValue(0);
     await expect(service.reserveItems([{ productId: 'p1', variantId: null, quantity: 20 }])).rejects.toBeInstanceOf(BadRequestException);
   });
 
@@ -55,9 +64,28 @@ describe('InventoryReservationService', () => {
   });
 
   it('cancels expired reservations', async () => {
+    const txOrderUpdate = vi.fn();
     prisma.order.findMany.mockResolvedValue([{ id: 'o2' }]);
-    prisma.order.findUnique.mockResolvedValue({ id: 'o2', items: [{ productId: 'p1', variantId: null, quantity: 1 }] });
+    prisma.$transaction.mockImplementation(async (cb: (tx: {
+      order: { findUnique: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
+      inventory: { findFirst: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
+      $executeRaw: ReturnType<typeof vi.fn>;
+    }) => Promise<unknown>) =>
+      cb({
+        order: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: 'o2',
+            items: [{ productId: 'p1', variantId: null, quantity: 1 }],
+          }),
+          update: txOrderUpdate,
+        },
+        inventory: prisma.inventory,
+        $executeRaw: prisma.$executeRaw,
+      }),
+    );
     expect(await service.releaseExpiredReservations(new Date())).toBe(1);
-    expect(prisma.order.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: OrderStatus.CANCELLED }) }));
+    expect(txOrderUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ status: OrderStatus.CANCELLED }) }),
+    );
   });
 });

@@ -88,12 +88,15 @@ export class OrdersService {
 
     const reservationItems = await this.validateItems(dto.items);
     let allocations;
+    let reservedInventory = false;
     if (this.backorderService.isEnabled()) {
       allocations = await this.backorderService.allocateItems(reservationItems);
     } else {
       await this.reservationService.reserveItems(reservationItems);
+      reservedInventory = true;
     }
 
+    try {
     const cartItems = dto.items.map((item) => ({
       productId: item.productId,
       variantId: item.variantId ?? undefined,
@@ -226,6 +229,12 @@ export class OrdersService {
         taxRate: Number(i.taxRate), taxAmount: Number(i.taxAmount), discountAmount: Number(i.discountAmount),
       })),
     };
+    } catch (error) {
+      if (reservedInventory) {
+        await this.reservationService.releaseItems(reservationItems).catch(() => undefined);
+      }
+      throw error;
+    }
   }
 
   async getOrderById(id: string, context: OrderAccessContext) {
@@ -417,11 +426,7 @@ export class OrdersService {
     this.orderAccess.assertOrderAccess(order, context);
     const cancellable: OrderStatus[] = [OrderStatus.PENDING, OrderStatus.PAYMENT_PENDING];
     if (!cancellable.includes(order.status)) throw new BadRequestException(`Cannot cancel order in status ${order.status}`);
-    await this.reservationService.release(id);
-    await this.prisma.order.update({
-      where: { id },
-      data: { status: OrderStatus.CANCELLED, statusHistory: { create: { status: OrderStatus.CANCELLED, notes: 'Order cancelled' } } },
-    });
+    await this.reservationService.cancelOrderReservation(id);
     return { id, status: OrderStatus.CANCELLED };
   }
 

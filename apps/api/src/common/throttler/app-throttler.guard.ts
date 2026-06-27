@@ -1,5 +1,13 @@
 import { ExecutionContext, Injectable } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { ConfigService } from '@nestjs/config';
+import { Reflector } from '@nestjs/core';
+import {
+  InjectThrottlerOptions,
+  InjectThrottlerStorage,
+  ThrottlerGuard,
+  type ThrottlerModuleOptions,
+  type ThrottlerStorage,
+} from '@nestjs/throttler';
 import type { Request } from 'express';
 
 type AuthenticatedRequest = Request & {
@@ -8,8 +16,17 @@ type AuthenticatedRequest = Request & {
 
 @Injectable()
 export class AppThrottlerGuard extends ThrottlerGuard {
+  constructor(
+    @InjectThrottlerOptions() options: ThrottlerModuleOptions,
+    @InjectThrottlerStorage() storageService: ThrottlerStorage,
+    reflector: Reflector,
+    private readonly configService: ConfigService,
+  ) {
+    super(options, storageService, reflector);
+  }
+
   protected async shouldSkip(_context: ExecutionContext): Promise<boolean> {
-    return process.env.E2E_RELAX_THROTTLE === 'true';
+    return this.configService.get<string>('E2E_RELAX_THROTTLE') === 'true';
   }
 
   protected async getTracker(req: AuthenticatedRequest): Promise<string> {

@@ -3,7 +3,10 @@ import { ExecutionContext } from '@nestjs/common';
 import { AppThrottlerGuard } from './app-throttler.guard.js';
 
 describe('AppThrottlerGuard', () => {
-  const guard = new AppThrottlerGuard({} as never, {} as never, {} as never);
+  const configService = {
+    get: (key: string) => (key === 'E2E_RELAX_THROTTLE' ? process.env.E2E_RELAX_THROTTLE : undefined),
+  };
+  const guard = new AppThrottlerGuard({} as never, {} as never, {} as never, configService as never);
 
   it('tracks authenticated users by user id', async () => {
     const tracker = await guard['getTracker']({

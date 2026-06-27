@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { sidebarIconHover, sidebarIconRest } from '@/lib/neo-motion';
-import { filterAdminNav } from '@/lib/admin-nav';
+import { filterAdminNav, isNavItemActive } from '@/lib/admin-nav';
 import {
   Tooltip,
   TooltipContent,
@@ -91,7 +91,7 @@ export function AdminSidebar({ role }: AdminSidebarProps) {
       <nav className="flex flex-1 flex-col items-center gap-6 overflow-y-auto px-3 py-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {visibleNav.map((item, index) => {
           const Icon = navIcons[item.href];
-          const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const active = isNavItemActive(pathname, item.href);
           const prevGroup = index > 0 ? visibleNav[index - 1]?.group : null;
           const showDivider = prevGroup && prevGroup !== item.group;
 

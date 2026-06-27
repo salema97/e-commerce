@@ -28,6 +28,7 @@ export class ChatController {
 
   @Get('sessions/:sessionId/messages')
   @Public()
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @ApiOperation({ summary: 'List messages for a web chat session' })
   listMessages(@Param('sessionId') sessionId: string) {
     return this.chatService.listMessages(sessionId);

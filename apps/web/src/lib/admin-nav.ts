@@ -37,6 +37,13 @@ export function filterAdminNav(role: Role): AdminNavItem[] {
   return adminNavItems.filter((item) => item.roles.includes(role));
 }
 
+export function isNavItemActive(pathname: string, href: string, exact = false): boolean {
+  if (exact) {
+    return pathname === href;
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 /** RBAC compartido con middleware.ts — misma matriz que admin-nav.ts */
 export function canAccessAdminPath(role: Role, pathname: string): boolean {
   const normalized = pathname.replace(/\/$/, '') || '/admin';
@@ -63,9 +70,7 @@ export function canAccessAdminPath(role: Role, pathname: string): boolean {
 }
 
 export function adminNavLabelForPath(pathname: string): string {
-  const match = adminNavItems.find(
-    (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
-  );
+  const match = adminNavItems.find((item) => isNavItemActive(pathname, item.href));
   return match?.label ?? 'Administración';
 }
 

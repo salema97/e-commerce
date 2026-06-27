@@ -21,6 +21,7 @@ import { AuditModule } from '../audit/audit.module.js';
 import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.module.js';
 import { NotificationsModule } from '../notifications/notifications.module.js';
 import { SriQueueModule } from '../invoices/sri/sri-queue.module.js';
+import { RedisModule } from '../common/redis/redis.module.js';
 import { isNonProduction } from '../common/is-non-production.js';
 
 @Module({
@@ -29,6 +30,7 @@ import { isNonProduction } from '../common/is-non-production.js';
     SriQueueModule,
     InventoryModule,
     AuditModule,
+    RedisModule,
     WhatsAppNotificationModule,
     NotificationsModule,
   ],

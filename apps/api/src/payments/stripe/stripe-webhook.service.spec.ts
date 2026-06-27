@@ -10,6 +10,7 @@ import { OrderStatus } from '@prisma/client';
 import { SriQueueService } from '../../invoices/sri/sri-queue.service.js';
 import { InventoryReservationService } from '../../inventory/inventory-reservation.service.js';
 import { AuditLogService } from '../../audit/audit-log.service.js';
+import { RedisIdempotencyService } from '../../common/redis/idempotency.service.js';
 import { EventBus } from '../../event-bus/event-bus.interface.js';
 
 describe('StripeWebhookService', () => {
@@ -18,6 +19,7 @@ describe('StripeWebhookService', () => {
   let sriQueue: { addIssueInvoiceJob: ReturnType<typeof vi.fn> };
   let reservationService: { confirm: ReturnType<typeof vi.fn> };
   let auditLogService: { log: ReturnType<typeof vi.fn> };
+  let idempotency: { claim: ReturnType<typeof vi.fn>; release: ReturnType<typeof vi.fn> };
   let prisma: {
     payment: {
       findFirst: ReturnType<typeof vi.fn>;
@@ -39,6 +41,10 @@ describe('StripeWebhookService', () => {
     sriQueue = { addIssueInvoiceJob: vi.fn().mockResolvedValue({ id: 'job_1' }) };
     reservationService = { confirm: vi.fn() };
     auditLogService = { log: vi.fn() };
+    idempotency = {
+      claim: vi.fn().mockResolvedValue(true),
+      release: vi.fn().mockResolvedValue(undefined),
+    };
 
     const tx = {
       payment: {
@@ -77,6 +83,7 @@ describe('StripeWebhookService', () => {
         { provide: SriQueueService, useValue: sriQueue },
         { provide: InventoryReservationService, useValue: reservationService },
         { provide: AuditLogService, useValue: auditLogService },
+        { provide: RedisIdempotencyService, useValue: idempotency },
         { provide: EventBus, useValue: { publish: vi.fn(), registerHandler: vi.fn() } },
       ],
     }).compile();
@@ -98,7 +105,7 @@ describe('StripeWebhookService', () => {
 
   it('skips already processed events', async () => {
     stripeProvider.validateWebhookSignature.mockReturnValue(true);
-    prisma.auditLog.findFirst.mockResolvedValue({ id: 'log_1' });
+    idempotency.claim.mockResolvedValue(false);
 
     await service.handleWebhook(
       buildWebhookPayload('payment_intent.succeeded', { id: 'pi_123' }, 'evt_duplicate'),

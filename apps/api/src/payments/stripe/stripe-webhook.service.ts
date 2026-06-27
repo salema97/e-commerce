@@ -13,6 +13,7 @@ import { SriQueueService } from '../../invoices/sri/sri-queue.service.js';
 import { InventoryReservationService } from '../../inventory/inventory-reservation.service.js';
 import { AuditLogService } from '../../audit/audit-log.service.js';
 import { EventBus } from '../../event-bus/event-bus.interface.js';
+import { RedisIdempotencyService } from '../../common/redis/idempotency.service.js';
 
 interface StripeEvent {
   id: string;
@@ -37,6 +38,7 @@ export class StripeWebhookService {
     private readonly reservationService: InventoryReservationService,
     private readonly auditLogService: AuditLogService,
     @Inject(EventBus) private readonly eventBus: EventBus,
+    private readonly idempotency: RedisIdempotencyService,
   ) {}
 
   async handleWebhook(rawBody: Buffer, signature: string): Promise<void> {
@@ -50,13 +52,15 @@ export class StripeWebhookService {
 
     this.logger.debug(`Received Stripe event: ${event.type} (${event.id})`);
 
-    const alreadyProcessed = await this.isEventProcessed(event.id);
-    if (alreadyProcessed) {
+    const idempotencyKey = `stripe:event:${event.id}`;
+    const claimed = await this.idempotency.claim(idempotencyKey);
+    if (!claimed) {
       this.logger.debug(`Stripe event ${event.id} already processed; skipping`);
       return;
     }
 
-    switch (event.type) {
+    try {
+      switch (event.type) {
       case 'checkout.session.completed':
         await this.handleCheckoutSessionCompleted(event.data.object, event.id);
         break;
@@ -81,18 +85,11 @@ export class StripeWebhookService {
         break;
       default:
         this.logger.warn(`Unhandled Stripe event type: ${event.type}`);
+      }
+    } catch (error) {
+      await this.idempotency.release(idempotencyKey);
+      throw error;
     }
-  }
-
-  private async isEventProcessed(eventId: string): Promise<boolean> {
-    const existing = await this.prisma.auditLog.findFirst({
-      where: {
-        resource: 'stripe-webhook',
-        action: 'processed',
-        resourceId: eventId,
-      },
-    });
-    return existing != null;
   }
 
   private async handleCheckoutSessionCompleted(

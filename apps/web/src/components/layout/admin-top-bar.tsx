@@ -7,7 +7,7 @@ import * as React from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { adminNavLabelForPath, filterAdminNav } from '@/lib/admin-nav';
+import { adminNavLabelForPath, filterAdminNav, isNavItemActive } from '@/lib/admin-nav';
 import type { Role } from '@repo/shared-types';
 import { cn } from '@/lib/utils';
 
@@ -86,7 +86,7 @@ export function AdminTopBar({ role }: AdminTopBarProps) {
           </SheetHeader>
           <nav className="flex flex-col gap-1 p-4">
             {navItems.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const active = isNavItemActive(pathname, item.href);
               return (
                 <Link
                   key={item.href}

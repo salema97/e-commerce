@@ -124,6 +124,7 @@ const envSchema = z.object({
   KAFKA_PASSWORD: z.string().optional(),
   KAFKA_DOMAIN_EVENTS_TOPIC: z.string().default('domain-events'),
   ENABLE_TEST_AUTH: z.enum(['true', 'false']).default('false'),
+  E2E_RELAX_THROTTLE: z.enum(['true', 'false']).default('false'),
   CAPTCHA_PROVIDER: z.enum(['none', 'hcaptcha']).default('none'),
   HCAPTCHA_SECRET_KEY: z.string().optional(),
   LOYALTY_SIGNUP_POINTS: z.coerce.number().int().min(0).default(25),
@@ -147,6 +148,14 @@ const envSchema = z.object({
   SIIGO_API_KEY: z.string().optional(),
   SIIGO_API_URL: z.string().optional(),
   MULTI_CURRENCY_ENABLED: z.enum(['true', 'false']).default('false'),
+}).superRefine((data, ctx) => {
+  if (data.NODE_ENV === 'production' && data.E2E_RELAX_THROTTLE === 'true') {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['E2E_RELAX_THROTTLE'],
+      message: 'E2E_RELAX_THROTTLE cannot be true when NODE_ENV is production',
+    });
+  }
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -13,7 +13,7 @@ import {
 } from '../payment-provider.interface.js';
 import { PaymentStatus } from '../public-api.js';
 import { MercadoPagoWebhookDto } from '../public-api.js';
-import { resilientFetch } from '../../common/resilience/resilient-fetch.js';
+import { resilientFetchWithRetry } from '../../common/resilience/resilient-fetch.js';
 import { requirePaymentMetadataToken } from '../payment-metadata.util.js';
 
 @Injectable()
@@ -34,7 +34,7 @@ export class MercadoPagoProvider extends PaymentProvider {
       'mercadoPagoToken',
       'MercadoPago',
     );
-    const response = await resilientFetch('payments.mercadopago', `${this.baseUrl}/v1/payments`, {
+    const response = await resilientFetchWithRetry('payments.mercadopago', `${this.baseUrl}/v1/payments`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -63,7 +63,7 @@ export class MercadoPagoProvider extends PaymentProvider {
   }
 
   async createCheckoutSession(order: PaymentOrder): Promise<CheckoutSessionResult> {
-    const response = await resilientFetch(
+    const response = await resilientFetchWithRetry(
       'payments.mercadopago',
       `${this.baseUrl}/checkout/preferences`,
       {
