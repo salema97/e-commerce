@@ -383,6 +383,7 @@ model User {
   auditLogs     AuditLog[]
   returns       ReturnRequest[]
   storeCredits  StoreCredit[]
+  giftCards     GiftCard[]
   authSessions  AuthSession[]
   pushDeviceTokens PushDeviceToken[]
   productReviews ProductReview[]
@@ -643,6 +644,7 @@ model Order {
   marketplaceImport  MarketplaceOrderImport?
   sellerPayouts      SellerPayout[]
   marketplaceDisputes MarketplaceDispute[]
+  sriSupplementaryDocuments SriSupplementaryDocument[]
 
   @@index([userId])
   @@index([companyId])
@@ -948,6 +950,7 @@ model Conversation {
   status          ConversationStatus @default(OPEN)
   botEnabled      Boolean            @default(true)
   assignedAgentId String?
+  internalNotes   String?            @db.Text
   lastMessageAt   DateTime?
   unreadCount     Int                @default(0)
   createdAt       DateTime           @default(now())
@@ -1250,6 +1253,66 @@ model StoreCredit {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model GiftCard {
+  id             String    @id @default(uuid())
+  code           String    @unique
+  initialBalance Decimal   @db.Decimal(12, 2)
+  balance        Decimal   @db.Decimal(12, 2)
+  currency       String    @default("USD")
+  expiresAt      DateTime?
+  isActive       Boolean   @default(true)
+  issuedToUserId String?
+  note           String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  issuedToUser User? @relation(fields: [issuedToUserId], references: [id], onDelete: SetNull)
+
+  @@index([issuedToUserId])
+  @@index([isActive])
+}
+
+model WhatsAppQuickReply {
+  id        String   @id @default(uuid())
+  label     String
+  text      String   @db.Text
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+model SriSupplementaryDocument {
+  id                     String            @id @default(uuid())
+  documentType           String
+  accessKey              String            @unique
+  orderId                String?
+  parentInvoiceAccessKey String?
+  sequenceNumber         String?
+  authorizationNumber    String?
+  authorizationDate      DateTime?
+  status                 CreditNoteStatus  @default(DRAFT)
+  sriStatus              SriDocumentStatus @default(PENDING)
+  signedXml              String?           @db.Text
+  reason                 String?
+  totalAmount            Decimal           @db.Decimal(12, 2) @default(0)
+  retryCount             Int               @default(0)
+  lastError              String?
+  sriResponse            Json?
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+
+  order Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([documentType])
+  @@index([orderId])
+  @@index([accessKey])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model PushDeviceToken {

@@ -1,11 +1,12 @@
 import { Module, RequestMethod } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { validate } from './config/env.validation.js';
 import { RedisService } from './common/redis/redis.service.js';
 import { RedisThrottlerStorage } from './common/throttler/redis-throttler.storage.js';
+import { AppThrottlerGuard } from './common/throttler/app-throttler.guard.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { HealthModule } from './health/health.module.js';
 import { CategoriesModule } from './categories/categories.module.js';
@@ -125,7 +126,7 @@ import { DropshipModule } from './dropship/dropship.module.js';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: AppThrottlerGuard,
     },
     {
       provide: APP_GUARD,

@@ -20,20 +20,21 @@ if (!authJwtSecret) {
 
 process.env.EVOLUTION_WEBHOOK_SECRET ??= E2E_EVOLUTION_WEBHOOK_SECRET;
 
-const reuseExistingServer = process.env.PLAYWRIGHT_REUSE_EXISTING_SERVER !== '0';
+const reuseExistingServer = process.env.PLAYWRIGHT_REUSE_EXISTING_SERVER === '1';
 
 const e2eServerEnv = {
   AUTH_JWT_ACCESS_SECRET: authJwtSecret,
   NEXT_PUBLIC_API_BASE_URL: E2E_API_BASE,
   API_BASE_URL: E2E_API_BASE,
   CORS_ORIGINS: 'http://localhost:3000,http://127.0.0.1:3000',
+  E2E_RELAX_THROTTLE: 'true',
 };
 
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   retries: 1,
-  workers: 4,
+  workers: 2,
   reporter: 'list',
   use: {
     baseURL: `http://${E2E_HOST}:3000`,

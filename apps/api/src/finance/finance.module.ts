@@ -4,6 +4,7 @@ import { ExpenseCategoriesModule } from './expense-categories/expense-categories
 import { ExpensesModule } from './expenses/expenses.module.js';
 import { FinanceReportsModule } from './reports/finance-reports.module.js';
 import { FinanceStoreCreditsModule } from './store-credits/finance-store-credits.module.js';
+import { FinanceGiftCardsModule } from './gift-cards/finance-gift-cards.module.js';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { FinanceStoreCreditsModule } from './store-credits/finance-store-credits
     ExpensesModule,
     FinanceReportsModule,
     FinanceStoreCreditsModule,
+    FinanceGiftCardsModule,
   ],
   exports: [
     IncomesModule,

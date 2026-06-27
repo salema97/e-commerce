@@ -109,6 +109,7 @@ export class ConversationService {
           assignedAgentId: data.assignedAgentId,
         }),
         ...(data.contactName !== undefined && { contactName: data.contactName }),
+        ...(data.internalNotes !== undefined && { internalNotes: data.internalNotes }),
       },
     });
   }

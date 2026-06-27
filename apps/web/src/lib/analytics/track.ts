@@ -12,7 +12,12 @@ type PostHogClient = {
 let posthog: PostHogClient | null = null;
 let initialized = false;
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001/v1';
+function getAnalyticsApiBase(): string {
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/api/v1`;
+  }
+  return process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || 'http://localhost:3001/v1';
+}
 
 export async function initAnalytics(userId?: string): Promise<void> {
   if (initialized || !hasAnalyticsConsent()) {
@@ -81,7 +86,7 @@ export async function trackEvent(
   posthog?.capture(event, properties);
 
   try {
-    await fetch(`${API_BASE}/analytics/events`, {
+    await fetch(`${getAnalyticsApiBase()}/analytics/events`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -100,7 +105,7 @@ export function isFeatureEnabled(flag: string): boolean {
 }
 
 export function reportClientError(message: string, context?: Record<string, unknown>): void {
-  void fetch(`${API_BASE}/analytics/errors`, {
+  void fetch(`${getAnalyticsApiBase()}/analytics/errors`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

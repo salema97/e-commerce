@@ -9,6 +9,10 @@ const TEST_CONFIG = {
   KUSHKI_WEBHOOK_SECRET: 'kushki_webhook_secret',
 };
 
+const LOCAL_PAYMENT_METADATA = {
+  kushkiToken: 'tok_kushki_test',
+};
+
 function mockResponse(body: unknown, ok = true): Response {
   return {
     ok,
@@ -51,6 +55,7 @@ describe('KushkiProvider', () => {
       amount: 1000,
       currency: 'USD',
       idempotencyKey: 'idem_1',
+      metadata: LOCAL_PAYMENT_METADATA,
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -81,6 +86,7 @@ describe('KushkiProvider', () => {
         amount: 500,
         currency: 'USD',
         idempotencyKey: 'idem_2',
+        metadata: LOCAL_PAYMENT_METADATA,
       }),
     ).rejects.toThrow('Kushki charge failed: Invalid card');
   });
@@ -95,6 +101,7 @@ describe('KushkiProvider', () => {
       orderNumber: 'ORD-003',
       amount: 1500,
       currency: 'USD',
+      metadata: LOCAL_PAYMENT_METADATA,
     });
 
     expect(result.sessionId).toBe('kushki_txn_2');

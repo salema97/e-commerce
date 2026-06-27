@@ -4,7 +4,7 @@ import {
   addDeepLinkListener,
   parseDeepLink,
   useDeepLinkUrl,
-} from '../lib/deep-links.js';
+} from '../lib/deep-links';
 
 export function DeepLinkManager(): null {
   const router = useRouter();

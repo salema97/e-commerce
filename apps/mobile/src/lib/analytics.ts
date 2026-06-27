@@ -1,7 +1,7 @@
 import type { EcommerceAnalyticsEventName } from '@repo/shared-types';
-import { getApiBaseUrl } from './env.js';
-import { hasAnalyticsConsent } from './analytics-consent.js';
-import { captureMobileException } from './sentry.js';
+import { getApiBaseUrl } from './env';
+import { hasAnalyticsConsent } from './analytics-consent';
+import { captureMobileException } from './sentry';
 
 const API_BASE = getApiBaseUrl();
 

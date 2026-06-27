@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Card, Switch, neo } from '@repo/shared-ui';
-import { api } from '../../lib/api.js';
+import { api } from '../../lib/api';
 
 export function NotificationPreferencesPanel(): React.ReactElement {
   const { data, isLoading } = api.hooks.useNotificationPreferences();

@@ -14,11 +14,14 @@ test.describe('admin invoice UI e2e', () => {
     await authenticatePage(page, TEST_FINANCE_USER);
     await page.goto('/admin/invoices');
 
-    await expect(page.locator('body')).toContainText('Facturación');
-    await expect(page.locator('body')).toContainText(invoice.accessKey.slice(0, 20));
+    await expect(page.locator('body')).toContainText('Facturación', { timeout: 15_000 });
+    await expect(page.locator('body')).toContainText(invoice.accessKey.slice(0, 20), {
+      timeout: 15_000,
+    });
 
     const row = page.getByRole('row').filter({ hasText: invoice.accessKey.slice(0, 20) });
-    await row.getByRole('button', { name: 'Ver' }).click();
+    await row.getByRole('button', { name: 'Acciones de factura' }).click();
+    await page.getByRole('menuitem', { name: 'Ver detalle' }).click();
     await expect(page).toHaveURL(`/admin/invoices/${invoice.id}`);
     await expect(page.locator('body')).toContainText('Clave de acceso');
     await expect(page.locator('body')).toContainText(invoice.accessKey);

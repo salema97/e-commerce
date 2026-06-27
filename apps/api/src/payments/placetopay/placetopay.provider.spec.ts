@@ -10,6 +10,8 @@ const TEST_CONFIG = {
   PLACETOPAY_BASE_URL: 'https://ptp.test',
 };
 
+const PLACETOPAY_METADATA = { returnUrl: 'https://store.example.com/checkout/return' };
+
 function mockResponse(body: unknown, ok = true): Response {
   return {
     ok,
@@ -56,6 +58,7 @@ describe('PlaceToPayProvider', () => {
       amount: 1000,
       currency: 'USD',
       idempotencyKey: 'idem_1',
+      metadata: PLACETOPAY_METADATA,
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -81,6 +84,7 @@ describe('PlaceToPayProvider', () => {
         amount: 500,
         currency: 'USD',
         idempotencyKey: 'idem_2',
+        metadata: PLACETOPAY_METADATA,
       }),
     ).rejects.toThrow('PlaceToPay session failed: Invalid auth');
   });
@@ -99,6 +103,7 @@ describe('PlaceToPayProvider', () => {
       orderNumber: 'ORD-003',
       amount: 1500,
       currency: 'USD',
+      metadata: PLACETOPAY_METADATA,
     });
 
     expect(result.sessionId).toBe('11111');

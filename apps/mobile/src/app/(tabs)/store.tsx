@@ -2,14 +2,14 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Input, Badge, PressableCard, ProductImage, Button, neo } from '@repo/shared-ui';
-import { NeoScreen } from '../../components/neo-screen.js';
-import { StoreChatWidget } from '../../components/store/StoreChatWidget.js';
-import { api } from '../../lib/api.js';
+import { NeoScreen } from '../../components/neo-screen';
+import { StoreChatWidget } from '../../components/store/StoreChatWidget';
+import { api } from '../../lib/api';
 import { formatPrice } from '@repo/shared-utils';
 import type { CatalogProductSummary, Category } from '@repo/shared-types';
-import { NeoEnterFromTop, NeoStaggeredItem } from '../../components/neo-animated.js';
-import { trackMobileEvent } from '../../lib/analytics.js';
-import { useAuth } from '../../providers/AuthProvider.js';
+import { NeoEnterFromTop, NeoStaggeredItem } from '../../components/neo-animated';
+import { trackMobileEvent } from '../../lib/analytics';
+import { useAuth } from '../../providers/AuthProvider';
 
 export default function StoreScreen(): React.ReactElement {
   const router = useRouter();

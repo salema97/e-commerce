@@ -1,12 +1,14 @@
 import { test, expect } from '@playwright/test';
-import { presetCookieConsent } from './fixtures/auth.js';
+import { createTestProduct, presetCookieConsent } from './fixtures/auth.js';
 
 test.describe('checkout e2e', () => {
-  test('guest can open checkout with items in cart', async ({ page }) => {
-    await presetCookieConsent(page);
-    await page.goto('/store', { waitUntil: 'domcontentloaded' });
+  test('guest can open checkout with items in cart', async ({ page, request }) => {
+    const product = await createTestProduct(request);
 
-    const addButton = page.getByRole('button', { name: /añadir|agregar|add to cart/i }).first();
+    await presetCookieConsent(page);
+    await page.goto(`/store/${product.slug}`, { waitUntil: 'domcontentloaded' });
+
+    const addButton = page.getByRole('button', { name: /agregar al carrito/i });
     await expect(addButton).toBeVisible({ timeout: 15_000 });
     await addButton.click();
 

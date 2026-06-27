@@ -31,9 +31,13 @@ export class JwtAuthGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    if (isPublic) return true;
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+
+    if (isPublic) {
+      this.attachUserIfPresent(request);
+      return true;
+    }
 
     const authHeader = request.headers.authorization;
     if (typeof authHeader !== 'string' || !authHeader.startsWith('Bearer ')) {
@@ -49,6 +53,23 @@ export class JwtAuthGuard implements CanActivate {
       return true;
     } catch {
       throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
+
+  private attachUserIfPresent(request: AuthenticatedRequest): void {
+    const authHeader = request.headers.authorization;
+    if (typeof authHeader !== 'string' || !authHeader.startsWith('Bearer ')) {
+      return;
+    }
+
+    try {
+      const payload = this.jwt.verifyAccessToken(authHeader.slice(7));
+      if (payload.type !== 'access') {
+        return;
+      }
+      request.user = { userId: payload.sub, role: payload.role };
+    } catch {
+      // Public route — invalid token is ignored.
     }
   }
 }

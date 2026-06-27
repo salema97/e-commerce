@@ -6,9 +6,9 @@ import { useAuth } from '@/contexts/auth-context';
 
 function getBaseURL(): string {
   if (typeof window !== 'undefined') {
-    return '/api/v1';
+    return `${window.location.origin}/api/v1`;
   }
-  return process.env.API_BASE_URL ?? 'http://localhost:3001/v1';
+  return process.env.API_BASE_URL?.trim() || 'http://localhost:3001/v1';
 }
 
 export function useAuthApiReady(): boolean {

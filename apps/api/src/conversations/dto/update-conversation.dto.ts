@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import type { ConversationStatus } from '@repo/shared-types';
 
@@ -12,4 +12,10 @@ export class UpdateConversationDto {
   @IsOptional()
   @IsUUID()
   assignedAgentId?: string;
+
+  @ApiPropertyOptional({ description: 'Internal support notes (not sent to customer)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(5000)
+  internalNotes?: string;
 }

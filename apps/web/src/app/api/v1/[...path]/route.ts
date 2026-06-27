@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { ACCESS_TOKEN_COOKIE } from '@/lib/auth-cookies';
 
-const API_BASE = (process.env.API_BASE_URL ?? 'http://localhost:3001/v1').replace(/\/$/, '');
+const API_BASE = (process.env.API_BASE_URL?.trim() || 'http://localhost:3001/v1').replace(/\/$/, '');
 
 type RouteContext = { params: Promise<{ path: string[] }> };
 

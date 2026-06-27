@@ -2,7 +2,7 @@ import React from 'react';
 import { type ViewStyle } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { neo } from '@repo/shared-ui';
-import { NeoEnterFromTop } from './neo-animated.js';
+import { NeoEnterFromTop } from './neo-animated';
 
 type NeoScreenProps = {
   children: React.ReactNode;

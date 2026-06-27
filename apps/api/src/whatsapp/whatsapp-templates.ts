@@ -40,6 +40,27 @@ export interface RefundConfirmedContext {
   refundMethod: string;
 }
 
+export interface ReturnRequestedContext {
+  customerName: string;
+  orderNumber: string;
+  returnId: string;
+  reason: string;
+}
+
+export interface ReturnStatusChangedContext {
+  customerName: string;
+  orderNumber: string;
+  returnId: string;
+  fromStatus: string;
+  toStatus: string;
+}
+
+export interface ReturnStoreCreditContext {
+  customerName: string;
+  orderNumber: string;
+  amount: string;
+}
+
 export interface SriDocumentDeliveryContext {
   customerName: string;
   documentTypeLabel: string;
@@ -55,6 +76,9 @@ export type NotificationContext =
   | PickupReadyContext
   | PaymentFailedContext
   | RefundConfirmedContext
+  | ReturnRequestedContext
+  | ReturnStatusChangedContext
+  | ReturnStoreCreditContext
   | SriDocumentDeliveryContext;
 
 /**
@@ -79,6 +103,12 @@ export function renderWhatsAppTemplate(
       return paymentFailed(context as PaymentFailedContext);
     case 'REFUND_CONFIRMED':
       return refundConfirmed(context as RefundConfirmedContext);
+    case 'RETURN_REQUESTED':
+      return returnRequested(context as ReturnRequestedContext);
+    case 'RETURN_STATUS_CHANGED':
+      return returnStatusChanged(context as ReturnStatusChangedContext);
+    case 'RETURN_STORE_CREDIT':
+      return returnStoreCredit(context as ReturnStoreCreditContext);
     case 'SRI_DOCUMENT_DELIVERY':
       return sriDocumentDelivery(context as SriDocumentDeliveryContext);
     default:
@@ -142,6 +172,31 @@ function refundConfirmed(ctx: RefundConfirmedContext): string {
     `Monto: ${ctx.amount}\n` +
     `Metodo: ${ctx.refundMethod}\n\n` +
     `El reembolso se reflejara en los proximos dias habiles segun tu banco o metodo de pago.`
+  );
+}
+
+function returnRequested(ctx: ReturnRequestedContext): string {
+  return (
+    `Hola ${ctx.customerName}, recibimos tu solicitud de devolucion del pedido *${ctx.orderNumber}*.\n\n` +
+    `Referencia: ${ctx.returnId}\n` +
+    `Motivo: ${ctx.reason}\n\n` +
+    `Te avisaremos cuando revisemos tu solicitud.`
+  );
+}
+
+function returnStatusChanged(ctx: ReturnStatusChangedContext): string {
+  return (
+    `Hola ${ctx.customerName}, tu devolucion del pedido *${ctx.orderNumber}* fue actualizada.\n\n` +
+    `Referencia: ${ctx.returnId}\n` +
+    `Estado anterior: ${ctx.fromStatus}\n` +
+    `Estado actual: ${ctx.toStatus}`
+  );
+}
+
+function returnStoreCredit(ctx: ReturnStoreCreditContext): string {
+  return (
+    `Hola ${ctx.customerName}, se acredito *${ctx.amount}* a tu saldo en tienda por la devolucion del pedido *${ctx.orderNumber}*.\n\n` +
+    `Puedes usarlo en tu proxima compra.`
   );
 }
 

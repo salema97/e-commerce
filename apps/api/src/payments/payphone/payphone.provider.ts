@@ -14,6 +14,7 @@ import {
 import { PaymentStatus } from '../public-api.js';
 import { PayPhoneWebhookDto } from '../public-api.js';
 import { resilientFetch } from '../../common/resilience/resilient-fetch.js';
+import { requirePaymentMetadataToken } from '../payment-metadata.util.js';
 
 @Injectable()
 export class PayPhoneProvider extends PaymentProvider {
@@ -32,6 +33,11 @@ export class PayPhoneProvider extends PaymentProvider {
   }
 
   async createPaymentIntent(order: CreatePaymentIntentOptions): Promise<PaymentIntentResult> {
+    const clientTransactionId = requirePaymentMetadataToken(
+      order.metadata,
+      'payphoneToken',
+      'PayPhone',
+    );
     const response = await resilientFetch('payments.payphone', `${this.baseUrl}/api/transaction/create`, {
       method: 'POST',
       headers: {
@@ -42,6 +48,7 @@ export class PayPhoneProvider extends PaymentProvider {
         amount: order.amount,
         reference: order.orderNumber,
         storeId: this.storeId,
+        clientTransactionId,
         metadata: {
           orderId: order.orderId,
           ...order.metadata,

@@ -2,8 +2,8 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Card, neo } from '@repo/shared-ui';
-import { NeoScreen } from '../../components/neo-screen.js';
-import { api } from '../../lib/api.js';
+import { NeoScreen } from '../../components/neo-screen';
+import { api } from '../../lib/api';
 import { LEGAL_PATH_TITLES, resolveLegalCmsSlug } from '@repo/shared-utils';
 
 export default function LegalPageScreen(): React.ReactElement {

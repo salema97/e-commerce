@@ -48,66 +48,69 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 ## Phase 0 — Monorepo Setup
 
-- [ ] Initialize pnpm workspace (`pnpm-workspace.yaml`) with `apps/*` and `packages/*`.
-- [ ] Add root `package.json` with `packageManager: pnpm@10.x` and Turborepo scripts.
-- [ ] Add Turborepo pipeline (`turbo.json`) for `dev`, `build`, `lint`, `test`, `test:e2e`, `typecheck`.
-- [ ] Create workspace packages: `shared-config`, `shared-types`, `shared-utils`, `shared-ui`, `api-client`.
-- [ ] Configure TypeScript project references (`composite: true`, root solution `tsconfig.json`).
-- [ ] Configure pnpm catalogs for shared versions (React, TypeScript, Zod, Tailwind, ESLint, Prettier).
-- [ ] Use `workspace:^` for all internal dependencies.
-- [ ] Configure ESLint 9 flat config + Prettier + Husky + lint-staged.
-- [ ] Create `docker-compose.yml` with PostgreSQL, Redis, Meilisearch, and Evolution API.
-- [ ] Add root `.env.example` and per-app `.env.example` files.
+- [x] Initialize pnpm workspace (`pnpm-workspace.yaml`) with `apps/*` and `packages/*`.
+- [x] Add root `package.json` with `packageManager: pnpm@10.x` and Turborepo scripts.
+- [x] Add Turborepo pipeline (`turbo.json`) for `dev`, `build`, `lint`, `test`, `test:e2e`, `typecheck`.
+- [x] Create workspace packages: `shared-config`, `shared-types`, `shared-utils`, `shared-ui`, `api-client`.
+- [x] Configure TypeScript project references (`composite: true`, root solution `tsconfig.json`).
+- [x] Configure pnpm catalogs for shared versions (React, TypeScript, Zod, Tailwind, ESLint, Prettier).
+- [x] Use `workspace:^` for all internal dependencies.
+- [x] Configure ESLint 9 flat config + Prettier + Husky + lint-staged.
+- [x] Create `docker-compose.yml` with PostgreSQL, Redis, Meilisearch, and Evolution API.
+- [x] Add root `.env.example` and per-app `.env.example` files.
 
 ## Phase 1 — API Core (`apps/api`)
 
 > **SDD phase**: partial. SDD required for RBAC/auth, `PaymentProvider`, and `InvoiceProvider` abstractions only.
 
-- [ ] Bootstrap NestJS 11 app inside `apps/api` (Node 20+).
-- [ ] Configure Prisma with PostgreSQL.
-- [ ] Define initial schema:
-  - [ ] `User` (with native auth fields: email, `role`, phone, password hash)
-  - [ ] `Category`
-  - [ ] `Product`, `ProductVariant`, `ProductImage`, `ProductAttribute`
-  - [ ] `Inventory`
-  - [ ] `Cart`, `CartItem`
-  - [ ] `Order`, `OrderItem`, `OrderStatusHistory`
-  - [ ] `Payment`, `Refund`
-  - [ ] `Promotion`, `Coupon`, `DiscountRule`
-  - [ ] `Wishlist`, `BackInStockAlert`
-  - [ ] `AuditLog`
-  - [ ] `Address`
-  - [ ] `Conversation`, `Message` (for WhatsApp support inbox)
-  - [ ] `Supplier`
-  - [ ] `Income`, `Expense`, `ExpenseCategory` (financial module)
-- [ ] Add indexes on `slug`, `categoryId`, `status`, `userId`, `createdAt`, `customerPhone`.
-- [ ] Run initial migration and seed script with sample data.
-- [ ] Implement feature modules:
-  - [ ] Auth (native JWT guard, public route decorator, role guard)
-  - [ ] RBAC: `@Roles()` decorator + global RolesGuard reading `role` from JWT
-  - [ ] Users (register/login, refresh tokens, `role` field in Prisma)
-  - [ ] Categories (CRUD)
-  - [ ] Products (CRUD with variants, attributes, images)
-  - [ ] Inventory (stock levels, reservations, oversell prevention)
-  - [ ] Suppliers (CRUD, linked to products/purchase orders)
-  - [ ] Cart (guest + authenticated, merge on login)
-  - [ ] Orders (create from cart, status lifecycle)
-- [ ] Add Swagger/OpenAPI documentation and publish public versioned docs at `/v1/docs`.
-- [ ] Add API versioning prefix (`/v1`) to the NestJS global route prefix.
+- [x] Bootstrap NestJS 11 app inside `apps/api` (Node 22+).
+- [x] Configure Prisma with PostgreSQL.
+- [x] Define initial schema:
+  - [x] `User` (with native auth fields: email, `role`, phone, password hash)
+  - [x] `Category`
+  - [x] `Product`, `ProductVariant`, `ProductImage`, `ProductAttribute`
+  - [x] `Inventory`
+  - [x] `Cart`, `CartItem`
+  - [x] `Order`, `OrderItem`, `OrderStatusHistory`
+  - [x] `Payment`, `Refund`
+  - [x] `Promotion`, `Coupon`, `DiscountRule`
+  - [x] `Wishlist`, `BackInStockAlert`
+  - [x] `AuditLog`
+  - [x] `Address`
+  - [x] `Conversation`, `Message` (for WhatsApp support inbox)
+  - [x] `Supplier`
+  - [x] `Income`, `Expense`, `ExpenseCategory` (financial module)
+- [x] Add indexes on `slug`, `categoryId`, `status`, `userId`, `createdAt`, `customerPhone`.
+- [x] Run initial migration and seed script with sample data.
+- [x] Implement feature modules:
+  - [x] Auth (native JWT guard, public route decorator, role guard)
+  - [x] RBAC: `@Roles()` decorator + global RolesGuard reading `role` from JWT
+  - [x] Users (register/login, refresh tokens, `role` field in Prisma)
+  - [x] Categories (CRUD)
+  - [x] Products (CRUD with variants, attributes, images)
+  - [x] Inventory (stock levels, reservations, oversell prevention)
+  - [x] Suppliers (CRUD, linked to products/purchase orders)
+  - [x] Cart (guest + authenticated, merge on login)
+  - [x] Orders (create from cart, status lifecycle)
+- [x] Add Swagger/OpenAPI documentation and publish public versioned docs at `/v1/docs`.
+- [x] Add API versioning prefix (`/v1`) to the NestJS global route prefix.
 - [ ] Version the generated `@repo/api-client` with API versions and publish change log / migration guides.
-- [ ] Add S3 image upload endpoint (signed URLs).
-- [ ] Add global exception filter, validation pipes, and health check endpoint.
-- [ ] Implement granular rate limiting:
-  - [ ] Per endpoint, per IP, per user, and per API key.
-  - [ ] Sliding window or token bucket strategy backed by Redis.
-  - [ ] Stricter limits for public endpoints (login, register, forgot password, checkout, webhooks) vs authenticated endpoints.
-- [ ] Add structured logging (Pino).
-- [ ] Add circuit breaker / retry pattern for external service calls (Stripe, SRI, Evolution API, email, push).
-- [ ] Add `PaymentProvider` abstraction and Stripe adapter.
-- [ ] Add local Ecuador payment provider adapters: Kushki, PayPhone, MercadoPago, PlaceToPay.
-- [ ] Add `PromotionService` with coupon, discount rule, and bundle support.
-- [ ] Add `AuditLogService` to record admin mutations with diff snapshots.
-- [ ] Write unit tests for services and E2E tests for controllers.
+- [x] Add S3 image upload endpoint (signed URLs).
+- [x] Add global exception filter, validation pipes, and health check endpoint.
+- [x] Implement granular rate limiting:
+  - [x] Per endpoint (via `@Throttle` on auth, checkout, webhooks, etc.).
+  - [x] Per IP (global `ThrottlerGuard` + Redis storage).
+  - [ ] Per user (custom throttler tracker not implemented).
+  - [ ] Per API key (not implemented).
+  - [x] Sliding window or token bucket strategy backed by Redis.
+  - [x] Stricter limits for public endpoints (login, register, forgot password, checkout, webhooks) vs authenticated endpoints.
+- [x] Add structured logging (Pino).
+- [x] Add circuit breaker / retry pattern for external service calls (Stripe, SRI, Evolution API, email, push).
+- [x] Add `PaymentProvider` abstraction and Stripe adapter.
+- [x] Add local Ecuador payment provider adapters: Kushki, PayPhone, MercadoPago, PlaceToPay.
+- [~] Add `PromotionService` with coupon, discount rule, and bundle support — coupons/discount rules OK; bundle logic simplified.
+- [x] Add `AuditLogService` to record admin mutations with diff snapshots.
+- [x] Write unit tests for services and E2E tests for controllers.
 
 ## Phase 2 — Shared Packages
 
@@ -119,69 +122,69 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 ## Phase 3 — Web App (`apps/web`)
 
-- [ ] Bootstrap Next.js 15 with App Router, Tailwind, shadcn/ui.
-- [ ] Setup native JWT auth provider; configure `middleware.ts` route protection.
-- [ ] Landing page (`/`).
-- [ ] Customer store:
-  - [ ] Catalog page (`/store`) with filters, sorting, and Meilisearch integration.
-  - [ ] Product detail page (`/store/[slug]`).
-  - [ ] Cart page (`/cart`) using Zustand + server sync.
-  - [ ] Checkout page (`/checkout`) with Stripe.
-  - [ ] Order confirmation and order history pages.
-  - [ ] Guest checkout flow.
-- [ ] Admin panel (`/admin`):
-  - [ ] Admin layout and route protection (role-based).
-  - [ ] Middleware to validate admin roles before rendering admin routes.
-  - [ ] UI hides menus/actions based on role.
-  - [ ] Server Actions/Route Handlers re-validate role on every request.
-  - [ ] Products CRUD with image upload.
-  - [ ] Categories CRUD.
-  - [ ] Inventory management.
-  - [ ] Orders list, detail view, status updates, refunds.
-  - [ ] Customers list and detail.
-  - [ ] Simple dashboard with metrics.
-- [ ] Add global layout, navigation, footer, error pages, loading states.
-- [ ] Implement SEO basics: sitemap, robots, structured data, metadata.
-- [ ] Add PWA setup: service worker, web manifest, offline cart/catalog browsing.
-- [ ] Add wishlist UI (`/wishlist`, product detail toggle).
-- [ ] Add CMS-driven pages: blog, legal pages, and editable landing page sections.
+- [x] Bootstrap Next.js 16 with App Router, Tailwind, shadcn/ui.
+- [x] Setup native JWT auth provider; configure `middleware.ts` route protection.
+- [x] Landing page (`/`).
+- [x] Customer store:
+  - [x] Catalog page (`/store`) with filters, sorting, and Meilisearch integration.
+  - [x] Product detail page (`/store/[slug]`).
+  - [x] Cart page (`/cart`) using Zustand + server sync.
+  - [x] Checkout page (`/checkout`) with Stripe Payment Element.
+  - [x] Order confirmation and order history pages (`/orders`, `/orders/[id]`).
+  - [x] Guest checkout flow (orders without `userId`, email verification on lookup).
+- [x] Admin panel (`/admin`):
+  - [x] Admin layout and route protection (role-based).
+  - [x] Middleware to validate admin roles before rendering admin routes.
+  - [x] UI hides menus/actions based on role.
+  - [x] Server Actions/Route Handlers re-validate role on every request.
+  - [x] Products CRUD with image upload.
+  - [x] Categories CRUD.
+  - [x] Inventory management.
+  - [x] Orders list, detail view, status updates, refunds.
+  - [x] Customers list and detail.
+  - [x] Simple dashboard with metrics.
+- [x] Add global layout, navigation, footer, error pages, loading states.
+- [x] Implement SEO basics: sitemap, robots, structured data, metadata.
+- [x] Add PWA setup: service worker, web manifest, offline cart/catalog browsing.
+- [x] Add wishlist UI (`/wishlist`, product detail toggle).
+- [~] Add CMS-driven pages: blog, legal pages, and editable landing page sections — blog/legal + admin CMS OK; landing hero sigue en componentes estáticos.
 
 ## Phase 4 — Mobile App (`apps/mobile`)
 
-- [ ] Bootstrap Expo SDK 52 with development build.
-- [ ] Setup Expo Router with tab navigation.
-- [ ] Setup native JWT auth (`expo-secure-store` for tokens).
-- [ ] Screens:
-  - [ ] Home / landing
-  - [ ] Catalog with search and filters
-  - [ ] Product detail
-  - [ ] Cart
-  - [ ] Checkout with Stripe Payment Intents
-  - [ ] Account / orders / saved addresses
-- [ ] Integrate `@repo/api-client` and `@repo/shared-ui`.
-- [ ] Secure token storage with `expo-secure-store`.
-- [ ] Add push notification scaffolding (Expo Notifications).
-- [ ] Deep linking for products, orders, password reset.
+- [x] Bootstrap Expo SDK 56 with development build.
+- [x] Setup Expo Router with tab navigation.
+- [x] Setup native JWT auth (`expo-secure-store` for tokens).
+- [x] Screens:
+  - [x] Home / landing
+  - [x] Catalog with search and filters
+  - [x] Product detail
+  - [x] Cart
+  - [x] Checkout with Stripe Payment Intents
+  - [x] Account / orders / saved addresses
+- [x] Integrate `@repo/api-client` and `@repo/shared-ui`.
+- [x] Secure token storage with `expo-secure-store`.
+- [x] Add push notification scaffolding (Expo Notifications).
+- [x] Deep linking for products, orders, password reset.
 
 ## Phase 5 — Checkout & Payments
 
 > **SDD phase**: required. Financial risk, webhook idempotency, refunds, and fraud prevention must be specified before implementation.
 
-- [ ] Stripe Checkout / Payment Element on web.
-- [ ] Stripe React Native SDK on mobile (development build).
-- [ ] Create Stripe Customers on user sign-up; store `stripeCustomerId` in Prisma.
-- [ ] Implement `PaymentProvider` abstraction in `apps/api` with provider selection per order/region.
-- [ ] Expand payment methods to include Ecuador-local providers: Kushki, PayPhone, MercadoPago, PlaceToPay.
-- [ ] Idempotency keys on payment creation.
-- [ ] Webhook handler for:
-  - [ ] `checkout.session.completed`
-  - [ ] `payment_intent.succeeded`
-  - [ ] `payment_intent.payment_failed`
-  - [ ] `charge.refunded`
-- [ ] Update order statuses and decrement inventory in webhook handlers (async queue recommended).
-- [ ] Promotion and coupon application at checkout.
-- [ ] Refund flow (full and partial) from admin panel.
-- [ ] Receipt generation.
+- [x] Stripe Checkout / Payment Element on web.
+- [x] Stripe React Native SDK on mobile (development build).
+- [x] Create Stripe Customers on user sign-up; store `stripeCustomerId` in Prisma.
+- [x] Implement `PaymentProvider` abstraction in `apps/api` with provider selection per order/region.
+- [x] Expand payment methods to include Ecuador-local providers: Kushki, PayPhone, MercadoPago, PlaceToPay.
+- [x] Idempotency keys on payment creation.
+- [x] Webhook handler for:
+  - [x] `checkout.session.completed`
+  - [x] `payment_intent.succeeded`
+  - [x] `payment_intent.payment_failed`
+  - [x] `charge.refunded`
+- [x] Update order statuses and decrement inventory in webhook handlers (async queue recommended).
+- [x] Promotion and coupon application at checkout.
+- [x] Refund flow (full and partial) from admin panel.
+- [x] Receipt generation.
 
 ## Phase 5.5 — Returns, Warranties & RMA
 
@@ -726,5 +729,5 @@ Everything else (AI, advanced analytics, marketplaces, ERP, WMS, loyalty, referr
 1. ✅ Confirmed: market is Ecuador only, platform is Spanish-only.
 2. ✅ Confirmed: use latest compatible versions (Option A): Node 22.23.0, pnpm 10.34.3, TypeScript 5.9.3, NestJS 11.1.27, Prisma 7.8.0, Next.js 16.2.9, React 19.2.7, Expo SDK 56.0.12, React Native 0.85.3, Tailwind 4.3.1, shadcn 4.11.0, Zod 4.4.3.
 3. ✅ Confirmed: SRI integration is **direct** (SOAP/XML, `.p12` signing, no intermediary).
-4. Initialize the monorepo (Phase 0).
-5. Bootstrap the NestJS API and Prisma schema (Phase 1).
+4. ✅ Initialize the monorepo (Phase 0).
+5. ✅ Bootstrap the NestJS API and Prisma schema (Phase 1).

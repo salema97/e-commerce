@@ -7,8 +7,8 @@ import {
   getStoredUser,
   saveAuthSession,
   type StoredAuthUser,
-} from '../lib/auth-storage.js';
-import { getApiBaseUrl } from '../lib/env.js';
+} from '../lib/auth-storage';
+import { getApiBaseUrl } from '../lib/env';
 
 const API_BASE = getApiBaseUrl();
 

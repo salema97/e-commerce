@@ -14,6 +14,7 @@ import {
 import { PaymentStatus } from '../public-api.js';
 import { MercadoPagoWebhookDto } from '../public-api.js';
 import { resilientFetch } from '../../common/resilience/resilient-fetch.js';
+import { requirePaymentMetadataToken } from '../payment-metadata.util.js';
 
 @Injectable()
 export class MercadoPagoProvider extends PaymentProvider {
@@ -28,6 +29,11 @@ export class MercadoPagoProvider extends PaymentProvider {
   }
 
   async createPaymentIntent(order: CreatePaymentIntentOptions): Promise<PaymentIntentResult> {
+    const token = requirePaymentMetadataToken(
+      order.metadata,
+      'mercadoPagoToken',
+      'MercadoPago',
+    );
     const response = await resilientFetch('payments.mercadopago', `${this.baseUrl}/v1/payments`, {
       method: 'POST',
       headers: {
@@ -36,6 +42,7 @@ export class MercadoPagoProvider extends PaymentProvider {
         'X-Idempotency-Key': order.idempotencyKey,
       },
       body: JSON.stringify({
+        token,
         transaction_amount: order.amount / 100,
         currency_id: order.currency,
         external_reference: order.orderId,

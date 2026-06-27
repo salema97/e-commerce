@@ -80,6 +80,49 @@ export interface AdminStoreCredit {
   updatedAt: string;
 }
 
+export interface IssueStoreCreditDto {
+  userId: string;
+  amount: number;
+  currency?: string;
+  expiresAt?: string;
+}
+
+export interface UpdateStoreCreditDto {
+  balance?: number;
+  expiresAt?: string | null;
+}
+
+export interface GiftCard {
+  id: string;
+  code: string;
+  initialBalance: number;
+  balance: number;
+  currency: string;
+  expiresAt?: string | null;
+  isActive: boolean;
+  issuedToUserId?: string | null;
+  issuedToUserEmail?: string | null;
+  note?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateGiftCardDto {
+  code?: string;
+  initialBalance: number;
+  currency?: string;
+  expiresAt?: string;
+  issuedToUserId?: string;
+  note?: string;
+}
+
+export interface UpdateGiftCardDto {
+  balance?: number;
+  expiresAt?: string | null;
+  isActive?: boolean;
+  note?: string;
+}
+
 export interface CashFlowReport {
   periodStart: string;
   periodEnd: string;

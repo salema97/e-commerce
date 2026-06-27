@@ -51,6 +51,7 @@ describe('PayPhoneProvider', () => {
       amount: 1000,
       currency: 'USD',
       idempotencyKey: 'idem_1',
+      metadata: { payphoneToken: 'tok_payphone_test' },
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -80,6 +81,7 @@ describe('PayPhoneProvider', () => {
         amount: 500,
         currency: 'USD',
         idempotencyKey: 'idem_2',
+        metadata: { payphoneToken: 'tok_payphone_test' },
       }),
     ).rejects.toThrow('PayPhone transaction failed: Store not found');
   });

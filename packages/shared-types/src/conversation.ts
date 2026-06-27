@@ -35,6 +35,7 @@ export interface Conversation {
   contactName?: string | null;
   status: ConversationStatus;
   assignedAgentId?: string | null;
+  internalNotes?: string | null;
   lastMessageAt?: string | null;
   unreadCount: number;
   createdAt: string;
@@ -51,6 +52,7 @@ export interface SendMessageDto {
 export interface UpdateConversationDto {
   status?: ConversationStatus;
   assignedAgentId?: string;
+  internalNotes?: string;
 }
 
 export interface ConversationTemplate {

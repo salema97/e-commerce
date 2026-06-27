@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Button, ChatBubble, Input, neo } from '@repo/shared-ui';
 import type { Message } from '@repo/shared-types';
-import { api } from '../../lib/api.js';
+import { api } from '../../lib/api';
 
 export function StoreChatWidget(): React.ReactElement {
   const [sessionId, setSessionId] = useState<string | null>(null);

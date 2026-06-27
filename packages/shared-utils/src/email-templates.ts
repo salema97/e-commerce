@@ -40,6 +40,27 @@ export interface RefundConfirmedEmailContext {
   refundMethod: string;
 }
 
+export interface ReturnRequestedEmailContext {
+  customerName: string;
+  orderNumber: string;
+  returnId: string;
+  reason: string;
+}
+
+export interface ReturnStatusChangedEmailContext {
+  customerName: string;
+  orderNumber: string;
+  returnId: string;
+  fromStatus: string;
+  toStatus: string;
+}
+
+export interface ReturnStoreCreditEmailContext {
+  customerName: string;
+  orderNumber: string;
+  amount: string;
+}
+
 export interface SriDocumentDeliveryEmailContext {
   customerName: string;
   documentTypeLabel: string;
@@ -82,6 +103,9 @@ export type EmailTemplateContext =
   | PickupReadyEmailContext
   | PaymentFailedEmailContext
   | RefundConfirmedEmailContext
+  | ReturnRequestedEmailContext
+  | ReturnStatusChangedEmailContext
+  | ReturnStoreCreditEmailContext
   | SriDocumentDeliveryEmailContext
   | AbandonedCartEmailContext
   | BackInStockEmailContext
@@ -105,6 +129,12 @@ export function renderEmailTemplate(
       return paymentFailed(context as PaymentFailedEmailContext);
     case 'REFUND_CONFIRMED':
       return refundConfirmed(context as RefundConfirmedEmailContext);
+    case 'RETURN_REQUESTED':
+      return returnRequested(context as ReturnRequestedEmailContext);
+    case 'RETURN_STATUS_CHANGED':
+      return returnStatusChanged(context as ReturnStatusChangedEmailContext);
+    case 'RETURN_STORE_CREDIT':
+      return returnStoreCredit(context as ReturnStoreCreditEmailContext);
     case 'SRI_DOCUMENT_DELIVERY':
       return sriDocumentDelivery(context as SriDocumentDeliveryEmailContext);
     case 'ABANDONED_CART':
@@ -181,6 +211,37 @@ function refundConfirmed(ctx: RefundConfirmedEmailContext) {
     `Tu reembolso del pedido ${ctx.orderNumber} fue procesado.\n` +
     `Monto: ${ctx.amount}\n` +
     `Método: ${ctx.refundMethod}`;
+  return { subject, text, html: paragraph(text) };
+}
+
+function returnRequested(ctx: ReturnRequestedEmailContext) {
+  const subject = `Solicitud de devolución recibida — pedido ${ctx.orderNumber}`;
+  const text =
+    `Hola ${ctx.customerName},\n\n` +
+    `Recibimos tu solicitud de devolución para el pedido ${ctx.orderNumber}.\n` +
+    `Referencia: ${ctx.returnId}\n` +
+    `Motivo: ${ctx.reason}\n\n` +
+    `Te avisaremos cuando revisemos tu solicitud.`;
+  return { subject, text, html: paragraph(text) };
+}
+
+function returnStatusChanged(ctx: ReturnStatusChangedEmailContext) {
+  const subject = `Actualización de devolución — pedido ${ctx.orderNumber}`;
+  const text =
+    `Hola ${ctx.customerName},\n\n` +
+    `Tu devolución del pedido ${ctx.orderNumber} cambió de estado.\n` +
+    `Referencia: ${ctx.returnId}\n` +
+    `Estado anterior: ${ctx.fromStatus}\n` +
+    `Estado actual: ${ctx.toStatus}`;
+  return { subject, text, html: paragraph(text) };
+}
+
+function returnStoreCredit(ctx: ReturnStoreCreditEmailContext) {
+  const subject = `Crédito en tienda emitido — pedido ${ctx.orderNumber}`;
+  const text =
+    `Hola ${ctx.customerName},\n\n` +
+    `Se acreditó ${ctx.amount} a tu saldo en tienda por la devolución del pedido ${ctx.orderNumber}.\n` +
+    `Puedes usarlo en tu próxima compra.`;
   return { subject, text, html: paragraph(text) };
 }
 

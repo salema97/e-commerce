@@ -2,9 +2,9 @@ import React from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button, Card, neo } from '@repo/shared-ui';
-import { NeoScreen } from '../components/neo-screen.js';
-import { NeoStaggeredItem } from '../components/neo-animated.js';
-import { api } from '../lib/api.js';
+import { NeoScreen } from '../components/neo-screen';
+import { NeoStaggeredItem } from '../components/neo-animated';
+import { api } from '../lib/api';
 import type { Faq } from '@repo/shared-types';
 
 export default function HelpScreen(): React.ReactElement {

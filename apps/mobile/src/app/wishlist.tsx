@@ -2,9 +2,9 @@ import React from 'react';
 import { View, Text, FlatList, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button, Card, neo, ProductImage } from '@repo/shared-ui';
-import { NeoScreen } from '../components/neo-screen.js';
-import { NeoStaggeredItem } from '../components/neo-animated.js';
-import { useWishlist } from '../lib/wishlist.js';
+import { NeoScreen } from '../components/neo-screen';
+import { NeoStaggeredItem } from '../components/neo-animated';
+import { useWishlist } from '../lib/wishlist';
 
 export default function WishlistScreen(): React.ReactElement {
   const router = useRouter();

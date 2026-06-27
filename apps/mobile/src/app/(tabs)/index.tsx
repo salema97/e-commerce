@@ -7,8 +7,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button, PressableCard, ProductImage, neo } from '@repo/shared-ui';
-import { NeoScreen } from '../../components/neo-screen.js';
-import { api } from '../../lib/api.js';
+import { NeoScreen } from '../../components/neo-screen';
+import { api } from '../../lib/api';
 import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
 import type { Product } from '@repo/shared-types';
 import {
@@ -17,7 +17,7 @@ import {
   NeoPulse,
   NeoScaleIn,
   NeoStaggeredItem,
-} from '../../components/neo-animated.js';
+} from '../../components/neo-animated';
 
 export default function HomeScreen(): React.ReactElement {
   const router = useRouter();

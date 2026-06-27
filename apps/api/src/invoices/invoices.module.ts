@@ -12,6 +12,9 @@ import { SriSignerService } from './sri/sri-signer.service.js';
 import { SriSoapClient } from './sri/sri-soap.client.js';
 import { InvoiceSequenceService } from './invoice-sequence.service.js';
 import { SriCreditNoteXmlBuilder } from './sri/sri-credit-note-xml.builder.js';
+import { SriSupplementaryXmlBuilder } from './sri/sri-supplementary-xml.builder.js';
+import { SriSupplementaryService } from './sri/sri-supplementary.service.js';
+import { SriSupplementaryController } from './sri-supplementary.controller.js';
 import { SriRidePdfService } from './sri/sri-ride-pdf.service.js';
 import { SriDocumentStorageService } from './sri/sri-document-storage.service.js';
 import { SriDeliveryService } from './sri/sri-delivery.service.js';
@@ -36,6 +39,7 @@ import { isNonProduction } from '../common/is-non-production.js';
   controllers: [
     InvoicesController,
     CreditNotesController,
+    SriSupplementaryController,
     ...(isNonProduction() ? [TestInvoicesController] : []),
   ],
   providers: [
@@ -46,6 +50,8 @@ import { isNonProduction } from '../common/is-non-production.js';
     SriAccessKeyBuilder,
     SriXmlBuilder,
     SriCreditNoteXmlBuilder,
+    SriSupplementaryXmlBuilder,
+    SriSupplementaryService,
     SriSignerService,
     SriSoapClient,
     InvoiceSequenceService,

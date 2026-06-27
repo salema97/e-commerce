@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Alert } from '@/components/ui/alert';
 import { AlertDescription } from '@/components/ui/alert-description';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useApiClient, useAuthApiReady } from '@/lib/client-api';
+import { useApiClient } from '@/lib/client-api';
 import { formatPrice } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
 
@@ -97,7 +97,6 @@ function returnFormReducer(state: ReturnFormState, action: ReturnFormAction): Re
 export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequestFormProps) {
   const router = useRouter();
   const api = useApiClient();
-  const authReady = useAuthApiReady();
   const [mounted, setMounted] = React.useState(false);
   const [form, dispatch] = React.useReducer(returnFormReducer, returnFormInitialState);
   const { selected, email, isSubmitting, error, submitted } = form;
@@ -284,7 +283,6 @@ export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequ
             || Object.keys(selected).length === 0
             || !isWithinWindow
             || (isGuest && !email)
-            || (!isGuest && !authReady)
           }
         >
           {isSubmitting ? 'Enviando…' : 'Enviar solicitud de devolución'}

@@ -15,8 +15,15 @@ async function openConversation(page: Page, contactName: string): Promise<void> 
 async function selectConversationStatus(page: Page, label: string): Promise<void> {
   const combobox = page.getByRole('combobox', { name: 'Estado de la conversación' });
   await expect(combobox).toBeVisible({ timeout: 10000 });
+  const patchResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'PATCH' &&
+      response.url().includes('/conversations/') &&
+      response.ok(),
+  );
   await combobox.click();
   await page.getByRole('option', { name: label, exact: true }).click();
+  await patchResponse;
 }
 
 test.describe('admin support inbox e2e', () => {

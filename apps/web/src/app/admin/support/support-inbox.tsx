@@ -1,12 +1,14 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useApiClient, useAuthApiReady } from '@/lib/client-api';
 import { ConversationList } from '@/components/admin/support/conversation-list';
 import { ConversationDetail } from '@/components/admin/support/conversation-detail';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
+import { buttonVariants } from '@/components/ui/button-variants';
 import type { Conversation, ConversationStatus, PaginatedConversations } from '@repo/shared-types';
 
 interface SupportInboxProps {
@@ -84,7 +86,7 @@ export function SupportInbox({ currentUserId, initialConversations }: SupportInb
       data,
     }: {
       id: string;
-      data: { status?: ConversationStatus; assignedAgentId?: string };
+      data: { status?: ConversationStatus; assignedAgentId?: string; internalNotes?: string };
     }) => api.conversations.update(id, data),
     onSuccess: (_, { id }) => {
       void queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -106,6 +108,7 @@ export function SupportInbox({ currentUserId, initialConversations }: SupportInb
   async function handleUpdateConversation(data: {
     status?: ConversationStatus;
     assignedAgentId?: string;
+    internalNotes?: string;
   }) {
     if (!selectedId) return;
     await updateConversation.mutateAsync({ id: selectedId, data });
@@ -119,6 +122,14 @@ export function SupportInbox({ currentUserId, initialConversations }: SupportInb
           title="Soporte"
           subtitle="Bandeja de conversaciones WhatsApp"
           showNetworkStatus={false}
+          actions={
+            <Link
+              href="/admin/support/templates"
+              className={buttonVariants({ variant: 'outline', size: 'sm' })}
+            >
+              Plantillas
+            </Link>
+          }
         />
       }
     >

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useRouter, type Href } from 'expo-router';
-import { usePushNotifications } from '../hooks/usePushNotifications.js';
-import { parseDeepLink } from '../lib/deep-links.js';
+import { usePushNotifications } from '../hooks/usePushNotifications';
+import { parseDeepLink } from '../lib/deep-links';
 
 export function PushNotificationManager(): null {
   const router = useRouter();

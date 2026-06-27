@@ -6,14 +6,14 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
-import { CartProvider } from '../lib/cart.js';
-import { WishlistProvider } from '../lib/wishlist.js';
-import { AuthProvider } from '../providers/AuthProvider.js';
-import { AuthTokenBridge } from '../providers/AuthTokenBridge.js';
-import { PushNotificationManager } from '../providers/PushNotificationManager.js';
-import { DeepLinkManager } from '../providers/DeepLinkManager.js';
-import { AnalyticsConsentBanner } from '../components/AnalyticsConsentBanner.js';
-import { initMobileSentry } from '../lib/sentry.js';
+import { CartProvider } from '../lib/cart';
+import { WishlistProvider } from '../lib/wishlist';
+import { AuthProvider } from '../providers/AuthProvider';
+import { AuthTokenBridge } from '../providers/AuthTokenBridge';
+import { PushNotificationManager } from '../providers/PushNotificationManager';
+import { DeepLinkManager } from '../providers/DeepLinkManager';
+import { AnalyticsConsentBanner } from '../components/AnalyticsConsentBanner';
+import { initMobileSentry } from '../lib/sentry';
 
 initMobileSentry();
 

@@ -9,6 +9,8 @@ const financeLinks = [
   { href: '/admin/finance/categories', label: 'Categorías' },
   { href: '/admin/finance/suppliers', label: 'Proveedores' },
   { href: '/admin/finance/reports', label: 'Reportes' },
+  { href: '/admin/finance/store-credits', label: 'Crédito tienda' },
+  { href: '/admin/finance/gift-cards', label: 'Gift cards' },
 ];
 
 export function FinanceSubNav() {

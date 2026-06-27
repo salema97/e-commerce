@@ -13,9 +13,6 @@ import { RefundService } from '../payments/refund.service.js';
 import { StoreCreditService } from './store-credit.service.js';
 import { InvoicesService } from '../invoices/invoices.service.js';
 import { ReturnNotificationService } from './notifications/return-notification.service.js';
-import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
-import { EmailNotificationService } from '../notifications/email-notification.service.js';
-import { PushNotificationService } from '../notifications/push-notification.service.js';
 import { BackInStockAlertsService } from '../notifications/back-in-stock-alerts.service.js';
 import { CreateReturnDto } from './dto/create-return.dto.js';
 import { CreateGuestReturnRequestDto } from './dto/create-guest-return-request.dto.js';
@@ -66,9 +63,6 @@ export class ReturnsService {
     private readonly storeCreditService: StoreCreditService,
     private readonly invoicesService: InvoicesService,
     private readonly notificationService: ReturnNotificationService,
-    private readonly whatsappNotificationService: WhatsAppNotificationService,
-    private readonly emailNotificationService: EmailNotificationService,
-    private readonly pushNotificationService: PushNotificationService,
     private readonly backInStockAlerts: BackInStockAlertsService,
     configService: ConfigService,
   ) {
@@ -140,7 +134,7 @@ export class ReturnsService {
       after: { orderId: order.id, status: created.status, itemCount: created.items.length },
     });
 
-    await this.notificationService.onReturnRequested(created as never);
+    await this.notifySafely(this.notificationService.onReturnRequested(created as never));
 
     return created;
   }
@@ -219,7 +213,7 @@ export class ReturnsService {
       after: { orderId: order.id, status: created.status, itemCount: created.items.length },
     });
 
-    await this.notificationService.onReturnRequested(created as never);
+    await this.notifySafely(this.notificationService.onReturnRequested(created as never));
 
     return created;
   }
@@ -364,7 +358,9 @@ export class ReturnsService {
 
     this.logger.log({ returnId: id, from, to }, 'Return status transition applied');
 
-    await this.notificationService.onReturnStatusChanged(updated as never, from, to);
+    await this.notifySafely(
+      this.notificationService.onReturnStatusChanged(updated as never, from, to),
+    );
 
     return updated;
   }
@@ -477,70 +473,16 @@ export class ReturnsService {
       metadata: dto.notes ? { notes: dto.notes } : undefined,
     });
 
-    await this.notificationService.onReturnStatusChanged(
-      updated as never,
-      current.status,
-      updated.status,
+    await this.notifySafely(
+      this.notificationService.onReturnStatusChanged(
+        updated as never,
+        current.status,
+        updated.status,
+        { refundAmount: totalAmount },
+      ),
     );
 
-    if (
-      updated.status === ReturnStatus.RESOLVED &&
-      dto.refundMethod === RefundMethod.ORIGINAL_PAYMENT
-    ) {
-      await this.sendRefundConfirmed(current.order, totalAmount, id);
-    }
-
     return updated;
-  }
-
-  private async sendRefundConfirmed(
-    order: {
-      id: string;
-      orderNumber: string;
-      customerPhone: string | null;
-      customerEmail: string;
-      userId: string | null;
-    },
-    amount: number,
-    returnId: string,
-  ): Promise<void> {
-    const context = {
-      customerName: 'Cliente',
-      orderNumber: order.orderNumber,
-      amount: `USD ${amount.toFixed(2)}`,
-      refundMethod: 'Metodo original de pago',
-    };
-    const idempotencySuffix = `${order.id}:REFUND_CONFIRMED:${returnId}`;
-
-    try {
-      if (order.customerPhone) {
-        await this.whatsappNotificationService.notify(
-          order.id,
-          'REFUND_CONFIRMED',
-          order.customerPhone,
-          context,
-          { idempotencyKey: `wa:notification:${idempotencySuffix}` },
-        );
-      }
-      if (order.customerEmail) {
-        await this.emailNotificationService.notify(
-          order.id,
-          'REFUND_CONFIRMED',
-          order.customerEmail,
-          context,
-          { idempotencyKey: `email:notification:${idempotencySuffix}` },
-        );
-      }
-      await this.pushNotificationService.notifyForOrder(
-        order.id,
-        order.userId,
-        'REFUND_CONFIRMED',
-        context,
-        { idempotencyKey: `push:notification:${idempotencySuffix}` },
-      );
-    } catch {
-      // Notifications are best-effort and must not fail return resolution.
-    }
   }
 
   private computeRefundTotal(
@@ -697,6 +639,14 @@ export class ReturnsService {
           `Return quantity ${item.quantity} exceeds ordered quantity ${match.quantity}`,
         );
       }
+    }
+  }
+
+  private async notifySafely(promise: Promise<void>): Promise<void> {
+    try {
+      await promise;
+    } catch {
+      // Notifications are best-effort and must not fail return flows.
     }
   }
 }

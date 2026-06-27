@@ -49,6 +49,7 @@ describe('MercadoPagoProvider', () => {
       amount: 1000,
       currency: 'USD',
       idempotencyKey: 'idem_1',
+      metadata: { mercadoPagoToken: 'tok_mp_test' },
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -79,6 +80,7 @@ describe('MercadoPagoProvider', () => {
         amount: 500,
         currency: 'USD',
         idempotencyKey: 'idem_2',
+        metadata: { mercadoPagoToken: 'tok_mp_test' },
       }),
     ).rejects.toThrow('MercadoPago payment failed: Invalid access token');
   });

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Input, Card, Button, neo } from '@repo/shared-ui';
-import { api } from '../../lib/api.js';
-import { useAuth } from '../../providers/AuthProvider.js';
+import { api } from '../../lib/api';
+import { useAuth } from '../../providers/AuthProvider';
 
 interface ProductReviewsProps {
   productId: string;

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { setGetAuthToken } from '../lib/api.js';
-import { useAuth } from './AuthProvider.js';
+import { setGetAuthToken } from '../lib/api';
+import { useAuth } from './AuthProvider';
 
 export function AuthTokenBridge(): null {
   const { accessToken } = useAuth();

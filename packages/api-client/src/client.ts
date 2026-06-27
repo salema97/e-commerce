@@ -58,6 +58,11 @@ import type {
   UploadExpenseReceiptDto,
   CashFlowReport,
   AdminStoreCredit,
+  IssueStoreCreditDto,
+  UpdateStoreCreditDto,
+  GiftCard,
+  CreateGiftCardDto,
+  UpdateGiftCardDto,
   SearchResultItem,
   Faq,
   CreateFaqDto,
@@ -290,7 +295,8 @@ export function createApiClient(options: ApiClientOptions) {
     orders: {
       findAll: (query?: { page?: number; limit?: number; status?: string }) =>
         request<PaginatedResponse<Order>>('GET', '/orders', undefined, query),
-      findOne: (id: string) => request<Order>('GET', `/orders/${id}`),
+      findOne: (id: string, query?: { guestEmail?: string }) =>
+        request<Order>('GET', `/orders/${id}`, undefined, query),
       create: (data: CreateOrderDto) => request<CreatedOrderResult>('POST', '/orders', data),
       updateStatus: (id: string, data: UpdateOrderStatusDto) =>
         request<Order>('PATCH', `/orders/${id}/status`, data),
@@ -385,7 +391,7 @@ export function createApiClient(options: ApiClientOptions) {
     conversations: {
       findAll: (query?: { status?: string; assignedToMe?: string; search?: string; page?: number; limit?: number }) => request<PaginatedConversations>('GET', '/conversations', undefined, query),
       findOne: (id: string) => request<Conversation>('GET', `/conversations/${id}`),
-      update: (id: string, data: { status?: string; assignedAgentId?: string }) => request<Conversation>('PATCH', `/conversations/${id}`, data),
+      update: (id: string, data: { status?: string; assignedAgentId?: string; internalNotes?: string }) => request<Conversation>('PATCH', `/conversations/${id}`, data),
     },
     messages: {
       findAll: (conversationId: string, query?: { page?: number; limit?: number }) => request<PaginatedMessages>('GET', `/conversations/${conversationId}/messages`, undefined, query),
@@ -393,6 +399,15 @@ export function createApiClient(options: ApiClientOptions) {
     },
     whatsapp: {
       getQuickReplies: () => request<QuickReply[]>('GET', '/whatsapp/quick-replies'),
+      listQuickRepliesAdmin: () => request<QuickReply[]>('GET', '/whatsapp/quick-replies/admin'),
+      createQuickReply: (data: { label: string; text: string; sortOrder?: number; isActive?: boolean }) =>
+        request<QuickReply>('POST', '/whatsapp/quick-replies', data),
+      updateQuickReply: (
+        id: string,
+        data: { label?: string; text?: string; sortOrder?: number; isActive?: boolean },
+      ) => request<QuickReply>('PATCH', `/whatsapp/quick-replies/${id}`, data),
+      deleteQuickReply: (id: string) =>
+        request<{ deleted: true }>('DELETE', `/whatsapp/quick-replies/${id}`),
     },
     finance: {
       incomes: {
@@ -447,6 +462,17 @@ export function createApiClient(options: ApiClientOptions) {
       },
       storeCredits: {
         findAll: () => request<AdminStoreCredit[]>('GET', '/finance/store-credits'),
+        issue: (data: IssueStoreCreditDto) =>
+          request<AdminStoreCredit>('POST', '/finance/store-credits', data),
+        update: (id: string, data: UpdateStoreCreditDto) =>
+          request<AdminStoreCredit>('PATCH', `/finance/store-credits/${id}`, data),
+      },
+      giftCards: {
+        findAll: () => request<GiftCard[]>('GET', '/finance/gift-cards'),
+        create: (data: CreateGiftCardDto) =>
+          request<GiftCard>('POST', '/finance/gift-cards', data),
+        update: (id: string, data: UpdateGiftCardDto) =>
+          request<GiftCard>('PATCH', `/finance/gift-cards/${id}`, data),
       },
     },
     notifications: {

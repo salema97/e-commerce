@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card } from '@repo/shared-ui';
-import { api } from '../../lib/api.js';
+import { api } from '../../lib/api';
 
 export default function PrivacyScreen(): React.ReactElement {
   async function exportData(): Promise<void> {

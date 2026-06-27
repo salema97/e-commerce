@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { Button, Input } from '@repo/shared-ui';
-import { NeoScreen } from '../components/neo-screen.js';
-import { NeoScaleIn } from '../components/neo-animated.js';
-import { useAuth } from '../providers/AuthProvider.js';
+import { NeoScreen } from '../components/neo-screen';
+import { NeoScaleIn } from '../components/neo-animated';
+import { useAuth } from '../providers/AuthProvider';
 
 export default function SignUpScreen(): React.ReactElement {
   const router = useRouter();

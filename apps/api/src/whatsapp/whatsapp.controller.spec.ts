@@ -1,27 +1,42 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { WhatsAppController } from './whatsapp.controller.js';
+import type { WhatsAppQuickReplyService } from './whatsapp-quick-reply.service.js';
 
 describe('WhatsAppController', () => {
-  const controller = new WhatsAppController();
+  const quickReplies = [
+    { id: 'qr_1', label: 'Saludo', text: '¡Hola! Gracias por contactarnos.' },
+    { id: 'qr_2', label: 'Estado del pedido', text: 'Indícanos tu número de orden.' },
+    { id: 'qr_3', label: 'Envío', text: 'Tu pedido está en proceso de envío.' },
+    { id: 'qr_4', label: 'Horario de atención', text: 'Horario: lunes a viernes 08:00-18:00.' },
+    { id: 'qr_5', label: 'Agradecimiento', text: 'Gracias por tu compra.' },
+  ];
 
-  it('returns quick reply templates', () => {
-    const result = controller.getQuickReplies();
+  let quickReplyService: Pick<WhatsAppQuickReplyService, 'findActive'>;
+  let controller: WhatsAppController;
 
-    expect(result.length).toBe(5);
+  beforeEach(() => {
+    quickReplyService = {
+      findActive: vi.fn().mockResolvedValue(quickReplies),
+    };
+    controller = new WhatsAppController(quickReplyService as WhatsAppQuickReplyService);
+  });
+
+  it('returns quick reply templates', async () => {
+    const result = await controller.getQuickReplies();
+
+    expect(result).toHaveLength(5);
     expect(result[0]).toHaveProperty('id');
     expect(result[0]).toHaveProperty('label');
     expect(result[0]).toHaveProperty('text');
   });
 
-  it('includes the expected quick reply ids', () => {
-    const result = controller.getQuickReplies();
-    const ids = result.map((r) => r.id);
-
-    expect(ids).toEqual(['greeting', 'order-status', 'shipping', 'hours', 'thanks']);
+  it('delegates to WhatsAppQuickReplyService', async () => {
+    await controller.getQuickReplies();
+    expect(quickReplyService.findActive).toHaveBeenCalled();
   });
 
-  it('returns Spanish labels and text for each reply', () => {
-    const result = controller.getQuickReplies();
+  it('returns Spanish labels and text for each reply', async () => {
+    const result = await controller.getQuickReplies();
 
     expect(result.some((r) => r.label.includes('Saludo'))).toBe(true);
     expect(result.some((r) => r.text.toLowerCase().includes('horario'))).toBe(true);

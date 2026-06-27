@@ -1,5 +1,5 @@
 import { createApi } from '@repo/api-client';
-import { getApiBaseUrl } from './env.js';
+import { getApiBaseUrl } from './env';
 
 let getAuthTokenRef: () => Promise<string | null> = async () => null;
 

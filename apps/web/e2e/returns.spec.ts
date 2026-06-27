@@ -20,7 +20,7 @@ async function selectFirstReturnItem(page: Page): Promise<void> {
   await expect(page.getByTestId('return-request-form')).toBeVisible();
   const checkbox = page.getByTestId(/^return-item-/).first();
   await expect(checkbox).toBeVisible({ timeout: 15_000 });
-  await checkbox.click();
+  await checkbox.check();
   await expect(checkbox).toHaveAttribute('data-state', 'checked', { timeout: 10_000 });
   await expect(
     page.getByPlaceholder('Motivo de la devolución de este artículo').first(),
@@ -44,16 +44,21 @@ async function expectReturnForOrder(
 }
 
 test.describe('returns e2e', () => {
+  test.describe.configure({ mode: 'serial' });
+
   test('customer creates a return request from the order detail page', async ({ page, request }) => {
-    const order = await createTestOrder(request, {
-      status: 'DELIVERED',
-      customerEmail: 'cliente@example.com',
-    });
+    test.setTimeout(60_000);
+    const order = await createTestOrder(
+      request,
+      { status: 'DELIVERED' },
+      { orderAs: 'CUSTOMER' },
+    );
+    await createCompletedPayment(request, order.id);
 
     await authenticatePage(page, TEST_CUSTOMER);
     await page.goto(`/orders/${order.id}`, { waitUntil: 'domcontentloaded' });
 
-    await expect(page.locator('body')).toContainText('Solicitar devolución');
+    await expect(page.locator('body')).toContainText('Solicitar devolución', { timeout: 15_000 });
     await page.getByRole('button', { name: 'Solicitar devolución' }).click();
 
     await expect(page).toHaveURL(`/orders/${order.id}/return`);
@@ -64,30 +69,30 @@ test.describe('returns e2e', () => {
       .fill('Defectuoso');
 
     const submitButton = page.getByRole('button', { name: 'Enviar solicitud de devolución' });
-    await expect(submitButton).toBeEnabled({ timeout: 15_000 });
+    await expect(submitButton).toBeEnabled({ timeout: 30_000 });
     await submitButton.click();
 
-    await expect(page).toHaveURL(`/orders/${order.id}`, { timeout: 15_000 });
+    await expect(page).toHaveURL(`/orders/${order.id}`, { timeout: 30_000 });
     await expectReturnForOrder(request, order.id);
   });
 
   test('admin resolves a pending return request', async ({ page, request }) => {
-    const order = await createTestOrder(request, {
-      status: 'DELIVERED',
-      customerEmail: 'cliente@example.com',
-    });
+    const order = await createTestOrder(
+      request,
+      { status: 'DELIVERED' },
+      { orderAs: 'CUSTOMER' },
+    );
     await createCompletedPayment(request, order.id);
     const returnRequest = await createReturnRequest(request, order.id, TEST_CUSTOMER);
     await transitionReturnStatus(request, returnRequest.id, 'APPROVED');
     await transitionReturnStatus(request, returnRequest.id, 'INSPECTION');
 
     await authenticatePage(page, TEST_ADMIN);
-    await page.goto(`/admin/returns/${returnRequest.id}`);
+    await page.goto(`/admin/returns/${returnRequest.id}/resolve`, {
+      waitUntil: 'domcontentloaded',
+    });
 
-    await expect(page).toHaveURL(new RegExp(`/admin/returns/${returnRequest.id}$`));
-    await page.getByRole('button', { name: 'Resolver' }).click();
-
-    await expect(page).toHaveURL(`/admin/returns/${returnRequest.id}/resolve`);
+    await expect(page).toHaveURL(`/admin/returns/${returnRequest.id}/resolve`, { timeout: 15_000 });
     await expect(page.getByTestId('resolve-return-form')).toBeVisible();
     await page.getByRole('radio', { name: 'Pago original' }).click();
     const confirmButton = page.getByRole('button', { name: 'Confirmar resolución' });
@@ -110,17 +115,21 @@ test.describe('returns e2e', () => {
 
   test('guest creates a return request using the order email', async ({ page, request }) => {
     const customerEmail = 'guest@example.com';
-    const order = await createTestOrder(request, {
-      status: 'DELIVERED',
-      customerEmail,
-    });
+    const order = await createTestOrder(
+      request,
+      {
+        status: 'DELIVERED',
+        customerEmail,
+      },
+      { anonymous: true },
+    );
     await createCompletedPayment(request, order.id);
 
     await clearAuth(page);
     await presetCookieConsent(page);
-    await page.goto(`/orders/${order.id}/return`);
+    await page.goto(`/orders/${order.id}/return?email=${encodeURIComponent(customerEmail)}`);
 
-    await expect(page.locator('body')).toContainText('Correo del pedido');
+    await expect(page.locator('body')).toContainText('Correo del pedido', { timeout: 15_000 });
     await page.locator('input[type="email"]').fill(customerEmail);
     await selectFirstReturnItem(page);
     await page

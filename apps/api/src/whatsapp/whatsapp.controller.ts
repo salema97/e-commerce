@@ -1,50 +1,65 @@
-import { Controller, Get } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from '../auth/roles.decorator.js';
 import { Role } from '../auth/role.enum.js';
-
-export interface QuickReply {
-  id: string;
-  label: string;
-  text: string;
-}
-
-const DEFAULT_QUICK_REPLIES: QuickReply[] = [
-  {
-    id: 'greeting',
-    label: 'Saludo',
-    text: '¡Hola! Gracias por contactarnos. ¿En qué podemos ayudarte hoy?',
-  },
-  {
-    id: 'order-status',
-    label: 'Estado del pedido',
-    text: 'Con gusto reviso el estado de tu pedido. ¿Podrías indicarnos el número de orden?',
-  },
-  {
-    id: 'shipping',
-    label: 'Envío',
-    text: 'Tu pedido está en proceso de envío. En cuanto tengamos la guía de rastreo te la compartimos.',
-  },
-  {
-    id: 'hours',
-    label: 'Horario de atención',
-    text: 'Nuestro horario de atención es de lunes a viernes de 08:00 a 18:00 y sábados de 09:00 a 13:00.',
-  },
-  {
-    id: 'thanks',
-    label: 'Agradecimiento',
-    text: 'Gracias por tu compra. Si necesitas algo más, estamos para ayudarte.',
-  },
-];
+import { WhatsAppQuickReplyService, type QuickReplyRecord } from './whatsapp-quick-reply.service.js';
+import { CreateWhatsAppQuickReplyDto } from './dto/create-whatsapp-quick-reply.dto.js';
+import { UpdateWhatsAppQuickReplyDto } from './dto/update-whatsapp-quick-reply.dto.js';
 
 @ApiTags('WhatsApp')
 @Controller('whatsapp')
-@Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.SUPPORT)
 export class WhatsAppController {
+  constructor(private readonly quickReplyService: WhatsAppQuickReplyService) {}
+
   @Get('quick-replies')
-  @ApiOperation({ summary: 'List quick reply templates' })
-  @ApiResponse({ status: 200, description: 'Quick reply templates' })
-  getQuickReplies(): QuickReply[] {
-    return DEFAULT_QUICK_REPLIES;
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.SUPPORT)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List active quick reply templates' })
+  getQuickReplies(): Promise<QuickReplyRecord[]> {
+    return this.quickReplyService.findActive();
+  }
+
+  @Get('quick-replies/admin')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List all quick reply templates (admin)' })
+  listQuickRepliesAdmin(): Promise<QuickReplyRecord[]> {
+    return this.quickReplyService.findAllAdmin();
+  }
+
+  @Post('quick-replies')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a quick reply template' })
+  createQuickReply(@Body() dto: CreateWhatsAppQuickReplyDto): Promise<QuickReplyRecord> {
+    return this.quickReplyService.create(dto);
+  }
+
+  @Patch('quick-replies/:id')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update a quick reply template' })
+  updateQuickReply(
+    @Param('id') id: string,
+    @Body() dto: UpdateWhatsAppQuickReplyDto,
+  ): Promise<QuickReplyRecord> {
+    return this.quickReplyService.update(id, dto);
+  }
+
+  @Delete('quick-replies/:id')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete a quick reply template' })
+  async deleteQuickReply(@Param('id') id: string): Promise<{ deleted: true }> {
+    await this.quickReplyService.remove(id);
+    return { deleted: true };
   }
 }

@@ -11,7 +11,7 @@
     "web": "expo start --web",
     "dev": "expo start --dev-client",
     "health:expo": "expo-doctor",
-    "build": "expo export",
+    "build": "expo export --platform android --platform ios",
     "lint": "echo 'No lint configured'",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",

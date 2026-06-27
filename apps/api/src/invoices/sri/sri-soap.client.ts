@@ -159,7 +159,7 @@ export class SriSoapClient {
       : response.comprobantes &&
           typeof response.comprobantes === 'object' &&
           'comprobante' in response.comprobantes
-        ? response.comprobantes.comprobante
+        ? (response.comprobantes as { comprobante?: unknown }).comprobante
         : undefined;
     const comprobanteList = Array.isArray(rawComprobantes)
       ? rawComprobantes

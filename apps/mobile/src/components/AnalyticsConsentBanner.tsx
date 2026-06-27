@@ -5,7 +5,7 @@ import {
   DEFAULT_ANALYTICS_CONSENT,
   getStoredAnalyticsConsent,
   saveAnalyticsConsent,
-} from '../lib/analytics-consent.js';
+} from '../lib/analytics-consent';
 
 export function AnalyticsConsentBanner(): React.ReactElement | null {
   const [visible, setVisible] = useState(false);

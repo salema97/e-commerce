@@ -5,17 +5,26 @@ import ReturnRequestForm from './return-request-form';
 
 interface ReturnRequestPageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ email?: string }>;
 }
 
-export default async function ReturnRequestPage({ params }: ReturnRequestPageProps) {
-  const [session, { id }, api] = await Promise.all([
+export default async function ReturnRequestPage({
+  params,
+  searchParams,
+}: ReturnRequestPageProps) {
+  const [session, { id }, { email: guestEmail }, api] = await Promise.all([
     getSession(),
     params,
+    searchParams,
     getServerApiClient(),
   ]);
   const isAuthenticated = Boolean(session);
 
-  const order = await api.orders.findOne(id).catch(() => null);
+  const order = isAuthenticated
+    ? await api.orders.findOne(id).catch(() => null)
+    : guestEmail
+      ? await api.orders.findOne(id, { guestEmail }).catch(() => null)
+      : null;
 
   if (!order) {
     notFound();

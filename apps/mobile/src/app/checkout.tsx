@@ -3,14 +3,14 @@ import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Alert } from 're
 import { useRouter } from 'expo-router';
 import { useStripe } from '@stripe/stripe-react-native';
 import { Button, Input, Card } from '@repo/shared-ui';
-import { NeoScreen } from '../components/neo-screen.js';
-import { NeoEnterFromBottom, NeoStaggeredItem } from '../components/neo-animated.js';
-import { api } from '../lib/api.js';
-import { useCart } from '../lib/cart.js';
+import { NeoScreen } from '../components/neo-screen';
+import { NeoEnterFromBottom, NeoStaggeredItem } from '../components/neo-animated';
+import { api } from '../lib/api';
+import { useCart } from '../lib/cart';
 import { formatPrice, estimateCheckoutTotals } from '@repo/shared-utils';
 import type { OrderAddress, CreateOrderDto, CreatePaymentIntentDto } from '@repo/shared-types';
-import { trackMobileEvent } from '../lib/analytics.js';
-import { useAuth } from '../providers/AuthProvider.js';
+import { trackMobileEvent } from '../lib/analytics';
+import { useAuth } from '../providers/AuthProvider';
 
 export default function CheckoutScreen(): React.ReactElement {
   const router = useRouter();

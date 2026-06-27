@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '@repo/shared-ui';
-import { api } from '../../lib/api.js';
+import { api } from '../../lib/api';
 import { formatDate } from '@repo/shared-utils';
 
 export default function LoyaltyScreen(): React.ReactElement {

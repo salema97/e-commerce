@@ -2,9 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button, neo } from '@repo/shared-ui';
-import { NeoScreen } from '../../components/neo-screen.js';
-import { useAuth } from '../../providers/AuthProvider.js';
-import { NotificationPreferencesPanel } from '../../components/account/NotificationPreferencesPanel.js';
+import { NeoScreen } from '../../components/neo-screen';
+import { useAuth } from '../../providers/AuthProvider';
+import { NotificationPreferencesPanel } from '../../components/account/NotificationPreferencesPanel';
 
 export default function NotificationPreferencesScreen(): React.ReactElement {
   const router = useRouter();

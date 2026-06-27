@@ -5,7 +5,7 @@ import { Tabs } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@repo/api-client';
 import { neo } from '@repo/shared-ui';
-import { api } from '../../lib/api.js';
+import { api } from '../../lib/api';
 
 export default function TabLayout(): React.ReactElement {
   const queryClient = useQueryClient();

@@ -6,10 +6,10 @@ import {
   addNotificationReceivedListener,
   addNotificationResponseReceivedListener,
   removeNotificationSubscription,
-} from '../lib/notifications.js';
-import { api } from '../lib/api.js';
-import { useAuth } from '../providers/AuthProvider.js';
-import { setRegisteredPushToken } from '../lib/push-token-registry.js';
+} from '../lib/notifications';
+import { api } from '../lib/api';
+import { useAuth } from '../providers/AuthProvider';
+import { setRegisteredPushToken } from '../lib/push-token-registry';
 
 export interface UsePushNotificationsResult {
   pushToken: string | null;

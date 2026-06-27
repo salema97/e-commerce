@@ -2,9 +2,9 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Card, Button } from '@repo/shared-ui';
-import { NeoScreen } from '../../components/neo-screen.js';
-import { NeoStaggeredItem } from '../../components/neo-animated.js';
-import { api } from '../../lib/api.js';
+import { NeoScreen } from '../../components/neo-screen';
+import { NeoStaggeredItem } from '../../components/neo-animated';
+import { api } from '../../lib/api';
 import { formatPrice, orderStatusLabel } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
 

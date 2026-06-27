@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card } from '@repo/shared-ui';
-import { api } from '../../lib/api.js';
+import { api } from '../../lib/api';
 
 export default function SubscriptionsScreen(): React.ReactElement {
   const subscriptionsQuery = useQuery({

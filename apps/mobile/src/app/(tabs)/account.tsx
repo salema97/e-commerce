@@ -7,12 +7,12 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../providers/AuthProvider.js';
+import { useAuth } from '../../providers/AuthProvider';
 import { Button, Card, Badge, neo } from '@repo/shared-ui';
-import { NeoScreen } from '../../components/neo-screen.js';
-import { NeoStaggeredItem } from '../../components/neo-animated.js';
-import { api } from '../../lib/api.js';
-import { getRegisteredPushToken } from '../../lib/push-token-registry.js';
+import { NeoScreen } from '../../components/neo-screen';
+import { NeoStaggeredItem } from '../../components/neo-animated';
+import { api } from '../../lib/api';
+import { getRegisteredPushToken } from '../../lib/push-token-registry';
 import { formatPrice, formatDate, orderStatusLabel } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
 

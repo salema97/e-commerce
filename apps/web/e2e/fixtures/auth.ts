@@ -100,14 +100,9 @@ export async function clearAuth(page: Page): Promise<void> {
   await page.request.post('/api/auth/logout');
 }
 
-export async function createTestOrder(
+export async function createTestProduct(
   request: APIRequestContext,
-  overrides: {
-    status?: 'DELIVERED' | 'PENDING' | 'PAYMENT_PENDING';
-    customerEmail?: string;
-    createdAt?: string;
-  } = {},
-): Promise<{ id: string; orderNumber: string }> {
+): Promise<{ id: string; slug: string; variantId?: string }> {
   const adminHeaders = await getApiAuthHeaders(request, 'ADMIN');
   const now = Date.now();
   const unique = `${now}-${Math.random().toString(36).slice(2, 9)}`;
@@ -127,7 +122,11 @@ export async function createTestOrder(
     throw new Error(`Failed to create test product: ${await productRes.text()}`);
   }
 
-  const product = (await productRes.json()) as { id: string; variants: Array<{ id: string }> };
+  const product = (await productRes.json()) as {
+    id: string;
+    slug: string;
+    variants: Array<{ id: string }>;
+  };
 
   const inventoryRes = await request.post(`${API_BASE}/inventory`, {
     data: {
@@ -144,14 +143,40 @@ export async function createTestOrder(
     throw new Error(`Failed to create test inventory: ${await inventoryRes.text()}`);
   }
 
+  return {
+    id: product.id,
+    slug: product.slug,
+    variantId: product.variants[0]?.id,
+  };
+}
+
+export async function createTestOrder(
+  request: APIRequestContext,
+  overrides: {
+    status?: 'DELIVERED' | 'PENDING' | 'PAYMENT_PENDING';
+    customerEmail?: string;
+    createdAt?: string;
+  } = {},
+  options: { orderAs?: TestRole; anonymous?: boolean } = {},
+): Promise<{ id: string; orderNumber: string }> {
+  const adminHeaders = await getApiAuthHeaders(request, 'ADMIN');
+  const product = await createTestProduct(request);
+  const orderRole = options.orderAs ?? 'ADMIN';
+  const orderHeaders = options.anonymous
+    ? undefined
+    : orderRole === 'ADMIN'
+      ? adminHeaders
+      : await getApiAuthHeaders(request, orderRole);
+
   const orderRes = await request.post(`${API_BASE}/orders`, {
     data: {
-      items: [{ productId: product.id, variantId: product.variants[0]?.id, quantity: 1, price: 49.99 }],
-      customerEmail: overrides.customerEmail ?? 'customer@example.com',
+      items: [{ productId: product.id, variantId: product.variantId, quantity: 1, price: 49.99 }],
+      customerEmail:
+        overrides.customerEmail ?? SEED_EMAIL_BY_ROLE[orderRole === 'ADMIN' ? 'CUSTOMER' : orderRole],
       customerPhone: '+593999999999',
       channel: 'WEB',
     },
-    headers: adminHeaders,
+    headers: orderHeaders,
   });
 
   if (!orderRes.ok()) {

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, FlatList, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Card, neo } from '@repo/shared-ui';
-import { NeoScreen } from '../../components/neo-screen.js';
+import { NeoScreen } from '../../components/neo-screen';
 import { LEGAL_PATH_SLUGS, LEGAL_PATH_TITLES } from '@repo/shared-utils';
 
 export default function LegalIndexScreen(): React.ReactElement {

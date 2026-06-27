@@ -10,9 +10,6 @@ import { RefundService } from '../payments/refund.service.js';
 import { StoreCreditService } from './store-credit.service.js';
 import { InvoicesService } from '../invoices/invoices.service.js';
 import { ReturnNotificationService } from './notifications/return-notification.service.js';
-import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
-import { EmailNotificationService } from '../notifications/email-notification.service.js';
-import { PushNotificationService } from '../notifications/push-notification.service.js';
 import { BackInStockAlertsService } from '../notifications/back-in-stock-alerts.service.js';
 
 function buildTxClient() {
@@ -48,9 +45,6 @@ describe('ReturnsService', () => {
     onReturnRequested: ReturnType<typeof vi.fn>;
     onReturnStatusChanged: ReturnType<typeof vi.fn>;
   };
-  let whatsappNotificationService: { notify: ReturnType<typeof vi.fn> };
-  let emailNotificationService: { notify: ReturnType<typeof vi.fn> };
-  let pushNotificationService: { notifyForOrder: ReturnType<typeof vi.fn> };
   let backInStockAlerts: { notifyRestocked: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
@@ -64,9 +58,6 @@ describe('ReturnsService', () => {
       onReturnRequested: vi.fn().mockResolvedValue(undefined),
       onReturnStatusChanged: vi.fn().mockResolvedValue(undefined),
     };
-    whatsappNotificationService = { notify: vi.fn().mockResolvedValue(undefined) };
-    emailNotificationService = { notify: vi.fn().mockResolvedValue(undefined) };
-    pushNotificationService = { notifyForOrder: vi.fn().mockResolvedValue(undefined) };
     backInStockAlerts = { notifyRestocked: vi.fn().mockResolvedValue(undefined) };
 
     const module = await Test.createTestingModule({
@@ -78,9 +69,6 @@ describe('ReturnsService', () => {
         { provide: StoreCreditService, useValue: storeCreditService },
         { provide: InvoicesService, useValue: invoicesService },
         { provide: ReturnNotificationService, useValue: notificationService },
-        { provide: WhatsAppNotificationService, useValue: whatsappNotificationService },
-        { provide: EmailNotificationService, useValue: emailNotificationService },
-        { provide: PushNotificationService, useValue: pushNotificationService },
         { provide: BackInStockAlertsService, useValue: backInStockAlerts },
         { provide: ConfigService, useValue: configService },
       ],
@@ -284,20 +272,19 @@ describe('ReturnsService', () => {
       }));
       expect(prisma.__txClient.inventory.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ quantity: { increment: 1 } }) }));
       expect(invoicesService.enqueueCreditNoteForReturn).not.toHaveBeenCalled();
-      expect(whatsappNotificationService.notify).toHaveBeenCalledWith(
-        'o1',
-        'REFUND_CONFIRMED',
-        '+593991234567',
-        expect.objectContaining({ orderNumber: 'ORD-1', amount: 'USD 50.00' }),
-        { idempotencyKey: 'wa:notification:o1:REFUND_CONFIRMED:rr1' },
+      expect(notificationService.onReturnStatusChanged).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'rr1', refundMethod: RefundMethod.ORIGINAL_PAYMENT }),
+        ReturnStatus.INSPECTION,
+        ReturnStatus.RESOLVED,
+        { refundAmount: 50 },
       );
     });
 
-    it('completes return resolution even if WhatsApp notification rejects', async () => {
+    it('completes return resolution even if return notification rejects', async () => {
       prisma.returnRequest.findUnique.mockResolvedValue(buildReturnForResolve(ReturnStatus.INSPECTION, { order: { ...buildReturnForResolve().order, customerPhone: '+593991234567' } }));
       prisma.returnRequest.update.mockResolvedValue({ id: 'rr1', status: ReturnStatus.RESOLVED, refundMethod: RefundMethod.ORIGINAL_PAYMENT, items: [] });
       prisma.__txClient.inventory.findFirst.mockResolvedValue({ id: 'inv1', productId: 'p1', variantId: null, quantity: 10, reservedQuantity: 0 });
-      whatsappNotificationService.notify.mockRejectedValue(new Error('WhatsApp down'));
+      notificationService.onReturnStatusChanged.mockRejectedValue(new Error('Notification down'));
 
       const result = await service.resolveReturn('rr1', { refundMethod: RefundMethod.ORIGINAL_PAYMENT }, 'admin1');
 

@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { FormSelect } from '@/components/ui/form-select';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { MessageBubble } from './message-bubble';
 import { QuickReplyPicker } from './quick-reply-picker';
@@ -26,7 +27,11 @@ interface ConversationDetailProps {
   quickReplies?: QuickReply[];
   currentUserId?: string;
   onSendMessage: (content: string) => void | Promise<void>;
-  onUpdateConversation: (data: { status?: ConversationStatus; assignedAgentId?: string }) => void | Promise<void>;
+  onUpdateConversation: (data: {
+    status?: ConversationStatus;
+    assignedAgentId?: string;
+    internalNotes?: string;
+  }) => void | Promise<void>;
   isSending?: boolean;
   isUpdating?: boolean;
 }
@@ -42,7 +47,12 @@ export function ConversationDetail({
   isUpdating,
 }: ConversationDetailProps) {
   const [content, setContent] = React.useState('');
+  const [internalNotes, setInternalNotes] = React.useState(conversation.internalNotes ?? '');
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    setInternalNotes(conversation.internalNotes ?? '');
+  }, [conversation.id, conversation.internalNotes]);
 
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -101,6 +111,26 @@ export function ConversationDetail({
             Asignarme
           </Button>
         </div>
+      </div>
+
+      <div className="border-b border-neo-onyx/20 bg-neo-lace/60 px-4 py-3">
+        <Label htmlFor="internal-notes" className="text-xs uppercase tracking-wide text-muted-foreground">
+          Notas internas (solo equipo)
+        </Label>
+        <Textarea
+          id="internal-notes"
+          value={internalNotes}
+          onChange={(event) => setInternalNotes(event.target.value)}
+          onBlur={() => {
+            if (internalNotes !== (conversation.internalNotes ?? '')) {
+              void onUpdateConversation({ internalNotes });
+            }
+          }}
+          disabled={isUpdating}
+          rows={2}
+          className="mt-2 resize-none"
+          placeholder="Contexto para otros agentes..."
+        />
       </div>
 
       <div className="flex-1 overflow-auto p-4">

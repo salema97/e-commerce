@@ -14,6 +14,7 @@ import {
 import { PaymentStatus } from '../public-api.js';
 import { PlaceToPayWebhookDto } from '../public-api.js';
 import { resilientFetch } from '../../common/resilience/resilient-fetch.js';
+import { requirePaymentMetadataToken } from '../payment-metadata.util.js';
 
 interface PlaceToPayAuth {
   login: string;
@@ -86,7 +87,7 @@ export class PlaceToPayProvider extends PaymentProvider {
             total: order.amount / 100,
           },
         },
-        returnUrl: order.metadata?.returnUrl ?? '',
+        returnUrl: requirePaymentMetadataToken(order.metadata, 'returnUrl', 'PlaceToPay'),
         expiration: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
       }),
     });

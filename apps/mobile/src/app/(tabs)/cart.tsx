@@ -7,12 +7,12 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Card, Button, neo, ProductImage } from '@repo/shared-ui';
-import { NeoScreen } from '../../components/neo-screen.js';
-import { NeoStaggeredItem } from '../../components/neo-animated.js';
-import { useCart } from '../../lib/cart.js';
+import { NeoScreen } from '../../components/neo-screen';
+import { NeoStaggeredItem } from '../../components/neo-animated';
+import { useCart } from '../../lib/cart';
 import { formatPrice } from '@repo/shared-utils';
-import { trackMobileEvent } from '../../lib/analytics.js';
-import { useAuth } from '../../providers/AuthProvider.js';
+import { trackMobileEvent } from '../../lib/analytics';
+import { useAuth } from '../../providers/AuthProvider';
 
 export default function CartScreen(): React.ReactElement {
   const router = useRouter();

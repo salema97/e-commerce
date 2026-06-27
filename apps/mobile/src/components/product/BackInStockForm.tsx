@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Button, Card, Input, neo } from '@repo/shared-ui';
-import { useAuth } from '../../providers/AuthProvider.js';
-import { api } from '../../lib/api.js';
+import { useAuth } from '../../providers/AuthProvider';
+import { api } from '../../lib/api';
 
 interface BackInStockFormProps {
   productId: string;

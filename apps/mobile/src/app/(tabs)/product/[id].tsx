@@ -7,18 +7,18 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Badge, Card, neo, ProductImage } from '@repo/shared-ui';
-import { NeoScreen } from '../../../components/neo-screen.js';
-import { NeoStaggeredItem } from '../../../components/neo-animated.js';
-import { api } from '../../../lib/api.js';
-import { useCart } from '../../../lib/cart.js';
+import { NeoScreen } from '../../../components/neo-screen';
+import { NeoStaggeredItem } from '../../../components/neo-animated';
+import { api } from '../../../lib/api';
+import { useCart } from '../../../lib/cart';
 import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
-import { getProductAvailableQuantity } from '../../../lib/product-stock.js';
-import { trackMobileEvent } from '../../../lib/analytics.js';
-import { useAuth } from '../../../providers/AuthProvider.js';
-import { useWishlist } from '../../../lib/wishlist.js';
-import { BackInStockForm } from '../../../components/product/BackInStockForm.js';
-import { ProductReviews } from '../../../components/product/ProductReviews.js';
-import { captureMobileException } from '../../../lib/sentry.js';
+import { getProductAvailableQuantity } from '../../../lib/product-stock';
+import { trackMobileEvent } from '../../../lib/analytics';
+import { useAuth } from '../../../providers/AuthProvider';
+import { useWishlist } from '../../../lib/wishlist';
+import { BackInStockForm } from '../../../components/product/BackInStockForm';
+import { ProductReviews } from '../../../components/product/ProductReviews';
+import { captureMobileException } from '../../../lib/sentry';
 import type { ProductVariant } from '@repo/shared-types';
 
 export default function ProductDetailScreen(): React.ReactElement {

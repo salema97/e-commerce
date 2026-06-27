@@ -14,6 +14,7 @@ import {
 import { PaymentStatus } from '../public-api.js';
 import { KushkiWebhookDto } from '../public-api.js';
 import { resilientFetch } from '../../common/resilience/resilient-fetch.js';
+import { requirePaymentMetadataToken } from '../payment-metadata.util.js';
 
 @Injectable()
 export class KushkiProvider extends PaymentProvider {
@@ -28,6 +29,7 @@ export class KushkiProvider extends PaymentProvider {
   }
 
   async createPaymentIntent(order: CreatePaymentIntentOptions): Promise<PaymentIntentResult> {
+    const token = requirePaymentMetadataToken(order.metadata, 'kushkiToken', 'Kushki');
     const response = await resilientFetch('payments.kushki', `${this.baseUrl}/card/v1/charges`, {
       method: 'POST',
       headers: {
@@ -35,7 +37,7 @@ export class KushkiProvider extends PaymentProvider {
         'Private-Merchant-Id': this.privateKey,
       },
       body: JSON.stringify({
-        token: 'tok_placeholder',
+        token,
         amount: order.amount,
         currency: order.currency,
         metadata: {
