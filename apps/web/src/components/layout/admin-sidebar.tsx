@@ -27,6 +27,7 @@ import {
   MapPin,
   Repeat,
   UsersRound,
+  Truck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { sidebarIconHover, sidebarIconRest } from '@/lib/neo-motion';
@@ -45,6 +46,7 @@ const navIcons: Record<string, React.ElementType> = {
   '/admin/categories': Tags,
   '/admin/inventory': Warehouse,
   '/admin/orders': ShoppingBag,
+  '/admin/fulfillments': Truck,
   '/admin/returns': RotateCcw,
   '/admin/customers': Users,
   '/admin/reviews': Star,

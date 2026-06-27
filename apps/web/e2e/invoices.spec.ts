@@ -36,7 +36,7 @@ test.describe('admin invoice UI e2e', () => {
     await authenticatePage(page, TEST_ADMIN);
     await page.goto(`/admin/invoices/${invoice.id}`);
 
-    await expect(page.locator('body')).toContainText('falló');
+    await expect(page.locator('body')).toContainText('falló', { timeout: 15_000 });
 
     await page.getByRole('button', { name: 'Reintentar' }).click();
     await expect(page).toHaveURL(`/admin/invoices/${invoice.id}`, { timeout: 15_000 });

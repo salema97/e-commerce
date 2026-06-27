@@ -32,9 +32,9 @@ const e2eServerEnv = {
 
 export default defineConfig({
   testDir: './e2e',
-  fullyParallel: true,
+  fullyParallel: false,
   retries: 1,
-  workers: 2,
+  workers: 1,
   reporter: 'list',
   use: {
     baseURL: `http://${E2E_HOST}:3000`,

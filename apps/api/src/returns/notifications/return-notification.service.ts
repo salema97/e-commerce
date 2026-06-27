@@ -151,7 +151,7 @@ export class ReturnNotificationService {
       where: { id: returnId },
       include: { order: true },
     });
-    if (!record) {
+    if (!record || !record.order) {
       return null;
     }
     return {

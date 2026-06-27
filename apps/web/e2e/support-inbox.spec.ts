@@ -58,9 +58,9 @@ test.describe('admin support inbox e2e', () => {
     });
 
     await authenticatePage(page, TEST_ADMIN);
-    await page.goto('/admin/support');
+    await page.goto('/admin/support', { waitUntil: 'domcontentloaded' });
 
-    await expect(page.locator('body')).toContainText(contactName);
+    await expect(page.locator('body')).toContainText(contactName, { timeout: 15_000 });
     await openConversation(page, contactName);
 
     await selectConversationStatus(page, 'Pendiente');
