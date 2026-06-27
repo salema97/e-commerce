@@ -21,7 +21,7 @@ export function getCircuitBreaker(name: string, options?: {
   return breaker;
 }
 
-export async function resilientFetch(
+export function resilientFetch(
   breakerName: string,
   url: string,
   init?: RequestInit,

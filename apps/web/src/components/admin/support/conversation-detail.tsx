@@ -21,6 +21,38 @@ const STATUS_OPTIONS: { value: ConversationStatus; label: string }[] = [
   { value: 'CLOSED', label: 'Cerrado' },
 ];
 
+function InternalNotesField({
+  conversationId,
+  initialNotes,
+  isUpdating,
+  onSave,
+}: {
+  conversationId: string;
+  initialNotes: string;
+  isUpdating?: boolean;
+  onSave: (notes: string) => void | Promise<void>;
+}) {
+  const [internalNotes, setInternalNotes] = React.useState(initialNotes);
+
+  return (
+    <Textarea
+      id="internal-notes"
+      value={internalNotes}
+      onChange={(event) => setInternalNotes(event.target.value)}
+      onBlur={() => {
+        if (internalNotes !== initialNotes) {
+          void onSave(internalNotes);
+        }
+      }}
+      disabled={isUpdating}
+      rows={2}
+      className="mt-2 resize-none"
+      placeholder="Contexto para otros agentes..."
+      data-conversation-id={conversationId}
+    />
+  );
+}
+
 interface ConversationDetailProps {
   conversation: Conversation;
   messages?: Message[];
@@ -47,12 +79,8 @@ export function ConversationDetail({
   isUpdating,
 }: ConversationDetailProps) {
   const [content, setContent] = React.useState('');
-  const [internalNotes, setInternalNotes] = React.useState(conversation.internalNotes ?? '');
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    setInternalNotes(conversation.internalNotes ?? '');
-  }, [conversation.id, conversation.internalNotes]);
+  const internalNotesKey = `${conversation.id}:${conversation.internalNotes ?? ''}`;
 
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -117,19 +145,12 @@ export function ConversationDetail({
         <Label htmlFor="internal-notes" className="text-xs uppercase tracking-wide text-muted-foreground">
           Notas internas (solo equipo)
         </Label>
-        <Textarea
-          id="internal-notes"
-          value={internalNotes}
-          onChange={(event) => setInternalNotes(event.target.value)}
-          onBlur={() => {
-            if (internalNotes !== (conversation.internalNotes ?? '')) {
-              void onUpdateConversation({ internalNotes });
-            }
-          }}
-          disabled={isUpdating}
-          rows={2}
-          className="mt-2 resize-none"
-          placeholder="Contexto para otros agentes..."
+        <InternalNotesField
+          key={internalNotesKey}
+          conversationId={conversation.id}
+          initialNotes={conversation.internalNotes ?? ''}
+          isUpdating={isUpdating}
+          onSave={(notes) => onUpdateConversation({ internalNotes: notes })}
         />
       </div>
 

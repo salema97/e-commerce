@@ -9,6 +9,6 @@ import { PaymentsModule } from '../payments/payments.module.js';
   imports: [PrismaModule, PaymentsModule],
   controllers: [SubscriptionsController],
   providers: [SubscriptionsService, StripeBillingService],
-  exports: [SubscriptionsService, StripeBillingService],
+  exports: [],
 })
 export class SubscriptionsModule {}

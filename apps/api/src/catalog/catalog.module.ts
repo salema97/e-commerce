@@ -11,6 +11,6 @@ import { CatalogCacheService } from './catalog-cache.service.js';
   imports: [PrismaModule, AiModule, RedisModule, EventBusModule],
   controllers: [CatalogController],
   providers: [CatalogService, CatalogCacheService],
-  exports: [CatalogService, CatalogCacheService],
+  exports: [],
 })
 export class CatalogModule {}

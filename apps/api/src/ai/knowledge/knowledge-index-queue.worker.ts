@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import { ConfigService } from '@nestjs/config';
 import { Worker } from 'bullmq';
 import { KnowledgeIndexingService } from './knowledge-indexing.service.js';
+import { KnowledgeIndexQueueLifecycle } from './knowledge-index-queue.lifecycle.js';
 import {
   getKnowledgeIndexQueueConcurrency,
   isKnowledgeIndexQueueEnabled,
@@ -23,6 +24,7 @@ export class KnowledgeIndexQueueWorker implements OnModuleInit, OnModuleDestroy 
   constructor(
     private readonly config: ConfigService,
     private readonly indexing: KnowledgeIndexingService,
+    private readonly queueLifecycle: KnowledgeIndexQueueLifecycle,
   ) {}
 
   onModuleInit(): void {
@@ -65,6 +67,7 @@ export class KnowledgeIndexQueueWorker implements OnModuleInit, OnModuleDestroy 
   }
 
   async onModuleDestroy(): Promise<void> {
+    void this.queueLifecycle;
     await this.worker?.close();
   }
 }

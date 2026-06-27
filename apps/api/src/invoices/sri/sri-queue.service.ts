@@ -4,6 +4,8 @@ import type { Job, Queue } from 'bullmq';
 import { Prisma, SriDocumentJob, SriDocumentJobStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { SRI_QUEUE_TOKEN } from './sri-queue.tokens.js';
+import { SriQueueLifecycle } from './sri-queue.lifecycle.js';
+import { SriReconciliationService } from './sri-reconciliation.service.js';
 import {
   SRI_QUEUE_NAME,
   getSriQueueMaxRetries,
@@ -24,9 +26,12 @@ export class SriQueueService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     @Inject(SRI_QUEUE_TOKEN) private readonly queue: Queue,
+    private readonly queueLifecycle: SriQueueLifecycle,
+    private readonly reconciliationService: SriReconciliationService,
   ) {}
 
   get isEnabled(): boolean {
+    void this.reconciliationService;
     return isSriQueueEnabled(this.config);
   }
 

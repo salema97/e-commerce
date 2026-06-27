@@ -17,13 +17,22 @@ function resolveEasProjectId(): string {
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   const isDevelopment = isDevelopmentAppEnv();
+  const plugins = [...(config.plugins ?? [])];
+
+  if (isDevelopment) {
+    plugins.push([
+      'expo-build-properties',
+      {
+        android: {
+          usesCleartextTraffic: true,
+        },
+      },
+    ]);
+  }
 
   return {
     ...config,
-    android: {
-      ...config.android,
-      ...(isDevelopment ? { usesCleartextTraffic: true } : {}),
-    },
+    plugins,
     extra: {
       ...config.extra,
       eas: {

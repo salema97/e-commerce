@@ -1,6 +1,7 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { dirname } from 'node:path';
 import forge from 'node-forge';
 
 const RUC = process.env.DEV_SRI_RUC ?? '0591764479001';
@@ -8,8 +9,8 @@ const PASSWORD = process.env.DEV_SRI_CERT_PASSWORD ?? 'DevSriCert0591!';
 const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '../certs');
 const OUT_FILE = join(OUT_DIR, 'dev-sri.p12');
 
-function generateDevP12(): void {
-  mkdirSync(OUT_DIR, { recursive: true });
+async function generateDevP12(): Promise<void> {
+  await mkdir(OUT_DIR, { recursive: true });
 
   const keys = forge.pki.rsa.generateKeyPair(2048);
   const cert = forge.pki.createCertificate();
@@ -34,7 +35,7 @@ function generateDevP12(): void {
   const p12Asn1 = forge.pkcs12.toPkcs12Asn1(keys.privateKey, cert, PASSWORD);
   const p12Der = forge.asn1.toDer(p12Asn1).getBytes();
 
-  writeFileSync(OUT_FILE, Buffer.from(p12Der, 'binary'), { mode: 0o600 });
+  await writeFile(OUT_FILE, Buffer.from(p12Der, 'binary'), { mode: 0o600 });
 
   const parsed = forge.pkcs12.pkcs12FromAsn1(p12Asn1, false, PASSWORD);
   const exportedCert = parsed.getBags({ bagType: forge.pki.oids.certBag })[
@@ -54,4 +55,7 @@ function generateDevP12(): void {
   );
 }
 
-generateDevP12();
+generateDevP12().catch((error: unknown) => {
+  console.error('Failed to generate dev SRI certificate:', error);
+  process.exit(1);
+});

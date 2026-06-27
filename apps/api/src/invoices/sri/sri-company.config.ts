@@ -10,7 +10,20 @@ export interface SriCompanyConfig {
   specialTaxpayerNumber?: string;
 }
 
-type ConfigReader = Pick<ConfigService, 'get' | 'getOrThrow'>;
+export type ConfigReader = Pick<ConfigService, 'get' | 'getOrThrow'>;
+
+export function createEnvConfigReader(env: NodeJS.ProcessEnv): ConfigReader {
+  return {
+    get: <T>(key: string) => env[key] as T | undefined,
+    getOrThrow: <T>(key: string) => {
+      const value = env[key];
+      if (value === undefined || value === '') {
+        throw new Error(`Missing environment variable: ${key}`);
+      }
+      return value as T;
+    },
+  };
+}
 
 export function readSriCompanyConfig(source: ConfigReader): SriCompanyConfig {
   const name = source.getOrThrow<string>('SRI_COMPANY_NAME');

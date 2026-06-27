@@ -10,6 +10,6 @@ import { ExternalReviewsService } from './external-reviews.service.js';
   imports: [PrismaModule, AiModule, LoyaltyModule],
   controllers: [ReviewsController],
   providers: [ReviewsService, ExternalReviewsService],
-  exports: [ReviewsService],
+  exports: [],
 })
 export class ReviewsModule {}

@@ -21,6 +21,6 @@ import { NotificationsModule } from '../notifications/notifications.module.js';
   ],
   controllers: [OrderReturnsController, ReturnsController],
   providers: [ReturnsService, StoreCreditService, ReturnNotificationService],
-  exports: [ReturnsService, StoreCreditService, ReturnNotificationService],
+  exports: [StoreCreditService],
 })
 export class ReturnsModule {}

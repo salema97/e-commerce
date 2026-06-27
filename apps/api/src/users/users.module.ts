@@ -9,6 +9,6 @@ import { UserProvisioningService } from './user-provisioning.service.js';
   imports: [ConfigModule, PrismaModule],
   controllers: [UsersController],
   providers: [UsersService, UserProvisioningService],
-  exports: [UsersService, UserProvisioningService],
+  exports: [UserProvisioningService],
 })
 export class UsersModule {}

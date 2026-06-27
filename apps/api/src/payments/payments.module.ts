@@ -57,9 +57,7 @@ import { isNonProduction } from '../common/is-non-production.js';
   exports: [
     PaymentsService,
     RefundService,
-    PaymentProviderFactory,
     StripeCustomerService,
-    PaymentWebhookService,
   ],
 })
 export class PaymentsModule {}

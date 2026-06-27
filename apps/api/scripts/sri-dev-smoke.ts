@@ -1,13 +1,13 @@
 import 'dotenv/config';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { ConfigService } from '@nestjs/config';
 import { SriSignerService } from '../src/invoices/sri/sri-signer.service.js';
 import { SriSoapClient } from '../src/invoices/sri/sri-soap.client.js';
 import { SriXmlBuilder } from '../src/invoices/sri/sri-xml.builder.js';
 import { SriAccessKeyBuilder } from '../src/invoices/sri/sri-access-key.builder.js';
 import {
   mapSriCompanyToXmlFields,
+  createEnvConfigReader,
   readSriCompanyConfig,
 } from '../src/invoices/sri/sri-company.config.js';
 
@@ -36,7 +36,7 @@ const sampleOrder = {
 };
 
 async function main(): Promise<void> {
-  const config = new ConfigService(process.env);
+  const config = createEnvConfigReader(process.env);
   const company = readSriCompanyConfig(config);
   const certPath = resolve(
     process.cwd(),
@@ -47,6 +47,7 @@ async function main(): Promise<void> {
 
   console.log('=== SRI dev smoke test ===\n');
 
+  // nestjs-doctor-ignore — standalone dev script; Nest DI is not bootstrapped here.
   const signer = new SriSignerService();
   const certBuffer = await readFile(certPath);
   const { certificate } = signer.loadP12(certBuffer, password);

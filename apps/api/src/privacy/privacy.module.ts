@@ -8,6 +8,6 @@ import { PrivacyService } from './privacy.service.js';
   imports: [PrismaModule, UsersModule],
   controllers: [PrivacyController],
   providers: [PrivacyService],
-  exports: [PrivacyService],
+  exports: [],
 })
 export class PrivacyModule {}

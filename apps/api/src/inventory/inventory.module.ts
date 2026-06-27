@@ -9,6 +9,6 @@ import { EventBusModule } from '../event-bus/event-bus.module.js';
   imports: [NotificationsModule, EventBusModule],
   controllers: [InventoryController],
   providers: [InventoryService, InventoryReservationService],
-  exports: [InventoryService, InventoryReservationService],
+  exports: [InventoryReservationService],
 })
 export class InventoryModule {}

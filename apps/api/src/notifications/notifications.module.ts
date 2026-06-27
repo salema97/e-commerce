@@ -72,14 +72,8 @@ import { NotificationProviderWiring } from './notification-provider.wiring.js';
   ],
   exports: [
     EmailNotificationService,
-    CampaignEmailService,
     BackInStockAlertsService,
     PushNotificationService,
-    MarketingEmailProvider,
-    MarketingAutomationService,
-    OrderConfirmationService,
-    NotificationPreferencesService,
-    NotificationSegmentService,
   ],
 })
 export class NotificationsModule {}

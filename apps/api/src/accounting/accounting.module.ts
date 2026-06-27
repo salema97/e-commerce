@@ -19,6 +19,6 @@ import { InvoiceAuthorizedAccountingConsumer } from './invoice-authorized-accoun
     SiigoAccountingProvider,
     InvoiceAuthorizedAccountingConsumer,
   ],
-  exports: [AccountingService],
+  exports: [],
 })
 export class AccountingModule {}

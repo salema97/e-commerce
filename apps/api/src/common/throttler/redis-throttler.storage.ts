@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import type { ThrottlerStorage } from '@nestjs/throttler';
 import { RedisService } from '../redis/redis.service.js';
 
@@ -9,7 +8,6 @@ type ThrottlerStorageRecord = {
   timeToBlockExpire: number;
 };
 
-@Injectable()
 export class RedisThrottlerStorage implements ThrottlerStorage {
   constructor(private readonly redis: RedisService) {}
 

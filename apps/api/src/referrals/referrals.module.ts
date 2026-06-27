@@ -10,6 +10,6 @@ import { ReferralsController } from './referrals.controller.js';
   imports: [PrismaModule, ReturnsModule, LoyaltyModule],
   controllers: [ReferralsController],
   providers: [ReferralEngine, ReferralsService],
-  exports: [ReferralEngine, ReferralsService],
+  exports: [ReferralsService],
 })
 export class ReferralsModule {}

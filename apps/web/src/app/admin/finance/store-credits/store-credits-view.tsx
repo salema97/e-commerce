@@ -56,14 +56,7 @@ export function StoreCreditsView({
         showNetworkStatus={false}
       />
 
-      <form
-        className="neo-panel grid gap-4 p-4 md:grid-cols-[1fr_160px_auto]"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!userId.trim() || !amount) return;
-          void issueMutation.mutateAsync();
-        }}
-      >
+      <div className="neo-panel grid gap-4 p-4 md:grid-cols-[1fr_160px_auto]">
         <div className="space-y-2">
           <Label htmlFor="userId">ID de usuario</Label>
           <Input
@@ -87,11 +80,15 @@ export function StoreCreditsView({
           />
         </div>
         <div className="flex items-end">
-          <Button type="submit" disabled={issueMutation.isPending}>
+          <Button
+            type="button"
+            disabled={issueMutation.isPending || !userId.trim() || !amount}
+            onClick={() => void issueMutation.mutateAsync()}
+          >
             {issueMutation.isPending ? 'Emitiendo...' : 'Emitir crédito'}
           </Button>
         </div>
-      </form>
+      </div>
 
       <div className="neo-panel overflow-hidden">
         <Table>

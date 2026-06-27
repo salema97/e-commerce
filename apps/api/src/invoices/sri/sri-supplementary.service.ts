@@ -15,7 +15,7 @@ import {
   readSriCompanyConfig,
 } from './sri-company.config.js';
 import { formatSriDate } from './sri-xml.utils.js';
-import { IssueSupplementaryDocumentDto } from '../dto/issue-supplementary-document.dto.js';
+import { IssueSupplementaryDocumentDto } from '../invoices.api.js';
 import { InvoiceStatus } from '../invoice-status.enum.js';
 
 @Injectable()
@@ -154,7 +154,7 @@ export class SriSupplementaryService {
     };
   }
 
-  async findAll(documentType?: string) {
+  findAll(documentType?: string) {
     return this.prisma.sriSupplementaryDocument.findMany({
       where: documentType ? { documentType } : undefined,
       orderBy: { createdAt: 'desc' },

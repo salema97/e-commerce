@@ -9,6 +9,6 @@ import { EventBusModule } from '../event-bus/event-bus.module.js';
   imports: [PrismaModule, FulfillmentModule, EventBusModule],
   controllers: [DropshipController],
   providers: [DropshipService, OrderPaidDropshipConsumer],
-  exports: [DropshipService],
+  exports: [],
 })
 export class DropshipModule {}

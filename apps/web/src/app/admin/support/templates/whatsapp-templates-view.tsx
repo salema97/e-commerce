@@ -52,14 +52,7 @@ export function WhatsAppTemplatesView({
         showNetworkStatus={false}
       />
 
-      <form
-        className="neo-panel grid gap-4 p-4"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!label.trim() || !text.trim()) return;
-          void createMutation.mutateAsync();
-        }}
-      >
+      <div className="neo-panel grid gap-4 p-4">
         <div className="space-y-2">
           <Label htmlFor="label">Etiqueta</Label>
           <Input id="label" value={label} onChange={(e) => setLabel(e.target.value)} required />
@@ -68,10 +61,14 @@ export function WhatsAppTemplatesView({
           <Label htmlFor="text">Texto</Label>
           <Textarea id="text" value={text} onChange={(e) => setText(e.target.value)} rows={4} required />
         </div>
-        <Button type="submit" disabled={createMutation.isPending}>
+        <Button
+          type="button"
+          disabled={createMutation.isPending || !label.trim() || !text.trim()}
+          onClick={() => void createMutation.mutateAsync()}
+        >
           {createMutation.isPending ? 'Guardando...' : 'Agregar plantilla'}
         </Button>
-      </form>
+      </div>
 
       <ul className="neo-panel divide-y divide-neo-onyx/15">
         {(templates ?? []).map((template) => (

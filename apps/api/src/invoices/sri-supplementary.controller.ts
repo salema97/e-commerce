@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from '../auth/roles.decorator.js';
 import { Role } from '../auth/role.enum.js';
 import { SriSupplementaryService } from './sri/sri-supplementary.service.js';
-import { IssueSupplementaryDocumentDto } from './dto/issue-supplementary-document.dto.js';
+import { IssueSupplementaryDocumentDto } from './invoices.api.js';
 
 @ApiTags('Invoices — SRI Supplementary')
 @ApiBearerAuth()

@@ -5,7 +5,7 @@ import { PrismaModule } from '../../prisma/prisma.module.js';
 import { MeilisearchService } from './meilisearch.service.js';
 import { SearchReindexService } from './search-reindex.service.js';
 
-/** Minimal module for CLI reindex — avoids bootstrapping the full AppModule graph. */
+/** CLI-only module; imported by search reindex scripts, not AppModule. */
 @Module({
   imports: [
     ConfigModule.forRoot({

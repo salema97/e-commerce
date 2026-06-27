@@ -21,6 +21,6 @@ import { EventBusModule } from '../event-bus/event-bus.module.js';
   ],
   controllers: [PosController],
   providers: [PosService],
-  exports: [PosService],
+  exports: [],
 })
 export class PosModule {}

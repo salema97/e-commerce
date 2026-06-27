@@ -14,11 +14,13 @@ import { TaxModule } from '../tax/tax.module.js';
 import { LoyaltyModule } from '../loyalty/loyalty.module.js';
 import { BackorderService } from './backorder.service.js';
 import { OrderAccessService } from './order-access.service.js';
+import { CaptchaModule } from '../common/captcha/captcha.module.js';
 import { AuthModule } from '../auth/auth.module.js';
 
 @Module({
   imports: [
     AuthModule,
+    CaptchaModule,
     PrismaModule,
     InventoryModule,
     PromotionsModule,

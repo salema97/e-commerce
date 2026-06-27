@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FormSelect } from '@/components/ui/form-select';
@@ -30,6 +29,25 @@ const SORT_OPTIONS = [
 
 const EMPTY_BRAND_FACETS: CatalogFacetValue[] = [];
 
+function InStockFilter({ inStock }: { inStock: boolean }) {
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        id="inStock"
+        type="checkbox"
+        name="inStock"
+        value="true"
+        defaultChecked={inStock}
+        aria-label="Solo con stock"
+        className="size-5 shrink-0 appearance-none border-[3px] border-neo-onyx bg-white shadow-[2px_2px_0_0_#111111] checked:bg-neo-onyx checked:bg-[length:12px_12px] checked:bg-center checked:bg-no-repeat checked:bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22white%22%20stroke-width%3D%224%22%3E%3Cpath%20d%3D%22M5%2013l4%204L19%207%22/%3E%3C/svg%3E')]"
+      />
+      <Label htmlFor="inStock" className="cursor-pointer font-medium normal-case">
+        Solo con stock
+      </Label>
+    </div>
+  );
+}
+
 export function StoreFilters({
   search = '',
   categorySlug = '',
@@ -42,8 +60,6 @@ export function StoreFilters({
   categories,
   brandFacets = EMPTY_BRAND_FACETS,
 }: StoreFiltersProps) {
-  const [inStockChecked, setInStockChecked] = React.useState(inStock);
-
   return (
     <form
       className="flex flex-col gap-4 border-[3px] border-neo-onyx bg-white p-5 shadow-[6px_6px_0_0_#111111]"
@@ -138,17 +154,7 @@ export function StoreFilters({
         />
       </div>
 
-      {inStockChecked ? <input type="hidden" name="inStock" value="true" /> : null}
-      <div className="flex items-center gap-2">
-        <Checkbox
-          id="inStock"
-          checked={inStockChecked}
-          onCheckedChange={(checked) => setInStockChecked(checked === true)}
-        />
-        <Label htmlFor="inStock" className="cursor-pointer font-medium normal-case">
-          Solo con stock
-        </Label>
-      </div>
+      <InStockFilter key={inStock ? 'in-stock' : 'all'} inStock={inStock} />
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="sort">Ordenar</Label>

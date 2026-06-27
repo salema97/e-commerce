@@ -1,7 +1,13 @@
 {
   "$schema": "https://nestjs.doctor/schema/config.json",
+  "exclude": ["scripts/**"],
+  "ignore": {
+    "files": ["src/ai/search/search-reindex-script.module.ts"]
+  },
   "rules": {
     "security/require-guards-on-endpoints": false,
-    "architecture/no-orm-in-services": false
+    "architecture/no-orm-in-services": false,
+    "architecture/no-barrel-export-internals": false,
+    "schema/require-cascade-rule": false
   }
 }

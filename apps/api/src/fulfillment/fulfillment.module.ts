@@ -19,6 +19,6 @@ import { WmsIntegrationService } from './wms-integration.service.js';
     FulfillmentService,
     WmsIntegrationService,
   ],
-  exports: [FulfillmentService, FulfillmentProvider, WmsIntegrationService],
+  exports: [FulfillmentService, WmsIntegrationService],
 })
 export class FulfillmentModule {}

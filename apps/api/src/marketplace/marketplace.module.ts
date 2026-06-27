@@ -18,6 +18,6 @@ import { MercadoLibreMarketplaceAdapter } from './mercado-libre-marketplace.adap
     ConsoleMarketplaceAdapter,
     MercadoLibreMarketplaceAdapter,
   ],
-  exports: [MarketplaceService, MarketplaceChannelFactory],
+  exports: [],
 })
 export class MarketplaceModule {}

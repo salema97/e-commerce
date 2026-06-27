@@ -73,6 +73,6 @@ async function waitUntilReady(queue: Queue, timeoutMs: number): Promise<void> {
       inject: [ConfigService],
     },
   ],
-  exports: [SriQueueService, SriReconciliationService],
+  exports: [SriQueueService],
 })
 export class SriQueueModule {}

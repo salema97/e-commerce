@@ -9,6 +9,6 @@ import { B2bService } from './b2b.service.js';
   imports: [PrismaModule, B2bPricingModule, forwardRef(() => QuotesModule)],
   controllers: [B2bController],
   providers: [B2bService],
-  exports: [B2bService, B2bPricingModule],
+  exports: [B2bPricingModule],
 })
 export class B2bModule {}

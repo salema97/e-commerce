@@ -9,6 +9,6 @@ import { EventBusModule } from '../event-bus/event-bus.module.js';
   imports: [PrismaModule, EventBusModule],
   controllers: [SellersController],
   providers: [SellersService, OrderPaidSellerConsumer],
-  exports: [SellersService],
+  exports: [],
 })
 export class SellersModule {}

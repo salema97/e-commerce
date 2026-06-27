@@ -19,6 +19,6 @@ import { CarrierRateProviderFactory } from './carrier-rate-provider.factory.js';
     CarrierRateProviderFactory,
     ShippingService,
   ],
-  exports: [ShippingService, CarrierRateProviderFactory],
+  exports: [ShippingService],
 })
 export class ShippingModule {}

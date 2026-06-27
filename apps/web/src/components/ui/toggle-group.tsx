@@ -1,5 +1,6 @@
 'use client';
 
+import { use, useMemo } from 'react';
 import * as React from 'react';
 import * as ToggleGroupPrimitive from '@radix-ui/react-toggle-group';
 import { cn } from '@/lib/utils';
@@ -16,13 +17,15 @@ export function ToggleGroup({
   size?: 'default' | 'sm';
   ref?: React.Ref<React.ElementRef<typeof ToggleGroupPrimitive.Root>>;
 }) {
+  const contextValue = useMemo(() => ({ size }), [size]);
+
   return (
     <ToggleGroupPrimitive.Root
       ref={ref}
       className={cn('flex flex-col gap-2 sm:flex-row', className)}
       {...props}
     >
-      <ToggleGroupContext.Provider value={{ size }}>{children}</ToggleGroupContext.Provider>
+      <ToggleGroupContext.Provider value={contextValue}>{children}</ToggleGroupContext.Provider>
     </ToggleGroupPrimitive.Root>
   );
 }
@@ -35,7 +38,7 @@ export function ToggleGroupItem({
 }: React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Item> & {
   ref?: React.Ref<React.ElementRef<typeof ToggleGroupPrimitive.Item>>;
 }) {
-  const { size } = React.useContext(ToggleGroupContext);
+  const { size } = use(ToggleGroupContext);
 
   return (
     <ToggleGroupPrimitive.Item

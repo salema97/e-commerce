@@ -1,6 +1,7 @@
-import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Redis } from 'ioredis';
+import { setDistributedCircuitBreakerRedis } from '../resilience/distributed-circuit-breaker.js';
 
 /**
  * Thin wrapper around an ioredis client.
@@ -9,7 +10,7 @@ import { Redis } from 'ioredis';
  * perform Redis operations without importing ioredis directly.
  */
 @Injectable()
-export class RedisService implements OnModuleDestroy {
+export class RedisService implements OnModuleDestroy, OnModuleInit {
   private readonly logger = new Logger(RedisService.name);
   readonly client: Redis;
 
@@ -23,6 +24,10 @@ export class RedisService implements OnModuleDestroy {
     this.client.on('error', (error: Error) => {
       this.logger.error({ error }, 'Redis connection error');
     });
+  }
+
+  onModuleInit(): void {
+    setDistributedCircuitBreakerRedis(this.client);
   }
 
   async onModuleDestroy(): Promise<void> {

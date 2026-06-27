@@ -25,6 +25,6 @@ import { AppJwtService } from './jwt.service.js';
     JwtAuthGuard,
     RolesGuard,
   ],
-  exports: [AuthService, JwtAuthGuard, RolesGuard, AppJwtService],
+  exports: [AppJwtService],
 })
 export class AuthModule {}

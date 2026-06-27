@@ -8,6 +8,6 @@ import { AuditBeforeStateRegistry } from './audit-before-state.registry.js';
 @Module({
   imports: [PrismaModule],
   providers: [AuditLogService, AuditInterceptor, AuditBeforeStateRegistry],
-  exports: [AuditLogService, AuditBeforeStateRegistry],
+  exports: [AuditLogService],
 })
 export class AuditModule {}

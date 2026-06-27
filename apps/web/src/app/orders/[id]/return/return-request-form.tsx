@@ -97,13 +97,13 @@ function returnFormReducer(state: ReturnFormState, action: ReturnFormAction): Re
 export default function ReturnRequestForm({ order, isGuest = false }: ReturnRequestFormProps) {
   const router = useRouter();
   const api = useApiClient();
-  const [mounted, setMounted] = React.useState(false);
+  const mounted = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const [form, dispatch] = React.useReducer(returnFormReducer, returnFormInitialState);
   const { selected, email, isSubmitting, error, submitted } = form;
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const windowDays = 30;
   const isWithinWindow =

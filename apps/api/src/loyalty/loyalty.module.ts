@@ -8,6 +8,6 @@ import { LoyaltyController } from './loyalty.controller.js';
   imports: [PrismaModule],
   controllers: [LoyaltyController],
   providers: [LoyaltyEngine, LoyaltyService],
-  exports: [LoyaltyEngine, LoyaltyService],
+  exports: [LoyaltyService],
 })
 export class LoyaltyModule {}

@@ -15,6 +15,6 @@ import { TaxService } from './tax.service.js';
     { provide: TaxCalculator, useExisting: EcuadorIvaTaxCalculator },
     TaxService,
   ],
-  exports: [TaxService, TaxCalculator, EcuadorIvaTaxCalculator],
+  exports: [TaxService],
 })
 export class TaxModule {}

@@ -49,13 +49,7 @@ export function GiftCardsView({ initialGiftCards }: { initialGiftCards: GiftCard
         showNetworkStatus={false}
       />
 
-      <form
-        className="neo-panel flex flex-wrap items-end gap-4 p-4"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void createMutation.mutateAsync();
-        }}
-      >
+      <div className="neo-panel flex flex-wrap items-end gap-4 p-4">
         <div className="space-y-2">
           <Label htmlFor="initialBalance">Monto inicial (USD)</Label>
           <Input
@@ -68,10 +62,14 @@ export function GiftCardsView({ initialGiftCards }: { initialGiftCards: GiftCard
             required
           />
         </div>
-        <Button type="submit" disabled={createMutation.isPending}>
+        <Button
+          type="button"
+          disabled={createMutation.isPending}
+          onClick={() => void createMutation.mutateAsync()}
+        >
           {createMutation.isPending ? 'Creando...' : 'Crear gift card'}
         </Button>
-      </form>
+      </div>
 
       <div className="neo-panel overflow-hidden">
         <Table>

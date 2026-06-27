@@ -25,21 +25,21 @@ export class AppThrottlerGuard extends ThrottlerGuard {
     super(options, storageService, reflector);
   }
 
-  protected async shouldSkip(_context: ExecutionContext): Promise<boolean> {
-    return this.configService.get<string>('E2E_RELAX_THROTTLE') === 'true';
+  protected shouldSkip(_context: ExecutionContext): Promise<boolean> {
+    return Promise.resolve(this.configService.get<string>('E2E_RELAX_THROTTLE') === 'true');
   }
 
-  protected async getTracker(req: AuthenticatedRequest): Promise<string> {
+  protected getTracker(req: AuthenticatedRequest): Promise<string> {
     const userId = req.user?.userId;
     if (userId) {
-      return `user:${userId}`;
+      return Promise.resolve(`user:${userId}`);
     }
 
     const apiKey = req.headers['x-api-key'];
     if (typeof apiKey === 'string' && apiKey.length > 0) {
-      return `apikey:${apiKey}`;
+      return Promise.resolve(`apikey:${apiKey}`);
     }
 
-    return req.ip ?? 'unknown';
+    return Promise.resolve(req.ip ?? 'unknown');
   }
 }

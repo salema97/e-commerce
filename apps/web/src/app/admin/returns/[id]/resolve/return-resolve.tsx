@@ -69,7 +69,11 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
   const router = useRouter();
   const api = useApiClient();
   const authReady = useAuthApiReady();
-  const [mounted, setMounted] = React.useState(false);
+  const mounted = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const { data: liveReturn } = useQuery({
     queryKey: ['returns', returnRequest.id],
     queryFn: () => api.returns.findOne(returnRequest.id),
@@ -80,10 +84,6 @@ export default function ResolveReturnPage({ returnRequest }: { returnRequest: Re
   const [form, dispatch] = React.useReducer(resolveFormReducer, resolveFormInitialState);
   const { method, notes, isSubmitting, exchangeProductId, exchangeVariantId } = form;
   const [products, setProducts] = React.useState<Product[]>([]);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
 
   React.useEffect(() => {
     api.products.findAll().then((data) => setProducts(data)).catch(() => setProducts([]));
