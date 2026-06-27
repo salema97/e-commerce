@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { ConfigReader } from './sri-company.config.js';
+import { ConfigService } from '@nestjs/config';
 import { promisify } from 'node:util';
 import * as soap from 'soap';
 import { getCircuitBreaker } from '../../common/resilience/resilient-fetch.js';
@@ -39,7 +39,7 @@ export interface SriAuthorizationResponse {
 export class SriSoapClient {
   private readonly logger = new Logger(SriSoapClient.name);
 
-  constructor(private readonly configService: ConfigReader) {}
+  constructor(private readonly configService: ConfigService) {}
 
   submit(xml: string): Promise<SriReceptionResponse> {
     return getCircuitBreaker('sri.soap.submit').execute(() => this.submitWithRetry(xml));

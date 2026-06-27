@@ -75,4 +75,9 @@ async function waitUntilReady(queue: Queue, timeoutMs: number): Promise<void> {
   ],
   exports: [SriQueueService],
 })
-export class SriQueueModule {}
+export class SriQueueModule {
+  constructor(
+    private readonly queueLifecycle: SriQueueLifecycle,
+    private readonly reconciliationService: SriReconciliationService,
+  ) {}
+}
