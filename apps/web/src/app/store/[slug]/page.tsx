@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import {
-  getCachedProductBySlug,
-  getCachedProductReviews,
+  findProductBySlug,
+  fetchProductReviews,
 } from '@/lib/public-catalog';
 import { getSiteUrl } from '@/lib/site-url';
 import { Badge } from '@/components/ui/badge';
@@ -29,7 +29,7 @@ interface ProductPageProps {
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getCachedProductBySlug(slug);
+  const product = await findProductBySlug(slug);
 
   if (!product) {
     return { title: 'Producto no encontrado' };
@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const product = await getCachedProductBySlug(slug);
+  const product = await findProductBySlug(slug);
 
   if (!product) {
     notFound();
@@ -62,7 +62,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     new Date(product.preOrderReleaseDate) > new Date();
 
   const { reviews: initialReviews, summary: reviewSummary } =
-    await getCachedProductReviews(product.id);
+    await fetchProductReviews(product.id);
 
   const jsonLd = {
     '@context': 'https://schema.org',

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getServerApiClient } from '@/lib/api';
+import { browseCatalog, listCategories } from '@/lib/public-catalog';
 import { Button } from '@/components/ui/button';
 import { HomeHero } from '@/components/home/home-hero';
 import { CategoryBentoGrid } from '@/components/home/category-bento-grid';
@@ -8,24 +8,26 @@ import {
   getProductPrimaryImageUrl,
   getProductPrimaryImageAlt,
 } from '@repo/shared-utils';
-import type { Product, Category } from '@repo/shared-types';
+import type { ProductCardItem } from '@/components/store/product-card';
+import type { Category } from '@repo/shared-types';
 
 export default async function HomePage() {
-  const api = await getServerApiClient();
-  let featuredProducts: Product[] = [];
+  let featuredProducts: ProductCardItem[] = [];
   let categories: Category[] = [];
 
   try {
-    const [productsResult, categoriesResult] = await Promise.allSettled([
-      api.products.findAll({ status: 'ACTIVE' }),
-      api.categories.findAll(),
+    const [catalogResult, categoriesResult] = await Promise.allSettled([
+      browseCatalog({ limit: 48, page: 1, sort: 'newest' }),
+      listCategories(),
     ]);
-    const allProducts = productsResult.status === 'fulfilled' ? productsResult.value : [];
+    const allProducts =
+      catalogResult.status === 'fulfilled' ? catalogResult.value.items : [];
     featuredProducts = allProducts.filter((p) => p.isFeatured).slice(0, 6);
     if (featuredProducts.length === 0) {
       featuredProducts = allProducts.slice(0, 6);
     }
-    categories = categoriesResult.status === 'fulfilled' ? categoriesResult.value.slice(0, 6) : [];
+    categories =
+      categoriesResult.status === 'fulfilled' ? categoriesResult.value.slice(0, 6) : [];
   } catch {
     featuredProducts = [];
     categories = [];
@@ -81,7 +83,11 @@ export default async function HomePage() {
               </Button>
             </Link>
             <Link href="/wishlist">
-              <Button variant="outline" size="lg" className="w-full min-w-[200px] border-white bg-transparent text-white hover:bg-neo-gold hover:text-neo-onyx">
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full min-w-[200px] border-white bg-transparent text-white hover:bg-neo-gold hover:text-neo-onyx"
+              >
                 Mi lista de deseos
               </Button>
             </Link>

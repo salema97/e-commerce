@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Anton, Space_Grotesk } from 'next/font/google';
 import { Providers } from './providers';
 import { StoreChrome } from '@/components/layout/store-chrome';
+import { Footer } from '@/components/layout/footer';
 import ServiceWorkerRegistration from '@/components/pwa/service-worker-registration';
 import './globals.css';
 
@@ -23,6 +24,9 @@ export const metadata: Metadata = {
     template: '%s | NEO.STORE',
   },
   description: 'Tu tienda online local.',
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 export default function RootLayout({
@@ -40,7 +44,7 @@ export default function RootLayout({
           Saltar al contenido
         </a>
         <Providers>
-          <StoreChrome>
+          <StoreChrome footer={<Footer />}>
             <main id="main-content" className="flex min-h-screen flex-1 flex-col">
               {children}
             </main>

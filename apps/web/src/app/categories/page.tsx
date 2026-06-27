@@ -1,10 +1,9 @@
-import { getServerApiClient } from '@/lib/api';
+import { listCategories } from '@/lib/public-catalog';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { CategoryCardGrid } from '@/components/store/category-card-grid';
 
 export default async function CategoriesPage() {
-  const api = await getServerApiClient();
-  const categories = await api.categories.findAll().catch(() => []);
+  const categories = await listCategories().catch(() => []);
 
   return (
     <AnimatedPageShell

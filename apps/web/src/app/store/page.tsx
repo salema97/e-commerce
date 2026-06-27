@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { getCachedCatalog, getCachedCategories } from '@/lib/public-catalog';
+import { browseCatalog, listCategories } from '@/lib/public-catalog';
 import { getSiteUrl } from '@/lib/site-url';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -76,8 +76,8 @@ export default async function StorePage({ searchParams }: StorePageProps) {
   };
 
   const [catalogResult, categoriesResult] = await Promise.allSettled([
-    getCachedCatalog(catalogQuery),
-    getCachedCategories(),
+    browseCatalog(catalogQuery),
+    listCategories(),
   ]);
 
   const catalog =

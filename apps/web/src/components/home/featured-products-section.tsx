@@ -3,11 +3,11 @@
 import Link from 'next/link';
 import { m, useReducedMotion } from 'motion/react';
 import { ProductCard } from '@/components/store/product-card';
-import type { Product } from '@repo/shared-types';
+import type { ProductCardItem } from '@/components/store/product-card';
 import { fadeUpVariants, productCardVariants, productGridVariants, reducedMotionTransition } from '@/lib/neo-motion';
 
 interface FeaturedProductsSectionProps {
-  products: Product[];
+  products: ProductCardItem[];
 }
 
 export function FeaturedProductsSection({ products }: FeaturedProductsSectionProps) {

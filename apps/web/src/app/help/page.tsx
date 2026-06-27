@@ -1,12 +1,10 @@
 import Link from 'next/link';
-import { getServerApiClient } from '@/lib/api';
+import { listPublishedFaqs } from '@/lib/public-catalog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AnimatedPageShell, NeoReveal, NeoStagger } from '@/components/motion/neo-page-transition';
-import type { Faq } from '@repo/shared-types';
 
 export default async function HelpPage() {
-  const api = await getServerApiClient();
-  const faqs = await api.ai.faqs.findPublished().catch(() => [] as Faq[]);
+  const faqs = await listPublishedFaqs();
 
   return (
     <AnimatedPageShell

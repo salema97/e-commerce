@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { AnimatedPageShell, NeoReveal } from '@/components/motion/neo-page-transition';
 import { MarkdownContent } from '@/components/content/markdown-content';
-import { getServerApiClient } from '@/lib/api';
+import { findCmsPageBySlug } from '@/lib/public-catalog';
 import { LEGAL_PATH_TITLES, resolveLegalCmsSlug } from '@repo/shared-utils';
 
 interface LegalPageProps {
@@ -22,9 +22,8 @@ export default async function LegalPage({ params }: LegalPageProps) {
     notFound();
   }
 
-  const api = await getServerApiClient();
   const cmsSlug = resolveLegalCmsSlug(slug);
-  const page = await api.ai.cmsPages.findBySlug(cmsSlug).catch(() => null);
+  const page = await findCmsPageBySlug(cmsSlug);
 
   if (!page) {
     notFound();

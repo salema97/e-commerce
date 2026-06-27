@@ -19,6 +19,13 @@ function getAnalyticsApiBase(): string {
   return process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || 'http://localhost:3001/v1';
 }
 
+function isConfiguredPostHogKey(key: string | undefined): key is string {
+  if (!key) return false;
+  const normalized = key.trim();
+  if (!normalized || normalized.includes('xxx')) return false;
+  return normalized.startsWith('phc_');
+}
+
 export async function initAnalytics(userId?: string): Promise<void> {
   if (initialized || !hasAnalyticsConsent()) {
     return;
@@ -26,7 +33,7 @@ export async function initAnalytics(userId?: string): Promise<void> {
   initialized = true;
 
   const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-  if (posthogKey) {
+  if (isConfiguredPostHogKey(posthogKey)) {
     const mod = await import('posthog-js');
     posthog = mod.default as PostHogClient;
     posthog.init(posthogKey, {

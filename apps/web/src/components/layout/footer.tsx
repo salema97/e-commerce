@@ -1,8 +1,8 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
+import { CopyrightYear } from '@/components/layout/copyright-year';
 
 export function Footer() {
-  const currentYear = new Date().getFullYear();
-
   return (
     <footer className="border-t-[3px] border-neo-onyx bg-neo-onyx text-white">
       <div className="container mx-auto px-4 py-16 md:px-8">
@@ -78,7 +78,13 @@ export function Footer() {
         </div>
 
         <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-white/20 pt-8 text-xs font-bold uppercase tracking-[0.3em] opacity-50 md:flex-row">
-          <p>© {currentYear} NEO.STORE. Todos los derechos reservados.</p>
+          <p>
+            ©{' '}
+            <Suspense fallback={null}>
+              <CopyrightYear />
+            </Suspense>{' '}
+            NEO.STORE. Todos los derechos reservados.
+          </p>
         </div>
       </div>
     </footer>

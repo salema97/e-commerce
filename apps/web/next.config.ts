@@ -51,20 +51,19 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://js.stripe.com",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
       process.env.NODE_ENV === 'production'
         ? "connect-src 'self' https: wss:"
         : `connect-src 'self' https: wss: ${devApiConnectSrc}`,
-      "frame-src 'self' https://challenges.cloudflare.com",
+      "frame-src 'self' https://challenges.cloudflare.com https://js.stripe.com https://hooks.stripe.com",
     ].join('; '),
   },
 ];
 
 const nextConfig: NextConfig = {
-  cacheComponents: true,
   // Playwright E2E uses 127.0.0.1; without this, Next 16 blocks dev HMR and client hydration.
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
   images: {

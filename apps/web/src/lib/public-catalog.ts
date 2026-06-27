@@ -1,4 +1,3 @@
-import { cacheLife, cacheTag } from 'next/cache';
 import { createApiClient } from '@repo/api-client';
 import type {
   CatalogQuery,
@@ -13,47 +12,24 @@ const publicApi = createApiClient({
   baseURL: process.env.API_BASE_URL ?? 'http://localhost:3001/v1',
 });
 
-function catalogCacheStaleSeconds(): number {
-  return Number(process.env.CATALOG_CACHE_TTL_SECONDS ?? '120');
-}
-
-export async function getCachedCatalog(
+export async function browseCatalog(
   query: CatalogQuery & { attr?: string | string[] },
 ): Promise<CatalogResponse> {
-  'use cache';
-  cacheTag('catalog');
-  if (query.category) {
-    cacheTag(`catalog-category-${query.category}`);
-  }
-  cacheLife({ stale: catalogCacheStaleSeconds() });
-
   return publicApi.catalog.browse(query);
 }
 
-export async function getCachedCategories(): Promise<Category[]> {
-  'use cache';
-  cacheTag('categories');
-  cacheLife({ stale: catalogCacheStaleSeconds() });
-
+export async function listCategories(): Promise<Category[]> {
   return publicApi.categories.findAll();
 }
 
-export async function getCachedProductBySlug(slug: string): Promise<Product | null> {
-  'use cache';
-  cacheTag('products', `product-slug-${slug}`);
-  cacheLife({ stale: catalogCacheStaleSeconds() });
-
+export async function findProductBySlug(slug: string): Promise<Product | null> {
   return publicApi.products.findBySlug(slug).catch(() => null);
 }
 
-export async function getCachedProductReviews(productId: string): Promise<{
+export async function fetchProductReviews(productId: string): Promise<{
   reviews: ProductReview[];
   summary: ProductReviewSummary;
 }> {
-  'use cache';
-  cacheTag('product-reviews', `product-reviews-${productId}`);
-  cacheLife({ stale: catalogCacheStaleSeconds() });
-
   const emptySummary: ProductReviewSummary = {
     averageRating: 0,
     reviewCount: 0,
@@ -66,4 +42,12 @@ export async function getCachedProductReviews(productId: string): Promise<{
   ]);
 
   return { reviews, summary };
+}
+
+export async function listPublishedFaqs() {
+  return publicApi.ai.faqs.findPublished().catch(() => []);
+}
+
+export async function findCmsPageBySlug(slug: string) {
+  return publicApi.ai.cmsPages.findBySlug(slug).catch(() => null);
 }

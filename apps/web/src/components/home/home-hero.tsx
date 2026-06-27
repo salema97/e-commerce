@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ProductImage } from '@/components/store/product-image';
 import { formatPrice } from '@repo/shared-utils';
-import type { Product } from '@repo/shared-types';
+import type { ProductCardItem } from '@/components/store/product-card';
 import {
   heroCol1Variants,
   heroCol2Variants,
@@ -15,7 +15,7 @@ import {
 } from '@/lib/neo-motion';
 
 interface HomeHeroProps {
-  heroProduct?: Product;
+  heroProduct?: ProductCardItem;
   imageUrl?: string;
   imageAlt?: string;
 }
