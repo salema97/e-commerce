@@ -36,6 +36,11 @@ export interface SriSupplementaryXmlInput {
   emissionDate?: Date;
   requiresAccounting?: boolean;
   specialTaxpayerNumber?: string;
+  vehiclePlate?: string;
+  routeDescription?: string;
+  departureAddress?: string;
+  establishmentAddress?: string;
+  shipmentDetails?: Array<{ code: string; description: string; quantity: number }>;
 }
 
 const XML_VERSION = '1.1.0';
@@ -94,15 +99,16 @@ export class SriSupplementaryXmlBuilder {
         return {
           guiaRemision: this.wrapDocument('guiaRemision', infoTributaria, {
             infoGuiaRemision: {
-              dirEstablecimiento: input.companyAddress ?? 'Direccion establecimiento',
-              dirPartida: input.companyAddress ?? 'Direccion partida',
+              dirEstablecimiento:
+                input.establishmentAddress ?? input.companyAddress ?? 'Direccion establecimiento',
+              dirPartida: input.departureAddress ?? input.companyAddress ?? 'Direccion partida',
               razonSocialTransportista: input.companyName,
               tipoIdentificacionTransportista: '04',
               rucTransportista: input.companyRuc,
               obligadoContabilidad: formatSriYesNo(input.requiresAccounting ?? false),
               fechaIniTransporte: formatSriDate(emissionDate),
               fechaFinTransporte: formatSriDate(emissionDate),
-              placa: 'AAA0000',
+              placa: input.vehiclePlate ?? 'AAA0000',
               destinatarios: {
                 destinatario: {
                   identificacionDestinatario:
@@ -112,14 +118,17 @@ export class SriSupplementaryXmlBuilder {
                   motivoTraslado: input.reason,
                   docAduaneroUnico: '000',
                   codEstabDestino: input.establishmentCode.padStart(3, '0'),
-                  ruta: 'N/A',
+                  ruta: input.routeDescription ?? 'N/A',
                   detalles: {
-                    detalle: {
-                      codigoInterno: 'ENVIO',
+                    detalle: (input.shipmentDetails?.length
+                      ? input.shipmentDetails
+                      : [{ code: 'ENVIO', description: input.reason, quantity: 1 }]
+                    ).map((line) => ({
+                      codigoInterno: line.code,
                       codigoAdicional: '001',
-                      descripcion: input.reason,
-                      cantidad: formatSriAmount(1),
-                    },
+                      descripcion: line.description,
+                      cantidad: formatSriAmount(line.quantity),
+                    })),
                   },
                 },
               },

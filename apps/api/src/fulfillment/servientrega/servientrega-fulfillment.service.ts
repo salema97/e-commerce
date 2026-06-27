@@ -14,6 +14,7 @@ import { ServientregaQuoteClient } from '../../shipping/servientrega/servientreg
 import { ServientregaGuideSoapClient } from '../../shipping/servientrega/servientrega-guide-soap.client.js';
 import { buildServientregaEnvioExterno } from '../../shipping/servientrega/servientrega-guide.builder.js';
 import { buildServientregaTrackingUrl } from '../../shipping/servientrega/servientrega-order.util.js';
+import { ServientregaSriRemissionService } from './servientrega-sri-remission.service.js';
 
 @Injectable()
 export class ServientregaFulfillmentService {
@@ -26,6 +27,7 @@ export class ServientregaFulfillmentService {
     private readonly cityService: ServientregaCityService,
     private readonly guideClient: ServientregaGuideSoapClient,
     private readonly manualFulfillment: ManualFulfillmentProvider,
+    private readonly sriRemission: ServientregaSriRemissionService,
   ) {}
 
   async createShipmentFromOrder(orderId: string, items?: ShipmentLineInput[]) {
@@ -100,10 +102,19 @@ export class ServientregaFulfillmentService {
 
     this.logger.log({ orderId, guideNumber }, 'Servientrega guide created');
 
+    const sriRemission = await this.sriRemission.tryIssueForShipment({
+      orderId,
+      shipmentId: shipment.id,
+      guideNumber,
+      orderNumber: order.orderNumber,
+      totalAmount: Number(order.subtotal),
+    });
+
     return {
       ...shipment,
       servientregaGuideNumber: guideNumber,
       servientregaRaw: guide.raw,
+      sriRemission,
     };
   }
 }

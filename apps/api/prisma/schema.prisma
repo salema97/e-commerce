@@ -1303,13 +1303,17 @@ model SriSupplementaryDocument {
   retryCount             Int               @default(0)
   lastError              String?
   sriResponse            Json?
+  shipmentId             String?           @unique
+  carrierGuideNumber     String?
   createdAt              DateTime          @default(now())
   updatedAt              DateTime          @updatedAt
 
   order Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  shipment Shipment? @relation(fields: [shipmentId], references: [id], onDelete: SetNull)
 
   @@index([documentType])
   @@index([orderId])
+  @@index([shipmentId])
   @@index([accessKey])
   @@index([status])
   @@index([createdAt])
@@ -1387,6 +1391,7 @@ model Shipment {
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
   items ShipmentItem[]
+  sriRemissionGuide SriSupplementaryDocument?
 
   @@index([orderId])
   @@index([status])

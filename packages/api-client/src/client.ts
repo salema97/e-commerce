@@ -320,10 +320,18 @@ export function createApiClient(options: ApiClientOptions) {
       createShipment: (orderId: string, data: CreateShipmentDto) =>
         request<Shipment>('POST', `/fulfillment/orders/${orderId}/shipments`, data),
       createServientregaShipment: (orderId: string) =>
-        request<Shipment & { servientregaGuideNumber?: string }>(
-          'POST',
-          `/fulfillment/orders/${orderId}/shipments/servientrega`,
-        ),
+        request<
+          Shipment & {
+            servientregaGuideNumber?: string;
+            sriRemission?: {
+              skipped?: boolean;
+              issued?: boolean;
+              error?: string;
+              accessKey?: string;
+              status?: string;
+            };
+          }
+        >('POST', `/fulfillment/orders/${orderId}/shipments/servientrega`),
       listShipments: (orderId: string) =>
         request<Shipment[]>('GET', `/fulfillment/orders/${orderId}/shipments`),
       listAllShipments: (params?: { status?: string; limit?: number; offset?: number }) => {

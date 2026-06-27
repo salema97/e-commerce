@@ -17,6 +17,15 @@ import {
 import { formatSriDate } from './sri-xml.utils.js';
 import { IssueSupplementaryDocumentDto } from '../dto/issue-supplementary-document.dto.js';
 import { InvoiceStatus } from '../invoice-status.enum.js';
+import { parseOrderShippingAddress } from '../../shipping/servientrega/servientrega-order.util.js';
+
+function formatShippingAddressLine(value: unknown): string | undefined {
+  const address = parseOrderShippingAddress(value);
+  if (!address) return undefined;
+  return [address.street, address.city, address.state, address.zipCode, address.country]
+    .filter(Boolean)
+    .join(', ');
+}
 
 @Injectable()
 export class SriSupplementaryService {
@@ -44,6 +53,21 @@ export class SriSupplementaryService {
     });
     if (!order) {
       throw new NotFoundException(`Order ${dto.orderId} not found`);
+    }
+
+    if (dto.shipmentId) {
+      const existing = await this.prisma.sriSupplementaryDocument.findUnique({
+        where: { shipmentId: dto.shipmentId },
+      });
+      if (existing) {
+        return {
+          id: existing.id,
+          documentType: existing.documentType,
+          accessKey: existing.accessKey,
+          status: existing.status as unknown as InvoiceStatus,
+          authorizationNumber: existing.authorizationNumber ?? undefined,
+        };
+      }
     }
 
     const parentAccessKey =
@@ -75,15 +99,42 @@ export class SriSupplementaryService {
 
     const company = readSriCompanyConfig(this.configService);
     const totalAmount = dto.totalAmount ?? Number(order.total);
+    const shippingAddress = parseOrderShippingAddress(order.shippingAddress);
+    const customerName =
+      (documentType === '06' && shippingAddress?.recipientName) ||
+      order.customerName ||
+      order.customerEmail;
+    const customerAddress =
+      (documentType === '06' && formatShippingAddressLine(order.shippingAddress)) ||
+      order.customerAddress ||
+      undefined;
+
+    let shipmentDetails:
+      | Array<{ code: string; description: string; quantity: number }>
+      | undefined;
+    if (documentType === '06' && dto.shipmentId) {
+      const shipment = await this.prisma.shipment.findUnique({
+        where: { id: dto.shipmentId },
+        include: { items: { include: { orderItem: true } } },
+      });
+      if (!shipment) {
+        throw new NotFoundException(`Shipment ${dto.shipmentId} not found`);
+      }
+      shipmentDetails = shipment.items.map((line) => ({
+        code: line.orderItem.sku,
+        description: line.orderItem.name,
+        quantity: line.quantity,
+      }));
+    }
 
     const xml = this.xmlBuilder.build({
       documentType,
       accessKey,
-      customerName: order.customerName ?? order.customerEmail,
+      customerName,
       customerIdentification: order.customerIdentification ?? undefined,
       customerEmail: order.customerEmail,
       customerPhone: order.customerPhone ?? undefined,
-      customerAddress: order.customerAddress ?? undefined,
+      customerAddress,
       parentInvoiceAccessKey: parentAccessKey,
       parentInvoiceNumber: order.invoice?.sequenceNumber ?? undefined,
       parentInvoiceDate: order.invoice?.authorizationDate
@@ -96,6 +147,14 @@ export class SriSupplementaryService {
       sequenceNumber,
       environment: this.getEnvironmentCode(),
       emissionDate,
+      vehiclePlate: this.configService.get<string>('SERVIENTREGA_VEHICLE_PLATE') ?? undefined,
+      routeDescription: dto.carrierGuideNumber
+        ? `Servientrega ${dto.carrierGuideNumber}`
+        : undefined,
+      departureAddress:
+        this.configService.get<string>('SERVIENTREGA_ORIGIN_STREET') ?? company.address,
+      establishmentAddress: company.address,
+      shipmentDetails,
       ...mapSriCompanyToXmlFields(company),
     });
 
@@ -137,6 +196,8 @@ export class SriSupplementaryService {
         reason: dto.reason ?? null,
         totalAmount: new Prisma.Decimal(totalAmount),
         sriResponse: reception as unknown as Prisma.InputJsonValue,
+        shipmentId: dto.shipmentId ?? null,
+        carrierGuideNumber: dto.carrierGuideNumber ?? null,
       },
     });
 
@@ -152,6 +213,12 @@ export class SriSupplementaryService {
       status: status as unknown as InvoiceStatus,
       authorizationNumber,
     };
+  }
+
+  async findByShipmentId(shipmentId: string) {
+    return this.prisma.sriSupplementaryDocument.findUnique({
+      where: { shipmentId },
+    });
   }
 
   async findAll(documentType?: string) {
