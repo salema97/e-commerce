@@ -40,7 +40,7 @@ export interface CreateReturnInput extends CreateReturnDto {
   userId?: string;
 }
 
-export interface CreateGuestReturnInput extends CreateGuestReturnRequestDto {}
+export type CreateGuestReturnInput = CreateGuestReturnRequestDto;
 
 export interface ListReturnsFilter {
   status?: ReturnStatus;
