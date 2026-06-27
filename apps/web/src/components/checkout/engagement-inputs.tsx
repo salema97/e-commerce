@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useApiQueryHooks } from '@/lib/client-api';
 import { useAuth } from '@/contexts/auth-context';
 
@@ -29,10 +30,8 @@ export function EngagementInputs({
 
   if (!user) {
     return (
-      <div className="space-y-3">
-        <label className="text-sm font-medium" htmlFor="referralCode">
-          Código de referido
-        </label>
+      <div className="space-y-2">
+        <Label htmlFor="referralCode">Código de referido</Label>
         <Input
           id="referralCode"
           value={referralCode}
@@ -49,9 +48,7 @@ export function EngagementInputs({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="referralCode">
-          Código de referido
-        </label>
+        <Label htmlFor="referralCode">Código de referido</Label>
         <Input
           id="referralCode"
           value={referralCode}
@@ -61,13 +58,11 @@ export function EngagementInputs({
       </div>
 
       {account ? (
-        <div className="space-y-2 rounded-md border p-3 text-sm">
-          <p>
-            Puntos disponibles: <strong>{account.points}</strong> ({account.tier})
+        <div className="space-y-2 border-[3px] border-neo-onyx bg-white p-3 text-sm shadow-[4px_4px_0_0_#111111]">
+          <p className="font-bold uppercase">
+            Puntos disponibles: <span className="text-neo-gold">{account.points}</span> ({account.tier})
           </p>
-          <label className="text-sm font-medium" htmlFor="loyaltyPoints">
-            Canjear puntos
-          </label>
+          <Label htmlFor="loyaltyPoints">Canjear puntos</Label>
           <Input
             id="loyaltyPoints"
             type="number"

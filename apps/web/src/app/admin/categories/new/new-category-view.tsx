@@ -35,13 +35,16 @@ export function NewCategoryView() {
   }
 
   return (
-    <AnimatedPageShell className="flex flex-col gap-6">
-      <AdminPageHeader
-        title="Agregar categoría"
-        subtitle="Catálogo / Nueva categoría"
-        showNetworkStatus={false}
-      />
-
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={
+        <AdminPageHeader
+          title="Agregar categoría"
+          subtitle="Catálogo / Nueva categoría"
+          showNetworkStatus={false}
+        />
+      }
+    >
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Card>
           <CardHeader>

@@ -94,7 +94,6 @@ export function FormSelect({
               key={toRadixValue(option.value)}
               value={toRadixValue(option.value)}
               disabled={option.disabled}
-              className={option.label.length > 20 ? 'normal-case' : undefined}
             >
               {option.label}
             </SelectItem>

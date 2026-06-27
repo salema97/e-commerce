@@ -18,7 +18,7 @@ export function OrderTrackingView({ tracking }: OrderTrackingViewProps) {
       header={
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Seguimiento del pedido</h1>
+            <h1 className="font-anton text-4xl uppercase">Seguimiento del pedido</h1>
             <p className="mt-2 text-muted-foreground">{tracking.orderNumber}</p>
           </div>
           <Badge variant="outline">{orderStatusLabel(tracking.status)}</Badge>
@@ -36,10 +36,13 @@ export function OrderTrackingView({ tracking }: OrderTrackingViewProps) {
             </p>
           ) : (
             tracking.shipments.map((shipment) => (
-              <div key={shipment.id} className="rounded-lg border p-4">
+              <div
+                key={shipment.id}
+                className="border-[3px] border-neo-onyx bg-white p-4 shadow-[4px_4px_0_0_#111111]"
+              >
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="font-medium">{shipment.carrier}</p>
+                    <p className="font-bold uppercase">{shipment.carrier}</p>
                     <p className="text-sm text-muted-foreground">
                       Guía: {shipment.trackingNumber ?? 'Pendiente'}
                     </p>

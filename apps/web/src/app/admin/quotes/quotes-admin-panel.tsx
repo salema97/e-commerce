@@ -68,10 +68,8 @@ export function QuotesAdminPanel({ initialQuotes }: QuotesAdminPanelProps) {
         subtitle="Aprueba cotizaciones B2B y conviértelas en pedidos."
         metrics={[{ label: 'Total', value: String(quotes.length) }]}
       />
-      <div className="space-y-4">
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      <div className="rounded-md border">
-        <Table>
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      <Table>
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
@@ -115,8 +113,6 @@ export function QuotesAdminPanel({ initialQuotes }: QuotesAdminPanelProps) {
             ))}
           </TableBody>
         </Table>
-      </div>
-      </div>
     </div>
   );
 }

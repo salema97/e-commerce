@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
+import { AdminSectionTitle } from '@/components/admin/admin-section-title';
 import { useApiClient } from '@/lib/client-api';
 import { formatPrice } from '@repo/shared-utils';
 import type {
@@ -84,24 +85,35 @@ export function AccountingAdminPanel({
           { label: 'Registros', value: String(records.length) },
         ]}
       />
-      <div className="space-y-6">
-      <div className="rounded-md border p-4">
-        <h2 className="mb-3 font-semibold">Proveedores</h2>
-        <ul className="space-y-2 text-sm">
-          {initialProviders.map((provider) => (
-            <li key={provider.id} className="flex items-center justify-between">
-              <span>{provider.name}</span>
-              <span className="text-muted-foreground text-xs">{provider.regions.join(', ')}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
 
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      <div className="flex flex-col gap-10">
+        <section className="flex flex-col gap-4">
+          <AdminSectionTitle>Proveedores contables</AdminSectionTitle>
+          {initialProviders.length === 0 ? (
+            <p className="text-sm font-bold uppercase text-muted-foreground">
+              Sin proveedores configurados.
+            </p>
+          ) : (
+            <ul className="neo-panel divide-y divide-neo-onyx/15">
+              {initialProviders.map((provider) => (
+                <li
+                  key={provider.id}
+                  className="flex flex-wrap items-center justify-between gap-2 p-4 text-sm font-bold uppercase"
+                >
+                  <span>{provider.name}</span>
+                  <span className="text-xs font-medium normal-case text-muted-foreground">
+                    {provider.regions.join(', ')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
-      <div className="space-y-3">
-        <h2 className="font-semibold">Comisiones marketplace</h2>
-        <div className="rounded-md border">
+        {error ? <p className="text-sm font-bold text-destructive">{error}</p> : null}
+
+        <section className="flex flex-col gap-4">
+          <AdminSectionTitle>Comisiones marketplace</AdminSectionTitle>
           <Table>
             <TableHeader>
               <TableRow>
@@ -126,7 +138,7 @@ export function AccountingAdminPanel({
                     <TableCell>{fee.channel}</TableCell>
                     <TableCell>{formatPrice(fee.fees)}</TableCell>
                     <TableCell>
-                      <Badge>{fee.syncStatus}</Badge>
+                      <Badge variant="outline">{fee.syncStatus}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       {fee.syncStatus !== 'SYNCED' ? (
@@ -145,12 +157,10 @@ export function AccountingAdminPanel({
               )}
             </TableBody>
           </Table>
-        </div>
-      </div>
+        </section>
 
-      <div className="space-y-3">
-        <h2 className="font-semibold">Facturas SRI</h2>
-        <div className="rounded-md border">
+        <section className="flex flex-col gap-4">
+          <AdminSectionTitle>Facturas SRI</AdminSectionTitle>
           <Table>
             <TableHeader>
               <TableRow>
@@ -167,7 +177,7 @@ export function AccountingAdminPanel({
                     <TableCell className="font-mono text-xs">{record.resourceId.slice(0, 8)}</TableCell>
                     <TableCell>{record.provider}</TableCell>
                     <TableCell>
-                      <Badge>{record.status}</Badge>
+                      <Badge variant="outline">{record.status}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       {record.status === 'FAILED' ? (
@@ -188,8 +198,7 @@ export function AccountingAdminPanel({
               )}
             </TableBody>
           </Table>
-        </div>
-      </div>
+        </section>
       </div>
     </div>
   );

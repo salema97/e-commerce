@@ -102,34 +102,37 @@ export function AnalyticsView({
     : [];
 
   return (
-    <AnimatedPageShell className="flex flex-col gap-6">
-      <AdminPageHeader
-        title="Analítica avanzada"
-        subtitle={`Métricas de los últimos ${overviewDays} días, embudo de conversión y retención por cohorte.`}
-        showNetworkStatus
-        actions={
-          <div className="flex items-end gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="overview-range" className="text-xs uppercase">
-                Período
-              </Label>
-              <FormSelect
-                id="overview-range"
-                value={String(overviewDays)}
-                onValueChange={(value) => setOverviewDays(Number(value))}
-                options={OVERVIEW_RANGE_OPTIONS.map((option) => ({
-                  value: option.value,
-                  label: option.label,
-                }))}
-              />
+    <AnimatedPageShell
+      className="flex min-h-0 flex-1 flex-col gap-6"
+      header={
+        <AdminPageHeader
+          title="Analítica avanzada"
+          subtitle={`Métricas de los últimos ${overviewDays} días, embudo de conversión y retención por cohorte.`}
+          showNetworkStatus
+          actions={
+            <div className="flex items-end gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="overview-range" className="text-xs uppercase">
+                  Período
+                </Label>
+                <FormSelect
+                  id="overview-range"
+                  value={String(overviewDays)}
+                  onValueChange={(value) => setOverviewDays(Number(value))}
+                  options={OVERVIEW_RANGE_OPTIONS.map((option) => ({
+                    value: option.value,
+                    label: option.label,
+                  }))}
+                />
+              </div>
+              <Button type="button" variant="outline" onClick={handleExportCsv}>
+                Exportar CSV
+              </Button>
             </div>
-            <Button type="button" variant="outline" onClick={handleExportCsv}>
-              Exportar CSV
-            </Button>
-          </div>
-        }
-      />
-
+          }
+        />
+      }
+    >
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard title="Ingresos" value={metrics ? formatPrice(metrics.revenue) : '—'} />
         <MetricCard title="Pedidos pagados" value={metrics ? String(metrics.paidOrders) : '—'} />

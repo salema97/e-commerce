@@ -79,13 +79,16 @@ export function CmsView({ initialPages }: CmsViewProps) {
   }
 
   return (
-    <AnimatedPageShell className="flex min-h-0 flex-1 flex-col gap-6">
-      <AdminPageHeader
-        title="CMS"
-        subtitle="Conocimiento / Páginas de contenido"
-        showNetworkStatus={false}
-      />
-
+    <AnimatedPageShell
+      className="flex min-h-0 flex-1 flex-col gap-6"
+      header={
+        <AdminPageHeader
+          title="CMS"
+          subtitle="Conocimiento / Páginas de contenido"
+          showNetworkStatus={false}
+        />
+      }
+    >
       <div className="neo-panel grid gap-4 p-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="cms-slug">Slug</Label>

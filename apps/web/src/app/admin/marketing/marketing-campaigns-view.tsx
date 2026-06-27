@@ -42,13 +42,16 @@ export function MarketingCampaignsView({
   }
 
   return (
-    <AnimatedPageShell className="flex min-h-0 flex-1 flex-col gap-6">
-      <AdminPageHeader
-        title="Marketing"
-        subtitle="Campañas / Distribución de promociones"
-        showNetworkStatus={false}
-      />
-
+    <AnimatedPageShell
+      className="flex min-h-0 flex-1 flex-col gap-6"
+      header={
+        <AdminPageHeader
+          title="Marketing"
+          subtitle="Campañas / Distribución de promociones"
+          showNetworkStatus={false}
+        />
+      }
+    >
       <div className="neo-panel grid max-w-xl gap-4 p-4">
         <div className="space-y-2">
           <Label htmlFor="promotion">Promoción</Label>

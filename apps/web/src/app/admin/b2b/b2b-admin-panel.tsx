@@ -4,6 +4,7 @@ import { useReducer } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -92,12 +93,10 @@ export function B2bAdminPanel({ initialCompanies }: B2bAdminPanelProps) {
         subtitle="Gestiona empresas, crédito y precios negociados."
         metrics={[{ label: 'Empresas', value: String(state.companies.length) }]}
       />
-      <div className="space-y-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-          <div className="flex-1 space-y-1">
-            <label htmlFor="b2b-company-name" className="text-sm font-medium">
-              Nombre
-            </label>
+      <div className="flex flex-col gap-6">
+        <div className="neo-panel flex flex-col gap-4 p-4 sm:flex-row sm:items-end">
+          <div className="flex-1 space-y-2">
+            <Label htmlFor="b2b-company-name">Nombre</Label>
             <Input
               id="b2b-company-name"
               value={state.name}
@@ -105,10 +104,8 @@ export function B2bAdminPanel({ initialCompanies }: B2bAdminPanelProps) {
               placeholder="Empresa S.A."
             />
           </div>
-          <div className="flex-1 space-y-1">
-            <label htmlFor="b2b-company-tax-id" className="text-sm font-medium">
-              RUC
-            </label>
+          <div className="flex-1 space-y-2">
+            <Label htmlFor="b2b-company-tax-id">RUC</Label>
             <Input
               id="b2b-company-tax-id"
               value={state.taxId}
@@ -121,34 +118,32 @@ export function B2bAdminPanel({ initialCompanies }: B2bAdminPanelProps) {
           </Button>
         </div>
 
-        {state.error ? <p className="text-sm text-red-600">{state.error}</p> : null}
+        {state.error ? <p className="text-sm text-destructive">{state.error}</p> : null}
 
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Empresa</TableHead>
-                <TableHead>RUC</TableHead>
-                <TableHead>Crédito</TableHead>
-                <TableHead>Estado</TableHead>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Empresa</TableHead>
+              <TableHead>RUC</TableHead>
+              <TableHead>Crédito</TableHead>
+              <TableHead>Estado</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {state.companies.map((company) => (
+              <TableRow key={company.id}>
+                <TableCell className="font-medium">{company.name}</TableCell>
+                <TableCell>{company.taxId}</TableCell>
+                <TableCell>{company.creditLimit != null ? `$${company.creditLimit}` : '—'}</TableCell>
+                <TableCell>
+                  <Badge variant={company.isActive ? 'default' : 'secondary'}>
+                    {company.isActive ? 'Activa' : 'Inactiva'}
+                  </Badge>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {state.companies.map((company) => (
-                <TableRow key={company.id}>
-                  <TableCell className="font-medium">{company.name}</TableCell>
-                  <TableCell>{company.taxId}</TableCell>
-                  <TableCell>{company.creditLimit != null ? `$${company.creditLimit}` : '—'}</TableCell>
-                  <TableCell>
-                    <Badge variant={company.isActive ? 'default' : 'secondary'}>
-                      {company.isActive ? 'Activa' : 'Inactiva'}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { FormSelect } from '@/components/ui/form-select';
 import type { CatalogFacetValue, Category } from '@repo/shared-types';
 
@@ -30,18 +31,18 @@ const SORT_OPTIONS = [
 const EMPTY_BRAND_FACETS: CatalogFacetValue[] = [];
 
 function InStockFilter({ inStock }: { inStock: boolean }) {
+  const [checked, setChecked] = React.useState(inStock);
+
   return (
     <div className="flex items-center gap-2">
-      <input
+      {checked ? <input type="hidden" name="inStock" value="true" /> : null}
+      <Checkbox
         id="inStock"
-        type="checkbox"
-        name="inStock"
-        value="true"
-        defaultChecked={inStock}
+        checked={checked}
+        onCheckedChange={(value) => setChecked(value === true)}
         aria-label="Solo con stock"
-        className="size-5 shrink-0 appearance-none border-[3px] border-neo-onyx bg-white shadow-[2px_2px_0_0_#111111] checked:bg-neo-onyx checked:bg-[length:12px_12px] checked:bg-center checked:bg-no-repeat checked:bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22white%22%20stroke-width%3D%224%22%3E%3Cpath%20d%3D%22M5%2013l4%204L19%207%22/%3E%3C/svg%3E')]"
       />
-      <Label htmlFor="inStock" className="cursor-pointer font-medium normal-case">
+      <Label htmlFor="inStock" className="cursor-pointer font-bold uppercase">
         Solo con stock
       </Label>
     </div>
@@ -73,7 +74,7 @@ export function StoreFilters({
           name="search"
           defaultValue={search}
           placeholder="Buscar productos..."
-          className="normal-case"
+          className="normal-case placeholder:font-medium placeholder:normal-case"
         />
       </div>
 

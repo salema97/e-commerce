@@ -34,13 +34,16 @@ export function NewInventoryView() {
   }
 
   return (
-    <AnimatedPageShell className="flex flex-col gap-6">
-      <AdminPageHeader
-        title="Agregar inventario"
-        subtitle="Inventario / Nueva entrada"
-        showNetworkStatus={false}
-      />
-
+    <AnimatedPageShell
+      className="flex flex-col gap-6"
+      header={
+        <AdminPageHeader
+          title="Agregar inventario"
+          subtitle="Inventario / Nueva entrada"
+          showNetworkStatus={false}
+        />
+      }
+    >
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <Card>
           <CardHeader>

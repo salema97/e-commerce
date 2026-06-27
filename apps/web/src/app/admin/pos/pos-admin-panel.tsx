@@ -93,15 +93,14 @@ export function PosAdminPanel({ initialLocations }: PosAdminPanelProps) {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-8">
+    <div className="flex min-h-0 flex-1 flex-col gap-6">
       <AdminPageHeader
         eyebrow="Ventas"
         title="POS y tiendas"
         subtitle="Ubicaciones físicas para venta en tienda y retiro BOPIS."
         metrics={[{ label: 'Ubicaciones', value: String(state.locations.length) }]}
       />
-      <div className="space-y-4">
-        <div className="grid gap-2 sm:grid-cols-3">
+      <div className="neo-panel grid gap-4 p-4 sm:grid-cols-3">
           <Input
             value={state.code}
             onChange={(e) => dispatch({ type: 'set_code', value: e.target.value })}
@@ -117,13 +116,14 @@ export function PosAdminPanel({ initialLocations }: PosAdminPanelProps) {
             onChange={(e) => dispatch({ type: 'set_address', value: e.target.value })}
             placeholder="Dirección"
           />
+          <div className="sm:col-span-3">
+            <Button type="button" onClick={() => void createLocation()} disabled={state.pending}>
+              Crear ubicación
+            </Button>
+          </div>
         </div>
-        <Button type="button" onClick={() => void createLocation()} disabled={state.pending}>
-          Crear ubicación
-        </Button>
 
-        <div className="rounded-md border">
-          <Table>
+      <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Código</TableHead>
@@ -143,8 +143,6 @@ export function PosAdminPanel({ initialLocations }: PosAdminPanelProps) {
               ))}
             </TableBody>
           </Table>
-        </div>
-      </div>
     </div>
   );
 }

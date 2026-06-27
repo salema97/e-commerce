@@ -80,13 +80,16 @@ export function FaqsView({ initialFaqs, canEdit }: FaqsViewProps) {
   }
 
   return (
-    <AnimatedPageShell className="flex min-h-0 flex-1 flex-col gap-6">
-      <AdminPageHeader
-        title="FAQ"
-        subtitle="Conocimiento / Preguntas frecuentes"
-        showNetworkStatus={false}
-      />
-
+    <AnimatedPageShell
+      className="flex min-h-0 flex-1 flex-col gap-6"
+      header={
+        <AdminPageHeader
+          title="FAQ"
+          subtitle="Conocimiento / Preguntas frecuentes"
+          showNetworkStatus={false}
+        />
+      }
+    >
       {canEdit ? (
         <div className="neo-panel grid gap-4 p-4 md:grid-cols-2">
           <div className="space-y-2 md:col-span-2">

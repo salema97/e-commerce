@@ -58,7 +58,6 @@ export function CheckoutDeliverySection({
                 label: `${location.name} — ${location.address}`,
               })),
             ]}
-            triggerClassName="normal-case"
           />
         ) : null}
       </CardContent>

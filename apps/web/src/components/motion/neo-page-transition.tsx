@@ -4,6 +4,7 @@ import * as React from 'react';
 import { usePathname } from 'next/navigation';
 import { m, useReducedMotion } from 'motion/react';
 import { fadeUpVariants, reducedMotionTransition } from '@/lib/neo-motion';
+import { cn } from '@/lib/utils';
 import { neoMotionDurations, neoMotionEasings } from '@repo/shared-utils';
 
 interface NeoPageTransitionProps {
@@ -169,18 +170,22 @@ export function AnimatedPageShell({
   children,
   header,
   className,
+  contentClassName = 'flex flex-col gap-6',
 }: {
   children: React.ReactNode;
   header?: React.ReactNode;
   className?: string;
+  /** Espaciado vertical entre bloques del cuerpo (formularios, tablas, paneles). */
+  contentClassName?: string;
 }) {
   const prefersReducedMotion = useReducedMotion();
+  const bodyClassName = cn(contentClassName);
 
   if (prefersReducedMotion) {
     return (
       <div className={className}>
         {header}
-        {children}
+        <div className={bodyClassName}>{children}</div>
       </div>
     );
   }
@@ -198,6 +203,7 @@ export function AnimatedPageShell({
         </m.div>
       ) : null}
       <m.div
+        className={bodyClassName}
         variants={fadeUpVariants}
         initial="hidden"
         animate="visible"

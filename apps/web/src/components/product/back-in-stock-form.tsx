@@ -32,8 +32,11 @@ export function BackInStockForm({ productId }: BackInStockFormProps): React.Reac
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 space-y-3 rounded-lg border p-4">
-      <p className="text-sm font-medium">Avísame cuando haya stock</p>
+    <form
+      onSubmit={handleSubmit}
+      className="mt-4 space-y-3 border-[3px] border-neo-onyx bg-white p-4 shadow-[6px_6px_0_0_#111111]"
+    >
+      <p className="font-bold uppercase">Avísame cuando haya stock</p>
       <div className="space-y-2">
         <Label htmlFor={`back-in-stock-${productId}`}>Correo electrónico</Label>
         <Input

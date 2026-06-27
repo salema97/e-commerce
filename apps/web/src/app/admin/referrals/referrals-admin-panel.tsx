@@ -55,10 +55,8 @@ export function ReferralsAdminPanel({ initialReport }: ReferralsAdminPanelProps)
           { label: 'Pagado', value: formatPrice(report.paidCommission) },
         ]}
       />
-      <div className="space-y-4">
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      <div className="rounded-md border">
-        <Table>
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      <Table>
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
@@ -95,8 +93,6 @@ export function ReferralsAdminPanel({ initialReport }: ReferralsAdminPanelProps)
             ))}
           </TableBody>
         </Table>
-      </div>
-      </div>
     </div>
   );
 }
