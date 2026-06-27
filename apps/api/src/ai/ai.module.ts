@@ -15,6 +15,7 @@ import { ConsoleEmbeddingProvider } from './embedding/providers/console-embeddin
 import { OpenAiEmbeddingProvider } from './embedding/providers/openai-embedding.provider.js';
 import { KnowledgeIndexingService } from './knowledge/knowledge-indexing.service.js';
 import { KnowledgeIndexQueueService } from './knowledge/knowledge-index-queue.service.js';
+import { KnowledgeIndexQueueLifecycle } from './knowledge/knowledge-index-queue.lifecycle.js';
 import { KnowledgeIndexQueueWorker } from './knowledge/knowledge-index-queue.worker.js';
 import { KNOWLEDGE_INDEX_QUEUE_TOKEN } from './knowledge/knowledge-index-queue.tokens.js';
 import {
@@ -105,6 +106,7 @@ import { AiProviderWiring } from './ai-provider.wiring.js';
     },
     KnowledgeIndexingService,
     KnowledgeIndexQueueService,
+    KnowledgeIndexQueueLifecycle,
     KnowledgeIndexQueueWorker,
     FaqService,
     CmsPageService,

@@ -1,13 +1,22 @@
 import { useEffect } from 'react';
-import { setGetAuthToken } from '../lib/api';
+import { setAuthRefreshCallbacks, setGetAuthToken } from '../lib/api';
 import { useAuth } from './AuthProvider';
 
 export function AuthTokenBridge(): null {
-  const { accessToken } = useAuth();
+  const { accessToken, syncAccessToken, clearLocalSession } = useAuth();
 
   useEffect(() => {
     setGetAuthToken(async () => accessToken);
   }, [accessToken]);
+
+  useEffect(() => {
+    setAuthRefreshCallbacks({
+      onTokenRefreshed: syncAccessToken,
+      onSessionExpired: () => {
+        void clearLocalSession();
+      },
+    });
+  }, [syncAccessToken, clearLocalSession]);
 
   return null;
 }

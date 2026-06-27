@@ -12,6 +12,7 @@ import sriQueueConfig, {
 } from './sri-queue.config.js';
 import { SRI_QUEUE_TOKEN } from './sri-queue.tokens.js';
 import { SriQueueService } from './sri-queue.service.js';
+import { SriQueueLifecycle } from './sri-queue.lifecycle.js';
 import { SriReconciliationService } from './sri-reconciliation.service.js';
 
 async function waitUntilReady(queue: Queue, timeoutMs: number): Promise<void> {
@@ -34,6 +35,7 @@ async function waitUntilReady(queue: Queue, timeoutMs: number): Promise<void> {
   ],
   providers: [
     SriQueueService,
+    SriQueueLifecycle,
     SriReconciliationService,
     {
       provide: SRI_QUEUE_TOKEN,

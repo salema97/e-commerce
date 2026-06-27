@@ -10,6 +10,8 @@
   },
   "scripts": {
     "dev": "turbo run dev",
+    "dev:api": "pnpm prisma:generate && pnpm --filter @repo/api dev",
+    "prisma:generate": "pnpm --filter @repo/api exec prisma generate",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
@@ -24,6 +26,7 @@
     "health:api": "pnpm --filter @repo/api health:nest",
     "health:mobile": "pnpm --filter @repo/mobile health:expo",
     "health": "pnpm health:web && pnpm health:api && pnpm health:mobile",
+    "api-client:generate": "pnpm --filter @repo/api-client generate && pnpm --filter @repo/api-client build",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,mjs,cjs,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,mjs,cjs,md,yml,yaml}\"",
     "clean": "turbo run clean && rm -rf node_modules .turbo"

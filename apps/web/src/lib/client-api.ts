@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { createApiClient, createQueryHooks } from '@repo/api-client';
 import { useAuth } from '@/contexts/auth-context';
+import { refreshAuthSession } from '@/lib/auth-refresh';
 
 function getBaseURL(): string {
   if (typeof window !== 'undefined') {
@@ -21,6 +22,7 @@ export function useApiClient() {
     () =>
       createApiClient({
         baseURL: getBaseURL(),
+        onUnauthorized: refreshAuthSession,
         onError: (error) => {
           // eslint-disable-next-line no-console
           console.error('API error:', error.message);

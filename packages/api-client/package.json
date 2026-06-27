@@ -14,8 +14,9 @@
   },
   "scripts": {
     "generate": "tsx scripts/generate.ts",
+    "openapi:check": "tsx scripts/generate.ts --check",
     "build": "tsc -p tsconfig.json",
-    "lint": "echo 'No lint configured'",
+    "lint": "eslint src/client.ts src/index.ts src/query-keys.ts",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
     "clean": "rm -rf dist .turbo"
@@ -26,10 +27,12 @@
     "@repo/shared-utils": "workspace:^"
   },
   "peerDependencies": {
-    "@tanstack/react-query": "^5.66.0"
+    "@tanstack/react-query": "catalog:",
+    "react": "catalog:"
   },
   "devDependencies": {
     "@tanstack/react-query": "catalog:",
+    "eslint": "catalog:",
     "typescript": "catalog:",
     "zod": "catalog:",
     "openapi-typescript": "^7.6.1",

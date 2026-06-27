@@ -29,6 +29,7 @@
     "@stripe/stripe-react-native": "^0.64.0",
     "@tanstack/react-query": "catalog:",
     "expo": "56.0.12",
+    "expo-dev-client": "~56.0.18",
     "expo-constants": "~56.0.18",
     "expo-linking": "~56.0.14",
     "expo-notifications": "~56.0.18",

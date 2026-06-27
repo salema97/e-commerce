@@ -14,7 +14,7 @@
     "start:debug": "dotenv -e .env -- nest start --debug --watch -e \"node --experimental-require-module\"",
     "start:prod": "node dist/main.js",
     "build": "nest build",
-    "lint": "echo 'Lint not configured in Phase 1A'",
+    "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
@@ -44,7 +44,6 @@
     "@nestjs/throttler": "6.5.0",
     "@prisma/adapter-pg": "7.8.0",
     "@prisma/client": "7.8.0",
-    "@repo/api-client": "workspace:^",
     "@repo/shared-config": "workspace:^",
     "@repo/shared-types": "workspace:^",
     "@repo/shared-utils": "workspace:^",
@@ -75,6 +74,8 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "@repo/api-client": "workspace:^",
     "@nestjs/cli": "11.0.23",
     "@nestjs/schematics": "11.1.0",
     "@nestjs/testing": "11.1.27",
@@ -87,11 +88,13 @@
     "@types/supertest": "7.2.0",
     "dotenv": "17.4.2",
     "dotenv-cli": "11.0.0",
+    "eslint": "catalog:",
     "nestjs-doctor": "0.4.32",
     "prisma": "7.8.0",
     "supertest": "7.2.2",
     "tsx": "catalog:",
     "typescript": "catalog:",
+    "typescript-eslint": "^8.32.0",
     "vitest": "catalog:"
   }
 }

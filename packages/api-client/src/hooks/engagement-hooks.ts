@@ -135,7 +135,7 @@ export function createEngagementHooks(client: ApiClient) {
       options?: Omit<UseQueryOptions<LoyaltyRedemptionQuote, Error>, 'queryKey' | 'queryFn'>,
     ) =>
       useQuery({
-        queryKey: ['loyalty', 'quote', subtotal, points] as const,
+        queryKey: queryKeys.loyaltyRedemptionQuote(subtotal, points),
         queryFn: () => client.loyalty.quoteRedemption(subtotal, points),
         enabled: subtotal > 0,
         ...options,

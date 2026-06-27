@@ -86,7 +86,7 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   if (!isProduction) {
-    SwaggerModule.setup('docs', app, document);
+    SwaggerModule.setup('docs', app, document, { useGlobalPrefix: true });
   }
 
   const port = parseInt(configService.get('PORT', '3001'), 10);
@@ -94,4 +94,4 @@ async function bootstrap() {
   await app.listen(port);
 }
 
-bootstrap();
+void bootstrap();

@@ -29,12 +29,15 @@ export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
+  private readonly pool: pg.Pool;
+
   constructor(@Inject(ConfigService) configService: ConfigService) {
     const pool = new pg.Pool({
       connectionString: configService.getOrThrow<string>('DATABASE_URL'),
     });
 
     super({ adapter: new PrismaPg(pool) });
+    this.pool = pool;
 
     const protectedClient = this.$extends(
       createAuditLogImmutabilityExtension() as never,
@@ -52,5 +55,6 @@ export class PrismaService
 
   async onModuleDestroy(): Promise<void> {
     await this.$disconnect();
+    await this.pool.end();
   }
 }

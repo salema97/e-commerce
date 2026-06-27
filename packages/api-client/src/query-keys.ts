@@ -70,5 +70,10 @@ export const queryKeys = {
   accountingSyncRecords: ['accounting', 'sync-records'] as const,
   marketplaceFeeReconciliations: ['accounting', 'marketplace-fees'] as const,
   privacyExport: ['privacy', 'export'] as const,
+  subscriptionPlans: ['subscriptions', 'plans'] as const,
+  mySubscriptions: ['subscriptions', 'me'] as const,
+  subscriptionsRoot: ['subscriptions'] as const,
+  loyaltyRedemptionQuote: (subtotal: number, points?: number) =>
+    ['loyalty', 'quote', subtotal, points] as const,
 };
 

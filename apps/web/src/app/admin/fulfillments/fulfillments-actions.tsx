@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useTransition } from 'react';
 import { Button } from '@/components/ui/button';
-import { useApiClient } from '@/lib/client-api';
+import { markShipmentDelivered } from './actions';
 
 interface FulfillmentsActionsProps {
   shipmentId: string;
@@ -11,12 +11,12 @@ interface FulfillmentsActionsProps {
 }
 
 export function FulfillmentsActions({ shipmentId, orderId }: FulfillmentsActionsProps) {
-  const api = useApiClient();
-  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
-  async function markDelivered() {
-    await api.fulfillment.markDelivered(shipmentId);
-    router.refresh();
+  function markDelivered() {
+    startTransition(async () => {
+      await markShipmentDelivered(shipmentId);
+    });
   }
 
   return (
@@ -26,8 +26,13 @@ export function FulfillmentsActions({ shipmentId, orderId }: FulfillmentsActions
           Pedido
         </Button>
       </Link>
-      <Button size="sm" className="font-anton uppercase" onClick={() => void markDelivered()}>
-        Entregado
+      <Button
+        size="sm"
+        className="font-anton uppercase"
+        disabled={isPending}
+        onClick={() => markDelivered()}
+      >
+        {isPending ? 'Guardando…' : 'Entregado'}
       </Button>
     </div>
   );

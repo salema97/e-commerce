@@ -39,6 +39,16 @@ export async function getRefreshToken(): Promise<string | null> {
   return SecureStore.getItemAsync(REFRESH_KEY);
 }
 
+export async function updateAuthTokens(
+  accessToken: string,
+  refreshToken: string,
+): Promise<void> {
+  await Promise.all([
+    SecureStore.setItemAsync(ACCESS_KEY, accessToken),
+    SecureStore.setItemAsync(REFRESH_KEY, refreshToken),
+  ]);
+}
+
 export async function getStoredUser(): Promise<StoredAuthUser | null> {
   const raw = await SecureStore.getItemAsync(USER_KEY);
   if (!raw) return null;

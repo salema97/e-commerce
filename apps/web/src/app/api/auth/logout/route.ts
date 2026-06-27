@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  ACCESS_TOKEN_COOKIE,
-  REFRESH_TOKEN_COOKIE,
-  cookieOptions,
-} from '@/lib/auth-cookies';
+import { REFRESH_TOKEN_COOKIE } from '@/lib/auth-cookies';
+import { clearAuthCookies } from '@/lib/auth-proxy';
 
 const API_BASE = process.env.API_BASE_URL ?? 'http://localhost:3001/v1';
 
@@ -18,7 +15,6 @@ export async function POST(request: NextRequest) {
   }
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(ACCESS_TOKEN_COOKIE, '', { ...cookieOptions, maxAge: 0 });
-  response.cookies.set(REFRESH_TOKEN_COOKIE, '', { ...cookieOptions, maxAge: 0 });
+  clearAuthCookies(response);
   return response;
 }

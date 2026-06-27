@@ -15,7 +15,6 @@
     },
     "android": {
       "package": "com.example.ecommerce",
-      "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "backgroundColor": "#ffffff"
       }
@@ -25,10 +24,17 @@
       "output": "static"
     },
     "plugins": [
+      "expo-dev-client",
       [
         "expo-router",
         {
           "root": "src/app"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#ffffff"
         }
       ],
       [
@@ -53,10 +59,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "stripePublishableKey": "pk_test_xxx",
-      "eas": {
-        "projectId": "your-eas-project-id"
-      }
+      "stripePublishableKey": "pk_test_xxx"
     }
   }
 }

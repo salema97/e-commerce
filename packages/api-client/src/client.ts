@@ -145,6 +145,8 @@ export interface ApiClientOptions {
   getToken?: () => string | null | Promise<string | null>;
   onError?: (error: ApiClientError) => void;
   getHeaders?: () => Record<string, string> | Promise<Record<string, string>>;
+  /** Called once on 401; return true to retry the request (e.g. after cookie refresh). */
+  onUnauthorized?: () => Promise<boolean>;
 }
 
 export class ApiClientError extends Error {
@@ -185,13 +187,14 @@ function buildURL(baseURL: string, path: string, query?: Record<string, string |
 }
 
 export function createApiClient(options: ApiClientOptions) {
-  const { baseURL, getToken, onError, getHeaders } = options;
+  const { baseURL, getToken, onError, getHeaders, onUnauthorized } = options;
 
   async function request<T>(
     method: string,
     path: string,
     body?: unknown,
     query?: Record<string, string | number | boolean | undefined>,
+    isRetry = false,
   ): Promise<T> {
     const token = getToken ? await getToken() : null;
     const extraHeaders = getHeaders ? await getHeaders() : {};
@@ -211,6 +214,13 @@ export function createApiClient(options: ApiClientOptions) {
     });
 
     if (!response.ok) {
+      if (response.status === 401 && onUnauthorized && !isRetry) {
+        const recovered = await onUnauthorized();
+        if (recovered) {
+          return request<T>(method, path, body, query, true);
+        }
+      }
+
       const data = await parseResponse(response);
       const error = new ApiClientError(
         typeof data === 'object' && data !== null && 'message' in data

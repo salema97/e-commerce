@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { createApiClient } from '@repo/api-client';
-import { ACCESS_TOKEN_COOKIE } from './auth-cookies';
+import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from './auth-cookies';
+import { refreshServerAuthSession } from './auth-refresh';
 
 export interface ServerApiClientOptions {
   token?: string | null;
@@ -17,6 +18,21 @@ export async function getServerApiClient(options?: ServerApiClientOptions) {
 
   return createApiClient({
     baseURL,
-    getToken: token ? () => token : undefined,
+    getToken: async () => token,
+    onUnauthorized: async () => {
+      const cookieStore = await cookies();
+      const refreshToken = cookieStore.get(REFRESH_TOKEN_COOKIE)?.value;
+      if (!refreshToken) {
+        return false;
+      }
+
+      const newToken = await refreshServerAuthSession();
+      if (!newToken) {
+        return false;
+      }
+
+      token = newToken;
+      return true;
+    },
   });
 }

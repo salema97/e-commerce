@@ -1,31 +1,26 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useQuery } from '@tanstack/react-query';
 import { Button, Card } from '@repo/shared-ui';
-import { createMobileApiClient } from '../../lib/api';
+import { useApiQueryHooks } from '../../lib/api';
 
 export default function SubscriptionsScreen(): React.ReactElement {
-  const client = createMobileApiClient();
-  const subscriptionsQuery = useQuery({
-    queryKey: ['subscriptions', 'me'],
-    queryFn: () => client.subscriptions.mine(),
-  });
-  const plansQuery = useQuery({
-    queryKey: ['subscriptions', 'plans'],
-    queryFn: () => client.subscriptions.listPlans(),
-  });
+  const hooks = useApiQueryHooks();
+  const subscriptionsQuery = hooks.useMySubscriptions();
+  const plansQuery = hooks.useSubscriptionPlans();
+  const subscribeMutation = hooks.useSubscribe();
+  const portalMutation = hooks.useSubscriptionPortal();
 
   const subscriptions = subscriptionsQuery.data ?? [];
   const plans = plansQuery.data ?? [];
 
   async function openPortal(): Promise<void> {
-    const { url } = await client.subscriptions.portal();
+    const { url } = await portalMutation.mutateAsync();
     if (url) await Linking.openURL(url);
   }
 
   async function subscribe(planId: string): Promise<void> {
-    const { url } = await client.subscriptions.subscribe(planId);
+    const { url } = await subscribeMutation.mutateAsync(planId);
     if (url) await Linking.openURL(url);
   }
 
@@ -34,7 +29,12 @@ export default function SubscriptionsScreen(): React.ReactElement {
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Suscripciones</Text>
 
-        <Button variant="outline" onPress={() => void openPortal()} style={styles.button}>
+        <Button
+          variant="outline"
+          onPress={() => void openPortal()}
+          disabled={portalMutation.isPending}
+          style={styles.button}
+        >
           Portal de facturación
         </Button>
 
@@ -59,7 +59,11 @@ export default function SubscriptionsScreen(): React.ReactElement {
           plans.map((plan) => (
             <Card key={plan.id} style={styles.card}>
               <Text style={styles.label}>{plan.productId}</Text>
-              <Button onPress={() => void subscribe(plan.id)} style={styles.button}>
+              <Button
+                onPress={() => void subscribe(plan.id)}
+                disabled={subscribeMutation.isPending}
+                style={styles.button}
+              >
                 Suscribirme
               </Button>
             </Card>

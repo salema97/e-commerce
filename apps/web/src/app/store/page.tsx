@@ -1,6 +1,8 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { getServerApiClient } from '@/lib/api';
+import type { Metadata } from 'next';
+import { getCachedCatalog, getCachedCategories } from '@/lib/public-catalog';
+import { getSiteUrl } from '@/lib/site-url';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -25,8 +27,38 @@ interface StorePageProps {
   }>;
 }
 
+function buildStoreCanonical(
+  params: Record<string, string | string[] | undefined>,
+): string {
+  const searchParams = new URLSearchParams();
+  for (const key of ['category', 'search', 'sort', 'page', 'brand', 'minPrice', 'maxPrice', 'minRating', 'inStock'] as const) {
+    const value = params[key];
+    if (!value) continue;
+    if (Array.isArray(value)) {
+      for (const entry of value) {
+        if (entry) searchParams.append(key, entry);
+      }
+    } else {
+      searchParams.set(key, value);
+    }
+  }
+  const query = searchParams.toString();
+  return query ? `${getSiteUrl()}/store?${query}` : `${getSiteUrl()}/store`;
+}
+
+export async function generateMetadata({ searchParams }: StorePageProps): Promise<Metadata> {
+  const params = await searchParams;
+  return {
+    title: 'Tienda',
+    description: 'Explora nuestro catálogo de productos.',
+    alternates: {
+      canonical: buildStoreCanonical(params),
+    },
+  };
+}
+
 export default async function StorePage({ searchParams }: StorePageProps) {
-  const [params, api] = await Promise.all([searchParams, getServerApiClient()]);
+  const params = await searchParams;
 
   const page = Math.max(1, Number(params.page ?? '1'));
   const sort = (params.sort as CatalogQuery['sort']) ?? 'newest';
@@ -44,8 +76,8 @@ export default async function StorePage({ searchParams }: StorePageProps) {
   };
 
   const [catalogResult, categoriesResult] = await Promise.allSettled([
-    api.catalog.browse(catalogQuery),
-    api.categories.findAll(),
+    getCachedCatalog(catalogQuery),
+    getCachedCategories(),
   ]);
 
   const catalog =

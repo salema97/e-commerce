@@ -1,6 +1,11 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getServerApiClient } from '@/lib/api';
+import type { Metadata } from 'next';
+import {
+  getCachedProductBySlug,
+  getCachedProductReviews,
+} from '@/lib/public-catalog';
+import { getSiteUrl } from '@/lib/site-url';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ProductImage } from '@/components/store/product-image';
@@ -16,22 +21,15 @@ import {
   getProductPrimaryImageUrl,
   serializeJsonLd,
 } from '@repo/shared-utils';
-import type { ProductReview, ProductReviewSummary } from '@repo/shared-types';
 import { getProductAvailableQuantity } from '@repo/shared-utils';
-
-const EMPTY_REVIEW_SUMMARY: ProductReviewSummary = {
-  averageRating: 0,
-  reviewCount: 0,
-  distribution: {},
-};
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateMetadata({ params }: ProductPageProps) {
-  const [{ slug }, api] = await Promise.all([params, getServerApiClient()]);
-  const product = await api.products.findBySlug(slug).catch(() => null);
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getCachedProductBySlug(slug);
 
   if (!product) {
     return { title: 'Producto no encontrado' };
@@ -40,12 +38,15 @@ export async function generateMetadata({ params }: ProductPageProps) {
   return {
     title: product.name,
     description: product.description ?? `Comprar ${product.name}`,
+    alternates: {
+      canonical: `${getSiteUrl()}/store/${slug}`,
+    },
   };
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const [{ slug }, api] = await Promise.all([params, getServerApiClient()]);
-  const product = await api.products.findBySlug(slug).catch(() => null);
+  const { slug } = await params;
+  const product = await getCachedProductBySlug(slug);
 
   if (!product) {
     notFound();
@@ -60,12 +61,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
     product.preOrderReleaseDate &&
     new Date(product.preOrderReleaseDate) > new Date();
 
-  const emptySummary = EMPTY_REVIEW_SUMMARY;
-
-  const [initialReviews, reviewSummary] = await Promise.all([
-    api.reviews.listByProduct(product.id).catch(() => [] as ProductReview[]),
-    api.reviews.summary(product.id).catch(() => emptySummary),
-  ]);
+  const { reviews: initialReviews, summary: reviewSummary } =
+    await getCachedProductReviews(product.id);
 
   const jsonLd = {
     '@context': 'https://schema.org',

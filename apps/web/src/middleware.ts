@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 import type { Role } from '@repo/shared-types';
-import { ACCESS_TOKEN_COOKIE } from '@/lib/auth-cookies';
+import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '@/lib/auth-cookies';
+import { fetchAuthRefresh, setAuthCookies } from '@/lib/auth-proxy';
 import { canAccessAdminPath } from '@/lib/admin-nav';
 
 const ROLES: Role[] = [
@@ -18,8 +19,8 @@ function isRole(value: string): value is Role {
   return ROLES.includes(value as Role);
 }
 
-async function readSession(request: NextRequest) {
-  const token = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
+async function readSession(request: NextRequest, accessToken?: string) {
+  const token = accessToken ?? request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
   const secret = process.env.AUTH_JWT_ACCESS_SECRET;
   if (!token || !secret) return null;
 
@@ -34,23 +35,48 @@ async function readSession(request: NextRequest) {
   }
 }
 
+function redirectToSignIn(request: NextRequest, pathname: string) {
+  const signInUrl = new URL('/sign-in', request.url);
+  signInUrl.searchParams.set('redirect_url', pathname);
+  return NextResponse.redirect(signInUrl);
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  if (!pathname.startsWith('/admin')) {
+  const isAdmin = pathname.startsWith('/admin');
+  const isAccount = pathname.startsWith('/account');
+  if (!isAdmin && !isAccount) {
     return NextResponse.next();
   }
 
-  const session = await readSession(request);
+  let session = await readSession(request);
+  let responseWithCookies: NextResponse | null = null;
 
-  if (!session || !canAccessAdminPath(session.role, pathname)) {
-    const signInUrl = new URL('/sign-in', request.url);
-    signInUrl.searchParams.set('redirect_url', pathname);
-    return NextResponse.redirect(signInUrl);
+  if (!session) {
+    const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
+    if (refreshToken) {
+      const tokens = await fetchAuthRefresh(refreshToken);
+      if (tokens) {
+        session = await readSession(request, tokens.accessToken);
+        responseWithCookies = NextResponse.next();
+        setAuthCookies(responseWithCookies, tokens);
+      }
+    }
   }
 
-  return NextResponse.next();
+  if (isAdmin) {
+    if (!session || !canAccessAdminPath(session.role, pathname)) {
+      return redirectToSignIn(request, pathname);
+    }
+  }
+
+  if (isAccount && !session) {
+    return redirectToSignIn(request, pathname);
+  }
+
+  return responseWithCookies ?? NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/account/:path*'],
 };

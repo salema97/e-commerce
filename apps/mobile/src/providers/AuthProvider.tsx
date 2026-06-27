@@ -17,6 +17,8 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name?: string) => Promise<void>;
   signOut: () => Promise<void>;
+  syncAccessToken: (token: string) => void;
+  clearLocalSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -61,6 +63,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await applySession((await res.json()) as AuthResponse);
   }, [applySession]);
 
+  const clearLocalSession = useCallback(async () => {
+    await clearAuthSession();
+    setUser(null);
+    setAccessToken(null);
+  }, []);
+
+  const syncAccessToken = useCallback((token: string) => {
+    setAccessToken(token);
+  }, []);
+
   const signOut = useCallback(async () => {
     const refresh = await getRefreshToken();
     if (refresh) {
@@ -70,14 +82,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ refreshToken: refresh }),
       }).catch(() => undefined);
     }
-    await clearAuthSession();
-    setUser(null);
-    setAccessToken(null);
-  }, []);
+    await clearLocalSession();
+  }, [clearLocalSession]);
 
   const value = useMemo(
-    () => ({ user, accessToken, loading, signIn, signUp, signOut }),
-    [user, accessToken, loading, signIn, signUp, signOut],
+    () => ({
+      user,
+      accessToken,
+      loading,
+      signIn,
+      signUp,
+      signOut,
+      syncAccessToken,
+      clearLocalSession,
+    }),
+    [user, accessToken, loading, signIn, signUp, signOut, syncAccessToken, clearLocalSession],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

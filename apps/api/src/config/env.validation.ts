@@ -1,154 +1,16 @@
 import { z } from 'zod';
+import { envCoreSchema } from './env.core.schema.js';
+import { envProvidersSchema } from './env.providers.schema.js';
 
-const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  APP_ENV: z.enum(['development', 'staging', 'production']).default('development'),
-  CORS_ORIGINS: z.string().default('http://localhost:3000'),
-  PORT: z.coerce.number().int().positive().default(3001),
-  DATABASE_URL: z.string().min(1),
-  REDIS_URL: z.string().min(1),
-  AUTH_JWT_ACCESS_SECRET: z.string().min(32),
-  AUTH_ACCESS_TOKEN_TTL: z.string().default('15m'),
-  AUTH_REFRESH_TOKEN_DAYS: z.coerce.number().int().positive().default(30),
-  STRIPE_SECRET_KEY: z.string().min(1),
-  STRIPE_WEBHOOK_SECRET: z.string().min(1),
-  STRIPE_SUCCESS_URL: z.string().min(1),
-  STRIPE_CANCEL_URL: z.string().min(1),
-  KUSHKI_PRIVATE_KEY: z.string().min(1),
-  KUSHKI_WEBHOOK_SECRET: z.string().min(1),
-  PAYPHONE_TOKEN: z.string().min(1),
-  PAYPHONE_STORE_ID: z.string().min(1),
-  MERCADOPAGO_ACCESS_TOKEN: z.string().min(1),
-  MERCADOPAGO_WEBHOOK_SECRET: z.string().min(1),
-  PLACETOPAY_LOGIN: z.string().min(1),
-  PLACETOPAY_SECRET_KEY: z.string().min(1),
-  PLACETOPAY_BASE_URL: z.string().min(1),
-  DEFAULT_LOCAL_PAYMENT_PROVIDER: z.string().optional(),
-  AWS_REGION: z.string().min(1),
-  AWS_ACCESS_KEY_ID: z.string().min(1),
-  AWS_SECRET_ACCESS_KEY: z.string().min(1),
-  AWS_S3_BUCKET: z.string().min(1),
-  AWS_S3_ENDPOINT: z.string().url(),
-  AWS_S3_FORCE_PATH_STYLE: z.enum(['true', 'false']).default('true'),
-  AWS_S3_PUBLIC_URL: z.string().optional(),
-  SRI_MODE: z.enum(['direct', 'intermediary']).default('direct'),
-  SRI_RUC: z.string().min(1),
-  SRI_SOL_KEY: z.string().min(1),
-  SRI_DIGITAL_CERTIFICATE_PATH: z.string().min(1),
-  SRI_DIGITAL_CERTIFICATE_PASSWORD: z.string().min(1),
-  SRI_ESTABLISHMENT_CODE: z.string().min(1),
-  SRI_EMISSION_POINT_CODE: z.string().min(1),
-  SRI_TEST_ENVIRONMENT: z.enum(['true', 'false']).default('true'),
-  SRI_COMPANY_NAME: z.string().min(1),
-  SRI_COMPANY_TRADE_NAME: z.string().min(1),
-  SRI_COMPANY_ADDRESS: z.string().min(1),
-  SRI_COMPANY_SPECIAL_TAXPAYER_NUMBER: z.string().optional(),
-  SRI_COMPANY_REQUIRES_ACCOUNTING: z
-    .enum(['true', 'false'])
-    .default('true'),
-  SRI_QUEUE_ENABLED: z.enum(['true', 'false']).default('true'),
-  SRI_WORKER_CONCURRENCY: z.coerce.number().int().positive().default(5),
-  SRI_MAX_RETRIES: z.coerce.number().int().positive().default(5),
-  SRI_RECONCILIATION_CRON: z.string().default('0 * * * *'),
-  SRI_DELIVERY_ENABLED: z.enum(['true', 'false']).default('true'),
-  SRI_EMAIL_FROM: z.string().min(1).default('facturas@example.com'),
-  RETURN_WINDOW_DAYS: z.coerce.number().int().positive().default(30),
-  EVOLUTION_API_URL: z.string().min(1),
-  EVOLUTION_API_KEY: z.string().min(1),
-  EVOLUTION_WEBHOOK_SECRET: z.string().min(1),
-  EVOLUTION_INSTANCE_NAME: z.string().min(1),
-  WHATSAPP_NOTIFICATIONS_ENABLED: z.enum(['true', 'false']).default('true'),
-  EMAIL_PROVIDER: z.enum(['console', 'resend']).default('console'),
-  RESEND_API_KEY: z.string().optional(),
-  TRANSACTIONAL_EMAIL_FROM: z.string().optional(),
-  EMAIL_NOTIFICATIONS_ENABLED: z.enum(['true', 'false']).default('true'),
-  PUSH_PROVIDER: z.enum(['console', 'expo', 'onesignal']).default('console'),
-  EXPO_ACCESS_TOKEN: z.string().optional(),
-  ONESIGNAL_APP_ID: z.string().optional(),
-  ONESIGNAL_API_KEY: z.string().optional(),
-  PUSH_NOTIFICATIONS_ENABLED: z.enum(['true', 'false']).default('true'),
-  MARKETING_EMAIL_PROVIDER: z.enum(['console', 'loops']).default('console'),
-  LOOPS_API_KEY: z.string().optional(),
-  STOREFRONT_URL: z.string().optional(),
-  API_PUBLIC_URL: z.string().optional(),
-  NOTIFICATION_UNSUBSCRIBE_SECRET: z.string().optional(),
-  ABANDONED_CART_ENABLED: z.enum(['true', 'false']).default('true'),
-  ABANDONED_CART_REMINDER_HOURS: z.coerce.number().int().positive().default(24),
-  WIN_BACK_ENABLED: z.enum(['true', 'false']).default('true'),
-  MEILI_HOST: z.string().optional(),
-  MEILI_API_KEY: z.string().optional(),
-  CATALOG_CACHE_TTL_SECONDS: z.coerce.number().int().min(0).default(120),
-  LLM_PROVIDER: z.enum(['console', 'openai', 'anthropic']).default('console'),
-  OPENAI_API_KEY: z.string().optional(),
-  ANTHROPIC_API_KEY: z.string().optional(),
-  LLM_MODEL: z.string().default('gpt-4o'),
-  ANTHROPIC_MODEL: z.string().default('claude-3-5-sonnet-20241022'),
-  EMBEDDING_PROVIDER: z.enum(['console', 'openai']).default('console'),
-  EMBEDDING_MODEL: z.string().default('text-embedding-3-small'),
-  LLM_MAX_TOKENS: z.coerce.number().int().positive().default(2048),
-  LLM_TIMEOUT_MS: z.coerce.number().int().positive().default(30000),
-  SUPPORT_BOT_ENABLED: z.enum(['true', 'false']).default('false'),
-  BOT_CONFIDENCE_THRESHOLD: z.coerce.number().min(0).max(1).default(0.7),
-  SEMANTIC_SEARCH_ENABLED: z.enum(['true', 'false', 'auto']).default('auto'),
-  CONVERSATION_ORCHESTRATOR: z.enum(['native', 'dify', 'typebot']).default('native'),
-  KNOWLEDGE_INDEX_QUEUE_ENABLED: z.enum(['true', 'false']).default('true'),
-  KNOWLEDGE_INDEX_QUEUE_CONCURRENCY: z.coerce.number().int().positive().default(3),
-  KNOWLEDGE_USE_PGVECTOR: z.enum(['true', 'false']).default('true'),
-  DIFY_API_URL: z.string().optional(),
-  DIFY_API_KEY: z.string().optional(),
-  TYPEBOT_API_URL: z.string().optional(),
-  PRODUCT_ANALYTICS_PROVIDER: z.enum(['console', 'posthog', 'plausible']).default('console'),
-  POSTHOG_KEY: z.string().optional(),
-  POSTHOG_HOST: z.string().optional(),
-  SENTRY_DSN: z.string().optional(),
-  SENTRY_RELEASE: z.string().optional(),
-  SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0.1),
-  EVENT_BUS_ENABLED: z.enum(['true', 'false']).default('true'),
-  EVENT_BUS_BACKEND: z.enum(['redis', 'kafka']).default('redis'),
-  SHIPPING_FREE_THRESHOLD: z.coerce.number().min(0).default(50),
-  SHIPPING_FLAT_RATE: z.coerce.number().min(0).default(5),
-  CARRIER_RATE_PROVIDER: z.enum(['zones', 'shippo', 'easypost', 'shipengine']).default('zones'),
-  SHIPPO_API_KEY: z.string().optional(),
-  EASYPOST_API_KEY: z.string().optional(),
-  SHIPENGINE_API_KEY: z.string().optional(),
-  TAX_PROVIDER: z.enum(['ecuador', 'stripe_tax', 'taxjar', 'avalara', 'composite']).default('composite'),
-  INTERNATIONAL_TAX_PROVIDER: z.enum(['stripe_tax', 'taxjar', 'avalara']).default('stripe_tax'),
-  STRIPE_TAX_ENABLED: z.enum(['true', 'false']).default('false'),
-  TAXJAR_API_KEY: z.string().optional(),
-  FULFILLMENT_PROVIDER: z.enum(['manual', 'wms']).default('manual'),
-  WMS_PROVIDER: z.enum(['manual', 'redpack', 'shipbob', 'amazon_fba']).default('manual'),
-  WMS_WEBHOOK_SECRET: z.string().optional(),
-  ALLOW_BACKORDERS: z.enum(['true', 'false']).default('false'),
-  KAFKA_URL: z.string().optional(),
-  KAFKA_USERNAME: z.string().optional(),
-  KAFKA_PASSWORD: z.string().optional(),
-  KAFKA_DOMAIN_EVENTS_TOPIC: z.string().default('domain-events'),
-  ENABLE_TEST_AUTH: z.enum(['true', 'false']).default('false'),
-  E2E_RELAX_THROTTLE: z.enum(['true', 'false']).default('false'),
-  CAPTCHA_PROVIDER: z.enum(['none', 'hcaptcha']).default('none'),
-  HCAPTCHA_SECRET_KEY: z.string().optional(),
-  LOYALTY_SIGNUP_POINTS: z.coerce.number().int().min(0).default(25),
-  LOYALTY_REVIEW_POINTS: z.coerce.number().int().min(0).default(50),
-  LOYALTY_REFERRAL_POINTS: z.coerce.number().int().min(0).default(100),
-  LOYALTY_PURCHASE_POINTS_PER_DOLLAR: z.coerce.number().min(0).default(1),
-  LOYALTY_POINT_VALUE: z.coerce.number().min(0).default(0.01),
-  LOYALTY_POINTS_EXPIRATION_DAYS: z.coerce.number().int().positive().default(365),
-  REFERRAL_COMMISSION_RATE: z.coerce.number().min(0).max(1).default(0.05),
-  EXTERNAL_REVIEW_PROVIDER: z.enum(['console', 'google', 'trustpilot']).default('console'),
-  GOOGLE_REVIEWS_RATING: z.coerce.number().min(0).max(5).optional(),
-  GOOGLE_REVIEWS_COUNT: z.coerce.number().int().min(0).optional(),
-  GOOGLE_REVIEWS_URL: z.string().optional(),
-  TRUSTPILOT_RATING: z.coerce.number().min(0).max(5).optional(),
-  TRUSTPILOT_REVIEW_COUNT: z.coerce.number().int().min(0).optional(),
-  TRUSTPILOT_PROFILE_URL: z.string().optional(),
-  MARKETPLACE_CHANNEL: z.enum(['console', 'mercado_libre']).default('console'),
-  MERCADO_LIBRE_ACCESS_TOKEN: z.string().optional(),
-  MERCADO_LIBRE_SELLER_ID: z.string().optional(),
-  ACCOUNTING_PROVIDER: z.enum(['console', 'siigo', 'alegra']).default('console'),
-  SIIGO_API_KEY: z.string().optional(),
-  SIIGO_API_URL: z.string().optional(),
-  MULTI_CURRENCY_ENABLED: z.enum(['true', 'false']).default('false'),
-}).superRefine((data, ctx) => {
+const envSchema = envCoreSchema.merge(envProvidersSchema).superRefine((data, ctx) => {
+  if (data.NODE_ENV === 'production' && data.ENABLE_TEST_AUTH === 'true') {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['ENABLE_TEST_AUTH'],
+      message: 'ENABLE_TEST_AUTH cannot be true when NODE_ENV is production',
+    });
+  }
+
   if (data.NODE_ENV === 'production' && data.E2E_RELAX_THROTTLE === 'true') {
     ctx.addIssue({
       code: 'custom',
@@ -164,8 +26,20 @@ export function validate(config: Record<string, unknown>): Env {
   const result = envSchema.safeParse(config);
 
   if (!result.success) {
-    const issues = result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join('; ');
+    const issues = result.error.issues
+      .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+      .join('; ');
     throw new Error(`Environment validation failed: ${issues}`);
+  }
+
+  if (
+    result.data.NODE_ENV === 'production' &&
+    result.data.STRIPE_SECRET_KEY.startsWith('sk_test_')
+  ) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      'WARNING: STRIPE_SECRET_KEY appears to be a test key (sk_test_*) in production. Use a live Stripe secret key.',
+    );
   }
 
   return result.data;

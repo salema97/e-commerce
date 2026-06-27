@@ -2,6 +2,7 @@
 
 import { createContext, use, useCallback, useEffect, useMemo, useState } from 'react';
 import type { AuthUser } from '@repo/shared-types';
+import { refreshAuthSession } from '@/lib/auth-refresh';
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -19,7 +20,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    const res = await fetch('/api/auth/me');
+    let res = await fetch('/api/auth/me');
+    if (!res.ok && res.status === 401) {
+      const renewed = await refreshAuthSession();
+      if (renewed) {
+        res = await fetch('/api/auth/me');
+      }
+    }
     if (!res.ok) {
       setUser(null);
       return;

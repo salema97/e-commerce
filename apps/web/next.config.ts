@@ -64,6 +64,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  cacheComponents: true,
   // Playwright E2E uses 127.0.0.1; without this, Next 16 blocks dev HMR and client hydration.
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
   images: {
