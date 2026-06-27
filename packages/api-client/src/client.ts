@@ -313,10 +313,17 @@ export function createApiClient(options: ApiClientOptions) {
     shipping: {
       quote: (data: ShippingQuoteDto) => request<ShippingQuote>('POST', '/shipping/quote', data),
       listZones: () => request<ShippingZone[]>('GET', '/shipping/zones'),
+      syncServientregaCities: () =>
+        request<{ upserted: number }>('POST', '/shipping/servientrega/sync-cities'),
     },
     fulfillment: {
       createShipment: (orderId: string, data: CreateShipmentDto) =>
         request<Shipment>('POST', `/fulfillment/orders/${orderId}/shipments`, data),
+      createServientregaShipment: (orderId: string) =>
+        request<Shipment & { servientregaGuideNumber?: string }>(
+          'POST',
+          `/fulfillment/orders/${orderId}/shipments/servientrega`,
+        ),
       listShipments: (orderId: string) =>
         request<Shipment[]>('GET', `/fulfillment/orders/${orderId}/shipments`),
       listAllShipments: (params?: { status?: string; limit?: number; offset?: number }) => {
@@ -332,6 +339,16 @@ export function createApiClient(options: ApiClientOptions) {
       },
       markDelivered: (shipmentId: string) =>
         request<Shipment>('PATCH', `/fulfillment/shipments/${shipmentId}/delivered`),
+      syncServientregaShipmentTracking: (shipmentId: string) =>
+        request<{ shipment: Shipment }>(
+          'POST',
+          `/fulfillment/shipments/${shipmentId}/servientrega/sync-tracking`,
+        ),
+      syncServientregaActiveTracking: () =>
+        request<{ processed: number; succeeded: number; failed: number }>(
+          'POST',
+          '/fulfillment/servientrega/sync-tracking',
+        ),
       getLabelUrl: (shipmentId: string) =>
         `/fulfillment/shipments/${shipmentId}/label`,
       getTracking: (orderId: string) =>

@@ -31,6 +31,34 @@ export class FulfillmentController {
     return this.fulfillmentService.createShipment(orderId, dto);
   }
 
+  @Post('orders/:orderId/shipments/servientrega')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.INVENTORY)
+  @Audit({ resource: 'shipment', action: 'create_servientrega' })
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a Servientrega guide and shipment for an order' })
+  @ApiResponse({ status: 201, description: 'Servientrega shipment created' })
+  createServientregaShipment(@Param('orderId') orderId: string) {
+    return this.fulfillmentService.createServientregaShipment(orderId);
+  }
+
+  @Post('shipments/:shipmentId/servientrega/sync-tracking')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.INVENTORY, Role.SUPPORT)
+  @Audit({ resource: 'shipment', action: 'sync_servientrega_tracking' })
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Sync Servientrega tracking for one shipment' })
+  syncServientregaShipmentTracking(@Param('shipmentId') shipmentId: string) {
+    return this.fulfillmentService.syncServientregaShipmentTracking(shipmentId);
+  }
+
+  @Post('servientrega/sync-tracking')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.INVENTORY)
+  @Audit({ resource: 'shipment', action: 'sync_servientrega_tracking_batch' })
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Sync Servientrega tracking for active shipments' })
+  syncServientregaActiveTracking() {
+    return this.fulfillmentService.syncServientregaActiveTracking();
+  }
+
   @Get('shipments')
   @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.INVENTORY, Role.SUPPORT)
   @ApiBearerAuth()

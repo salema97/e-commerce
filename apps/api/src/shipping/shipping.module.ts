@@ -11,6 +11,8 @@ import { ServientregaQuoteClient } from './servientrega/servientrega-quote.clien
 import { ServientregaCityService } from './servientrega/servientrega-city.service.js';
 import { ServientregaCitySyncService } from './servientrega/servientrega-city-sync.service.js';
 import { ServientregaCarrierRateProvider } from './servientrega/servientrega-carrier-rate.provider.js';
+import { ServientregaGuideSoapClient } from './servientrega/servientrega-guide-soap.client.js';
+import { ServientregaTrackingSoapClient } from './servientrega/servientrega-tracking-soap.client.js';
 
 @Module({
   imports: [PrismaModule],
@@ -24,9 +26,18 @@ import { ServientregaCarrierRateProvider } from './servientrega/servientrega-car
     ServientregaCityService,
     ServientregaCitySyncService,
     ServientregaCarrierRateProvider,
+    ServientregaGuideSoapClient,
+    ServientregaTrackingSoapClient,
     CarrierRateProviderFactory,
     ShippingService,
   ],
-  exports: [ShippingService, CarrierRateProviderFactory],
+  exports: [
+    ShippingService,
+    CarrierRateProviderFactory,
+    ServientregaCityService,
+    ServientregaQuoteClient,
+    ServientregaGuideSoapClient,
+    ServientregaTrackingSoapClient,
+  ],
 })
 export class ShippingModule {}

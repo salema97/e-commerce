@@ -19,6 +19,7 @@ type ShipmentFormState = {
   trackingNumber: string;
   trackingUrl: string;
   isSubmitting: boolean;
+  isServientregaSubmitting: boolean;
   error: string | null;
 };
 
@@ -29,7 +30,9 @@ type ShipmentFormAction =
       value: string;
     }
   | { type: 'submit_start' }
+  | { type: 'servientrega_start' }
   | { type: 'submit_success' }
+  | { type: 'servientrega_success' }
   | { type: 'submit_error'; message: string };
 
 const initialFormState: ShipmentFormState = {
@@ -37,6 +40,7 @@ const initialFormState: ShipmentFormState = {
   trackingNumber: '',
   trackingUrl: '',
   isSubmitting: false,
+  isServientregaSubmitting: false,
   error: null,
 };
 
@@ -49,6 +53,8 @@ function shipmentFormReducer(
       return { ...state, [action.field]: action.value };
     case 'submit_start':
       return { ...state, isSubmitting: true, error: null };
+    case 'servientrega_start':
+      return { ...state, isServientregaSubmitting: true, error: null };
     case 'submit_success':
       return {
         ...state,
@@ -56,8 +62,10 @@ function shipmentFormReducer(
         trackingNumber: '',
         trackingUrl: '',
       };
+    case 'servientrega_success':
+      return { ...state, isServientregaSubmitting: false };
     case 'submit_error':
-      return { ...state, isSubmitting: false, error: action.message };
+      return { ...state, isSubmitting: false, isServientregaSubmitting: false, error: action.message };
     default:
       return state;
   }
@@ -67,6 +75,36 @@ export function ShipmentPanel({ orderId, initialShipments }: ShipmentPanelProps)
   const router = useRouter();
   const api = useApiClient();
   const [form, dispatch] = React.useReducer(shipmentFormReducer, initialFormState);
+
+  async function handleCreateServientregaShipment() {
+    dispatch({ type: 'servientrega_start' });
+    try {
+      await api.fulfillment.createServientregaShipment(orderId);
+      dispatch({ type: 'servientrega_success' });
+      router.refresh();
+    } catch (err) {
+      dispatch({
+        type: 'submit_error',
+        message:
+          err instanceof Error
+            ? err.message
+            : 'No se pudo generar la guía Servientrega.',
+      });
+    }
+  }
+
+  async function handleSyncTracking(shipmentId: string) {
+    try {
+      await api.fulfillment.syncServientregaShipmentTracking(shipmentId);
+      router.refresh();
+    } catch (err) {
+      dispatch({
+        type: 'submit_error',
+        message:
+          err instanceof Error ? err.message : 'No se pudo sincronizar el tracking.',
+      });
+    }
+  }
 
   async function handleCreateShipment(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -106,7 +144,7 @@ export function ShipmentPanel({ orderId, initialShipments }: ShipmentPanelProps)
                     {shipment.items.length} línea(s) en este envío
                   </p>
                 ) : null}
-                <div className="mt-2 flex gap-2">
+                <div className="mt-2 flex flex-wrap gap-2">
                   {shipment.labelUrl ? (
                     <Button
                       type="button"
@@ -115,6 +153,26 @@ export function ShipmentPanel({ orderId, initialShipments }: ShipmentPanelProps)
                       onClick={() => window.open(shipment.labelUrl!, '_blank')}
                     >
                       Imprimir etiqueta
+                    </Button>
+                  ) : null}
+                  {shipment.trackingUrl ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(shipment.trackingUrl!, '_blank')}
+                    >
+                      Ver rastreo
+                    </Button>
+                  ) : null}
+                  {shipment.carrier.toLowerCase().includes('servientrega') ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void handleSyncTracking(shipment.id)}
+                    >
+                      Sync Servientrega
                     </Button>
                   ) : null}
                   <Button
@@ -136,6 +194,22 @@ export function ShipmentPanel({ orderId, initialShipments }: ShipmentPanelProps)
         ) : (
           <p className="text-sm text-muted-foreground">No hay envíos registrados.</p>
         )}
+
+        <div className="flex flex-col gap-2">
+          <Button
+            type="button"
+            disabled={form.isServientregaSubmitting || form.isSubmitting}
+            onClick={() => void handleCreateServientregaShipment()}
+          >
+            {form.isServientregaSubmitting
+              ? 'Generando guía Servientrega...'
+              : 'Generar guía Servientrega'}
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Crea la guía en Servientrega y registra el envío automáticamente. Requiere credenciales
+            SOAP en el API.
+          </p>
+        </div>
 
         <form onSubmit={handleCreateShipment} className="flex flex-col gap-3">
           <div className="grid gap-2">

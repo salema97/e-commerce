@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ShipmentStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { ServientregaFulfillmentService } from './servientrega/servientrega-fulfillment.service.js';
+import { ServientregaTrackingSyncService } from './servientrega/servientrega-tracking-sync.service.js';
 import { FulfillmentProviderFactory } from './fulfillment-provider.factory.js';
 import { CreateShipmentDto } from './dto/create-shipment.dto.js';
 import { LabelService } from './label.service.js';
+import type { ShipmentLineInput } from './fulfillment-provider.interface.js';
 
 export interface AdminShipmentListItem {
   id: string;
@@ -26,6 +29,8 @@ export class FulfillmentService {
     private readonly providerFactory: FulfillmentProviderFactory,
     private readonly labelService: LabelService,
     private readonly prisma: PrismaService,
+    private readonly servientregaFulfillment: ServientregaFulfillmentService,
+    private readonly servientregaTrackingSync: ServientregaTrackingSyncService,
   ) {}
 
   createShipment(orderId: string, dto: CreateShipmentDto) {
@@ -37,6 +42,18 @@ export class FulfillmentService {
       shippingCost: dto.shippingCost,
       items: dto.items,
     });
+  }
+
+  createServientregaShipment(orderId: string, items?: ShipmentLineInput[]) {
+    return this.servientregaFulfillment.createShipmentFromOrder(orderId, items);
+  }
+
+  syncServientregaShipmentTracking(shipmentId: string) {
+    return this.servientregaTrackingSync.syncShipment(shipmentId);
+  }
+
+  syncServientregaActiveTracking(limit?: number) {
+    return this.servientregaTrackingSync.syncActiveShipments(limit);
   }
 
   markDelivered(shipmentId: string) {

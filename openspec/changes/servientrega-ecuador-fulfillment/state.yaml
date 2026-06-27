@@ -1,0 +1,6 @@
+change: servientrega-ecuador-fulfillment
+status: in_progress
+phase: verify
+created: 2026-06-27
+depends_on: servientrega-ecuador-quotes
+delivery: single-pr
