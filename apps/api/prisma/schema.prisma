@@ -1355,6 +1355,21 @@ model ShippingZone {
   @@index([zoneType, isActive])
 }
 
+model ServientregaCity {
+  id                 String   @id @default(uuid())
+  servientregaCityId Int      @unique
+  name               String
+  province           String?
+  normalizedName     String
+  normalizedProvince String?
+  countryCode        String   @default("EC")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([normalizedName, normalizedProvince])
+  @@index([province])
+}
+
 model Shipment {
   id             String         @id @default(uuid())
   orderId        String

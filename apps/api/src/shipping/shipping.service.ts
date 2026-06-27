@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CarrierRateProviderFactory } from './carrier-rate-provider.factory.js';
+import { ServientregaCitySyncService } from './servientrega/servientrega-city-sync.service.js';
 import type { CarrierRateQuoteInput, CarrierRateQuoteResult } from './carrier-rate-provider.interface.js';
 
 export interface ShippingQuoteInput {
@@ -21,6 +22,7 @@ export class ShippingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly carrierRateFactory: CarrierRateProviderFactory,
+    private readonly servientregaCitySync: ServientregaCitySyncService,
   ) {}
 
   listZones() {
@@ -46,5 +48,9 @@ export class ShippingService {
 
     const provider = this.carrierRateFactory.resolve();
     return provider.quote(carrierInput);
+  }
+
+  syncServientregaCities() {
+    return this.servientregaCitySync.syncDestinationCities();
   }
 }

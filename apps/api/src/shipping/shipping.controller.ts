@@ -26,4 +26,12 @@ export class ShippingController {
   listZones() {
     return this.shippingService.listZones();
   }
+
+  @Post('servientrega/sync-cities')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN)
+  @ApiOperation({ summary: 'Sync Servientrega destination cities catalog (admin)' })
+  @ApiResponse({ status: 200, description: 'Sync result' })
+  syncServientregaCities() {
+    return this.shippingService.syncServientregaCities();
+  }
 }
