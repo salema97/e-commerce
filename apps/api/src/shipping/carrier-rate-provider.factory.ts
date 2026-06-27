@@ -5,8 +5,14 @@ import { ZoneFlatRateProvider } from './zone-flat-rate.provider.js';
 import { ShippoCarrierRateProvider } from './shippo-carrier-rate.provider.js';
 import { EasyPostCarrierRateProvider } from './easypost-carrier-rate.provider.js';
 import { ShipEngineCarrierRateProvider } from './shipengine-carrier-rate.provider.js';
+import { ServientregaCarrierRateProvider } from './servientrega/servientrega-carrier-rate.provider.js';
 
-export type CarrierRateProviderName = 'zones' | 'shippo' | 'easypost' | 'shipengine';
+export type CarrierRateProviderName =
+  | 'zones'
+  | 'shippo'
+  | 'easypost'
+  | 'shipengine'
+  | 'servientrega';
 
 @Injectable()
 export class CarrierRateProviderFactory {
@@ -16,6 +22,7 @@ export class CarrierRateProviderFactory {
     private readonly shippoProvider: ShippoCarrierRateProvider,
     private readonly easyPostProvider: EasyPostCarrierRateProvider,
     private readonly shipEngineProvider: ShipEngineCarrierRateProvider,
+    private readonly servientregaProvider: ServientregaCarrierRateProvider,
   ) {}
 
   resolve(provider?: CarrierRateProviderName): CarrierRateProvider {
@@ -33,6 +40,8 @@ export class CarrierRateProviderFactory {
         return this.easyPostProvider;
       case 'shipengine':
         return this.shipEngineProvider;
+      case 'servientrega':
+        return this.servientregaProvider;
       case 'zones':
       default:
         return this.zoneProvider;

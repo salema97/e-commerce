@@ -107,10 +107,20 @@ const envSchema = z.object({
   EVENT_BUS_BACKEND: z.enum(['redis', 'kafka']).default('redis'),
   SHIPPING_FREE_THRESHOLD: z.coerce.number().min(0).default(50),
   SHIPPING_FLAT_RATE: z.coerce.number().min(0).default(5),
-  CARRIER_RATE_PROVIDER: z.enum(['zones', 'shippo', 'easypost', 'shipengine']).default('zones'),
+  CARRIER_RATE_PROVIDER: z
+    .enum(['zones', 'shippo', 'easypost', 'shipengine', 'servientrega'])
+    .default('zones'),
   SHIPPO_API_KEY: z.string().optional(),
   EASYPOST_API_KEY: z.string().optional(),
   SHIPENGINE_API_KEY: z.string().optional(),
+  SERVIENTREGA_QUOTE_BASE_URL: z
+    .string()
+    .url()
+    .default('https://mobile.servientrega.com/ApiIngresoCLientes'),
+  SERVIENTREGA_COUNTRY_ID: z.coerce.number().int().positive().optional(),
+  SERVIENTREGA_ORIGIN_CITY_ID: z.coerce.number().int().positive().optional(),
+  SERVIENTREGA_PRODUCT_ID: z.coerce.number().int().positive().optional(),
+  SERVIENTREGA_LANGUAGE: z.enum(['es', 'en']).default('es'),
   TAX_PROVIDER: z.enum(['ecuador', 'stripe_tax', 'taxjar', 'avalara', 'composite']).default('composite'),
   INTERNATIONAL_TAX_PROVIDER: z.enum(['stripe_tax', 'taxjar', 'avalara']).default('stripe_tax'),
   STRIPE_TAX_ENABLED: z.enum(['true', 'false']).default('false'),

@@ -7,6 +7,10 @@ import { ShippoCarrierRateProvider } from './shippo-carrier-rate.provider.js';
 import { EasyPostCarrierRateProvider } from './easypost-carrier-rate.provider.js';
 import { ShipEngineCarrierRateProvider } from './shipengine-carrier-rate.provider.js';
 import { CarrierRateProviderFactory } from './carrier-rate-provider.factory.js';
+import { ServientregaQuoteClient } from './servientrega/servientrega-quote.client.js';
+import { ServientregaCityService } from './servientrega/servientrega-city.service.js';
+import { ServientregaCitySyncService } from './servientrega/servientrega-city-sync.service.js';
+import { ServientregaCarrierRateProvider } from './servientrega/servientrega-carrier-rate.provider.js';
 
 @Module({
   imports: [PrismaModule],
@@ -16,6 +20,10 @@ import { CarrierRateProviderFactory } from './carrier-rate-provider.factory.js';
     ShippoCarrierRateProvider,
     EasyPostCarrierRateProvider,
     ShipEngineCarrierRateProvider,
+    ServientregaQuoteClient,
+    ServientregaCityService,
+    ServientregaCitySyncService,
+    ServientregaCarrierRateProvider,
     CarrierRateProviderFactory,
     ShippingService,
   ],

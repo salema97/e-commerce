@@ -9,6 +9,10 @@ import { ShippingService } from './shipping.service.js';
 import { ShippoCarrierRateProvider } from './shippo-carrier-rate.provider.js';
 import { EasyPostCarrierRateProvider } from './easypost-carrier-rate.provider.js';
 import { ShipEngineCarrierRateProvider } from './shipengine-carrier-rate.provider.js';
+import { ServientregaQuoteClient } from './servientrega/servientrega-quote.client.js';
+import { ServientregaCityService } from './servientrega/servientrega-city.service.js';
+import { ServientregaCitySyncService } from './servientrega/servientrega-city-sync.service.js';
+import { ServientregaCarrierRateProvider } from './servientrega/servientrega-carrier-rate.provider.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 describe('ShippingService', () => {
@@ -31,6 +35,7 @@ describe('ShippingService', () => {
   beforeEach(async () => {
     const prisma = {
       shippingZone: { findMany: vi.fn().mockResolvedValue(zones) },
+      servientregaCity: { findFirst: vi.fn(), upsert: vi.fn() },
     };
     const config = {
       get: vi.fn((key: string) => {
@@ -47,6 +52,10 @@ describe('ShippingService', () => {
         ShippoCarrierRateProvider,
         EasyPostCarrierRateProvider,
         ShipEngineCarrierRateProvider,
+        ServientregaQuoteClient,
+        ServientregaCityService,
+        ServientregaCitySyncService,
+        ServientregaCarrierRateProvider,
         CarrierRateProviderFactory,
         ShippingService,
         { provide: PrismaService, useValue: prisma },
