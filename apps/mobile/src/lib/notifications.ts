@@ -1,23 +1,44 @@
-import * as Notifications from 'expo-notifications';
-import Constants from 'expo-constants';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+export const pushNotificationsAvailable =
+  Constants.executionEnvironment !== ExecutionEnvironment.StoreClient;
 
 export interface PushRegistrationResult {
   token: string | null;
   error?: string;
 }
 
+type NotificationsModule = typeof import('expo-notifications');
+
+async function loadNotifications(): Promise<NotificationsModule | null> {
+  if (!pushNotificationsAvailable) {
+    return null;
+  }
+
+  const Notifications = await import('expo-notifications');
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+    }),
+  });
+  return Notifications;
+}
+
 export async function registerForPushNotificationsAsync(): Promise<PushRegistrationResult> {
+  if (!pushNotificationsAvailable) {
+    return { token: null, error: 'Push notifications require a development build (not Expo Go)' };
+  }
+
   try {
+    const Notifications = await loadNotifications();
+    if (!Notifications) {
+      return { token: null };
+    }
+
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
 
@@ -42,18 +63,26 @@ export async function registerForPushNotificationsAsync(): Promise<PushRegistrat
   }
 }
 
-export function addNotificationReceivedListener(
-  callback: (notification: Notifications.Notification) => void,
-): Notifications.Subscription {
+export async function addNotificationReceivedListener(
+  callback: (notification: import('expo-notifications').Notification) => void,
+): Promise<{ remove: () => void }> {
+  const Notifications = await loadNotifications();
+  if (!Notifications) {
+    return { remove: () => undefined };
+  }
   return Notifications.addNotificationReceivedListener(callback);
 }
 
-export function addNotificationResponseReceivedListener(
-  callback: (response: Notifications.NotificationResponse) => void,
-): Notifications.Subscription {
+export async function addNotificationResponseReceivedListener(
+  callback: (response: import('expo-notifications').NotificationResponse) => void,
+): Promise<{ remove: () => void }> {
+  const Notifications = await loadNotifications();
+  if (!Notifications) {
+    return { remove: () => undefined };
+  }
   return Notifications.addNotificationResponseReceivedListener(callback);
 }
 
-export function removeNotificationSubscription(subscription: Notifications.Subscription): void {
+export function removeNotificationSubscription(subscription: { remove: () => void }): void {
   subscription.remove();
 }

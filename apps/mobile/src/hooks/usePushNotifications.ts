@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
+import type { Notification } from 'expo-notifications';
 import {
+  pushNotificationsAvailable,
   registerForPushNotificationsAsync,
   addNotificationReceivedListener,
   addNotificationResponseReceivedListener,
@@ -13,7 +14,7 @@ import { setRegisteredPushToken } from '../lib/push-token-registry';
 
 export interface UsePushNotificationsResult {
   pushToken: string | null;
-  notification: Notifications.Notification | null;
+  notification: Notification | null;
   error: string | null;
 }
 
@@ -21,19 +22,24 @@ export function usePushNotifications(
   onNotificationResponse?: (url: string) => void,
 ): UsePushNotificationsResult {
   const [pushToken, setPushToken] = useState<string | null>(null);
-  const [notification, setNotification] = useState<Notifications.Notification | null>(null);
+  const [notification, setNotification] = useState<Notification | null>(null);
   const [error, setError] = useState<string | null>(null);
   const isRegisteredRef = useRef(false);
   const syncedTokenRef = useRef<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
-    if (isRegisteredRef.current) {
+    if (!pushNotificationsAvailable || isRegisteredRef.current) {
       return;
     }
     isRegisteredRef.current = true;
 
-    registerForPushNotificationsAsync().then((result) => {
+    let receivedSubscription: { remove: () => void } | null = null;
+    let responseSubscription: { remove: () => void } | null = null;
+    let cancelled = false;
+
+    void registerForPushNotificationsAsync().then((result) => {
+      if (cancelled) return;
       if (result.error) {
         setError(result.error);
       } else {
@@ -41,21 +47,38 @@ export function usePushNotifications(
       }
     });
 
-    const receivedSubscription = addNotificationReceivedListener((incoming) => {
+    void addNotificationReceivedListener((incoming) => {
       setNotification(incoming);
+    }).then((subscription) => {
+      if (cancelled) {
+        removeNotificationSubscription(subscription);
+        return;
+      }
+      receivedSubscription = subscription;
     });
 
-    const responseSubscription = addNotificationResponseReceivedListener((response) => {
+    void addNotificationResponseReceivedListener((response) => {
       setNotification(response.notification);
       const url = response.notification.request.content.data?.url;
       if (typeof url === 'string' && onNotificationResponse) {
         onNotificationResponse(url);
       }
+    }).then((subscription) => {
+      if (cancelled) {
+        removeNotificationSubscription(subscription);
+        return;
+      }
+      responseSubscription = subscription;
     });
 
     return () => {
-      removeNotificationSubscription(receivedSubscription);
-      removeNotificationSubscription(responseSubscription);
+      cancelled = true;
+      if (receivedSubscription) {
+        removeNotificationSubscription(receivedSubscription);
+      }
+      if (responseSubscription) {
+        removeNotificationSubscription(responseSubscription);
+      }
     };
   }, [onNotificationResponse]);
 
