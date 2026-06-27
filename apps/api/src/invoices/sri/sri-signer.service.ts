@@ -107,6 +107,33 @@ export class SriSignerService {
   }
 
   /**
+   * Describes the certificate subject for ops smoke tests.
+   * Ecuador SRI certs usually put the holder name in CN; RUC/cedula may appear in other attributes.
+   */
+  describeCertificateSubject(certificate: forge.pki.Certificate): {
+    commonName?: string;
+    taxIds: string[];
+  } {
+    const taxIds: string[] = [];
+    let commonName: string | undefined;
+
+    for (const attr of certificate.subject.attributes) {
+      const name = attr.shortName ?? attr.name;
+      const value = String(attr.value ?? '');
+      if (name === 'CN') {
+        commonName = value;
+      }
+      for (const match of value.match(/\d{10,13}/g) ?? []) {
+        if (match.length === 10 || match.length === 13) {
+          taxIds.push(match);
+        }
+      }
+    }
+
+    return { commonName, taxIds: [...new Set(taxIds)] };
+  }
+
+  /**
    * Signs an XML document with the supplied .p12 digital certificate.
    *
    * The signature is an XAdES-EPES enveloped signature that is SRI-compatible:

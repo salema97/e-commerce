@@ -52,6 +52,7 @@ import { PosModule } from './pos/pos.module.js';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module.js';
 import { SellersModule } from './sellers/sellers.module.js';
 import { DropshipModule } from './dropship/dropship.module.js';
+import { BulkImportModule } from './bulk-import/bulk-import.module.js';
 
 @Module({
   imports: [
@@ -122,6 +123,7 @@ import { DropshipModule } from './dropship/dropship.module.js';
     SubscriptionsModule,
     SellersModule,
     DropshipModule,
+    BulkImportModule,
   ],
   providers: [
     {

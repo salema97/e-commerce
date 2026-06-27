@@ -1,6 +1,6 @@
 {
   "name": "@repo/api-client",
-  "version": "0.0.0",
+  "version": "1.0.0-v1",
   "private": true,
   "type": "module",
   "description": "Generated API client and TanStack Query hooks",

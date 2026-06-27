@@ -81,6 +81,9 @@ import type {
   ShippingQuoteDto,
   ShippingZone,
   Shipment,
+  AdminShipmentListItem,
+  BackorderLine,
+  BulkImportResult,
   CreateShipmentDto,
   OrderTracking,
   WmsTrackingEvent,
@@ -316,6 +319,17 @@ export function createApiClient(options: ApiClientOptions) {
         request<Shipment>('POST', `/fulfillment/orders/${orderId}/shipments`, data),
       listShipments: (orderId: string) =>
         request<Shipment[]>('GET', `/fulfillment/orders/${orderId}/shipments`),
+      listAllShipments: (params?: { status?: string; limit?: number; offset?: number }) => {
+        const search = new URLSearchParams();
+        if (params?.status) search.set('status', params.status);
+        if (params?.limit != null) search.set('limit', String(params.limit));
+        if (params?.offset != null) search.set('offset', String(params.offset));
+        const query = search.toString();
+        return request<AdminShipmentListItem[]>(
+          'GET',
+          `/fulfillment/shipments${query ? `?${query}` : ''}`,
+        );
+      },
       markDelivered: (shipmentId: string) =>
         request<Shipment>('PATCH', `/fulfillment/shipments/${shipmentId}/delivered`),
       getLabelUrl: (shipmentId: string) =>
@@ -327,7 +341,11 @@ export function createApiClient(options: ApiClientOptions) {
         request<WmsSyncResult>('POST', '/fulfillment/wms/sync-inventory', { records }),
       importWmsTracking: (events: WmsTrackingEvent[]) =>
         request<{ imported: number }>('POST', '/fulfillment/wms/import-tracking', { events }),
-      listBackorders: () => request<unknown[]>('GET', '/fulfillment/backorders'),
+      listBackorders: () => request<BackorderLine[]>('GET', '/fulfillment/backorders'),
+    },
+    bulkImport: {
+      importProducts: (csv: string) =>
+        request<BulkImportResult>('POST', '/bulk-import/products', { csv }),
     },
     payments: {
       createIntent: (data: CreatePaymentIntentDto) => request<PaymentIntentResult>('POST', '/payments/intent', data),

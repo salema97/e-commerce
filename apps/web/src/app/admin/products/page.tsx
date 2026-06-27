@@ -33,9 +33,16 @@ export default async function AdminProductsPage() {
           subtitle="Catálogo y publicación"
           showNetworkStatus={false}
           actions={
-            <Link href="/admin/products/new">
-              <Button className="font-anton text-lg uppercase">Agregar producto</Button>
-            </Link>
+            <div className="flex gap-2">
+              <Link href="/admin/products/import">
+                <Button variant="outline" className="font-anton text-lg uppercase">
+                  Importar CSV
+                </Button>
+              </Link>
+              <Link href="/admin/products/new">
+                <Button className="font-anton text-lg uppercase">Agregar producto</Button>
+              </Link>
+            </div>
           }
         />
       }

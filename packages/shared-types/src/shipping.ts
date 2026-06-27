@@ -139,3 +139,48 @@ export interface WmsTrackingEvent {
   trackingUrl?: string;
   status?: ShipmentStatus;
 }
+
+export interface AdminShipmentListItem {
+  id: string;
+  orderId: string;
+  orderNumber: string;
+  customerEmail: string;
+  carrier: string;
+  trackingNumber?: string | null;
+  trackingUrl?: string | null;
+  status: ShipmentStatus;
+  shippingCost: number;
+  shippedAt?: string | null;
+  deliveredAt?: string | null;
+  createdAt: string;
+}
+
+export interface BackorderLine {
+  id: string;
+  quantity: number;
+  quantityBackordered: number;
+  order: {
+    id: string;
+    orderNumber: string;
+    status: OrderStatus;
+    customerEmail: string;
+  };
+  product: {
+    id: string;
+    name: string;
+    sku: string | null;
+  };
+}
+
+export interface BulkImportRowError {
+  row: number;
+  message: string;
+}
+
+export interface BulkImportResult {
+  totalRows: number;
+  created: number;
+  updated: number;
+  failed: number;
+  errors: BulkImportRowError[];
+}

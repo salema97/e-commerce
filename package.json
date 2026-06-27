@@ -19,6 +19,7 @@
     "audit:deps": "node scripts/ops/audit-deps.mjs",
     "audit:lighthouse": "node scripts/ops/lighthouse-local.mjs",
     "audit:pentest": "node scripts/ops/pentest-checklist.mjs",
+    "prelaunch:ec": "node scripts/ops/prelaunch-ecuador.mjs",
     "health:web": "pnpm --filter @repo/web health:react",
     "health:api": "pnpm --filter @repo/api health:nest",
     "health:mobile": "pnpm --filter @repo/mobile health:expo",

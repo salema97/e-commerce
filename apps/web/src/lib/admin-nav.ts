@@ -13,6 +13,7 @@ export const adminNavItems: AdminNavItem[] = [
   { href: '/admin/categories', label: 'Categorías', roles: ['SUPER_ADMIN', 'ADMIN'], group: 'catalog' },
   { href: '/admin/inventory', label: 'Inventario', roles: ['SUPER_ADMIN', 'ADMIN', 'INVENTORY'], group: 'catalog' },
   { href: '/admin/orders', label: 'Pedidos', roles: ['SUPER_ADMIN', 'ADMIN'], group: 'sales' },
+  { href: '/admin/fulfillments', label: 'Envíos', roles: ['SUPER_ADMIN', 'ADMIN', 'INVENTORY'], group: 'sales' },
   { href: '/admin/returns', label: 'Devoluciones', roles: ['SUPER_ADMIN', 'ADMIN'], group: 'sales' },
   { href: '/admin/customers', label: 'Clientes', roles: ['SUPER_ADMIN', 'ADMIN'], group: 'sales' },
   { href: '/admin/reviews', label: 'Reseñas', roles: ['SUPER_ADMIN', 'ADMIN'], group: 'sales' },

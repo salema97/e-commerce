@@ -94,14 +94,14 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
   - [x] Orders (create from cart, status lifecycle)
 - [x] Add Swagger/OpenAPI documentation and publish public versioned docs at `/v1/docs`.
 - [x] Add API versioning prefix (`/v1`) to the NestJS global route prefix.
-- [ ] Version the generated `@repo/api-client` with API versions and publish change log / migration guides.
+- [x] Version the generated `@repo/api-client` with API versions and publish change log / migration guides (`1.0.0-v1`, `CHANGELOG.md`, `API-VERSION.md`).
 - [x] Add S3 image upload endpoint (signed URLs).
 - [x] Add global exception filter, validation pipes, and health check endpoint.
 - [x] Implement granular rate limiting:
   - [x] Per endpoint (via `@Throttle` on auth, checkout, webhooks, etc.).
   - [x] Per IP (global `ThrottlerGuard` + Redis storage).
-  - [ ] Per user (custom throttler tracker not implemented).
-  - [ ] Per API key (not implemented).
+  - [x] Per user (`AppThrottlerGuard.getTracker` → `user:{userId}` when JWT present).
+  - [x] Per API key (`X-Api-Key` header → `apikey:{key}` tracker).
   - [x] Sliding window or token bucket strategy backed by Redis.
   - [x] Stricter limits for public endpoints (login, register, forgot password, checkout, webhooks) vs authenticated endpoints.
 - [x] Add structured logging (Pino).
@@ -198,7 +198,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] Link approved returns to SRI credit notes (nota de crédito 04).
 - [x] Refund method options: original payment, store credit, or exchange.
 - [x] Admin panel: `/admin/returns` list, detail, and resolution actions.
-- [ ] Email/WhatsApp notifications for return status updates.
+- [x] Email/WhatsApp notifications for return status updates (`ReturnNotificationService`).
 
 ## Phase 6 — WhatsApp Integration (Evolution API)
 
@@ -222,7 +222,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] Webhook endpoint `POST /webhooks/evolution/messages` to receive inbound messages.
 - [x] Webhook handlers for:
   - [x] Inbound text messages
-  - [~] Media messages (images, audio, documents) — schema ready; full download/render deferred.
+  - [x] Media messages (images, audio, documents) — `WhatsAppMediaService` downloads via Evolution API and stores in S3.
   - [x] Delivery/read receipts
   - [x] Connection status events
 - [x] Endpoint to send messages via Evolution API.
@@ -237,7 +237,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] Order delivered message.
 - [x] Payment failure/retry message.
 - [x] Refund confirmation message.
-- [ ] Message templates configurable from admin panel — deferred to Phase 10/11.
+- [x] Message templates configurable from admin panel (`/admin/support/templates`, quick replies CRUD).
 
 ### 6.4 Admin Support Inbox (`/admin/support`)
 
@@ -248,7 +248,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] Quick reply templates.
 - [x] Conversation status management (open, in progress, resolved, closed).
 - [x] Agent assignment.
-- [ ] Internal notes visible only to agents — deferred to Phase 10/11.
+- [x] Internal notes visible only to agents (`Conversation.internalNotes`, admin inbox UI).
 - [x] Display delivery/read status.
 
 ### 6.5 Migration Path
@@ -292,7 +292,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] Prisma schema additions:
   - [x] `Invoice` (order relation, access key, authorization number, status, XML/PDF URLs)
   - [x] `InvoiceSequence` (per document type, current number, authorized range)
-  - [x] `CreditNote`, `DebitNote`, `ShippingGuide`, `WithholdingVoucher` as needed — `CreditNote` implemented; 05/06/07 deferred.
+  - [x] `CreditNote`, `DebitNote`, `ShippingGuide`, `WithholdingVoucher` as needed — `CreditNote` + supplementary docs 05/06/07 via `SriSupplementaryService`.
 
 ### 7.4 XML Generation & Signing
 
@@ -325,9 +325,9 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 
 - [x] Factura (01) — standard sales invoice.
 - [x] Nota de crédito (04) — refunds / returns linked to a prior invoice.
-- [ ] Nota de débito (05) — additional charges / corrections — deferred.
-- [ ] Guía de remisión (06) — shipping / transport authorization — deferred.
-- [ ] Comprobante de retención (07) — withholding tax certificate — deferred.
+- [x] Nota de débito (05) — `POST /v1/invoices/sri/supplementary` (documentType 05).
+- [x] Guía de remisión (06) — supplementary API documentType 06.
+- [x] Comprobante de retención (07) — supplementary API documentType 07.
 
 ### 7.8 Delivery & Admin
 
@@ -346,8 +346,8 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] Prisma schema (existing models used): `Supplier`, `Income`, `Expense`, `ExpenseCategory`
 - [x] `Income.relatedOrderId` FK → `Order` (migration `20260629000000_phase8_income_order_fk`)
 - [ ] `PurchaseOrder` (optional — deferred)
-- [x] `StoreCredit` read-only listing in finance reports (existing returns module)
-- [ ] `GiftCard` CRUD (deferred)
+- [x] `StoreCredit` CRUD in finance module (`/admin/finance/store-credits`)
+- [x] `GiftCard` CRUD (`FinanceGiftCardsModule`, `/admin/finance/gift-cards`)
 
 ### 8.2 Backend (NestJS)
 
@@ -357,8 +357,8 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] Expense receipt upload to S3 (base64)
 - [x] RBAC: `SUPER_ADMIN`, `ADMIN`, `FINANCE`; suppliers GET restricted
 - [x] Audit logging on finance mutations
-- [ ] Gift card / store credit CRUD (deferred — read-only list only)
-- [ ] Bulk import/export CSV (deferred)
+- [x] Gift card / store credit CRUD (admin API + UI)
+- [~] Bulk import/export CSV — products import MVP (`POST /v1/bulk-import/products`); export deferred
 
 ### 8.3 Admin Panel (Next.js)
 
@@ -514,7 +514,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] Implement order allocation, pick/pack/ship workflows — manual provider + split shipments.
 - [x] Sync inventory levels from WMS to Prisma — admin + webhook endpoints.
 - [x] Import tracking numbers and fulfillment events from 3PL — webhook + admin import.
-- [x] Admin panel: fulfillments list, create shipment, print labels, RMA handling — fulfillments por pedido en `ShipmentPanel`; lista global/backorders solo API.
+- [x] Admin panel: fulfillments list, create shipment, print labels, RMA handling — `ShipmentPanel` por pedido + `/admin/fulfillments` (envíos globales y backorders).
 
 ## Phase 13 — Search, Filters & Performance
 
@@ -621,7 +621,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] Fraud detection (Stripe Radar). *(guía `docs/ops/stripe-radar-mfa.md`)*
 - [x] Bot protection (reCAPTCHA Enterprise / hCaptcha) on public forms. *(hCaptcha opcional en checkout API)*
 - [x] Admin MFA enforcement. *(guía auth nativo + Stripe Radar en `docs/ops/stripe-radar-mfa.md`)*
-- [ ] Dependency scanning before releases (`pnpm audit --audit-level=high`).
+- [x] Dependency scanning before releases (`pnpm audit:deps` → `scripts/ops/audit-deps.mjs`; included in `pnpm prelaunch:ec`).
 - [ ] Penetration test before public launch. *(pre-lanzamiento — checklist en ops docs)*
 
 ### 16.3 Production Readiness
@@ -633,7 +633,7 @@ SDD (Spec-Driven Development) is used for phases with high business risk, legal/
 - [x] Deploy API to Railway/Render/Fly.io with Docker. *(Dockerfile + `infra/docker-compose.prod.yml`)*
 - [x] Deploy Evolution API to VPS/dedicated container service. *(`docs/ops/evolution-api-production.md`)*
 - [x] Configure EAS builds for mobile (dev + prod profiles). *(eas.json)*
-- [x] Run end-to-end smoke tests on staging. *(`apps/web/e2e/smoke.spec.ts` — ejecutar local con Playwright)*
+- [x] Run end-to-end smoke tests on staging. *(`apps/web/e2e/smoke.spec.ts`; `pnpm prelaunch:ec`)*
 - [x] Load test checkout, catalog, WhatsApp webhook, and SRI invoice endpoints. *(`scripts/load-test/smoke.mjs`)*
 - [x] Add CDN + caching strategy (Cloudflare + Redis) for static assets, product media, catalog, and search results. *(Redis catalog cache Fase 13; CDN config deferida)*
 - [x] Mobile app store compliance checklist: review policies, IAP rules for digital goods, location/notification permissions.
@@ -731,3 +731,4 @@ Everything else (AI, advanced analytics, marketplaces, ERP, WMS, loyalty, referr
 3. ✅ Confirmed: SRI integration is **direct** (SOAP/XML, `.p12` signing, no intermediary).
 4. ✅ Initialize the monorepo (Phase 0).
 5. ✅ Bootstrap the NestJS API and Prisma schema (Phase 1).
+6. **Pre-launch Ecuador**: complete [`docs/ops/sri-production-checklist.md`](docs/ops/sri-production-checklist.md), run `pnpm prelaunch:ec`, then `pnpm --filter @repo/api sri:smoke` against staging with production cert.

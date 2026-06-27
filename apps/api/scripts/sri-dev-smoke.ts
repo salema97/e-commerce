@@ -50,17 +50,27 @@ async function main(): Promise<void> {
   const signer = new SriSignerService();
   const certBuffer = await readFile(certPath);
   const { certificate } = signer.loadP12(certBuffer, password);
-  const cn = certificate.subject.getField('CN')?.value;
-  console.log(`[1/4] Certificado .p12 OK — CN: ${cn}`);
-  if (cn !== ruc) {
-    throw new Error(`RUC en .env (${ruc}) no coincide con CN del certificado (${cn})`);
+  const subject = signer.describeCertificateSubject(certificate);
+  const testEnv = config.get<string>('SRI_TEST_ENVIRONMENT') !== 'false';
+  console.log(
+    `[1/4] Certificado .p12 OK — titular: ${subject.commonName ?? '(sin CN)'}`,
+  );
+  if (subject.taxIds.length > 0) {
+    console.log(`      IDs en sujeto: ${subject.taxIds.join(', ')}`);
   }
+  const envRuc = ruc.trim();
+  if (!subject.taxIds.includes(envRuc) && subject.commonName !== envRuc) {
+    console.warn(
+      `      AVISO: SRI_RUC (${envRuc}) no coincide con IDs del certificado; verifica .env antes de producción.`,
+    );
+  }
+  console.log(`      Ambiente SRI: ${testEnv ? 'PRUEBAS (celcer)' : 'PRODUCCIÓN (cel)'}`);
 
   const accessKeyBuilder = new SriAccessKeyBuilder();
   const xmlBuilder = new SriXmlBuilder();
   const establishment = config.getOrThrow<string>('SRI_ESTABLISHMENT_CODE').trim();
   const emission = config.getOrThrow<string>('SRI_EMISSION_POINT_CODE').trim();
-  const sequence = '000000099';
+  const sequence = String(Math.floor(Math.random() * 900_000) + 100_000).padStart(9, '0');
   const emissionDate = new Date();
   const accessKey = accessKeyBuilder.build({
     date: emissionDate,
@@ -108,6 +118,21 @@ async function main(): Promise<void> {
         console.log(`      → [${msg.tipo}] ${msg.identificador}: ${msg.mensaje}`);
       }
     }
+    if (first?.estado === 'NO_AUTORIZADO') {
+      const last = await soap.queryStatus(accessKey);
+      const pending = last.autorizaciones?.[0];
+      if (pending && pending.estado !== first.estado) {
+        console.log('      Última consulta SRI:', pending.estado);
+        for (const msg of pending.mensajes ?? []) {
+          console.log(`      → [${msg.tipo}] ${msg.identificador}: ${msg.mensaje}`);
+        }
+      }
+    }
+    if (first?.estado !== 'AUTORIZADO') {
+      process.exitCode = 1;
+    }
+  } else {
+    process.exitCode = 1;
   }
 
   console.log('\nSmoke test completado.');

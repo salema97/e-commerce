@@ -1,13 +1,31 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { ShipmentStatus } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service.js';
 import { FulfillmentProviderFactory } from './fulfillment-provider.factory.js';
 import { CreateShipmentDto } from './dto/create-shipment.dto.js';
 import { LabelService } from './label.service.js';
+
+export interface AdminShipmentListItem {
+  id: string;
+  orderId: string;
+  orderNumber: string;
+  customerEmail: string;
+  carrier: string;
+  trackingNumber: string | null;
+  trackingUrl: string | null;
+  status: ShipmentStatus;
+  shippingCost: number;
+  shippedAt: Date | null;
+  deliveredAt: Date | null;
+  createdAt: Date;
+}
 
 @Injectable()
 export class FulfillmentService {
   constructor(
     private readonly providerFactory: FulfillmentProviderFactory,
     private readonly labelService: LabelService,
+    private readonly prisma: PrismaService,
   ) {}
 
   createShipment(orderId: string, dto: CreateShipmentDto) {
@@ -27,6 +45,37 @@ export class FulfillmentService {
 
   listShipments(orderId: string) {
     return this.providerFactory.resolve().listShipments(orderId);
+  }
+
+  async listAllShipments(params: {
+    status?: ShipmentStatus;
+    limit?: number;
+    offset?: number;
+  }): Promise<AdminShipmentListItem[]> {
+    const shipments = await this.prisma.shipment.findMany({
+      where: params.status ? { status: params.status } : undefined,
+      include: {
+        order: { select: { orderNumber: true, customerEmail: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: params.limit ?? 50,
+      skip: params.offset ?? 0,
+    });
+
+    return shipments.map((shipment) => ({
+      id: shipment.id,
+      orderId: shipment.orderId,
+      orderNumber: shipment.order.orderNumber,
+      customerEmail: shipment.order.customerEmail,
+      carrier: shipment.carrier,
+      trackingNumber: shipment.trackingNumber,
+      trackingUrl: shipment.trackingUrl,
+      status: shipment.status,
+      shippingCost: Number(shipment.shippingCost),
+      shippedAt: shipment.shippedAt,
+      deliveredAt: shipment.deliveredAt,
+      createdAt: shipment.createdAt,
+    }));
   }
 
   getLabelHtml(shipmentId: string) {

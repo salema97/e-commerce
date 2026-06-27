@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Header, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Header, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Audit } from '../audit/audit.decorator.js';
 import { Public } from '../auth/public.decorator.js';
@@ -7,6 +7,7 @@ import { Role } from '../auth/role.enum.js';
 import { FulfillmentService } from './fulfillment.service.js';
 import { WmsIntegrationService } from './wms-integration.service.js';
 import { CreateShipmentDto } from './dto/create-shipment.dto.js';
+import { ListShipmentsQueryDto } from './dto/list-shipments-query.dto.js';
 import { WmsImportTrackingDto, WmsSyncInventoryDto } from './dto/wms-sync.dto.js';
 
 @ApiTags('Fulfillment')
@@ -28,6 +29,14 @@ export class FulfillmentController {
     @Body() dto: CreateShipmentDto,
   ) {
     return this.fulfillmentService.createShipment(orderId, dto);
+  }
+
+  @Get('shipments')
+  @Roles(Role.SUPER_ADMIN, Role.ADMIN, Role.INVENTORY, Role.SUPPORT)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List all shipments (admin)' })
+  listAllShipments(@Query() query: ListShipmentsQueryDto) {
+    return this.fulfillmentService.listAllShipments(query);
   }
 
   @Get('orders/:orderId/shipments')
