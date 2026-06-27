@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { createApiClient } from '@repo/api-client';
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from './auth-cookies';
-import { refreshServerAuthSession } from './auth-refresh';
+import { refreshServerAuthSession } from './auth-refresh.server';
 
 export interface ServerApiClientOptions {
   token?: string | null;
