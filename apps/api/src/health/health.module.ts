@@ -7,6 +7,7 @@ import { HealthController } from './health.controller.js';
 import { PrismaHealthIndicator } from './prisma.health.js';
 import { RedisHealthIndicator } from './redis.health.js';
 import { MeilisearchHealthIndicator } from './meilisearch.health.js';
+import { EvolutionHealthIndicator } from './evolution.health.js';
 
 @Module({
   imports: [TerminusModule, RedisModule, ConfigModule],
@@ -16,6 +17,7 @@ import { MeilisearchHealthIndicator } from './meilisearch.health.js';
     RedisHealthIndicator,
     MeilisearchService,
     MeilisearchHealthIndicator,
+    EvolutionHealthIndicator,
   ],
 })
 export class HealthModule {}
