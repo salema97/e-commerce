@@ -2,11 +2,12 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '@repo/shared-ui';
-import { api } from '../../lib/api';
+import { useApiQueryHooks } from '../../lib/api';
 import { formatPrice } from '@repo/shared-utils';
 
 export default function QuotesScreen(): React.ReactElement {
-  const { data: quotes } = api.hooks.useQuotes('me');
+  const hooks = useApiQueryHooks();
+  const { data: quotes } = hooks.useQuotes('me');
 
   return (
     <SafeAreaView style={styles.container}>

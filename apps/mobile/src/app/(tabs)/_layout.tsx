@@ -1,11 +1,9 @@
-'use client';
-
 import React, { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@repo/api-client';
 import { neo } from '@repo/shared-ui';
-import { api } from '../../lib/api';
+import { createMobileApiClient } from '../../lib/api';
 
 export default function TabLayout(): React.ReactElement {
   const queryClient = useQueryClient();
@@ -13,11 +11,11 @@ export default function TabLayout(): React.ReactElement {
   useEffect(() => {
     void queryClient.prefetchQuery({
       queryKey: queryKeys.catalog({ page: 1, limit: 48, sort: 'newest' }),
-      queryFn: () => api.client.catalog.browse({ page: 1, limit: 48, sort: 'newest' }),
+      queryFn: () => createMobileApiClient().catalog.browse({ page: 1, limit: 48, sort: 'newest' }),
     });
     void queryClient.prefetchQuery({
       queryKey: queryKeys.categories,
-      queryFn: () => api.client.categories.findAll(),
+      queryFn: () => createMobileApiClient().categories.findAll(),
     });
   }, [queryClient]);
 
@@ -51,7 +49,6 @@ export default function TabLayout(): React.ReactElement {
         name="product/[id]"
         options={{
           href: null,
-          tabBarButton: () => null,
         }}
       />
     </Tabs>

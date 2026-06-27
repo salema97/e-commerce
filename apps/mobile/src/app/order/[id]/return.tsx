@@ -4,30 +4,18 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Card, Button, Input, Textarea, Checkbox, Alert, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../../../components/neo-screen';
 import { NeoStaggeredItem } from '../../../components/neo-animated';
-import { api } from '../../../lib/api';
-import { formatPrice } from '@repo/shared-utils';
+import { computeReturnEligibility, formatPrice } from '@repo/shared-utils';
+import { useApiQueryHooks } from '../../../lib/api';
 import type { Order } from '@repo/shared-types';
-
-const RETURN_WINDOW_DAYS = 30;
-
-function computeReturnEligibility(order: Order) {
-  const isDelivered = order.status === 'DELIVERED';
-  const createdAt = new Date(order.createdAt);
-  const cutoff = new Date(createdAt.getTime() + RETURN_WINDOW_DAYS * 24 * 60 * 60 * 1000);
-  const now = new Date();
-  const isWithinWindow = cutoff >= now;
-  const remainingMs = Math.max(0, cutoff.getTime() - now.getTime());
-  const remainingDays = Math.ceil(remainingMs / (24 * 60 * 60 * 1000));
-  return { isDelivered, isWithinWindow, remainingDays };
-}
 
 export default function ReturnRequestScreen(): React.ReactElement {
   const router = useRouter();
   const params = useLocalSearchParams<{ id: string }>();
   const orderId = params.id;
+  const hooks = useApiQueryHooks();
 
-  const { data: order, isError } = api.hooks.useOrder(orderId);
-  const createReturn = api.hooks.useCreateReturnRequest();
+  const { data: order, isError } = hooks.useOrder(orderId);
+  const createReturn = hooks.useCreateReturnRequest();
   const [selected, setSelected] = React.useState<Record<string, { qty: number; reason: string }>>({});
 
   if (isError || !order) {

@@ -39,5 +39,11 @@
     "*.{ts,tsx,js,jsx,mjs,cjs,json,md,yml,yaml}": [
       "prettier --write"
     ]
+  },
+  "pnpm": {
+    "overrides": {
+      "react": "19.2.3",
+      "react-dom": "19.2.3"
+    }
   }
 }

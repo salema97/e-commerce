@@ -4,12 +4,13 @@ import { useRouter } from 'expo-router';
 import { Button, Card, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../components/neo-screen';
 import { NeoStaggeredItem } from '../components/neo-animated';
-import { api } from '../lib/api';
+import { useApiQueryHooks } from '../lib/api';
 import type { Faq } from '@repo/shared-types';
 
 export default function HelpScreen(): React.ReactElement {
   const router = useRouter();
-  const { data: faqs = [], isLoading } = api.hooks.usePublishedFaqs();
+  const hooks = useApiQueryHooks();
+  const { data: faqs = [], isLoading } = hooks.usePublishedFaqs();
 
   const renderFaq = ({ item, index }: { item: Faq; index: number }) => (
     <NeoStaggeredItem index={index}>

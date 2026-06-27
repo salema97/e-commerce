@@ -10,8 +10,6 @@ import {
 } from '../lib/auth-storage';
 import { getApiBaseUrl } from '../lib/env';
 
-const API_BASE = getApiBaseUrl();
-
 interface AuthContextValue {
   user: StoredAuthUser | null;
   accessToken: string | null;
@@ -44,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    const res = await fetch(`${API_BASE}/auth/login`, {
+    const res = await fetch(`${getApiBaseUrl()}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -54,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [applySession]);
 
   const signUp = useCallback(async (email: string, password: string, name?: string) => {
-    const res = await fetch(`${API_BASE}/auth/register`, {
+    const res = await fetch(`${getApiBaseUrl()}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, name }),
@@ -66,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = useCallback(async () => {
     const refresh = await getRefreshToken();
     if (refresh) {
-      await fetch(`${API_BASE}/auth/logout`, {
+      await fetch(`${getApiBaseUrl()}/auth/logout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken: refresh }),

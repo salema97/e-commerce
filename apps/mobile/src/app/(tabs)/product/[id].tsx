@@ -9,10 +9,10 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Badge, Card, neo, ProductImage } from '@repo/shared-ui';
 import { NeoScreen } from '../../../components/neo-screen';
 import { NeoStaggeredItem } from '../../../components/neo-animated';
-import { api } from '../../../lib/api';
+import { useApiQueryHooks } from '../../../lib/api';
 import { useCart } from '../../../lib/cart';
 import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
-import { getProductAvailableQuantity } from '../../../lib/product-stock';
+import { getProductAvailableQuantity } from '@repo/shared-utils';
 import { trackMobileEvent } from '../../../lib/analytics';
 import { useAuth } from '../../../providers/AuthProvider';
 import { useWishlist } from '../../../lib/wishlist';
@@ -23,8 +23,9 @@ import type { ProductVariant } from '@repo/shared-types';
 
 export default function ProductDetailScreen(): React.ReactElement {
   const router = useRouter();
+  const hooks = useApiQueryHooks();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: product, error } = api.hooks.useProduct(id ?? '');
+  const { data: product, error } = hooks.useProduct(id ?? '');
   const { user } = useAuth();
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlist();
   const { addItem, itemCount } = useCart();

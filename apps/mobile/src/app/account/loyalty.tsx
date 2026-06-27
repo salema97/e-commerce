@@ -2,12 +2,13 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '@repo/shared-ui';
-import { api } from '../../lib/api';
+import { useApiQueryHooks } from '../../lib/api';
 import { formatDate } from '@repo/shared-utils';
 
 export default function LoyaltyScreen(): React.ReactElement {
-  const { data: account, isLoading: accountLoading } = api.hooks.useLoyaltyAccount();
-  const { data: transactions, isLoading: txLoading } = api.hooks.useLoyaltyTransactions();
+  const hooks = useApiQueryHooks();
+  const { data: account, isLoading: accountLoading } = hooks.useLoyaltyAccount();
+  const { data: transactions, isLoading: txLoading } = hooks.useLoyaltyTransactions();
 
   return (
     <SafeAreaView style={styles.container}>

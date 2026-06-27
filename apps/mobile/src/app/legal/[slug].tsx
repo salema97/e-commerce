@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Card, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen';
-import { api } from '../../lib/api';
+import { useApiQueryHooks } from '../../lib/api';
 import { LEGAL_PATH_TITLES, resolveLegalCmsSlug } from '@repo/shared-utils';
 
 export default function LegalPageScreen(): React.ReactElement {
@@ -12,8 +12,9 @@ export default function LegalPageScreen(): React.ReactElement {
   const pathSlug = slug ?? '';
   const fallbackTitle = LEGAL_PATH_TITLES[pathSlug];
   const cmsSlug = fallbackTitle ? resolveLegalCmsSlug(pathSlug) : '';
+  const hooks = useApiQueryHooks();
 
-  const { data: page, error } = api.hooks.useCmsPageBySlug(cmsSlug, {
+  const { data: page, error } = hooks.useCmsPageBySlug(cmsSlug, {
     enabled: Boolean(cmsSlug),
   });
 

@@ -2,12 +2,12 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card } from '@repo/shared-ui';
-import { api } from '../../lib/api';
+import { createMobileApiClient } from '../../lib/api';
 
 export default function PrivacyScreen(): React.ReactElement {
   async function exportData(): Promise<void> {
     try {
-      const bundle = await api.client.privacy.exportMine();
+      const bundle = await createMobileApiClient().privacy.exportMine();
       Alert.alert('Exportación lista', `Datos exportados el ${bundle.exportedAt}`);
     } catch {
       Alert.alert('Error', 'No se pudo exportar tus datos.');

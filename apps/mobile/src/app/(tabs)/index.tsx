@@ -8,7 +8,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Button, PressableCard, ProductImage, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen';
-import { api } from '../../lib/api';
+import { useApiQueryHooks } from '../../lib/api';
 import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
 import type { Product } from '@repo/shared-types';
 import {
@@ -21,7 +21,8 @@ import {
 
 export default function HomeScreen(): React.ReactElement {
   const router = useRouter();
-  const { data: products, error } = api.hooks.useProducts();
+  const hooks = useApiQueryHooks();
+  const { data: products, error } = hooks.useProducts();
 
   const featuredProducts = React.useMemo(() => {
     if (!products) return [];

@@ -4,23 +4,17 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Card, Button } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen';
 import { NeoStaggeredItem } from '../../components/neo-animated';
-import { api } from '../../lib/api';
-import { formatPrice, orderStatusLabel } from '@repo/shared-utils';
+import { createMobileApiClient, useApiQueryHooks } from '../../lib/api';
+import { formatPrice, isOrderReturnable, orderStatusLabel } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
-
-function isReturnable(order: Order): boolean {
-  if (order.status !== 'DELIVERED') return false;
-  const deliveredAt = new Date(order.createdAt);
-  const windowDays = 30;
-  return deliveredAt.getTime() + windowDays * 24 * 60 * 60 * 1000 >= Date.now();
-}
 
 export default function OrderDetailScreen(): React.ReactElement {
   const router = useRouter();
   const params = useLocalSearchParams<{ id: string }>();
   const orderId = params.id;
+  const hooks = useApiQueryHooks();
 
-  const { data: order, isError } = api.hooks.useOrder(orderId, {
+  const { data: order, isError } = hooks.useOrder(orderId, {
     refetchInterval: (query) => {
       const current = query.state.data as Order | undefined;
       if (current && (current.status === 'PAYMENT_PENDING' || current.status === 'PENDING')) {
@@ -36,8 +30,9 @@ export default function OrderDetailScreen(): React.ReactElement {
     if (!orderId) return;
     setIsGeneratingReceipt(true);
     try {
-      const receipt = await api.client.orders.getReceipt(orderId).catch(async () =>
-        api.client.orders.generateReceipt(orderId),
+      const client = createMobileApiClient();
+      const receipt = await client.orders.getReceipt(orderId).catch(async () =>
+        client.orders.generateReceipt(orderId),
       );
       if (receipt?.url) {
         await Linking.openURL(receipt.url);
@@ -148,7 +143,7 @@ export default function OrderDetailScreen(): React.ReactElement {
             </Button>
           ) : null}
 
-          {isReturnable(order) ? (
+          {isOrderReturnable(order) ? (
             <Button
               variant="outline"
               onPress={() => router.push(`/order/${orderId}/return`)}

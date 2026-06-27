@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Input, Card, Button, neo } from '@repo/shared-ui';
-import { api } from '../../lib/api';
+import { useApiQueryHooks } from '../../lib/api';
 import { useAuth } from '../../providers/AuthProvider';
 
 interface ProductReviewsProps {
@@ -9,10 +9,11 @@ interface ProductReviewsProps {
 }
 
 export function ProductReviews({ productId }: ProductReviewsProps): React.ReactElement {
+  const hooks = useApiQueryHooks();
   const { user } = useAuth();
-  const { data: reviews } = api.hooks.useProductReviews(productId);
-  const { data: summary } = api.hooks.useProductReviewSummary(productId);
-  const createReview = api.hooks.useCreateProductReview();
+  const { data: reviews } = hooks.useProductReviews(productId);
+  const { data: summary } = hooks.useProductReviewSummary(productId);
+  const createReview = hooks.useCreateProductReview();
 
   const [rating, setRating] = useState('5');
   const [body, setBody] = useState('');

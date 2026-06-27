@@ -17,7 +17,7 @@ import {
   serializeJsonLd,
 } from '@repo/shared-utils';
 import type { ProductReview, ProductReviewSummary } from '@repo/shared-types';
-import { getProductAvailableQuantity } from '@/lib/product-stock';
+import { getProductAvailableQuantity } from '@repo/shared-utils';
 
 const EMPTY_REVIEW_SUMMARY: ProductReviewSummary = {
   averageRating: 0,

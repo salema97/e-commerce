@@ -15,6 +15,7 @@
     },
     "android": {
       "package": "com.example.ecommerce",
+      "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "backgroundColor": "#ffffff"
       }
@@ -52,7 +53,6 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiUrl": "http://localhost:3001/v1",
       "stripePublishableKey": "pk_test_xxx",
       "eas": {
         "projectId": "your-eas-project-id"

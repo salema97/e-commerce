@@ -5,7 +5,7 @@ import { useStripe } from '@stripe/stripe-react-native';
 import { Button, Input, Card } from '@repo/shared-ui';
 import { NeoScreen } from '../components/neo-screen';
 import { NeoEnterFromBottom, NeoStaggeredItem } from '../components/neo-animated';
-import { api } from '../lib/api';
+import { createMobileApiClient, useApiQueryHooks } from '../lib/api';
 import { useCart } from '../lib/cart';
 import { formatPrice, estimateCheckoutTotals } from '@repo/shared-utils';
 import type { OrderAddress, CreateOrderDto, CreatePaymentIntentDto } from '@repo/shared-types';
@@ -37,9 +37,10 @@ export default function CheckoutScreen(): React.ReactElement {
   const [isProcessing, setIsProcessing] = useState(false);
   const [shippingAmount, setShippingAmount] = useState<number | null>(null);
 
-  const createOrder = api.hooks.useCreateOrder();
-  const createPaymentIntent = api.hooks.useCreatePaymentIntent();
-  const { data: loyaltyAccount } = api.hooks.useLoyaltyAccount();
+  const hooks = useApiQueryHooks();
+  const createOrder = hooks.useCreateOrder();
+  const createPaymentIntent = hooks.useCreatePaymentIntent();
+  const { data: loyaltyAccount } = hooks.useLoyaltyAccount();
 
   const addressReady = Boolean(recipientName && street && city && country);
 
@@ -50,7 +51,7 @@ export default function CheckoutScreen(): React.ReactElement {
     }
 
     let cancelled = false;
-    void api.client.shipping
+    void createMobileApiClient().shipping
       .quote({
         country,
         province: state || undefined,

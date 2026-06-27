@@ -3,8 +3,6 @@ import { getApiBaseUrl } from './env';
 import { hasAnalyticsConsent } from './analytics-consent';
 import { captureMobileException } from './sentry';
 
-const API_BASE = getApiBaseUrl();
-
 let sessionId: string | null = null;
 
 function getSessionId(): string {
@@ -25,7 +23,7 @@ export async function trackMobileEvent(
       return;
     }
 
-    await fetch(`${API_BASE}/analytics/events`, {
+    await fetch(`${getApiBaseUrl()}/analytics/events`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

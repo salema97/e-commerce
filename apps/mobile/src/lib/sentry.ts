@@ -32,18 +32,3 @@ export function captureMobileException(error: unknown, context?: Record<string, 
     Sentry.captureException(error);
   });
 }
-
-export function captureMobileMessage(message: string, context?: Record<string, unknown>): void {
-  if (!initialized) {
-    return;
-  }
-
-  Sentry.withScope((scope) => {
-    if (context) {
-      scope.setExtras(context);
-    }
-    Sentry.captureMessage(message);
-  });
-}
-
-export { Sentry };

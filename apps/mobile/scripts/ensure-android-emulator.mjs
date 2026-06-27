@@ -82,6 +82,14 @@ async function waitForBoot(adbPath, timeoutMs) {
   throw new Error(`Emulator did not boot within ${timeoutMs}ms`);
 }
 
+function setupMetroPortForward(adbPath) {
+  const metroPort = process.env.EXPO_METRO_PORT?.trim() || '8081';
+  const result = run(adbPath, ['reverse', `tcp:${metroPort}`, `tcp:${metroPort}`]);
+  if (result.status === 0) {
+    console.log(`[android] adb reverse tcp:${metroPort} → host (Metro)`);
+  }
+}
+
 async function main() {
   if (process.env.SKIP_ANDROID_EMULATOR === '1') {
     console.log('[android] SKIP_ANDROID_EMULATOR=1 — skipping emulator check');
@@ -107,6 +115,7 @@ async function main() {
   const online = listOnlineDevices(adbPath);
   if (online.length > 0) {
     console.log(`[android] Device already online: ${online.join(', ')}`);
+    setupMetroPortForward(adbPath);
     return;
   }
 
@@ -130,6 +139,7 @@ async function main() {
   const timeoutMs = Number(process.env.ANDROID_EMULATOR_BOOT_TIMEOUT_MS ?? '180000');
   const device = await waitForBoot(adbPath, timeoutMs);
   console.log(`[android] Emulator ready: ${device}`);
+  setupMetroPortForward(adbPath);
 }
 
 main().catch((err) => {

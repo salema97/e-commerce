@@ -6,9 +6,8 @@ import {
   registerForPushNotificationsAsync,
   addNotificationReceivedListener,
   addNotificationResponseReceivedListener,
-  removeNotificationSubscription,
 } from '../lib/notifications';
-import { api } from '../lib/api';
+import { createMobileApiClient } from '../lib/api';
 import { useAuth } from '../providers/AuthProvider';
 import { setRegisteredPushToken } from '../lib/push-token-registry';
 
@@ -51,7 +50,7 @@ export function usePushNotifications(
       setNotification(incoming);
     }).then((subscription) => {
       if (cancelled) {
-        removeNotificationSubscription(subscription);
+        subscription.remove();
         return;
       }
       receivedSubscription = subscription;
@@ -65,7 +64,7 @@ export function usePushNotifications(
       }
     }).then((subscription) => {
       if (cancelled) {
-        removeNotificationSubscription(subscription);
+        subscription.remove();
         return;
       }
       responseSubscription = subscription;
@@ -74,10 +73,10 @@ export function usePushNotifications(
     return () => {
       cancelled = true;
       if (receivedSubscription) {
-        removeNotificationSubscription(receivedSubscription);
+        receivedSubscription.remove();
       }
       if (responseSubscription) {
-        removeNotificationSubscription(responseSubscription);
+        responseSubscription.remove();
       }
     };
   }, [onNotificationResponse]);
@@ -90,7 +89,7 @@ export function usePushNotifications(
     const platform =
       Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web';
 
-    void api.client.notifications.pushTokens
+    void createMobileApiClient().notifications.pushTokens
       .register({ token: pushToken, platform })
       .then(() => {
         syncedTokenRef.current = pushToken;

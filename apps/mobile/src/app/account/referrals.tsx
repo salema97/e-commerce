@@ -2,12 +2,13 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card } from '@repo/shared-ui';
-import { api } from '../../lib/api';
+import { useApiQueryHooks } from '../../lib/api';
 import { formatPrice } from '@repo/shared-utils';
 
 export default function ReferralsScreen(): React.ReactElement {
-  const { data: code } = api.hooks.useReferralCode();
-  const { data: report } = api.hooks.useReferralPerformance('me');
+  const hooks = useApiQueryHooks();
+  const { data: code } = hooks.useReferralCode();
+  const { data: report } = hooks.useReferralPerformance('me');
 
   async function shareLink(): Promise<void> {
     if (!code?.link) return;

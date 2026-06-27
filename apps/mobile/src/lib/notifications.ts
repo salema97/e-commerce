@@ -82,7 +82,3 @@ export async function addNotificationResponseReceivedListener(
   }
   return Notifications.addNotificationResponseReceivedListener(callback);
 }
-
-export function removeNotificationSubscription(subscription: { remove: () => void }): void {
-  subscription.remove();
-}

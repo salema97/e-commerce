@@ -7,17 +7,35 @@
     "jsx": "react-native",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["ES2022"],
-    "types": ["react-native"],
+    "lib": [
+      "ES2022"
+    ],
+    "types": [
+      "react-native"
+    ],
     "resolveJsonModule": true,
     "noEmit": false
   },
-  "include": ["src/**/*"],
+  "include": [
+    "src/**/*",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ],
   "references": [
-    { "path": "../../packages/shared-config" },
-    { "path": "../../packages/shared-types" },
-    { "path": "../../packages/shared-utils" },
-    { "path": "../../packages/shared-ui" },
-    { "path": "../../packages/api-client" }
+    {
+      "path": "../../packages/shared-config"
+    },
+    {
+      "path": "../../packages/shared-types"
+    },
+    {
+      "path": "../../packages/shared-utils"
+    },
+    {
+      "path": "../../packages/shared-ui"
+    },
+    {
+      "path": "../../packages/api-client"
+    }
   ]
 }

@@ -10,23 +10,24 @@ import {
 } from 'react-native';
 import { Button, ChatBubble, Input, neo } from '@repo/shared-ui';
 import type { Message } from '@repo/shared-types';
-import { api } from '../../lib/api';
+import { useApiQueryHooks } from '../../lib/api';
 
 export function StoreChatWidget(): React.ReactElement {
+  const hooks = useApiQueryHooks();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const [open, setOpen] = useState(false);
 
-  const createSession = api.hooks.useCreateChatSession({
+  const createSession = hooks.useCreateChatSession({
     onSuccess: (session) => setSessionId(session.webSessionId),
   });
 
-  const { data: messages = [] } = api.hooks.useChatMessages(sessionId ?? '', {
+  const { data: messages = [] } = hooks.useChatMessages(sessionId ?? '', {
     enabled: Boolean(sessionId && open),
     refetchInterval: open ? 3_000 : false,
   });
 
-  const sendMessage = api.hooks.useSendChatMessage();
+  const sendMessage = hooks.useSendChatMessage();
 
   useEffect(() => {
     if (!open || sessionId || createSession.isPending) {

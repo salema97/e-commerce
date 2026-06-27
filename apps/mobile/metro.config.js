@@ -13,7 +13,33 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ];
 
-// Expo Doctor expects false; monorepo resolution uses nodeModulesPaths + watchFolders.
-config.resolver.disableHierarchicalLookup = false;
+const singletonPackages = ['react', '@tanstack/react-query'];
+
+const defaultResolveRequest = config.resolver.resolveRequest;
+
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  const rootPkg = moduleName.split('/')[0];
+  const forceSingleton =
+    singletonPackages.includes(rootPkg) ||
+    moduleName.startsWith('react/') ||
+    moduleName.startsWith('@tanstack/react-query/');
+
+  if (forceSingleton) {
+    try {
+      return {
+        type: 'sourceFile',
+        filePath: require.resolve(moduleName, { paths: [projectRoot] }),
+      };
+    } catch {
+      // Fall through.
+    }
+  }
+
+  if (defaultResolveRequest) {
+    return defaultResolveRequest(context, moduleName, platform);
+  }
+
+  return context.resolveRequest(context, moduleName, platform);
+};
 
 module.exports = config;

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Card, Switch, neo } from '@repo/shared-ui';
-import { api } from '../../lib/api';
+import { useApiQueryHooks } from '../../lib/api';
 
 export function NotificationPreferencesPanel(): React.ReactElement {
-  const { data, isLoading } = api.hooks.useNotificationPreferences();
-  const updatePreferences = api.hooks.useUpdateNotificationPreferences();
+  const hooks = useApiQueryHooks();
+  const { data, isLoading } = hooks.useNotificationPreferences();
+  const updatePreferences = hooks.useUpdateNotificationPreferences();
   const [message, setMessage] = useState('');
 
   if (isLoading || !data) {

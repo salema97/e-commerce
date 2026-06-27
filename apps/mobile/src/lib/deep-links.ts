@@ -1,6 +1,4 @@
-import * as Linking from 'expo-linking';
-
-export const linkingPrefixes = ['ecommerce://', 'https://ecommerce.example.com'];
+import type { Href } from 'expo-router';
 
 export interface DeepLinkTarget {
   pathname: string;
@@ -46,12 +44,15 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
   return null;
 }
 
-export function useDeepLinkUrl(): string | null {
-  return Linking.useURL();
-}
-
-export function addDeepLinkListener(callback: (url: string) => void): { remove: () => void } {
-  return Linking.addEventListener('url', (event) => {
-    callback(event.url);
-  });
+export function navigateDeepLink(
+  router: { navigate: (href: Href) => void },
+  url: string,
+): void {
+  const target = parseDeepLink(url);
+  if (target) {
+    router.navigate({
+      pathname: target.pathname,
+      params: target.params,
+    } as Href);
+  }
 }

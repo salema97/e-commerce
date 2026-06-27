@@ -1,5 +1,5 @@
 import React from 'react';
-import { AccessibilityInfo, type ViewStyle } from 'react-native';
+import { type ViewStyle } from 'react-native';
 import Animated, {
   Easing,
   FadeInDown,
@@ -131,17 +131,4 @@ function PulseLoop({ children, style }: NeoAnimatedViewProps) {
   }));
 
   return <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>;
-}
-
-export function useNeoMotionPreference(): { motionEnabled: boolean } {
-  const reducedMotion = useReducedMotion();
-  const [systemReduced, setSystemReduced] = React.useState(false);
-
-  React.useEffect(() => {
-    void AccessibilityInfo.isReduceMotionEnabled().then(setSystemReduced);
-    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setSystemReduced);
-    return () => sub.remove();
-  }, []);
-
-  return { motionEnabled: !reducedMotion && !systemReduced };
 }

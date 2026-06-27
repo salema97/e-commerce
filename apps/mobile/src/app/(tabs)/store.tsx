@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Input, Badge, PressableCard, ProductImage, Button, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen';
 import { StoreChatWidget } from '../../components/store/StoreChatWidget';
-import { api } from '../../lib/api';
+import { useApiQueryHooks } from '../../lib/api';
 import { formatPrice } from '@repo/shared-utils';
 import type { CatalogProductSummary, Category } from '@repo/shared-types';
 import { NeoEnterFromTop, NeoStaggeredItem } from '../../components/neo-animated';
@@ -13,6 +13,7 @@ import { useAuth } from '../../providers/AuthProvider';
 
 export default function StoreScreen(): React.ReactElement {
   const router = useRouter();
+  const hooks = useApiQueryHooks();
   const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
@@ -48,8 +49,8 @@ export default function StoreScreen(): React.ReactElement {
     }
   }, [selectedCategory, user?.id]);
 
-  const { data: catalog, error: catalogError } = api.hooks.useCatalog(catalogQuery);
-  const { data: categories } = api.hooks.useCategories();
+  const { data: catalog, error: catalogError } = hooks.useCatalog(catalogQuery);
+  const { data: categories } = hooks.useCategories();
 
   const products: CatalogProductSummary[] = catalog?.items ?? [];
 

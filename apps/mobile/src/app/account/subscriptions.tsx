@@ -3,28 +3,29 @@ import { View, Text, ScrollView, StyleSheet, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Card } from '@repo/shared-ui';
-import { api } from '../../lib/api';
+import { createMobileApiClient } from '../../lib/api';
 
 export default function SubscriptionsScreen(): React.ReactElement {
+  const client = createMobileApiClient();
   const subscriptionsQuery = useQuery({
     queryKey: ['subscriptions', 'me'],
-    queryFn: () => api.client.subscriptions.mine(),
+    queryFn: () => client.subscriptions.mine(),
   });
   const plansQuery = useQuery({
     queryKey: ['subscriptions', 'plans'],
-    queryFn: () => api.client.subscriptions.listPlans(),
+    queryFn: () => client.subscriptions.listPlans(),
   });
 
   const subscriptions = subscriptionsQuery.data ?? [];
   const plans = plansQuery.data ?? [];
 
   async function openPortal(): Promise<void> {
-    const { url } = await api.client.subscriptions.portal();
+    const { url } = await client.subscriptions.portal();
     if (url) await Linking.openURL(url);
   }
 
   async function subscribe(planId: string): Promise<void> {
-    const { url } = await api.client.subscriptions.subscribe(planId);
+    const { url } = await client.subscriptions.subscribe(planId);
     if (url) await Linking.openURL(url);
   }
 

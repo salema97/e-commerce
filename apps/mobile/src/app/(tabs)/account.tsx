@@ -11,23 +11,24 @@ import { useAuth } from '../../providers/AuthProvider';
 import { Button, Card, Badge, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen';
 import { NeoStaggeredItem } from '../../components/neo-animated';
-import { api } from '../../lib/api';
+import { createMobileApiClient, useApiQueryHooks } from '../../lib/api';
 import { getRegisteredPushToken } from '../../lib/push-token-registry';
 import { formatPrice, formatDate, orderStatusLabel } from '@repo/shared-utils';
 import type { Order } from '@repo/shared-types';
 
 export default function AccountScreen(): React.ReactElement {
   const router = useRouter();
+  const hooks = useApiQueryHooks();
   const { user, signOut } = useAuth();
-  const { data: orders } = api.hooks.useOrders({ limit: 10 });
-  const { data: storeCredit } = api.hooks.useMyStoreCredit({
+  const { data: orders } = hooks.useOrders({ limit: 10 });
+  const { data: storeCredit } = hooks.useMyStoreCredit({
     enabled: Boolean(user),
   });
 
   const handleSignOut = async (): Promise<void> => {
     const pushToken = getRegisteredPushToken();
     if (pushToken) {
-      await api.client.notifications.pushTokens.remove(pushToken).catch(() => undefined);
+      await createMobileApiClient().notifications.pushTokens.remove(pushToken).catch(() => undefined);
     }
     await signOut();
     router.replace('/(tabs)');
