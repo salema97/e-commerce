@@ -121,6 +121,27 @@ const envSchema = z.object({
   SERVIENTREGA_ORIGIN_CITY_ID: z.coerce.number().int().positive().optional(),
   SERVIENTREGA_PRODUCT_ID: z.coerce.number().int().positive().optional(),
   SERVIENTREGA_LANGUAGE: z.enum(['es', 'en']).default('es'),
+  SERVIENTREGA_LOGIN: z.string().optional(),
+  SERVIENTREGA_PASSWORD: z.string().optional(),
+  SERVIENTREGA_BILLING_CODE: z.string().optional(),
+  SERVIENTREGA_LOAD_NAME: z.string().optional(),
+  SERVIENTREGA_GUIDE_WSDL_URL: z
+    .string()
+    .url()
+    .default('http://web.servientrega.com:8081/GeneracionGuias.asmx?wsdl'),
+  SERVIENTREGA_TRACKING_WSDL_URL: z
+    .string()
+    .url()
+    .default('http://sismilenio.servientrega.com/wsrastreoenvios/wsrastreoenvios.asmx?wsdl'),
+  SERVIENTREGA_TRACKING_PUBLIC_URL: z
+    .string()
+    .url()
+    .default('https://www.servientrega.com.ec/Tracking/'),
+  SERVIENTREGA_ORIGIN_CONTACT_NAME: z.string().optional(),
+  SERVIENTREGA_ORIGIN_STREET: z.string().optional(),
+  SERVIENTREGA_ORIGIN_CITY_NAME: z.string().optional(),
+  SERVIENTREGA_ORIGIN_PROVINCE: z.string().optional(),
+  SERVIENTREGA_ORIGIN_PHONE: z.string().optional(),
   TAX_PROVIDER: z.enum(['ecuador', 'stripe_tax', 'taxjar', 'avalara', 'composite']).default('composite'),
   INTERNATIONAL_TAX_PROVIDER: z.enum(['stripe_tax', 'taxjar', 'avalara']).default('stripe_tax'),
   STRIPE_TAX_ENABLED: z.enum(['true', 'false']).default('false'),

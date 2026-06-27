@@ -42,21 +42,47 @@ POST /v1/shipping/servientrega/sync-cities
 Authorization: Bearer <admin-jwt>
 ```
 
-Esto descarga ciudades destino desde `CiudadesDepartamentoDestino` y las guarda en `ServientregaCity`.
+## 5. Generar guía (Fase 2)
 
-## 5. Cotización en checkout
+Configura además:
+
+```bash
+SERVIENTREGA_LOGIN=
+SERVIENTREGA_PASSWORD=
+SERVIENTREGA_BILLING_CODE=
+SERVIENTREGA_LOAD_NAME=
+SERVIENTREGA_ORIGIN_CONTACT_NAME=
+SERVIENTREGA_ORIGIN_STREET=
+SERVIENTREGA_ORIGIN_CITY_NAME=
+```
+
+Endpoint:
+
+```http
+POST /v1/fulfillment/orders/:orderId/shipments/servientrega
+Authorization: Bearer <admin-jwt>
+```
+
+Sync tracking:
+
+```http
+POST /v1/fulfillment/shipments/:shipmentId/servientrega/sync-tracking
+POST /v1/fulfillment/servientrega/sync-tracking
+```
+
+## 6. Cotización en checkout
 
 `POST /v1/shipping/quote` usa peso/dimensiones del carrito y `valorDeclarado` = subtotal.
 
 **Regla API:** HTTP 200 con `code !== 1` es error de negocio; la plataforma hace fallback a zonas.
 
-## 6. Próximas fases (no incluidas aún)
+## 7. Próximas fases (no incluidas aún)
 
-- Generación de guías SOAP: `http://web.servientrega.com:8081/GeneracionGuias.asmx`
-- Tracking SOAP: `http://sismilenio.servientrega.com/wsrastreoenvios/`
+- Generación de guías SOAP: implementado (`GeneracionGuias.asmx`)
+- Tracking SOAP: implementado (`wsRastreoEnvios`)
 - Guía SRI 06 al despachar
 
-## 7. Referencias
+## 8. Referencias
 
 - Tracking público: https://www.servientrega.com.ec/Tracking/
 - E-commerce Servientrega: https://www.servientrega.com.ec/
