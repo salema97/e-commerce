@@ -16,6 +16,11 @@ export function NeoPageTransition({ children }: NeoPageTransitionProps) {
   const pathname = usePathname();
   const prefersReducedMotion = useReducedMotion();
 
+  React.useEffect(() => {
+    // Next.js no siempre resetea scroll al navegar; evita heredar posición de la página anterior.
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   if (prefersReducedMotion || pathname === '/' || pathname?.startsWith('/admin')) {
     return <>{children}</>;
   }
