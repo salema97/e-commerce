@@ -6,7 +6,16 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { PressableCard, ProductImage, NeoPageHeader, getNeoLayoutStyles, getNeoTextStyles, neo } from '@repo/shared-ui';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  Button,
+  PressableCard,
+  ProductImage,
+  NeoPageHeader,
+  getNeoLayoutStyles,
+  getNeoTextStyles,
+  neo,
+} from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen';
 import { useApiQueryHooks } from '../../lib/api';
 import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
@@ -66,9 +75,19 @@ export default function HomeScreen(): React.ReactElement {
         <NeoPageHeader
           eyebrow="Colección"
           title="Descubre"
-          subtitle="Productos destacados de la tienda"
           style={layout.pageHeaderInset}
           compact
+          trailingCompact
+          trailing={
+            <Button
+              variant="outline"
+              size="icon"
+              accessibilityLabel="Notificaciones"
+              onPress={() => router.push('/account/notifications')}
+            >
+              <MaterialCommunityIcons name="bell-outline" size={22} color={neo.onyx} />
+            </Button>
+          }
         />
       </NeoEnterFromTop>
 

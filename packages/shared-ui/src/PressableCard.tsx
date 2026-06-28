@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, View, Text, StyleSheet, type PressableProps, type ViewStyle } from 'react-native';
 import { Card } from './Card.js';
 import { neo } from './theme.js';
-import { NeoBrutalShadow } from './neo-brutal-shadow.js';
+import { NeoBrutalShadow, getNeoPressTransform } from './neo-brutal-shadow.js';
 
 export interface PressableCardProps extends Omit<PressableProps, 'style'> {
   children: React.ReactNode;
@@ -56,18 +56,26 @@ export function Checkbox({
       onPress={() => onCheckedChange(!checked)}
       style={styles.checkboxRow}
     >
-      <NeoBrutalShadow shadow="xs">
-        <View
-          style={[
-            styles.checkboxBox,
-            checked && styles.checkboxBoxChecked,
-            disabled && styles.checkboxDisabled,
-          ]}
-        >
-          {checked ? <Text style={styles.checkmark}>✓</Text> : null}
-        </View>
-      </NeoBrutalShadow>
-      <Text style={[styles.checkboxLabel, disabled && styles.checkboxLabelDisabled]}>{label}</Text>
+      {({ pressed }) => {
+        const isPressed = pressed && !disabled;
+        return (
+          <>
+            <NeoBrutalShadow shadow="xs" hideShadow={isPressed} reserveShadowSpace>
+              <View
+                style={[
+                  styles.checkboxBox,
+                  checked && styles.checkboxBoxChecked,
+                  disabled && styles.checkboxDisabled,
+                  isPressed && getNeoPressTransform('xs'),
+                ]}
+              >
+                {checked ? <Text style={styles.checkmark}>✓</Text> : null}
+              </View>
+            </NeoBrutalShadow>
+            <Text style={[styles.checkboxLabel, disabled && styles.checkboxLabelDisabled]}>{label}</Text>
+          </>
+        );
+      }}
     </Pressable>
   );
 }

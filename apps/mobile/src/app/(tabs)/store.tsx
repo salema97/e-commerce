@@ -60,7 +60,8 @@ export default function StoreScreen(): React.ReactElement {
   const renderCategory = ({ item }: { item: Category }) => (
     <Button
       size="sm"
-      variant={selectedCategory === item.slug ? 'selected' : 'outline'}
+      variant="outline"
+      active={selectedCategory === item.slug}
       onPress={() =>
         setSelectedCategory((current) => (current === item.slug ? undefined : item.slug))
       }
@@ -134,7 +135,8 @@ export default function StoreScreen(): React.ReactElement {
           <Button
             key={value ?? 'all'}
             size="sm"
-            variant={minRating === value ? 'selected' : 'outline'}
+            variant="outline"
+            active={minRating === value}
             onPress={() => setMinRating(value)}
             style={styles.chip}
             textStyle={styles.chipText}

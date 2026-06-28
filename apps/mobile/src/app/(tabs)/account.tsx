@@ -103,7 +103,7 @@ export default function AccountScreen(): React.ReactElement {
           <Button variant="outline" fullWidth onPress={() => router.push('/help')}>
             Ayuda y preguntas frecuentes
           </Button>
-          <Button variant="outline" fullWidth onPress={() => router.push('/wishlist')}>
+          <Button variant="outline" fullWidth onPress={() => router.push('/(tabs)/wishlist')}>
             Lista de deseos
           </Button>
           <Button variant="outline" fullWidth onPress={() => router.push('/legal')}>

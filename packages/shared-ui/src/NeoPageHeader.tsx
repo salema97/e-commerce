@@ -9,6 +9,8 @@ export interface NeoPageHeaderProps {
   children?: React.ReactNode;
   /** Slot to the right of the title block (e.g. search field). */
   trailing?: React.ReactNode;
+  /** Icon/action trailing — does not stretch like a search field. */
+  trailingCompact?: boolean;
   style?: ViewStyle;
   compact?: boolean;
   align?: 'left' | 'center';
@@ -20,6 +22,7 @@ export function NeoPageHeader({
   subtitle,
   children,
   trailing,
+  trailingCompact = false,
   style,
   compact = false,
   align = 'left',
@@ -36,7 +39,13 @@ export function NeoPageHeader({
         style,
       ]}
     >
-      <View style={[styles.titleRow, trailing ? styles.titleRowWithTrailing : null]}>
+      <View
+        style={[
+          styles.titleRow,
+          trailing ? styles.titleRowWithTrailing : null,
+          trailing && trailingCompact ? styles.titleRowWithTrailingCompact : null,
+        ]}
+      >
         <View style={[styles.titleBlock, trailing ? styles.titleBlockTrailing : null]}>
           {eyebrow ? (
             <Text style={[text.eyebrow, styles.eyebrowGap, centered && styles.textCenter]}>
@@ -50,7 +59,9 @@ export function NeoPageHeader({
             </Text>
           ) : null}
         </View>
-        {trailing ? <View style={styles.trailing}>{trailing}</View> : null}
+        {trailing ? (
+          <View style={trailingCompact ? styles.trailingCompact : styles.trailing}>{trailing}</View>
+        ) : null}
       </View>
       {children}
     </View>
@@ -66,6 +77,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: 12,
   },
+  titleRowWithTrailingCompact: {
+    alignItems: 'center',
+  },
   titleBlock: {
     alignSelf: 'stretch',
   },
@@ -78,6 +92,10 @@ const styles = StyleSheet.create({
     minWidth: 120,
     maxWidth: 200,
     paddingBottom: 2,
+  },
+  trailingCompact: {
+    flexShrink: 0,
+    paddingBottom: 0,
   },
   centered: {
     alignItems: 'center',

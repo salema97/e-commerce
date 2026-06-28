@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { neo } from './theme.js';
 import { getNeoFontFamilies } from './typography.js';
-import { NeoBrutalShadow, type NeoShadowPreset } from './neo-brutal-shadow.js';
+import { NeoBrutalShadow, getNeoPressTransform, type NeoShadowPreset } from './neo-brutal-shadow.js';
 
 /** Matches web `buttonVariants` + `btn-brutal` in apps/web. */
 export type ButtonVariant =
@@ -23,12 +23,14 @@ export type ButtonVariant =
   | 'destructive'
   | 'selected';
 
-export type ButtonSize = 'default' | 'sm' | 'md' | 'lg';
+export type ButtonSize = 'default' | 'sm' | 'md' | 'lg' | 'icon';
 
 export interface ButtonProps {
   children: React.ReactNode;
   onPress?: () => void;
   variant?: ButtonVariant;
+  /** Persistent pressed look (shadow hidden + offset). Same colors — like an active tab. */
+  active?: boolean;
   size?: ButtonSize;
   disabled?: boolean;
   loading?: boolean;
@@ -41,25 +43,15 @@ export interface ButtonProps {
 
 function resolveVariant(
   variant: ButtonVariant,
-): Exclude<ButtonVariant, 'primary' | 'default'> | 'default' {
+): Exclude<ButtonVariant, 'primary' | 'default' | 'selected'> | 'default' | 'outline' {
   if (variant === 'primary') return 'default';
+  if (variant === 'selected') return 'outline';
   return variant;
 }
 
 function getShadowPreset(variant: ReturnType<typeof resolveVariant>): NeoShadowPreset {
-  switch (variant) {
-    case 'default':
-    case 'destructive':
-      return 'lg';
-    case 'outline':
-    case 'secondary':
-    case 'selected':
-      return 'md';
-    case 'ghost':
-      return 'none';
-    default:
-      return 'none';
-  }
+  if (variant === 'ghost') return 'none';
+  return 'lg';
 }
 
 function getVariantStyles(variant: ReturnType<typeof resolveVariant>) {
@@ -68,11 +60,6 @@ function getVariantStyles(variant: ReturnType<typeof resolveVariant>) {
       return {
         face: { backgroundColor: neo.gold, borderColor: neo.onyx },
         text: { color: neo.onyx },
-      };
-    case 'selected':
-      return {
-        face: { backgroundColor: neo.onyx, borderColor: neo.onyx },
-        text: { color: neo.white },
       };
     case 'outline':
       return {
@@ -98,19 +85,32 @@ function getVariantStyles(variant: ReturnType<typeof resolveVariant>) {
   }
 }
 
+function isTextChild(children: React.ReactNode): boolean {
+  return typeof children === 'string' || typeof children === 'number';
+}
+
 function getSizeStyles(size: ButtonSize) {
   switch (size) {
+    case 'icon':
+      return {
+        face: { width: 44, height: 44, paddingHorizontal: 0 },
+        text: { fontSize: 14, lineHeight: 18 },
+        displayFont: false,
+        iconOnly: true,
+      };
     case 'sm':
       return {
         face: { height: 36, paddingHorizontal: 12 },
         text: { fontSize: 12, lineHeight: 16 },
         displayFont: false,
+        iconOnly: false,
       };
     case 'lg':
       return {
         face: { height: 56, paddingHorizontal: 32 },
         text: { fontSize: 16, lineHeight: 20 },
         displayFont: true,
+        iconOnly: false,
       };
     case 'md':
     case 'default':
@@ -119,6 +119,7 @@ function getSizeStyles(size: ButtonSize) {
         face: { height: 44, paddingHorizontal: 20 },
         text: { fontSize: 14, lineHeight: 18 },
         displayFont: false,
+        iconOnly: false,
       };
   }
 }
@@ -127,6 +128,7 @@ export const Button: React.FC<ButtonProps> = ({
   children,
   onPress,
   variant = 'default',
+  active = false,
   size = 'default',
   disabled = false,
   loading = false,
@@ -142,6 +144,7 @@ export const Button: React.FC<ButtonProps> = ({
   const sizeStyles = getSizeStyles(size);
   const shadowPreset = getShadowPreset(resolvedVariant);
   const fonts = getNeoFontFamilies();
+  const isToggleActive = active || variant === 'selected';
 
   return (
     <Pressable
@@ -150,47 +153,60 @@ export const Button: React.FC<ButtonProps> = ({
       testID={testID}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
-      accessibilityState={{ disabled: isDisabled, busy: loading }}
+      accessibilityState={{ disabled: isDisabled, busy: loading, selected: isToggleActive }}
       style={[styles.root, fullWidth && styles.fullWidth, style]}
     >
-      <NeoBrutalShadow shadow={shadowPreset} hideShadow={isDisabled} fullWidth={fullWidth}>
-        <View
-          style={[
-            styles.face,
-            variantStyles.face,
-            sizeStyles.face,
-            fullWidth && styles.fullWidth,
-            isDisabled && styles.disabled,
-          ]}
-        >
-          {loading ? (
-            <ActivityIndicator
-              size="small"
-              color={
-                resolvedVariant === 'default' ||
-                resolvedVariant === 'destructive' ||
-                resolvedVariant === 'selected'
-                  ? neo.white
-                  : neo.onyx
-              }
-            />
-          ) : (
-            <Text
+      {({ pressed }) => {
+        const showPressed = (pressed && !isDisabled) || isToggleActive;
+        const hasShadow = shadowPreset !== 'none';
+
+        return (
+          <NeoBrutalShadow
+            shadow={shadowPreset}
+            hideShadow={isDisabled || showPressed}
+            reserveShadowSpace={hasShadow}
+            fullWidth={fullWidth}
+          >
+            <View
               style={[
-                styles.label,
-                sizeStyles.displayFont
-                  ? { fontFamily: fonts.display }
-                  : { fontFamily: fonts.sans },
-                variantStyles.text,
-                sizeStyles.text,
-                textStyle,
+                styles.face,
+                variantStyles.face,
+                sizeStyles.face,
+                fullWidth && !sizeStyles.iconOnly && styles.fullWidth,
+                isDisabled && styles.disabled,
+                showPressed && getNeoPressTransform(shadowPreset),
               ]}
             >
-              {children}
-            </Text>
-          )}
-        </View>
-      </NeoBrutalShadow>
+              {loading ? (
+                <ActivityIndicator
+                  size="small"
+                  color={
+                    resolvedVariant === 'default' || resolvedVariant === 'destructive'
+                      ? neo.white
+                      : neo.onyx
+                  }
+                />
+              ) : isTextChild(children) ? (
+                <Text
+                  style={[
+                    styles.label,
+                    sizeStyles.displayFont
+                      ? { fontFamily: fonts.display }
+                      : { fontFamily: fonts.sans },
+                    variantStyles.text,
+                    sizeStyles.text,
+                    textStyle,
+                  ]}
+                >
+                  {children}
+                </Text>
+              ) : (
+                children
+              )}
+            </View>
+          </NeoBrutalShadow>
+        );
+      }}
     </Pressable>
   );
 };

@@ -6,6 +6,7 @@ import { queryKeys } from '@repo/api-client';
 import { neo } from '@repo/shared-ui';
 import { createMobileApiClient } from '../../lib/api';
 import { tabIcons } from '../../components/tab-icons';
+import { NeoTabBarButton } from '../../components/neo-tab-bar-button';
 
 export default function TabLayout(): React.ReactElement {
   const queryClient = useQueryClient();
@@ -26,18 +27,28 @@ export default function TabLayout(): React.ReactElement {
 
   return (
     <Tabs
+      initialRouteName="index"
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
           backgroundColor: neo.bg,
           borderTopWidth: 3,
           borderTopColor: neo.onyx,
-          height: 56 + tabBarPaddingBottom,
+          height: 68 + tabBarPaddingBottom,
           paddingBottom: tabBarPaddingBottom,
-          paddingTop: 8,
+          paddingTop: 6,
+          paddingHorizontal: 12,
+          overflow: 'visible',
+        },
+        tabBarItemStyle: {
+          flex: 1,
+          paddingHorizontal: 0,
         },
         tabBarActiveTintColor: neo.onyx,
         tabBarInactiveTintColor: neo.muted,
+        tabBarActiveBackgroundColor: 'transparent',
+        tabBarInactiveBackgroundColor: 'transparent',
+        tabBarButton: (props) => <NeoTabBarButton {...props} />,
         tabBarLabelStyle: {
           fontWeight: '700',
           fontSize: 11,
@@ -47,16 +58,24 @@ export default function TabLayout(): React.ReactElement {
       }}
     >
       <Tabs.Screen
-        name="index"
-        options={{ title: 'Inicio', tabBarIcon: tabIcons.home }}
-      />
-      <Tabs.Screen
         name="store"
         options={{ title: 'Tienda', tabBarIcon: tabIcons.store }}
       />
       <Tabs.Screen
         name="cart"
         options={{ title: 'Carrito', tabBarIcon: tabIcons.cart }}
+      />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Inicio',
+          tabBarIcon: tabIcons.home,
+          tabBarButton: (props) => <NeoTabBarButton {...props} accent />,
+        }}
+      />
+      <Tabs.Screen
+        name="wishlist"
+        options={{ title: 'Favoritos', tabBarIcon: tabIcons.wishlist }}
       />
       <Tabs.Screen
         name="account"

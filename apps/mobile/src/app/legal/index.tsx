@@ -1,13 +1,12 @@
 import React from 'react';
-import { Text, FlatList, StyleSheet, Pressable } from 'react-native';
+import { FlatList, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Card, NeoPageHeader, getNeoLayoutStyles, getNeoTextStyles } from '@repo/shared-ui';
+import { Button, NeoPageHeader, getNeoLayoutStyles } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen';
 import { LEGAL_PATH_SLUGS, LEGAL_PATH_TITLES } from '@repo/shared-utils';
 
 export default function LegalIndexScreen(): React.ReactElement {
   const router = useRouter();
-  const text = getNeoTextStyles();
   const layout = getNeoLayoutStyles();
 
   return (
@@ -23,13 +22,24 @@ export default function LegalIndexScreen(): React.ReactElement {
         keyExtractor={(slug) => slug}
         contentContainerStyle={layout.listContent}
         renderItem={({ item: slug }) => (
-          <Pressable onPress={() => router.push(`/legal/${slug}`)}>
-            <Card style={layout.section} padding="md">
-              <Text style={text.label}>{LEGAL_PATH_TITLES[slug]}</Text>
-            </Card>
-          </Pressable>
+          <Button
+            variant="outline"
+            fullWidth
+            onPress={() => router.push(`/legal/${slug}`)}
+            style={layout.section}
+            textStyle={styles.linkLabel}
+          >
+            {LEGAL_PATH_TITLES[slug]}
+          </Button>
         )}
       />
     </NeoScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  linkLabel: {
+    textTransform: 'none',
+    letterSpacing: 0,
+  },
+});

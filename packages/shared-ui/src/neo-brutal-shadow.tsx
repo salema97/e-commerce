@@ -23,9 +23,21 @@ export const NEO_SHADOW: Record<Exclude<NeoShadowPreset, 'none'>, NeoShadowSpec>
 
 export const NEO_PRESS_OFFSET = 4;
 
+/** Default solid shadow for every interactive button (matches account CTAs). */
+export const NEO_BUTTON_SHADOW: NeoShadowPreset = 'lg';
+
 export function resolveNeoShadow(preset: NeoShadowPreset): NeoShadowSpec | null {
   if (preset === 'none') return null;
   return NEO_SHADOW[preset];
+}
+
+/** Face offset when shadow is hidden — matches navbar / tab pressed state. */
+export function getNeoPressTransform(preset: NeoShadowPreset): ViewStyle {
+  const spec = resolveNeoShadow(preset);
+  if (!spec) return {};
+  return {
+    transform: [{ translateX: spec.x }, { translateY: spec.y }],
+  };
 }
 
 export interface NeoBrutalShadowProps {
@@ -33,6 +45,8 @@ export interface NeoBrutalShadowProps {
   shadow?: NeoShadowPreset;
   /** Hide offset block (pressed / active state). */
   hideShadow?: boolean;
+  /** Keep shadow footprint when hideShadow — prevents layout jump on press. */
+  reserveShadowSpace?: boolean;
   fullWidth?: boolean;
   style?: StyleProp<ViewStyle>;
 }
@@ -45,18 +59,20 @@ export function NeoBrutalShadow({
   children,
   shadow = 'md',
   hideShadow = false,
+  reserveShadowSpace = false,
   fullWidth = false,
   style,
 }: NeoBrutalShadowProps): React.ReactElement {
   const spec = resolveNeoShadow(shadow);
   const showShadow = Boolean(spec && !hideShadow);
+  const reserveSpace = Boolean(spec && reserveShadowSpace);
 
   return (
     <View style={[styles.root, fullWidth && styles.fullWidth, style]}>
       <View
         style={[
           styles.host,
-          showShadow && spec && { paddingRight: spec.x, paddingBottom: spec.y },
+          (showShadow || reserveSpace) && spec && { paddingRight: spec.x, paddingBottom: spec.y },
           fullWidth && styles.fullWidth,
         ]}
       >

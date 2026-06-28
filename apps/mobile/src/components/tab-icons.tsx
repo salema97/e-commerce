@@ -20,6 +20,7 @@ export function neoTabIcon(outline: IconName, filled: IconName) {
 export const tabIcons = {
   home: neoTabIcon('home-outline', 'home'),
   store: neoTabIcon('store-outline', 'store'),
+  wishlist: neoTabIcon('heart-outline', 'heart'),
   cart: neoTabIcon('cart-outline', 'cart'),
   account: neoTabIcon('account-outline', 'account'),
 } as const;

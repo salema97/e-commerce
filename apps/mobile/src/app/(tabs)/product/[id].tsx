@@ -167,7 +167,8 @@ export default function ProductDetailScreen(): React.ReactElement {
                       return (
                         <Button
                           key={variant.id}
-                          variant={selected ? 'secondary' : 'outline'}
+                          variant="outline"
+                          active={selected}
                           size="sm"
                           onPress={() => setSelectedVariant(variant)}
                         >

@@ -11,6 +11,7 @@ export { Switch } from './Switch.js';
 export { Alert } from './Alert.js';
 export { neo } from './theme.js';
 export { NeoPageHeader } from './NeoPageHeader.js';
+export { NeoBrutalShadow, NEO_SHADOW, NEO_PRESS_OFFSET, NEO_BUTTON_SHADOW, resolveNeoShadow, getNeoPressTransform } from './neo-brutal-shadow.js';
 export {
   defaultNeoFonts,
   getNeoFontFamilies,
@@ -34,3 +35,4 @@ export type { AlertProps } from './Alert.js';
 export type { NeoColors } from './theme.js';
 export type { NeoFontFamilies } from './typography.js';
 export type { NeoPageHeaderProps } from './NeoPageHeader.js';
+export type { NeoBrutalShadowProps, NeoShadowPreset, NeoShadowSpec } from './neo-brutal-shadow.js';
