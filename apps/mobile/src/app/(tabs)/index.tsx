@@ -6,15 +6,13 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Button, PressableCard, ProductImage, NeoPageHeader, getNeoLayoutStyles, getNeoTextStyles, neo } from '@repo/shared-ui';
+import { PressableCard, ProductImage, NeoPageHeader, getNeoLayoutStyles, getNeoTextStyles, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen';
 import { useApiQueryHooks } from '../../lib/api';
 import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
 import type { Product } from '@repo/shared-types';
 import {
-  NeoEnterFromBottom,
   NeoEnterFromTop,
-  NeoPulse,
   NeoScaleIn,
   NeoStaggeredItem,
 } from '../../components/neo-animated';
@@ -34,10 +32,11 @@ export default function HomeScreen(): React.ReactElement {
   }, [products]);
 
   const renderProduct = ({ item, index }: { item: Product; index: number }) => (
-    <NeoStaggeredItem index={index} style={styles.productTouchable}>
+    <NeoStaggeredItem index={index} style={layout.productGridItem}>
       <PressableCard
         cardStyle={styles.productCard}
         padding="none"
+        fullWidth
         onPress={() => router.push({ pathname: '/(tabs)/product/[id]', params: { id: item.id } })}
       >
         <NeoScaleIn delay={120}>
@@ -68,13 +67,13 @@ export default function HomeScreen(): React.ReactElement {
           eyebrow="Colección"
           title="Descubre"
           subtitle="Productos destacados de la tienda"
-          style={styles.header}
+          style={layout.pageHeaderInset}
           compact
         />
       </NeoEnterFromTop>
 
       {error ? (
-        <View style={layout.center}>
+        <View style={layout.emptyState}>
           <Text style={text.error}>No se pudieron cargar los productos.</Text>
           <Text style={text.bodyMuted}>{error.message}</Text>
         </View>
@@ -83,90 +82,19 @@ export default function HomeScreen(): React.ReactElement {
           data={featuredProducts}
           keyExtractor={(item) => item.id}
           numColumns={2}
-          contentContainerStyle={styles.list}
-          columnWrapperStyle={styles.row}
+          contentContainerStyle={layout.listContent}
+          columnWrapperStyle={layout.productGridRow}
           renderItem={renderProduct}
           ListEmptyComponent={
             <Text style={[text.bodyMuted, styles.empty]}>No hay productos destacados por ahora.</Text>
           }
         />
       )}
-
-      <NeoEnterFromBottom delay={120}>
-        <View style={styles.footer}>
-          <NeoPulse>
-            <Button onPress={() => router.push('/(tabs)/store')} size="lg">
-              Explorar tienda
-            </Button>
-          </NeoPulse>
-        </View>
-      </NeoEnterFromBottom>
     </NeoScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: neo.bg,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  seasonLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-    color: neo.muted,
-  },
-  heading: {
-    fontSize: 40,
-    fontWeight: '900',
-    color: neo.onyx,
-    textTransform: 'uppercase',
-    letterSpacing: -1,
-    lineHeight: 40,
-  },
-  subheading: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: neo.muted,
-    marginTop: 6,
-  },
-  loader: {
-    marginTop: 40,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  error: {
-    color: neo.scarlet,
-    textAlign: 'center',
-    fontWeight: '700',
-  },
-  errorDetail: {
-    color: neo.muted,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  list: {
-    padding: 16,
-    paddingBottom: 120,
-  },
-  row: {
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  productTouchable: {
-    flex: 1,
-    marginHorizontal: 6,
-  },
   productCard: {
     minHeight: 180,
     overflow: 'hidden',
@@ -187,9 +115,6 @@ const styles = StyleSheet.create({
   productName: {
     flex: 1,
     fontSize: 14,
-    fontWeight: '800',
-    color: neo.onyx,
-    textTransform: 'uppercase',
     lineHeight: 18,
   },
   featuredDot: {
@@ -199,26 +124,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: neo.onyx,
   },
-  productPrice: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: neo.onyx,
-    marginTop: 10,
-  },
   empty: {
     textAlign: 'center',
-    color: neo.muted,
     marginTop: 24,
-    fontWeight: '600',
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-    backgroundColor: neo.bg,
-    borderTopWidth: 3,
-    borderTopColor: neo.onyx,
   },
 });

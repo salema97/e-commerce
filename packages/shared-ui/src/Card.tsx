@@ -1,12 +1,14 @@
 import React from 'react';
 import { View, StyleSheet, type ViewStyle } from 'react-native';
 import { neo } from './theme.js';
+import { NeoBrutalShadow } from './neo-brutal-shadow.js';
 
 export interface CardProps {
   children: React.ReactNode;
   style?: ViewStyle;
   padding?: 'none' | 'sm' | 'md' | 'lg';
   variant?: 'default' | 'gold' | 'dark';
+  fullWidth?: boolean;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -14,11 +16,22 @@ export const Card: React.FC<CardProps> = ({
   style,
   padding = 'md',
   variant = 'default',
+  fullWidth = false,
 }) => {
   return (
-    <View style={[styles.base, variantStyles[variant], getPaddingStyle(padding), style]}>
-      {children}
-    </View>
+    <NeoBrutalShadow shadow="lg" fullWidth={fullWidth}>
+      <View
+        style={[
+          styles.base,
+          variantStyles[variant],
+          getPaddingStyle(padding),
+          fullWidth && styles.fullWidth,
+          style,
+        ]}
+      >
+        {children}
+      </View>
+    </NeoBrutalShadow>
   );
 };
 
@@ -53,10 +66,8 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     borderWidth: 3,
     borderColor: neo.onyx,
-    shadowColor: neo.onyx,
-    shadowOffset: { width: 6, height: 6 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 6,
+  },
+  fullWidth: {
+    width: '100%',
   },
 });

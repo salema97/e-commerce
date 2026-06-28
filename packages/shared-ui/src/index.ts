@@ -16,6 +16,7 @@ export {
   getNeoFontFamilies,
   getNeoLayoutStyles,
   getNeoTextStyles,
+  neoSpacing,
   setNeoFontFamilies,
 } from './typography.js';
 

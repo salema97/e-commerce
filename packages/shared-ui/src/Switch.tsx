@@ -2,18 +2,18 @@ import React from 'react';
 import {
   Pressable,
   View,
-  Text,
   StyleSheet,
   type ViewStyle,
-  type TextStyle,
 } from 'react-native';
 import { neo } from './theme.js';
+import { NeoBrutalShadow } from './neo-brutal-shadow.js';
 
 export interface SwitchProps {
   value: boolean;
   onValueChange: (value: boolean) => void;
   disabled?: boolean;
   accessibilityLabel?: string;
+  style?: ViewStyle;
 }
 
 export const Switch: React.FC<SwitchProps> = ({
@@ -21,6 +21,7 @@ export const Switch: React.FC<SwitchProps> = ({
   onValueChange,
   disabled = false,
   accessibilityLabel,
+  style,
 }) => {
   return (
     <Pressable
@@ -29,13 +30,19 @@ export const Switch: React.FC<SwitchProps> = ({
       accessibilityLabel={accessibilityLabel}
       disabled={disabled}
       onPress={() => onValueChange(!value)}
-      style={[
-        styles.track,
-        value ? styles.trackOn : styles.trackOff,
-        disabled && styles.disabled,
-      ]}
+      style={style}
     >
-      <View style={[styles.thumb, value && styles.thumbOn]} />
+      <NeoBrutalShadow shadow="sm">
+        <View
+          style={[
+            styles.track,
+            value ? styles.trackOn : styles.trackOff,
+            disabled && styles.disabled,
+          ]}
+        >
+          <View style={[styles.thumb, value && styles.thumbOn]} />
+        </View>
+      </NeoBrutalShadow>
     </Pressable>
   );
 };
@@ -51,11 +58,6 @@ const styles = StyleSheet.create({
     borderColor: neo.onyx,
     justifyContent: 'center',
     paddingHorizontal: 2,
-    shadowColor: neo.onyx,
-    shadowOffset: { width: 3, height: 3 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 3,
   },
   trackOff: {
     backgroundColor: neo.white,

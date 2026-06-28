@@ -60,7 +60,7 @@ export default function OrderDetailScreen(): React.ReactElement {
         <NeoPageHeader
           eyebrow="Pedido"
           title={order.orderNumber}
-          style={styles.header}
+          style={layout.pageHeaderInList}
           compact
         />
         <Badge variant="secondary" style={styles.statusBadge}>

@@ -13,7 +13,7 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ];
 
-const singletonPackages = ['react', '@tanstack/react-query'];
+const singletonPackages = ['react', '@tanstack/react-query', '@expo/vector-icons'];
 
 const defaultResolveRequest = config.resolver.resolveRequest;
 
@@ -22,7 +22,8 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   const forceSingleton =
     singletonPackages.includes(rootPkg) ||
     moduleName.startsWith('react/') ||
-    moduleName.startsWith('@tanstack/react-query/');
+    moduleName.startsWith('@tanstack/react-query/') ||
+    moduleName.startsWith('@expo/vector-icons/');
 
   if (forceSingleton) {
     try {

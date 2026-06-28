@@ -60,7 +60,7 @@ export default function StoreScreen(): React.ReactElement {
   const renderCategory = ({ item }: { item: Category }) => (
     <Button
       size="sm"
-      variant={selectedCategory === item.slug ? 'secondary' : 'outline'}
+      variant={selectedCategory === item.slug ? 'selected' : 'outline'}
       onPress={() =>
         setSelectedCategory((current) => (current === item.slug ? undefined : item.slug))
       }
@@ -72,10 +72,11 @@ export default function StoreScreen(): React.ReactElement {
   );
 
   const renderProduct = ({ item, index }: { item: CatalogProductSummary; index: number }) => (
-    <NeoStaggeredItem index={index}>
+    <NeoStaggeredItem index={index} style={layout.productGridItem}>
       <PressableCard
         padding="none"
         cardStyle={styles.productCard}
+        fullWidth
         onPress={() => router.push({ pathname: '/(tabs)/product/[id]', params: { id: item.id } })}
       >
         <ProductImage url={item.imageUrl ?? undefined} alt={item.name} variant="card" />
@@ -104,14 +105,19 @@ export default function StoreScreen(): React.ReactElement {
   return (
     <NeoScreen style={layout.screen} entrance={false}>
       <NeoEnterFromTop>
-        <NeoPageHeader eyebrow="Catálogo" title="Tienda" style={styles.header} compact>
-          <Input
-            placeholder="Buscar productos..."
-            value={search}
-            onChangeText={setSearch}
-            containerStyle={styles.search}
-          />
-        </NeoPageHeader>
+        <NeoPageHeader
+          eyebrow="Catálogo"
+          title="Tienda"
+          style={layout.pageHeaderInset}
+          compact
+          trailing={
+            <Input
+              placeholder="Buscar..."
+              value={search}
+              onChangeText={setSearch}
+            />
+          }
+        />
       </NeoEnterFromTop>
 
       <FlatList
@@ -119,16 +125,16 @@ export default function StoreScreen(): React.ReactElement {
         data={categories ?? []}
         keyExtractor={(item) => item.id}
         renderItem={renderCategory}
-        contentContainerStyle={styles.categories}
+        contentContainerStyle={layout.horizontalInset}
         showsHorizontalScrollIndicator={false}
       />
 
-      <View style={styles.ratingRow}>
+      <View style={[layout.horizontalInset, styles.ratingRow]}>
         {[undefined, 4, 3].map((value) => (
           <Button
             key={value ?? 'all'}
             size="sm"
-            variant={minRating === value ? 'secondary' : 'outline'}
+            variant={minRating === value ? 'selected' : 'outline'}
             onPress={() => setMinRating(value)}
             style={styles.chip}
             textStyle={styles.chipText}
@@ -139,17 +145,19 @@ export default function StoreScreen(): React.ReactElement {
       </View>
 
       {catalogError ? (
-        <View style={styles.center}>
-          <Text style={styles.error}>No se pudieron cargar los productos.</Text>
+        <View style={layout.emptyState}>
+          <Text style={text.error}>No se pudieron cargar los productos.</Text>
         </View>
       ) : (
         <FlatList
           data={products}
           keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={layout.productGridRow}
           renderItem={renderProduct}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={layout.listContent}
           ListEmptyComponent={
-            <Text style={styles.empty}>No se encontraron productos.</Text>
+            <Text style={[text.bodyMuted, styles.empty]}>No se encontraron productos.</Text>
           }
         />
       )}
@@ -159,109 +167,38 @@ export default function StoreScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: neo.bg,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  seasonLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-    color: neo.muted,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: '900',
-    color: neo.onyx,
-    textTransform: 'uppercase',
-    marginBottom: 12,
-    letterSpacing: -1,
-  },
-  search: {
-    marginBottom: 4,
-  },
-  categories: {
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    gap: 8,
-  },
   chip: {
     marginRight: 8,
   },
   chipText: {
     textTransform: 'none',
     letterSpacing: 0,
-    fontWeight: '700',
   },
   ratingRow: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    gap: 8,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  error: {
-    color: neo.scarlet,
-    textAlign: 'center',
-    fontWeight: '700',
-  },
-  list: {
-    padding: 16,
-    paddingBottom: 32,
+    flexWrap: 'wrap',
   },
   productCard: {
-    marginBottom: 12,
     overflow: 'hidden',
   },
   productBody: {
     padding: 12,
+    gap: 4,
   },
   productName: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: neo.onyx,
-    textTransform: 'uppercase',
-  },
-  categoryName: {
-    fontSize: 12,
-    color: neo.muted,
-    marginTop: 4,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  productRating: {
-    fontSize: 12,
-    color: neo.muted,
-    marginTop: 4,
-    fontWeight: '600',
+    fontSize: 14,
+    lineHeight: 18,
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 8,
     gap: 8,
     flexWrap: 'wrap',
   },
-  productPrice: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: neo.onyx,
-  },
   empty: {
     textAlign: 'center',
-    color: neo.muted,
     marginTop: 24,
-    fontWeight: '600',
   },
 });

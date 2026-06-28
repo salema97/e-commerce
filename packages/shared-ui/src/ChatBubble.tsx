@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { neo } from './theme.js';
+import { NeoBrutalShadow } from './neo-brutal-shadow.js';
 
 export interface ChatBubbleProps {
   content: string;
@@ -34,27 +35,29 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
       ]}
     >
       {senderName ? <Text style={styles.senderName}>{senderName}</Text> : null}
-      <View
-        style={[
-          styles.bubble,
-          isOutbound
-            ? isBot
-              ? styles.botBubble
-              : styles.outboundBubble
-            : styles.inboundBubble,
-        ]}
-      >
-        {isBot ? <Text style={styles.botLabel}>Bot</Text> : null}
-        <Text
+      <NeoBrutalShadow shadow="sm">
+        <View
           style={[
-            styles.text,
-            isOutbound ? styles.outboundText : styles.inboundText,
-            textStyle,
+            styles.bubble,
+            isOutbound
+              ? isBot
+                ? styles.botBubble
+                : styles.outboundBubble
+              : styles.inboundBubble,
           ]}
         >
-          {content}
-        </Text>
-      </View>
+          {isBot ? <Text style={styles.botLabel}>Bot</Text> : null}
+          <Text
+            style={[
+              styles.text,
+              isOutbound ? styles.outboundText : styles.inboundText,
+              textStyle,
+            ]}
+          >
+            {content}
+          </Text>
+        </View>
+      </NeoBrutalShadow>
       <View style={styles.footer}>
         {timestamp ? <Text style={styles.timestamp}>{timestamp}</Text> : null}
         {status ? <Text style={styles.status}>{status}</Text> : null}
@@ -79,11 +82,6 @@ const styles = StyleSheet.create({
     borderColor: neo.onyx,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    shadowColor: neo.onyx,
-    shadowOffset: { width: 3, height: 3 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 3,
   },
   inboundBubble: {
     backgroundColor: neo.white,

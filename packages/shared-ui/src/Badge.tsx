@@ -32,6 +32,7 @@ export const Badge: React.FC<BadgeProps> = ({
 function getVariantStyles(variant: BadgeProps['variant']) {
   switch (variant) {
     case 'primary':
+    case 'default':
       return {
         container: { backgroundColor: neo.onyx },
         text: { color: neo.gold },
@@ -56,11 +57,10 @@ function getVariantStyles(variant: BadgeProps['variant']) {
         container: { backgroundColor: neo.green },
         text: { color: neo.white },
       };
-    case 'default':
     default:
       return {
-        container: { backgroundColor: neo.white },
-        text: { color: neo.onyx },
+        container: { backgroundColor: neo.onyx },
+        text: { color: neo.gold },
       };
   }
 }

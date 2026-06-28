@@ -1,43 +1,146 @@
 import React from 'react';
 import {
   Pressable,
+  View,
   Text,
   ActivityIndicator,
   StyleSheet,
   type ViewStyle,
   type TextStyle,
+  type StyleProp,
 } from 'react-native';
 import { neo } from './theme.js';
 import { getNeoFontFamilies } from './typography.js';
+import { NeoBrutalShadow, type NeoShadowPreset } from './neo-brutal-shadow.js';
+
+/** Matches web `buttonVariants` + `btn-brutal` in apps/web. */
+export type ButtonVariant =
+  | 'default'
+  | 'primary'
+  | 'secondary'
+  | 'outline'
+  | 'ghost'
+  | 'destructive'
+  | 'selected';
+
+export type ButtonSize = 'default' | 'sm' | 'md' | 'lg';
 
 export interface ButtonProps {
   children: React.ReactNode;
   onPress?: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   disabled?: boolean;
   loading?: boolean;
-  style?: ViewStyle;
+  fullWidth?: boolean;
+  style?: StyleProp<ViewStyle>;
   textStyle?: TextStyle;
   testID?: string;
   accessibilityLabel?: string;
 }
 
+function resolveVariant(
+  variant: ButtonVariant,
+): Exclude<ButtonVariant, 'primary' | 'default'> | 'default' {
+  if (variant === 'primary') return 'default';
+  return variant;
+}
+
+function getShadowPreset(variant: ReturnType<typeof resolveVariant>): NeoShadowPreset {
+  switch (variant) {
+    case 'default':
+    case 'destructive':
+      return 'lg';
+    case 'outline':
+    case 'secondary':
+    case 'selected':
+      return 'md';
+    case 'ghost':
+      return 'none';
+    default:
+      return 'none';
+  }
+}
+
+function getVariantStyles(variant: ReturnType<typeof resolveVariant>) {
+  switch (variant) {
+    case 'secondary':
+      return {
+        face: { backgroundColor: neo.gold, borderColor: neo.onyx },
+        text: { color: neo.onyx },
+      };
+    case 'selected':
+      return {
+        face: { backgroundColor: neo.onyx, borderColor: neo.onyx },
+        text: { color: neo.white },
+      };
+    case 'outline':
+      return {
+        face: { backgroundColor: neo.white, borderColor: neo.onyx },
+        text: { color: neo.onyx },
+      };
+    case 'ghost':
+      return {
+        face: { backgroundColor: 'transparent', borderColor: 'transparent' },
+        text: { color: neo.onyx },
+      };
+    case 'destructive':
+      return {
+        face: { backgroundColor: neo.scarlet, borderColor: neo.onyx },
+        text: { color: neo.white },
+      };
+    case 'default':
+    default:
+      return {
+        face: { backgroundColor: neo.onyx, borderColor: neo.onyx },
+        text: { color: neo.white },
+      };
+  }
+}
+
+function getSizeStyles(size: ButtonSize) {
+  switch (size) {
+    case 'sm':
+      return {
+        face: { height: 36, paddingHorizontal: 12 },
+        text: { fontSize: 12, lineHeight: 16 },
+        displayFont: false,
+      };
+    case 'lg':
+      return {
+        face: { height: 56, paddingHorizontal: 32 },
+        text: { fontSize: 16, lineHeight: 20 },
+        displayFont: true,
+      };
+    case 'md':
+    case 'default':
+    default:
+      return {
+        face: { height: 44, paddingHorizontal: 20 },
+        text: { fontSize: 14, lineHeight: 18 },
+        displayFont: false,
+      };
+  }
+}
+
 export const Button: React.FC<ButtonProps> = ({
   children,
   onPress,
-  variant = 'primary',
-  size = 'md',
+  variant = 'default',
+  size = 'default',
   disabled = false,
   loading = false,
+  fullWidth = false,
   style,
   textStyle,
   testID,
   accessibilityLabel,
 }) => {
   const isDisabled = disabled || loading;
-  const variantStyles = getVariantStyles(variant);
+  const resolvedVariant = resolveVariant(variant);
+  const variantStyles = getVariantStyles(resolvedVariant);
   const sizeStyles = getSizeStyles(size);
+  const shadowPreset = getShadowPreset(resolvedVariant);
   const fonts = getNeoFontFamilies();
 
   return (
@@ -48,145 +151,71 @@ export const Button: React.FC<ButtonProps> = ({
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
-      style={({ pressed }) => [
-        styles.base,
-        variantStyles.shadow,
-        variantStyles.container,
-        sizeStyles.container,
-        pressed && variant !== 'ghost' && !isDisabled && styles.pressed,
-        isDisabled && styles.disabled,
-        style,
-      ]}
+      style={[styles.root, fullWidth && styles.fullWidth, style]}
     >
-      {loading ? (
-        <ActivityIndicator
-          size="small"
-          color={variant === 'primary' || variant === 'destructive' ? neo.white : neo.onyx}
-        />
-      ) : (
-        <Text
+      <NeoBrutalShadow shadow={shadowPreset} hideShadow={isDisabled} fullWidth={fullWidth}>
+        <View
           style={[
-            styles.text,
-            { fontFamily: size === 'lg' ? fonts.display : fonts.sans },
-            variantStyles.text,
-            sizeStyles.text,
-            textStyle,
+            styles.face,
+            variantStyles.face,
+            sizeStyles.face,
+            fullWidth && styles.fullWidth,
+            isDisabled && styles.disabled,
           ]}
         >
-          {children}
-        </Text>
-      )}
+          {loading ? (
+            <ActivityIndicator
+              size="small"
+              color={
+                resolvedVariant === 'default' ||
+                resolvedVariant === 'destructive' ||
+                resolvedVariant === 'selected'
+                  ? neo.white
+                  : neo.onyx
+              }
+            />
+          ) : (
+            <Text
+              style={[
+                styles.label,
+                sizeStyles.displayFont
+                  ? { fontFamily: fonts.display }
+                  : { fontFamily: fonts.sans },
+                variantStyles.text,
+                sizeStyles.text,
+                textStyle,
+              ]}
+            >
+              {children}
+            </Text>
+          )}
+        </View>
+      </NeoBrutalShadow>
     </Pressable>
   );
 };
 
-function getVariantStyles(variant: ButtonProps['variant']) {
-  switch (variant) {
-    case 'secondary':
-      return {
-        container: {
-          backgroundColor: neo.gold,
-          borderColor: neo.onyx,
-        },
-        text: { color: neo.onyx },
-        shadow: styles.shadowMd,
-      };
-    case 'outline':
-      return {
-        container: {
-          backgroundColor: neo.white,
-          borderColor: neo.onyx,
-        },
-        text: { color: neo.onyx },
-        shadow: styles.shadowMd,
-      };
-    case 'ghost':
-      return {
-        container: {
-          backgroundColor: 'transparent',
-          borderColor: 'transparent',
-        },
-        text: { color: neo.onyx },
-        shadow: styles.shadowNone,
-      };
-    case 'destructive':
-      return {
-        container: {
-          backgroundColor: neo.scarlet,
-          borderColor: neo.onyx,
-        },
-        text: { color: neo.white },
-        shadow: styles.shadowLg,
-      };
-    case 'primary':
-    default:
-      return {
-        container: {
-          backgroundColor: neo.onyx,
-          borderColor: neo.onyx,
-        },
-        text: { color: neo.white },
-        shadow: styles.shadowPrimary,
-      };
-  }
-}
-
-function getSizeStyles(size: ButtonProps['size']) {
-  switch (size) {
-    case 'sm':
-      return { container: { paddingVertical: 8, paddingHorizontal: 12 }, text: { fontSize: 12 } };
-    case 'lg':
-      return { container: { paddingVertical: 16, paddingHorizontal: 24 }, text: { fontSize: 18 } };
-    case 'md':
-    default:
-      return { container: { paddingVertical: 12, paddingHorizontal: 16 }, text: { fontSize: 15 } };
-  }
-}
-
 const styles = StyleSheet.create({
-  base: {
+  root: {
+    alignSelf: 'flex-start',
+  },
+  fullWidth: {
+    alignSelf: 'stretch',
+    width: '100%',
+  },
+  face: {
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 0,
-    borderWidth: 3,
+    borderWidth: neo.borderWidth,
     flexDirection: 'row',
     gap: 8,
   },
-  shadowPrimary: {
-    shadowColor: neo.gold,
-    shadowOffset: { width: 6, height: 6 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 6,
-  },
-  shadowLg: {
-    shadowColor: neo.onyx,
-    shadowOffset: { width: 6, height: 6 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 6,
-  },
-  shadowMd: {
-    shadowColor: neo.onyx,
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4,
-  },
-  shadowNone: {
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  text: {
+  label: {
     fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  pressed: {
-    transform: [{ translateX: 4 }, { translateY: 4 }],
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    elevation: 0,
+    letterSpacing: 0.35,
+    textAlign: 'center',
   },
   disabled: {
     opacity: 0.5,

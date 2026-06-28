@@ -15,6 +15,7 @@ export const neoFieldStyles = StyleSheet.create({
     borderWidth: 3,
     borderColor: neo.onyx,
     borderRadius: 0,
+    minHeight: 44,
     paddingVertical: 12,
     paddingHorizontal: 16,
     fontSize: 14,

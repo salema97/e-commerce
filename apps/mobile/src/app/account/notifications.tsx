@@ -1,12 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   Button,
   NeoPageHeader,
   getNeoLayoutStyles,
   getNeoTextStyles,
-  neo,
 } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen';
 import { useAuth } from '../../providers/AuthProvider';
@@ -20,44 +19,40 @@ export default function NotificationPreferencesScreen(): React.ReactElement {
 
   if (!user) {
     return (
-      <NeoScreen style={layout.center}>
-        <Text style={[text.bodyMuted, styles.message]}>
-          Inicia sesión para gestionar tus notificaciones.
-        </Text>
-        <Button onPress={() => router.replace('/sign-in')}>Iniciar sesión</Button>
+      <NeoScreen style={layout.screen}>
+        <View style={layout.emptyState}>
+          <Text style={[text.bodyMuted, styles.message]}>
+            Inicia sesión para gestionar tus notificaciones.
+          </Text>
+          <Button onPress={() => router.replace('/sign-in')}>Iniciar sesión</Button>
+        </View>
       </NeoScreen>
     );
   }
 
   return (
-    <NeoScreen style={styles.container}>
-      <View style={styles.headerWrap}>
-        <Button variant="outline" size="sm" onPress={() => router.back()}>
-          Volver
-        </Button>
-        <NeoPageHeader title="Notificaciones" subtitle={user.email} compact />
-      </View>
-
-      <View style={styles.content}>
+    <NeoScreen style={layout.screen}>
+      <ScrollView contentContainerStyle={layout.contentPaddedBottom}>
+        <NeoPageHeader
+          title="Notificaciones"
+          subtitle={user.email}
+          compact
+          style={layout.pageHeaderInList}
+        >
+          <Button variant="outline" size="sm" onPress={() => router.back()} style={styles.back}>
+            Volver
+          </Button>
+        </NeoPageHeader>
         <NotificationPreferencesPanel />
-      </View>
+      </ScrollView>
     </NeoScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-    backgroundColor: neo.bg,
-  },
-  headerWrap: {
-    gap: 8,
-    paddingTop: 8,
-  },
-  content: {
-    flex: 1,
-    marginTop: 8,
+  back: {
+    marginTop: 12,
+    alignSelf: 'flex-start',
   },
   message: {
     textAlign: 'center',

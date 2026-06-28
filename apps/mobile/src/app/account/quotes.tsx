@@ -14,7 +14,7 @@ export default function QuotesScreen(): React.ReactElement {
   return (
     <NeoScreen style={layout.screen}>
       <ScrollView contentContainerStyle={layout.content}>
-        <NeoPageHeader title="Mis cotizaciones" style={styles.header} compact />
+        <NeoPageHeader title="Mis cotizaciones" style={layout.pageHeaderInList} compact />
 
         {!quotes?.length ? (
           <Text style={text.bodyMuted}>No tienes cotizaciones activas.</Text>

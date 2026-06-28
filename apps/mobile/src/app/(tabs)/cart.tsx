@@ -6,8 +6,9 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Card, Button, neo, ProductImage, NeoPageHeader, getNeoLayoutStyles, getNeoTextStyles } from '@repo/shared-ui';
+import { Card, Button, ProductImage, NeoPageHeader, getNeoLayoutStyles, getNeoTextStyles, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen';
+import { NeoStickyFooter } from '../../components/neo-layout';
 import { NeoStaggeredItem } from '../../components/neo-animated';
 import { useCart } from '../../lib/cart';
 import { formatPrice } from '@repo/shared-utils';
@@ -61,37 +62,37 @@ export default function CartScreen(): React.ReactElement {
     index: number;
   }) => (
     <NeoStaggeredItem index={index}>
-      <Card style={styles.itemCard} padding="sm">
-      <View style={styles.row}>
-        <ProductImage url={item.imageUrl} alt={item.name} variant="thumbnail" />
-        <View style={styles.info}>
-          <Text style={[text.label, styles.name]} numberOfLines={2}>
-            {item.name}
-          </Text>
-          <Text style={text.bodyMuted}>{formatPrice(item.price)}</Text>
+      <Card style={layout.section} padding="sm">
+        <View style={styles.row}>
+          <ProductImage url={item.imageUrl} alt={item.name} variant="thumbnail" />
+          <View style={styles.info}>
+            <Text style={[text.label, styles.name]} numberOfLines={2}>
+              {item.name}
+            </Text>
+            <Text style={text.bodyMuted}>{formatPrice(item.price)}</Text>
+          </View>
+          <Button variant="ghost" size="sm" onPress={() => handleRemoveItem(item.productId, item.variantId)}>
+            Eliminar
+          </Button>
         </View>
-        <Button variant="ghost" size="sm" onPress={() => handleRemoveItem(item.productId, item.variantId)}>
-          Eliminar
-        </Button>
-      </View>
 
-      <View style={styles.quantityRow}>
-        <Button
-          variant="outline"
-          size="sm"
-          onPress={() => handleUpdateQuantity(item.productId, item.quantity - 1, item.variantId)}
-        >
-          -
-        </Button>
-        <Text style={styles.quantity}>{item.quantity}</Text>
-        <Button
-          variant="outline"
-          size="sm"
-          onPress={() => handleUpdateQuantity(item.productId, item.quantity + 1, item.variantId)}
-        >
-          +
-        </Button>
-      </View>
+        <View style={styles.quantityRow}>
+          <Button
+            variant="outline"
+            size="sm"
+            onPress={() => handleUpdateQuantity(item.productId, item.quantity - 1, item.variantId)}
+          >
+            -
+          </Button>
+          <Text style={styles.quantity}>{item.quantity}</Text>
+          <Button
+            variant="outline"
+            size="sm"
+            onPress={() => handleUpdateQuantity(item.productId, item.quantity + 1, item.variantId)}
+          >
+            +
+          </Button>
+        </View>
       </Card>
     </NeoStaggeredItem>
   );
@@ -101,54 +102,44 @@ export default function CartScreen(): React.ReactElement {
       <NeoPageHeader
         eyebrow="Pago"
         title={`Carrito (${itemCount})`}
-        style={styles.header}
+        style={layout.pageHeaderInset}
         compact
       />
 
       {items.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={text.bodyMuted}>Tu carrito está vacío.</Text>
-          <Button onPress={() => router.push('/(tabs)/store')} style={styles.emptyButton}>
-            Ir a la tienda
-          </Button>
+        <View style={layout.emptyState}>
+          <View style={styles.emptyPanel}>
+            <Text style={[text.bodyMuted, styles.emptyText]}>Tu carrito está vacío.</Text>
+            <Button variant="outline" onPress={() => router.push('/(tabs)/store')} fullWidth>
+              Ir a la tienda
+            </Button>
+          </View>
         </View>
       ) : (
         <FlatList
           data={items}
           keyExtractor={(item) => `${item.productId}-${item.variantId ?? 'default'}`}
           renderItem={renderItem}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={layout.listContentWithFooter}
         />
       )}
 
       {items.length > 0 ? (
-        <View style={styles.footer}>
+        <NeoStickyFooter>
           <View style={styles.totalRow}>
             <Text style={text.totalLabel}>Total</Text>
             <Text style={text.totalValue}>{formatPrice(total)}</Text>
           </View>
-          <Button onPress={() => router.push('/checkout')} size="lg">
+          <Button onPress={() => router.push('/checkout')} size="lg" fullWidth>
             Continuar al pago
           </Button>
-        </View>
+        </NeoStickyFooter>
       ) : null}
     </NeoScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    marginBottom: 0,
-  },
-  list: {
-    padding: 16,
-    paddingBottom: 200,
-  },
-  itemCard: {
-    marginBottom: 12,
-  },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -156,7 +147,6 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
-    marginRight: 12,
   },
   name: {
     textTransform: 'uppercase',
@@ -172,33 +162,20 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     minWidth: 28,
     textAlign: 'center',
-    color: neo.onyx,
   },
-  empty: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
+  emptyPanel: {
+    width: '100%',
+    maxWidth: 320,
+    gap: 16,
+    alignItems: 'stretch',
   },
-  emptyButton: {
-    minWidth: 180,
-    marginTop: 16,
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-    backgroundColor: neo.bg,
-    borderTopWidth: 3,
-    borderTopColor: neo.onyx,
+  emptyText: {
+    textAlign: 'center',
   },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
     borderBottomWidth: 3,
     borderBottomColor: neo.onyx,
     paddingBottom: 12,

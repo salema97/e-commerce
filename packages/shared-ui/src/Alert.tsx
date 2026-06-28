@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
 import { neo } from './theme.js';
+import { NeoBrutalShadow } from './neo-brutal-shadow.js';
 
 export interface AlertProps {
   variant?: 'default' | 'destructive';
@@ -9,6 +10,7 @@ export interface AlertProps {
   style?: ViewStyle;
   titleStyle?: TextStyle;
   textStyle?: TextStyle;
+  fullWidth?: boolean;
 }
 
 export const Alert: React.FC<AlertProps> = ({
@@ -18,31 +20,35 @@ export const Alert: React.FC<AlertProps> = ({
   style,
   titleStyle,
   textStyle,
+  fullWidth = true,
 }) => {
   const isDestructive = variant === 'destructive';
 
   return (
-    <View
-      style={[
-        styles.alert,
-        isDestructive ? styles.destructive : styles.default,
-        style,
-      ]}
-      accessibilityRole="alert"
-    >
-      {title ? (
-        <Text style={[styles.title, isDestructive && styles.destructiveTitle, titleStyle]}>
-          {title}
-        </Text>
-      ) : null}
-      {typeof children === 'string' ? (
-        <Text style={[styles.text, isDestructive && styles.destructiveText, textStyle]}>
-          {children}
-        </Text>
-      ) : (
-        children
-      )}
-    </View>
+    <NeoBrutalShadow shadow="md" fullWidth={fullWidth}>
+      <View
+        style={[
+          styles.alert,
+          isDestructive ? styles.destructive : styles.default,
+          fullWidth && styles.fullWidth,
+          style,
+        ]}
+        accessibilityRole="alert"
+      >
+        {title ? (
+          <Text style={[styles.title, isDestructive && styles.destructiveTitle, titleStyle]}>
+            {title}
+          </Text>
+        ) : null}
+        {typeof children === 'string' ? (
+          <Text style={[styles.text, isDestructive && styles.destructiveText, textStyle]}>
+            {children}
+          </Text>
+        ) : (
+          children
+        )}
+      </View>
+    </NeoBrutalShadow>
   );
 };
 
@@ -51,11 +57,9 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: neo.onyx,
     padding: 16,
-    shadowColor: neo.onyx,
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4,
+  },
+  fullWidth: {
+    width: '100%',
   },
   default: {
     backgroundColor: neo.white,

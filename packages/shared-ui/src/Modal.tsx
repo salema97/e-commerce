@@ -7,6 +7,7 @@ import {
   type ModalProps,
 } from 'react-native';
 import { neo } from './theme.js';
+import { NeoBrutalShadow } from './neo-brutal-shadow.js';
 
 export interface ModalPropsCustom {
   visible: boolean;
@@ -38,7 +39,9 @@ export const Modal: React.FC<ModalPropsCustom> = ({
         accessibilityRole="button"
         accessibilityLabel="Cerrar modal"
       />
-      <View style={[styles.container, style]}>{children}</View>
+      <NeoBrutalShadow shadow="xl" style={styles.dialogHost}>
+        <View style={[styles.container, style]}>{children}</View>
+      </NeoBrutalShadow>
     </View>
   );
 };
@@ -54,19 +57,18 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(17, 17, 17, 0.7)',
   },
+  dialogHost: {
+    width: '90%',
+    maxWidth: 420,
+    alignSelf: 'center',
+  },
   container: {
     backgroundColor: neo.white,
     borderWidth: 3,
     borderColor: neo.onyx,
     borderRadius: 0,
     padding: 24,
-    width: '90%',
-    maxWidth: 420,
-    shadowColor: neo.onyx,
-    shadowOffset: { width: 12, height: 12 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 8,
+    width: '100%',
   },
 });
 

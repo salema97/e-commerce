@@ -15,7 +15,9 @@ export default function WishlistScreen(): React.ReactElement {
   if (isLoading) {
     return (
       <NeoScreen style={layout.screen}>
-        <Text style={[text.bodyMuted, styles.loading]}>Cargando lista de deseos…</Text>
+        <View style={layout.emptyState}>
+          <Text style={text.bodyMuted}>Cargando lista de deseos…</Text>
+        </View>
       </NeoScreen>
     );
   }
@@ -23,8 +25,8 @@ export default function WishlistScreen(): React.ReactElement {
   if (items.length === 0) {
     return (
       <NeoScreen style={layout.screen}>
-        <View style={layout.center}>
-          <NeoPageHeader eyebrow="Favoritos" title="Lista de deseos" compact style={styles.emptyHeader} />
+        <View style={layout.emptyState}>
+          <NeoPageHeader eyebrow="Favoritos" title="Lista de deseos" compact style={styles.guestHeader} />
           <Text style={[text.bodyMuted, styles.emptyText]}>Aún no guardaste productos.</Text>
           <Button onPress={() => router.push('/(tabs)/store')}>Explorar tienda</Button>
         </View>
@@ -37,16 +39,16 @@ export default function WishlistScreen(): React.ReactElement {
       <NeoPageHeader
         eyebrow="Favoritos"
         title={`Lista de deseos (${items.length})`}
-        style={styles.header}
+        style={layout.pageHeaderInset}
         compact
       />
       <FlatList
         data={items}
         keyExtractor={(item) => item.productId}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={layout.listContent}
         renderItem={({ item, index }) => (
           <NeoStaggeredItem index={index}>
-            <Card style={styles.itemCard} padding="sm">
+            <Card style={layout.section} padding="sm">
               <Pressable
                 style={styles.row}
                 onPress={() =>
@@ -70,12 +72,18 @@ export default function WishlistScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  header: { paddingHorizontal: 20, paddingTop: 12, marginBottom: 0 },
-  emptyHeader: { marginBottom: 12, borderBottomWidth: 0, paddingBottom: 0 },
-  list: { padding: 16, paddingBottom: 120 },
-  itemCard: { marginBottom: 12, gap: 12 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  guestHeader: {
+    marginBottom: 12,
+    borderBottomWidth: 0,
+    paddingBottom: 0,
+    alignSelf: 'stretch',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
   name: { flex: 1 },
   emptyText: { marginBottom: 16, textAlign: 'center' },
-  loading: { textAlign: 'center', marginTop: 40 },
 });

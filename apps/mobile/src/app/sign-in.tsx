@@ -34,7 +34,7 @@ export default function SignInScreen(): React.ReactElement {
 
   return (
     <NeoScreen style={layout.screen}>
-      <NeoScaleIn style={styles.content}>
+      <NeoScaleIn style={StyleSheet.flatten([layout.content, styles.authContent])}>
         <NeoPageHeader
           title="Iniciar sesión"
           subtitle="Accede con tu cuenta de la tienda"
@@ -67,6 +67,7 @@ export default function SignInScreen(): React.ReactElement {
           onPress={handleSignIn}
           loading={loading}
           disabled={!email || !password}
+          fullWidth
           style={styles.button}
         >
           Ingresar
@@ -84,10 +85,9 @@ export default function SignInScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  content: {
+  authContent: {
     flex: 1,
     justifyContent: 'center',
-    padding: 24,
   },
   header: {
     marginBottom: 24,

@@ -6,8 +6,18 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Button, Badge, Card, neo, ProductImage } from '@repo/shared-ui';
+import {
+  Button,
+  Badge,
+  Card,
+  NeoPageHeader,
+  getNeoLayoutStyles,
+  getNeoTextStyles,
+  neo,
+  ProductImage,
+} from '@repo/shared-ui';
 import { NeoScreen } from '../../../components/neo-screen';
+import { NeoStickyFooter } from '../../../components/neo-layout';
 import { NeoStaggeredItem } from '../../../components/neo-animated';
 import { useApiQueryHooks } from '../../../lib/api';
 import { useCart } from '../../../lib/cart';
@@ -31,6 +41,9 @@ export default function ProductDetailScreen(): React.ReactElement {
   const { addItem, itemCount } = useCart();
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>();
   const [quantity, setQuantity] = useState(1);
+
+  const text = getNeoTextStyles();
+  const layout = getNeoLayoutStyles();
 
   useEffect(() => {
     if (!product) return;
@@ -77,8 +90,10 @@ export default function ProductDetailScreen(): React.ReactElement {
       captureMobileException(error, { screen: 'product-detail', productId: id });
     }
     return (
-      <NeoScreen style={styles.center}>
-        <Text style={styles.error}>No se pudo cargar el producto.</Text>
+      <NeoScreen style={layout.screen}>
+        <View style={layout.emptyState}>
+          <Text style={text.error}>No se pudo cargar el producto.</Text>
+        </View>
       </NeoScreen>
     );
   }
@@ -106,10 +121,12 @@ export default function ProductDetailScreen(): React.ReactElement {
   };
 
   return (
-    <NeoScreen style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+    <NeoScreen style={layout.screen}>
+      <ScrollView contentContainerStyle={layout.detailContent}>
+        <NeoPageHeader eyebrow="Producto" title={product.name} style={layout.pageHeaderInList} compact />
+
         <NeoStaggeredItem index={0}>
-          <Card padding="none" style={styles.productShell}>
+          <Card padding="none" style={layout.section}>
             <View style={styles.imageSection}>
               <ProductImage
                 url={getProductPrimaryImageUrl(product)}
@@ -122,82 +139,71 @@ export default function ProductDetailScreen(): React.ReactElement {
             </View>
 
             <View style={styles.infoSection}>
-              <NeoStaggeredItem index={1}>
-                <View style={styles.badgeRow}>
-                  {product.isFeatured ? <Badge variant="secondary">Destacado</Badge> : null}
-                  {isPreOrder ? <Badge variant="outline">Pre-orden</Badge> : null}
-                  <Badge variant="primary">
-                    {isOutOfStock && !isPreOrder ? 'Sin stock' : 'En stock'}
-                  </Badge>
-                </View>
-              </NeoStaggeredItem>
+              <View style={styles.badgeRow}>
+                {product.isFeatured ? <Badge variant="secondary">Destacado</Badge> : null}
+                {isPreOrder ? <Badge variant="outline">Pre-orden</Badge> : null}
+                <Badge variant="primary">
+                  {isOutOfStock && !isPreOrder ? 'Sin stock' : 'En stock'}
+                </Badge>
+              </View>
 
-              <NeoStaggeredItem index={2}>
-                <Text style={styles.name}>{product.name}</Text>
-
-                {product.description ? (
-                  <Text style={styles.description}>{product.description}</Text>
-                ) : null}
-
-                {isPreOrder && product.preOrderReleaseDate ? (
-                  <Text style={styles.preorderNote}>
-                    Disponible a partir del{' '}
-                    {new Date(product.preOrderReleaseDate).toLocaleDateString('es-EC')}
-                  </Text>
-                ) : null}
-              </NeoStaggeredItem>
-
-              {product.variants && product.variants.length > 0 ? (
-                <NeoStaggeredItem index={3}>
-                  <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Variante</Text>
-                    <View style={styles.variants}>
-                      {product.variants.map((variant) => {
-                        const selected = selectedVariant?.id === variant.id;
-                        return (
-                          <View key={variant.id} style={styles.variantChip}>
-                            <Button
-                              variant={selected ? 'secondary' : 'outline'}
-                              size="sm"
-                              onPress={() => setSelectedVariant(variant)}
-                            >
-                              {variant.name}
-                            </Button>
-                          </View>
-                        );
-                      })}
-                    </View>
-                  </View>
-                </NeoStaggeredItem>
+              {product.description ? (
+                <Text style={text.bodyMuted}>{product.description}</Text>
               ) : null}
 
-              <NeoStaggeredItem index={4}>
-                <View style={styles.quantitySection}>
-                  <Text style={styles.sectionTitle}>Cantidad</Text>
-                  <View style={styles.quantityControls}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onPress={() => setQuantity((q) => Math.max(1, q - 1))}
-                    >
-                      -
-                    </Button>
-                    <Text style={styles.quantityValue}>{quantity}</Text>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onPress={() => setQuantity((q) => q + 1)}
-                    >
-                      +
-                    </Button>
+              {isPreOrder && product.preOrderReleaseDate ? (
+                <Text style={text.bodyMuted}>
+                  Disponible a partir del{' '}
+                  {new Date(product.preOrderReleaseDate).toLocaleDateString('es-EC')}
+                </Text>
+              ) : null}
+
+              {product.variants && product.variants.length > 0 ? (
+                <View style={layout.stackSection}>
+                  <Text style={text.sectionTitle}>Variante</Text>
+                  <View style={styles.variants}>
+                    {product.variants.map((variant) => {
+                      const selected = selectedVariant?.id === variant.id;
+                      return (
+                        <Button
+                          key={variant.id}
+                          variant={selected ? 'secondary' : 'outline'}
+                          size="sm"
+                          onPress={() => setSelectedVariant(variant)}
+                        >
+                          {variant.name}
+                        </Button>
+                      );
+                    })}
                   </View>
                 </View>
-              </NeoStaggeredItem>
+              ) : null}
+
+              <View style={layout.stackSection}>
+                <Text style={text.sectionTitle}>Cantidad</Text>
+                <View style={styles.quantityControls}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onPress={() => setQuantity((q) => Math.max(1, q - 1))}
+                  >
+                    -
+                  </Button>
+                  <Text style={styles.quantityValue}>{quantity}</Text>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onPress={() => setQuantity((q) => q + 1)}
+                  >
+                    +
+                  </Button>
+                </View>
+              </View>
 
               {isOutOfStock && !isPreOrder ? (
-                <NeoStaggeredItem index={5}>
+                <View style={layout.stackSection}>
                   <BackInStockForm productId={product.id} />
-                </NeoStaggeredItem>
+                </View>
               ) : null}
             </View>
           </Card>
@@ -206,45 +212,24 @@ export default function ProductDetailScreen(): React.ReactElement {
         <ProductReviews productId={product.id} />
       </ScrollView>
 
-      <View style={styles.footer}>
+      <NeoStickyFooter>
         {itemCount > 0 ? (
           <Badge variant="outline" style={styles.cartBadge}>
             {itemCount} en el carrito
           </Badge>
         ) : null}
-        <Button variant="outline" onPress={handleToggleWishlist} size="lg">
+        <Button variant="outline" onPress={handleToggleWishlist} size="lg" fullWidth>
           {savedToWishlist ? 'Quitar de favoritos' : 'Guardar en favoritos'}
         </Button>
-        <Button onPress={handleAddToCart} size="lg" disabled={isOutOfStock && !isPreOrder}>
+        <Button onPress={handleAddToCart} size="lg" fullWidth disabled={isOutOfStock && !isPreOrder}>
           {isOutOfStock && !isPreOrder ? 'Sin stock' : 'Agregar al carrito'}
         </Button>
-      </View>
+      </NeoStickyFooter>
     </NeoScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: neo.bg,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: neo.bg,
-  },
-  error: {
-    color: neo.scarlet,
-    fontWeight: '700',
-  },
-  content: {
-    padding: 16,
-    paddingBottom: 160,
-  },
-  productShell: {
-    overflow: 'hidden',
-  },
   imageSection: {
     position: 'relative',
   },
@@ -258,11 +243,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     transform: [{ rotate: '-2deg' }],
-    shadowColor: neo.onyx,
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4,
   },
   priceStickerText: {
     color: neo.white,
@@ -278,50 +258,10 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
   },
-  name: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: neo.onyx,
-    textTransform: 'uppercase',
-    lineHeight: 30,
-    letterSpacing: -0.5,
-  },
-  description: {
-    fontSize: 14,
-    color: neo.muted,
-    lineHeight: 20,
-    fontWeight: '600',
-  },
-  preorderNote: {
-    marginTop: 8,
-    fontSize: 13,
-    color: neo.muted,
-    fontWeight: '600',
-  },
-  section: {
-    marginTop: 8,
-  },
-  sectionTitle: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: neo.muted,
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
   variants: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-  },
-  variantChip: {
-    marginBottom: 4,
-  },
-  quantitySection: {
-    marginTop: 8,
-    borderTopWidth: 2,
-    borderTopColor: 'rgba(17,17,17,0.1)',
-    paddingTop: 12,
   },
   quantityControls: {
     flexDirection: 'row',
@@ -335,17 +275,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: neo.onyx,
   },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-    backgroundColor: neo.bg,
-    borderTopWidth: 3,
-    borderTopColor: neo.onyx,
-  },
   cartBadge: {
-    marginBottom: 12,
+    alignSelf: 'flex-start',
   },
 });

@@ -29,7 +29,7 @@ export default function SubscriptionsScreen(): React.ReactElement {
   return (
     <NeoScreen style={layout.screen}>
       <ScrollView contentContainerStyle={layout.content}>
-        <NeoPageHeader title="Suscripciones" style={styles.header} compact />
+        <NeoPageHeader title="Suscripciones" style={layout.pageHeaderInList} compact />
 
         <Button
           variant="outline"

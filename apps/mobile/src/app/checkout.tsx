@@ -185,7 +185,7 @@ export default function CheckoutScreen(): React.ReactElement {
   return (
     <NeoScreen style={layout.screen}>
       <ScrollView contentContainerStyle={layout.contentPaddedBottom}>
-        <NeoPageHeader eyebrow="Checkout" title="Finalizar compra" style={styles.header} />
+        <NeoPageHeader eyebrow="Checkout" title="Finalizar compra" style={layout.pageHeaderInList} compact />
 
         <NeoEnterFromBottom delay={0}>
           <Card style={styles.summary}>
@@ -225,7 +225,9 @@ export default function CheckoutScreen(): React.ReactElement {
         </NeoEnterFromBottom>
 
         <NeoEnterFromBottom delay={80}>
-          <Text style={[text.sectionTitle, styles.sectionGap]}>Datos de contacto</Text>
+          <View style={layout.stackSection}>
+            <Text style={text.sectionTitle}>Datos de contacto</Text>
+          </View>
           <Input
             label="Correo electrónico"
             value={email}
@@ -244,7 +246,9 @@ export default function CheckoutScreen(): React.ReactElement {
         </NeoEnterFromBottom>
 
         <NeoEnterFromBottom delay={160}>
-          <Text style={[text.sectionTitle, styles.sectionGap]}>Dirección de envío</Text>
+          <View style={layout.stackSection}>
+            <Text style={text.sectionTitle}>Dirección de envío</Text>
+          </View>
           <Input
             label="Nombre del destinatario"
             value={recipientName}
@@ -283,7 +287,9 @@ export default function CheckoutScreen(): React.ReactElement {
         </NeoEnterFromBottom>
 
         <NeoEnterFromBottom delay={240}>
-          <Text style={[text.sectionTitle, styles.sectionGap]}>Cupón (opcional)</Text>
+          <View style={layout.stackSection}>
+            <Text style={text.sectionTitle}>Cupón (opcional)</Text>
+          </View>
           <Input
             label="Código de cupón"
             value={couponCode}
@@ -294,7 +300,9 @@ export default function CheckoutScreen(): React.ReactElement {
         </NeoEnterFromBottom>
 
         <NeoEnterFromBottom delay={280}>
-          <Text style={[text.sectionTitle, styles.sectionGap]}>Referido y puntos</Text>
+          <View style={layout.stackSection}>
+            <Text style={text.sectionTitle}>Referido y puntos</Text>
+          </View>
           <Input
             label="Código de referido"
             value={referralCode}
@@ -326,6 +334,7 @@ export default function CheckoutScreen(): React.ReactElement {
               onPress={handleCheckout}
               disabled={!isFormValid}
               size="lg"
+              fullWidth
             >
               Pagar {formatPrice(estimatedTotal)}
             </Button>
@@ -337,14 +346,8 @@ export default function CheckoutScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    marginBottom: 4,
-  },
   emptyButton: {
     marginTop: 16,
-  },
-  sectionGap: {
-    marginTop: 20,
   },
   summary: {
     marginBottom: 8,

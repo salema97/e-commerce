@@ -20,7 +20,7 @@ export default function PrivacyScreen(): React.ReactElement {
   return (
     <NeoScreen style={layout.screen}>
       <ScrollView contentContainerStyle={layout.content}>
-        <NeoPageHeader title="Privacidad y datos" style={styles.header} compact />
+        <NeoPageHeader title="Privacidad y datos" style={layout.pageHeaderInList} compact />
         <Card style={styles.card}>
           <Text style={text.label}>Exportar datos (GDPR)</Text>
           <Button variant="outline" onPress={() => void exportData()} style={styles.button}>

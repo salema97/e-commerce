@@ -35,7 +35,7 @@ export default function SignUpScreen(): React.ReactElement {
 
   return (
     <NeoScreen style={layout.screen}>
-      <NeoScaleIn style={styles.content}>
+      <NeoScaleIn style={StyleSheet.flatten([layout.content, styles.authContent])}>
         <NeoPageHeader
           title="Crear cuenta"
           subtitle="Regístrate para comprar y seguir tus pedidos"
@@ -75,6 +75,7 @@ export default function SignUpScreen(): React.ReactElement {
           onPress={handleSignUp}
           loading={loading}
           disabled={!email || !password}
+          fullWidth
           style={styles.button}
         >
           Registrarme
@@ -92,10 +93,9 @@ export default function SignUpScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  content: {
+  authContent: {
     flex: 1,
     justifyContent: 'center',
-    padding: 24,
   },
   header: {
     marginBottom: 24,

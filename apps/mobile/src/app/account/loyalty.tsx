@@ -15,7 +15,7 @@ export default function LoyaltyScreen(): React.ReactElement {
   return (
     <NeoScreen style={layout.screen}>
       <ScrollView contentContainerStyle={layout.content}>
-        <NeoPageHeader title="Programa de lealtad" style={styles.header} compact />
+        <NeoPageHeader title="Programa de lealtad" style={layout.pageHeaderInList} compact />
 
         {accountLoading ? (
           <Text style={text.bodyMuted}>Cargando cuenta...</Text>
@@ -27,14 +27,16 @@ export default function LoyaltyScreen(): React.ReactElement {
           </Card>
         ) : null}
 
-        <Text style={[text.sectionTitle, styles.section]}>Historial</Text>
+        <View style={layout.stackSection}>
+          <Text style={text.sectionTitle}>Historial</Text>
+        </View>
         {txLoading ? (
           <Text style={text.bodyMuted}>Cargando movimientos...</Text>
         ) : (transactions ?? []).length === 0 ? (
           <Text style={text.bodyMuted}>Sin movimientos aún.</Text>
         ) : (
           (transactions ?? []).map((tx) => (
-            <Card key={tx.id} style={styles.txCard}>
+            <Card key={tx.id} style={layout.section}>
               <Text style={text.label}>
                 {tx.type} · {tx.points > 0 ? '+' : ''}
                 {tx.points} pts
@@ -50,16 +52,7 @@ export default function LoyaltyScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    marginBottom: 16,
-  },
   rowGap: {
     marginTop: 6,
-  },
-  section: {
-    marginTop: 24,
-  },
-  txCard: {
-    marginBottom: 8,
   },
 });

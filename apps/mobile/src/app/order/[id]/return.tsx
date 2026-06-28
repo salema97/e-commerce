@@ -74,7 +74,7 @@ export default function ReturnRequestScreen(): React.ReactElement {
           title="Solicitar devolución"
           subtitle={`Pedido #${currentOrder.orderNumber}`}
           compact
-          style={styles.header}
+          style={layout.pageHeaderInList}
         />
 
         {!isDelivered ? (

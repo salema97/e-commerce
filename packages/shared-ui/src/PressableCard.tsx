@@ -2,12 +2,14 @@ import React from 'react';
 import { Pressable, View, Text, StyleSheet, type PressableProps, type ViewStyle } from 'react-native';
 import { Card } from './Card.js';
 import { neo } from './theme.js';
+import { NeoBrutalShadow } from './neo-brutal-shadow.js';
 
 export interface PressableCardProps extends Omit<PressableProps, 'style'> {
   children: React.ReactNode;
   style?: ViewStyle;
   cardStyle?: ViewStyle;
   padding?: 'none' | 'sm' | 'md' | 'lg';
+  fullWidth?: boolean;
 }
 
 export function PressableCard({
@@ -15,16 +17,20 @@ export function PressableCard({
   style,
   cardStyle,
   padding = 'md',
+  fullWidth = false,
   ...pressableProps
 }: PressableCardProps): React.ReactElement {
   return (
-    <Pressable
-      style={({ pressed }) => [styles.pressable, pressed && styles.pressed, style]}
-      {...pressableProps}
-    >
-      <Card style={cardStyle} padding={padding}>
-        {children}
-      </Card>
+    <Pressable style={[styles.pressable, fullWidth && styles.fullWidth, style]} {...pressableProps}>
+      {({ pressed }) => (
+        <Card
+          style={StyleSheet.flatten([cardStyle, pressed && styles.pressed])}
+          padding={padding}
+          fullWidth={fullWidth}
+        >
+          {children}
+        </Card>
+      )}
     </Pressable>
   );
 }
@@ -50,15 +56,17 @@ export function Checkbox({
       onPress={() => onCheckedChange(!checked)}
       style={styles.checkboxRow}
     >
-      <View
-        style={[
-          styles.checkboxBox,
-          checked && styles.checkboxBoxChecked,
-          disabled && styles.checkboxDisabled,
-        ]}
-      >
-        {checked ? <Text style={styles.checkmark}>✓</Text> : null}
-      </View>
+      <NeoBrutalShadow shadow="xs">
+        <View
+          style={[
+            styles.checkboxBox,
+            checked && styles.checkboxBoxChecked,
+            disabled && styles.checkboxDisabled,
+          ]}
+        >
+          {checked ? <Text style={styles.checkmark}>✓</Text> : null}
+        </View>
+      </NeoBrutalShadow>
       <Text style={[styles.checkboxLabel, disabled && styles.checkboxLabelDisabled]}>{label}</Text>
     </Pressable>
   );
@@ -67,9 +75,14 @@ export function Checkbox({
 const styles = StyleSheet.create({
   pressable: {
     flex: 1,
+    alignSelf: 'flex-start',
+  },
+  fullWidth: {
+    alignSelf: 'stretch',
+    width: '100%',
   },
   pressed: {
-    transform: [{ translateX: 2 }, { translateY: 2 }],
+    opacity: 0.92,
   },
   checkboxRow: {
     flexDirection: 'row',
@@ -84,10 +97,6 @@ const styles = StyleSheet.create({
     backgroundColor: neo.white,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: neo.onyx,
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
   },
   checkboxBoxChecked: {
     backgroundColor: neo.gold,

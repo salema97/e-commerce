@@ -8,7 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Button, ChatBubble, Input, neo } from '@repo/shared-ui';
+import { Button, ChatBubble, Input, neo, neoSpacing } from '@repo/shared-ui';
 import type { Message } from '@repo/shared-types';
 import { useApiQueryHooks } from '../../lib/api';
 
@@ -123,8 +123,8 @@ export function StoreChatWidget(): React.ReactElement {
 const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
-    right: 16,
-    bottom: 88,
+    right: neoSpacing.screen,
+    bottom: neoSpacing.screen,
     zIndex: 50,
   },
   overlay: {

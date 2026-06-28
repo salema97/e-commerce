@@ -20,7 +20,7 @@ export default function ReferralsScreen(): React.ReactElement {
   return (
     <NeoScreen style={layout.screen}>
       <ScrollView contentContainerStyle={layout.content}>
-        <NeoPageHeader title="Invita y gana" style={styles.header} compact />
+        <NeoPageHeader title="Invita y gana" style={layout.pageHeaderInList} compact />
 
         {code ? (
           <Card>

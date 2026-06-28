@@ -16,7 +16,7 @@ export default function HelpScreen(): React.ReactElement {
 
   const renderFaq = ({ item, index }: { item: Faq; index: number }) => (
     <NeoStaggeredItem index={index}>
-      <Card style={styles.faqCard} padding="md">
+      <Card style={layout.section} padding="md">
         <Text style={text.label}>{item.question}</Text>
         <Text style={[text.bodyMuted, styles.answer]}>{item.answer}</Text>
       </Card>
@@ -29,7 +29,7 @@ export default function HelpScreen(): React.ReactElement {
         eyebrow="Soporte"
         title="Preguntas frecuentes"
         subtitle="¿No encuentras respuesta? Abre el chat desde la tienda."
-        style={styles.header}
+        style={layout.pageHeaderInset}
         compact
       >
         <Button variant="outline" size="sm" onPress={() => router.push('/(tabs)/store')} style={styles.headerButton}>
@@ -44,7 +44,7 @@ export default function HelpScreen(): React.ReactElement {
           data={faqs}
           keyExtractor={(item) => item.id}
           renderItem={renderFaq}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={layout.listContent}
           ListEmptyComponent={
             <Text style={[text.bodyMuted, styles.empty]}>Aún no hay preguntas publicadas.</Text>
           }
@@ -55,21 +55,9 @@ export default function HelpScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    marginBottom: 0,
-  },
   headerButton: {
     marginTop: 12,
     alignSelf: 'flex-start',
-  },
-  list: {
-    padding: 16,
-    paddingBottom: 120,
-  },
-  faqCard: {
-    marginBottom: 12,
   },
   answer: {
     marginTop: 8,
@@ -78,6 +66,7 @@ const styles = StyleSheet.create({
   loading: {
     textAlign: 'center',
     marginTop: 24,
+    paddingHorizontal: 24,
   },
   empty: {
     textAlign: 'center',

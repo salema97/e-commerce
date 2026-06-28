@@ -15,16 +15,16 @@ export default function LegalIndexScreen(): React.ReactElement {
       <NeoPageHeader
         eyebrow="Legal"
         title="Información legal"
-        style={styles.header}
+        style={layout.pageHeaderInset}
         compact
       />
       <FlatList
         data={LEGAL_PATH_SLUGS}
         keyExtractor={(slug) => slug}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={layout.listContent}
         renderItem={({ item: slug }) => (
           <Pressable onPress={() => router.push(`/legal/${slug}`)}>
-            <Card style={styles.card} padding="md">
+            <Card style={layout.section} padding="md">
               <Text style={text.label}>{LEGAL_PATH_TITLES[slug]}</Text>
             </Card>
           </Pressable>
@@ -33,13 +33,3 @@ export default function LegalIndexScreen(): React.ReactElement {
     </NeoScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    marginBottom: 0,
-  },
-  list: { padding: 16, paddingBottom: 120, gap: 12 },
-  card: { marginBottom: 12 },
-});
