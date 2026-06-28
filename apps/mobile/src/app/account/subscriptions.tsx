@@ -1,11 +1,13 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, Linking } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Card } from '@repo/shared-ui';
+import { Text, ScrollView, StyleSheet, Linking } from 'react-native';
+import { Button, Card, NeoPageHeader, getNeoLayoutStyles, getNeoTextStyles } from '@repo/shared-ui';
+import { NeoScreen } from '../../components/neo-screen';
 import { useApiQueryHooks } from '../../lib/api';
 
 export default function SubscriptionsScreen(): React.ReactElement {
   const hooks = useApiQueryHooks();
+  const text = getNeoTextStyles();
+  const layout = getNeoLayoutStyles();
   const subscriptionsQuery = hooks.useMySubscriptions();
   const plansQuery = hooks.useSubscriptionPlans();
   const subscribeMutation = hooks.useSubscribe();
@@ -25,9 +27,9 @@ export default function SubscriptionsScreen(): React.ReactElement {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Suscripciones</Text>
+    <NeoScreen style={layout.screen}>
+      <ScrollView contentContainerStyle={layout.content}>
+        <NeoPageHeader title="Suscripciones" style={styles.header} compact />
 
         <Button
           variant="outline"
@@ -38,27 +40,27 @@ export default function SubscriptionsScreen(): React.ReactElement {
           Portal de facturación
         </Button>
 
-        <Text style={styles.section}>Activas</Text>
+        <Text style={[text.sectionTitle, styles.section]}>Activas</Text>
         {subscriptionsQuery.isLoading ? (
-          <Text>Cargando...</Text>
+          <Text style={text.bodyMuted}>Cargando...</Text>
         ) : subscriptions.length === 0 ? (
-          <Text style={styles.muted}>No tienes suscripciones activas.</Text>
+          <Text style={text.bodyMuted}>No tienes suscripciones activas.</Text>
         ) : (
           subscriptions.map((sub) => (
             <Card key={sub.id} style={styles.card}>
-              <Text style={styles.label}>Plan: {sub.planId}</Text>
-              <Text style={styles.muted}>Estado: {sub.status}</Text>
+              <Text style={text.label}>Plan: {sub.planId}</Text>
+              <Text style={[text.bodyMuted, styles.rowGap]}>Estado: {sub.status}</Text>
             </Card>
           ))
         )}
 
-        <Text style={styles.section}>Planes disponibles</Text>
+        <Text style={[text.sectionTitle, styles.section]}>Planes disponibles</Text>
         {plansQuery.isLoading ? (
-          <Text>Cargando planes...</Text>
+          <Text style={text.bodyMuted}>Cargando planes...</Text>
         ) : (
           plans.map((plan) => (
             <Card key={plan.id} style={styles.card}>
-              <Text style={styles.label}>{plan.productId}</Text>
+              <Text style={text.label}>{plan.productId}</Text>
               <Button
                 onPress={() => void subscribe(plan.id)}
                 disabled={subscribeMutation.isPending}
@@ -70,17 +72,24 @@ export default function SubscriptionsScreen(): React.ReactElement {
           ))
         )}
       </ScrollView>
-    </SafeAreaView>
+    </NeoScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: 24 },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 16 },
-  section: { fontSize: 18, fontWeight: '600', marginTop: 24, marginBottom: 12 },
-  label: { fontSize: 15, fontWeight: '600', marginBottom: 4 },
-  muted: { color: '#737373', fontSize: 13 },
-  card: { marginBottom: 8 },
-  button: { marginTop: 8 },
+  header: {
+    marginBottom: 16,
+  },
+  section: {
+    marginTop: 24,
+  },
+  card: {
+    marginBottom: 8,
+  },
+  button: {
+    marginTop: 8,
+  },
+  rowGap: {
+    marginTop: 4,
+  },
 });

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Input, Card, Button, neo } from '@repo/shared-ui';
+import { Input, Card, Button, getNeoTextStyles } from '@repo/shared-ui';
 import { useApiQueryHooks } from '../../lib/api';
 import { useAuth } from '../../providers/AuthProvider';
 
@@ -19,6 +19,8 @@ export function ProductReviews({ productId }: ProductReviewsProps): React.ReactE
   const [body, setBody] = useState('');
   const [message, setMessage] = useState<string | null>(null);
 
+  const text = getNeoTextStyles();
+
   async function submitReview(): Promise<void> {
     setMessage(null);
     try {
@@ -35,15 +37,15 @@ export function ProductReviews({ productId }: ProductReviewsProps): React.ReactE
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Reseñas</Text>
-      <Text style={styles.summary}>
+      <Text style={text.sectionTitle}>Reseñas</Text>
+      <Text style={[text.bodyMuted, styles.summary]}>
         {(summary?.averageRating ?? 0).toFixed(1)} ★ ({summary?.reviewCount ?? 0})
       </Text>
 
       {(reviews ?? []).map((review) => (
         <Card key={review.id} style={styles.reviewCard}>
-          <Text style={styles.reviewRating}>{'★'.repeat(review.rating)}</Text>
-          <Text style={styles.reviewBody}>{review.body}</Text>
+          <Text style={text.label}>{'★'.repeat(review.rating)}</Text>
+          <Text style={text.bodyMuted}>{review.body}</Text>
         </Card>
       ))}
 
@@ -60,7 +62,7 @@ export function ProductReviews({ productId }: ProductReviewsProps): React.ReactE
           <Button onPress={() => void submitReview()} size="sm" style={styles.submit}>
             Enviar reseña
           </Button>
-          {message ? <Text style={styles.message}>{message}</Text> : null}
+          {message ? <Text style={[text.bodyMuted, styles.message]}>{message}</Text> : null}
         </View>
       ) : null}
     </View>
@@ -69,13 +71,10 @@ export function ProductReviews({ productId }: ProductReviewsProps): React.ReactE
 
 const styles = StyleSheet.create({
   container: { marginTop: 24 },
-  title: { fontSize: 18, fontWeight: '800', marginBottom: 4, color: neo.onyx, textTransform: 'uppercase' },
-  summary: { color: neo.muted, marginBottom: 12, fontWeight: '600' },
+  summary: { marginBottom: 12 },
   reviewCard: { marginBottom: 8 },
-  reviewRating: { fontWeight: '700', marginBottom: 4, color: neo.onyx },
-  reviewBody: { color: neo.muted, fontWeight: '600' },
   form: { marginTop: 16, gap: 8 },
   field: { marginTop: 8 },
   submit: { marginTop: 8, alignSelf: 'flex-start' },
-  message: { color: neo.muted, marginTop: 8, fontWeight: '600' },
+  message: { marginTop: 8 },
 });

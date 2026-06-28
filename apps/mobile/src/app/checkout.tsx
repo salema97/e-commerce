@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useStripe } from '@stripe/stripe-react-native';
-import { Button, Input, Card } from '@repo/shared-ui';
+import { Button, Input, Card, NeoPageHeader, getNeoLayoutStyles, getNeoTextStyles, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../components/neo-screen';
 import { NeoEnterFromBottom, NeoStaggeredItem } from '../components/neo-animated';
 import { createMobileApiClient, useApiQueryHooks } from '../lib/api';
@@ -168,59 +168,64 @@ export default function CheckoutScreen(): React.ReactElement {
 
   const isFormValid = Boolean(email && recipientName && street && city && country);
 
+  const text = getNeoTextStyles();
+  const layout = getNeoLayoutStyles();
+
   if (items.length === 0) {
     return (
-      <NeoScreen style={styles.center}>
-        <Text style={styles.empty}>No hay productos en el carrito.</Text>
-        <Button onPress={() => router.push('/(tabs)/store')}>Ir a la tienda</Button>
+      <NeoScreen style={layout.center}>
+        <Text style={text.bodyMuted}>No hay productos en el carrito.</Text>
+        <Button onPress={() => router.push('/(tabs)/store')} style={styles.emptyButton}>
+          Ir a la tienda
+        </Button>
       </NeoScreen>
     );
   }
 
   return (
-    <NeoScreen style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Finalizar compra</Text>
+    <NeoScreen style={layout.screen}>
+      <ScrollView contentContainerStyle={layout.contentPaddedBottom}>
+        <NeoPageHeader eyebrow="Checkout" title="Finalizar compra" style={styles.header} />
 
         <NeoEnterFromBottom delay={0}>
           <Card style={styles.summary}>
-            <Text style={styles.sectionTitle}>Resumen del pedido</Text>
+            <Text style={text.sectionTitle}>Resumen del pedido</Text>
             {items.map((item, index) => (
               <NeoStaggeredItem key={`${item.productId}-${item.variantId ?? 'default'}`} index={index}>
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryName} numberOfLines={1}>
+                  <Text style={text.bodyMuted} numberOfLines={1}>
                     {item.name} x{item.quantity}
                   </Text>
-                  <Text style={styles.summaryPrice}>{formatPrice(item.price * item.quantity)}</Text>
+                  <Text style={text.label}>{formatPrice(item.price * item.quantity)}</Text>
                 </View>
               </NeoStaggeredItem>
             ))}
           <View style={[styles.summaryRow, styles.subRow]}>
-            <Text style={styles.subLabel}>Subtotal</Text>
-            <Text style={styles.subValue}>{formatPrice(cartTotal)}</Text>
+            <Text style={text.bodyMuted}>Subtotal</Text>
+            <Text style={text.label}>{formatPrice(cartTotal)}</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.subLabel}>Envío</Text>
-            <Text style={styles.subValue}>
+            <Text style={text.bodyMuted}>Envío</Text>
+            <Text style={text.label}>
               {shipping === 0 ? 'Gratis' : formatPrice(shipping)}
             </Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.subLabel}>IVA (15%)</Text>
-            <Text style={styles.subValue}>{formatPrice(tax)}</Text>
+            <Text style={text.bodyMuted}>IVA (15%)</Text>
+            <Text style={text.label}>{formatPrice(tax)}</Text>
           </View>
-          <View style={[styles.summaryRow, styles.totalRow]}>
-            <Text style={styles.totalLabel}>Total estimado</Text>
-            <Text style={styles.totalValue}>{formatPrice(estimatedTotal)}</Text>
+          <View style={[styles.summaryRow, layout.totalRow]}>
+            <Text style={text.totalLabel}>Total estimado</Text>
+            <Text style={text.totalValue}>{formatPrice(estimatedTotal)}</Text>
           </View>
-          <Text style={styles.disclaimer}>
+          <Text style={[text.bodyMuted, styles.disclaimer]}>
             El total final se calcula al crear el pedido.
           </Text>
           </Card>
         </NeoEnterFromBottom>
 
         <NeoEnterFromBottom delay={80}>
-          <Text style={styles.sectionTitle}>Datos de contacto</Text>
+          <Text style={[text.sectionTitle, styles.sectionGap]}>Datos de contacto</Text>
           <Input
             label="Correo electrónico"
             value={email}
@@ -239,7 +244,7 @@ export default function CheckoutScreen(): React.ReactElement {
         </NeoEnterFromBottom>
 
         <NeoEnterFromBottom delay={160}>
-          <Text style={styles.sectionTitle}>Dirección de envío</Text>
+          <Text style={[text.sectionTitle, styles.sectionGap]}>Dirección de envío</Text>
           <Input
             label="Nombre del destinatario"
             value={recipientName}
@@ -278,7 +283,7 @@ export default function CheckoutScreen(): React.ReactElement {
         </NeoEnterFromBottom>
 
         <NeoEnterFromBottom delay={240}>
-          <Text style={styles.sectionTitle}>Cupón (opcional)</Text>
+          <Text style={[text.sectionTitle, styles.sectionGap]}>Cupón (opcional)</Text>
           <Input
             label="Código de cupón"
             value={couponCode}
@@ -289,7 +294,7 @@ export default function CheckoutScreen(): React.ReactElement {
         </NeoEnterFromBottom>
 
         <NeoEnterFromBottom delay={280}>
-          <Text style={styles.sectionTitle}>Referido y puntos</Text>
+          <Text style={[text.sectionTitle, styles.sectionGap]}>Referido y puntos</Text>
           <Input
             label="Código de referido"
             value={referralCode}
@@ -298,7 +303,7 @@ export default function CheckoutScreen(): React.ReactElement {
             containerStyle={styles.field}
           />
           {loyaltyAccount ? (
-            <Text style={styles.loyaltyHint}>
+            <Text style={[text.bodyMuted, styles.loyaltyHint]}>
               Puntos disponibles: {loyaltyAccount.points} ({loyaltyAccount.tier})
             </Text>
           ) : null}
@@ -312,10 +317,10 @@ export default function CheckoutScreen(): React.ReactElement {
         </NeoEnterFromBottom>
 
         <NeoEnterFromBottom delay={320}>
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {error ? <Text style={[text.error, styles.errorGap]}>{error}</Text> : null}
 
           {isProcessing ? (
-            <ActivityIndicator size="large" color="#171717" style={styles.loader} />
+            <ActivityIndicator size="large" color={neo.onyx} style={styles.loader} />
           ) : (
             <Button
               onPress={handleCheckout}
@@ -332,37 +337,14 @@ export default function CheckoutScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
+  header: {
+    marginBottom: 4,
   },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
+  emptyButton: {
+    marginTop: 16,
   },
-  empty: {
-    fontSize: 16,
-    color: '#737373',
-    marginBottom: 16,
-  },
-  content: {
-    padding: 24,
-    paddingBottom: 40,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#171717',
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#171717',
+  sectionGap: {
     marginTop: 20,
-    marginBottom: 12,
   },
   summary: {
     marginBottom: 8,
@@ -372,53 +354,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-  summaryName: {
-    flex: 1,
-    color: '#525252',
-    marginRight: 12,
-  },
-  summaryPrice: {
-    color: '#171717',
-    fontWeight: '500',
-  },
   subRow: {
     marginTop: 8,
   },
-  subLabel: {
-    fontSize: 14,
-    color: '#525252',
-  },
-  subValue: {
-    fontSize: 14,
-    color: '#171717',
-  },
-  totalRow: {
-    borderTopWidth: 1,
-    borderTopColor: '#e5e5e5',
-    paddingTop: 12,
-    marginTop: 4,
-  },
-  totalLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#171717',
-  },
-  totalValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#171717',
-  },
   disclaimer: {
-    fontSize: 12,
-    color: '#737373',
     marginTop: 8,
   },
   field: {
     marginBottom: 12,
   },
   loyaltyHint: {
-    fontSize: 13,
-    color: '#525252',
     marginBottom: 8,
   },
   row: {
@@ -428,8 +373,7 @@ const styles = StyleSheet.create({
   halfField: {
     flex: 1,
   },
-  error: {
-    color: '#ef4444',
+  errorGap: {
     marginVertical: 12,
   },
   loader: {

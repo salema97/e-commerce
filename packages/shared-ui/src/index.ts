@@ -10,6 +10,14 @@ export { ProductImage } from './ProductImage.js';
 export { Switch } from './Switch.js';
 export { Alert } from './Alert.js';
 export { neo } from './theme.js';
+export { NeoPageHeader } from './NeoPageHeader.js';
+export {
+  defaultNeoFonts,
+  getNeoFontFamilies,
+  getNeoLayoutStyles,
+  getNeoTextStyles,
+  setNeoFontFamilies,
+} from './typography.js';
 
 export type { ButtonProps } from './Button.js';
 export type { InputProps } from './Input.js';
@@ -23,3 +31,5 @@ export type { ProductImageProps, ProductImageVariant } from './ProductImage.js';
 export type { SwitchProps } from './Switch.js';
 export type { AlertProps } from './Alert.js';
 export type { NeoColors } from './theme.js';
+export type { NeoFontFamilies } from './typography.js';
+export type { NeoPageHeaderProps } from './NeoPageHeader.js';

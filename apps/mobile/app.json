@@ -16,7 +16,7 @@
     "android": {
       "package": "com.example.ecommerce",
       "adaptiveIcon": {
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#fdf5e6"
       }
     },
     "web": {
@@ -34,7 +34,7 @@
       [
         "expo-notifications",
         {
-          "color": "#ffffff"
+          "color": "#ffd800"
         }
       ],
       [
@@ -43,7 +43,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#fdf5e6"
         }
       ],
       [

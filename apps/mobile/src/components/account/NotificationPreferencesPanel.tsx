@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Card, Switch, neo } from '@repo/shared-ui';
+import { Card, Switch, getNeoTextStyles } from '@repo/shared-ui';
 import { useApiQueryHooks } from '../../lib/api';
 
 export function NotificationPreferencesPanel(): React.ReactElement {
@@ -9,8 +9,10 @@ export function NotificationPreferencesPanel(): React.ReactElement {
   const updatePreferences = hooks.useUpdateNotificationPreferences();
   const [message, setMessage] = useState('');
 
+  const text = getNeoTextStyles();
+
   if (isLoading || !data) {
-    return <Text style={styles.loading}>Cargando preferencias…</Text>;
+    return <Text style={text.bodyMuted}>Cargando preferencias…</Text>;
   }
 
   const handleToggle = (
@@ -32,8 +34,8 @@ export function NotificationPreferencesPanel(): React.ReactElement {
       <Card style={styles.card}>
         <View style={styles.row}>
           <View style={styles.copy}>
-            <Text style={styles.label}>Emails transaccionales</Text>
-            <Text style={styles.hint}>Confirmaciones, envíos y reembolsos.</Text>
+            <Text style={text.label}>Emails transaccionales</Text>
+            <Text style={text.bodyMuted}>Confirmaciones, envíos y reembolsos.</Text>
           </View>
           <Switch
             value={!data.emailOptOut}
@@ -46,8 +48,8 @@ export function NotificationPreferencesPanel(): React.ReactElement {
       <Card style={styles.card}>
         <View style={styles.row}>
           <View style={styles.copy}>
-            <Text style={styles.label}>Emails de marketing</Text>
-            <Text style={styles.hint}>Promociones, carrito abandonado y win-back.</Text>
+            <Text style={text.label}>Emails de marketing</Text>
+            <Text style={text.bodyMuted}>Promociones, carrito abandonado y win-back.</Text>
           </View>
           <Switch
             value={!data.marketingEmailOptOut}
@@ -60,8 +62,8 @@ export function NotificationPreferencesPanel(): React.ReactElement {
       <Card style={styles.card}>
         <View style={styles.row}>
           <View style={styles.copy}>
-            <Text style={styles.label}>WhatsApp</Text>
-            <Text style={styles.hint}>Actualizaciones de pedido por WhatsApp.</Text>
+            <Text style={text.label}>WhatsApp</Text>
+            <Text style={text.bodyMuted}>Actualizaciones de pedido por WhatsApp.</Text>
           </View>
           <Switch
             value={!data.whatsappOptOut}
@@ -71,9 +73,9 @@ export function NotificationPreferencesPanel(): React.ReactElement {
         </View>
       </Card>
 
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+      {message ? <Text style={text.body}>{message}</Text> : null}
 
-      <Text style={styles.accountNote}>
+      <Text style={[text.bodyMuted, styles.accountNote]}>
         Para cambiar tu contraseña, cierra sesión y usa «¿Olvidaste tu contraseña?» en el inicio de
         sesión de la tienda web.
       </Text>
@@ -84,10 +86,6 @@ export function NotificationPreferencesPanel(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     gap: 12,
-  },
-  loading: {
-    color: neo.muted,
-    fontSize: 15,
   },
   card: {
     padding: 16,
@@ -101,28 +99,8 @@ const styles = StyleSheet.create({
   copy: {
     flex: 1,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: neo.onyx,
-    marginBottom: 4,
-  },
-  hint: {
-    fontSize: 13,
-    color: neo.muted,
-    lineHeight: 18,
-    fontWeight: '600',
-  },
-  message: {
-    fontSize: 14,
-    color: neo.onyx,
-    fontWeight: '600',
-  },
   accountNote: {
-    fontSize: 12,
-    color: neo.muted,
     lineHeight: 18,
     marginTop: 8,
-    fontWeight: '600',
   },
 });

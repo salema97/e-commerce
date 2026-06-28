@@ -6,7 +6,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Card, Button, neo, ProductImage } from '@repo/shared-ui';
+import { Card, Button, neo, ProductImage, NeoPageHeader, getNeoLayoutStyles, getNeoTextStyles } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen';
 import { NeoStaggeredItem } from '../../components/neo-animated';
 import { useCart } from '../../lib/cart';
@@ -50,6 +50,9 @@ export default function CartScreen(): React.ReactElement {
     updateQuantity(productId, quantity, variantId);
   }
 
+  const text = getNeoTextStyles();
+  const layout = getNeoLayoutStyles();
+
   const renderItem = ({
     item,
     index,
@@ -62,10 +65,10 @@ export default function CartScreen(): React.ReactElement {
       <View style={styles.row}>
         <ProductImage url={item.imageUrl} alt={item.name} variant="thumbnail" />
         <View style={styles.info}>
-          <Text style={styles.name} numberOfLines={2}>
+          <Text style={[text.label, styles.name]} numberOfLines={2}>
             {item.name}
           </Text>
-          <Text style={styles.price}>{formatPrice(item.price)}</Text>
+          <Text style={text.bodyMuted}>{formatPrice(item.price)}</Text>
         </View>
         <Button variant="ghost" size="sm" onPress={() => handleRemoveItem(item.productId, item.variantId)}>
           Eliminar
@@ -94,15 +97,17 @@ export default function CartScreen(): React.ReactElement {
   );
 
   return (
-    <NeoScreen style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.seasonLabel}>Pago</Text>
-        <Text style={styles.title}>CARRITO ({itemCount})</Text>
-      </View>
+    <NeoScreen style={layout.screen}>
+      <NeoPageHeader
+        eyebrow="Pago"
+        title={`Carrito (${itemCount})`}
+        style={styles.header}
+        compact
+      />
 
       {items.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyText}>Tu carrito está vacío.</Text>
+          <Text style={text.bodyMuted}>Tu carrito está vacío.</Text>
           <Button onPress={() => router.push('/(tabs)/store')} style={styles.emptyButton}>
             Ir a la tienda
           </Button>
@@ -119,8 +124,8 @@ export default function CartScreen(): React.ReactElement {
       {items.length > 0 ? (
         <View style={styles.footer}>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>{formatPrice(total)}</Text>
+            <Text style={text.totalLabel}>Total</Text>
+            <Text style={text.totalValue}>{formatPrice(total)}</Text>
           </View>
           <Button onPress={() => router.push('/checkout')} size="lg">
             Continuar al pago
@@ -132,28 +137,10 @@ export default function CartScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: neo.bg,
-  },
   header: {
     paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: 8,
-  },
-  seasonLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-    color: neo.muted,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: neo.onyx,
-    textTransform: 'uppercase',
-    letterSpacing: -1,
+    marginBottom: 0,
   },
   list: {
     padding: 16,
@@ -172,21 +159,6 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   name: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: neo.onyx,
-    textTransform: 'uppercase',
-  },
-  price: {
-    fontSize: 14,
-    color: neo.muted,
-    marginTop: 4,
-    fontWeight: '600',
-  },
-  remove: {
-    color: neo.scarlet,
-    fontSize: 12,
-    fontWeight: '700',
     textTransform: 'uppercase',
   },
   quantityRow: {
@@ -208,14 +180,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
   },
-  emptyText: {
-    fontSize: 16,
-    color: neo.muted,
-    marginBottom: 16,
-    fontWeight: '600',
-  },
   emptyButton: {
     minWidth: 180,
+    marginTop: 16,
   },
   footer: {
     position: 'absolute',
@@ -235,16 +202,5 @@ const styles = StyleSheet.create({
     borderBottomWidth: 3,
     borderBottomColor: neo.onyx,
     paddingBottom: 12,
-  },
-  totalLabel: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: neo.onyx,
-    textTransform: 'uppercase',
-  },
-  totalValue: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: neo.onyx,
   },
 });

@@ -1,10 +1,13 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Card } from '@repo/shared-ui';
+import { Text, ScrollView, StyleSheet, Alert } from 'react-native';
+import { Button, Card, NeoPageHeader, getNeoLayoutStyles, getNeoTextStyles } from '@repo/shared-ui';
+import { NeoScreen } from '../../components/neo-screen';
 import { createMobileApiClient } from '../../lib/api';
 
 export default function PrivacyScreen(): React.ReactElement {
+  const text = getNeoTextStyles();
+  const layout = getNeoLayoutStyles();
+
   async function exportData(): Promise<void> {
     try {
       const bundle = await createMobileApiClient().privacy.exportMine();
@@ -15,28 +18,32 @@ export default function PrivacyScreen(): React.ReactElement {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Privacidad y datos</Text>
+    <NeoScreen style={layout.screen}>
+      <ScrollView contentContainerStyle={layout.content}>
+        <NeoPageHeader title="Privacidad y datos" style={styles.header} compact />
         <Card style={styles.card}>
-          <Text style={styles.label}>Exportar datos (GDPR)</Text>
-          <Button variant="outline" onPress={() => void exportData()}>
+          <Text style={text.label}>Exportar datos (GDPR)</Text>
+          <Button variant="outline" onPress={() => void exportData()} style={styles.button}>
             Solicitar exportación
           </Button>
         </Card>
-        <Text style={styles.hint}>
+        <Text style={text.bodyMuted}>
           Para eliminación completa de cuenta, usa la versión web en /account/privacy.
         </Text>
       </ScrollView>
-    </SafeAreaView>
+    </NeoScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: 24 },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 16 },
-  card: { gap: 12, marginBottom: 16 },
-  label: { fontWeight: '600' },
-  hint: { color: '#737373', fontSize: 13 },
+  header: {
+    marginBottom: 16,
+  },
+  card: {
+    gap: 12,
+    marginBottom: 16,
+  },
+  button: {
+    marginTop: 4,
+  },
 });

@@ -1,7 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Button, neo } from '@repo/shared-ui';
+import {
+  Button,
+  NeoPageHeader,
+  getNeoLayoutStyles,
+  getNeoTextStyles,
+  neo,
+} from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen';
 import { useAuth } from '../../providers/AuthProvider';
 import { NotificationPreferencesPanel } from '../../components/account/NotificationPreferencesPanel';
@@ -9,11 +15,15 @@ import { NotificationPreferencesPanel } from '../../components/account/Notificat
 export default function NotificationPreferencesScreen(): React.ReactElement {
   const router = useRouter();
   const { user } = useAuth();
+  const text = getNeoTextStyles();
+  const layout = getNeoLayoutStyles();
 
   if (!user) {
     return (
-      <NeoScreen style={styles.center}>
-        <Text style={styles.message}>Inicia sesión para gestionar tus notificaciones.</Text>
+      <NeoScreen style={layout.center}>
+        <Text style={[text.bodyMuted, styles.message]}>
+          Inicia sesión para gestionar tus notificaciones.
+        </Text>
         <Button onPress={() => router.replace('/sign-in')}>Iniciar sesión</Button>
       </NeoScreen>
     );
@@ -21,12 +31,11 @@ export default function NotificationPreferencesScreen(): React.ReactElement {
 
   return (
     <NeoScreen style={styles.container}>
-      <View style={styles.header}>
+      <View style={styles.headerWrap}>
         <Button variant="outline" size="sm" onPress={() => router.back()}>
           Volver
         </Button>
-        <Text style={styles.title}>Notificaciones</Text>
-        <Text style={styles.subtitle}>{user.email}</Text>
+        <NeoPageHeader title="Notificaciones" subtitle={user.email} compact />
       </View>
 
       <View style={styles.content}>
@@ -40,38 +49,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16,
+    backgroundColor: neo.bg,
   },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-    padding: 24,
-  },
-  header: {
+  headerWrap: {
     gap: 8,
     paddingTop: 8,
-    paddingBottom: 16,
-    borderBottomWidth: 3,
-    borderBottomColor: neo.onyx,
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: neo.onyx,
-    textTransform: 'uppercase',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#737373',
   },
   content: {
     flex: 1,
+    marginTop: 8,
   },
   message: {
-    fontSize: 16,
-    color: '#525252',
     textAlign: 'center',
+    marginBottom: 16,
   },
 });

@@ -14,6 +14,7 @@ import { AuthTokenBridge } from '../providers/AuthTokenBridge';
 import { PushNotificationManager } from '../providers/PushNotificationManager';
 import { DeepLinkManager } from '../providers/DeepLinkManager';
 import { AnalyticsConsentBanner } from '../components/AnalyticsConsentBanner';
+import { NeoFontProvider } from '../providers/NeoFontProvider';
 import { initMobileSentry } from '../lib/sentry';
 
 initMobileSentry();
@@ -35,6 +36,7 @@ const stripePublishableKey =
 export default function RootLayout(): React.ReactElement {
   return (
     <SafeAreaProvider>
+      <NeoFontProvider>
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
           <StripeProvider publishableKey={stripePublishableKey}>
@@ -51,6 +53,7 @@ export default function RootLayout(): React.ReactElement {
           </StripeProvider>
         </QueryClientProvider>
       </AuthProvider>
+      </NeoFontProvider>
     </SafeAreaProvider>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Input, Badge, PressableCard, ProductImage, Button, neo } from '@repo/shared-ui';
+import { Input, Badge, PressableCard, ProductImage, Button, NeoPageHeader, getNeoLayoutStyles, getNeoTextStyles, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen';
 import { StoreChatWidget } from '../../components/store/StoreChatWidget';
 import { useApiQueryHooks } from '../../lib/api';
@@ -22,6 +22,9 @@ export default function StoreScreen(): React.ReactElement {
   const lastCategoryRef = useRef<string | null>(null);
 
   const trimmedSearch = search.trim();
+
+  const text = getNeoTextStyles();
+  const layout = getNeoLayoutStyles();
 
   const catalogQuery = useMemo(
     () => ({
@@ -77,19 +80,19 @@ export default function StoreScreen(): React.ReactElement {
       >
         <ProductImage url={item.imageUrl ?? undefined} alt={item.name} variant="card" />
         <View style={styles.productBody}>
-          <Text style={styles.productName} numberOfLines={2}>
+          <Text style={[text.label, styles.productName]} numberOfLines={2}>
             {item.name}
           </Text>
           {item.categoryName ? (
-            <Text style={styles.categoryName}>{item.categoryName}</Text>
+            <Text style={text.bodyMuted}>{item.categoryName}</Text>
           ) : null}
           {item.reviewCount && item.reviewCount > 0 ? (
-            <Text style={styles.productRating}>
+            <Text style={text.bodyMuted}>
               {(item.averageRating ?? 0).toFixed(1)} ★ ({item.reviewCount})
             </Text>
           ) : null}
           <View style={styles.priceRow}>
-            <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
+            <Text style={text.label}>{formatPrice(item.price)}</Text>
             {item.compareAtPrice ? <Badge variant="destructive" size="sm">Oferta</Badge> : null}
             {!item.inStock ? <Badge variant="outline" size="sm">Agotado</Badge> : null}
           </View>
@@ -99,18 +102,16 @@ export default function StoreScreen(): React.ReactElement {
   );
 
   return (
-    <NeoScreen style={styles.container} entrance={false}>
+    <NeoScreen style={layout.screen} entrance={false}>
       <NeoEnterFromTop>
-        <View style={styles.header}>
-          <Text style={styles.seasonLabel}>Catálogo</Text>
-          <Text style={styles.title}>TIENDA</Text>
+        <NeoPageHeader eyebrow="Catálogo" title="Tienda" style={styles.header} compact>
           <Input
             placeholder="Buscar productos..."
             value={search}
             onChangeText={setSearch}
             containerStyle={styles.search}
           />
-        </View>
+        </NeoPageHeader>
       </NeoEnterFromTop>
 
       <FlatList

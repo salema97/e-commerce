@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Button, Card, Input, neo } from '@repo/shared-ui';
+import { Button, Card, Input, getNeoTextStyles } from '@repo/shared-ui';
 import { useAuth } from '../../providers/AuthProvider';
 import { useApiQueryHooks } from '../../lib/api';
 
@@ -15,6 +15,8 @@ export function BackInStockForm({ productId }: BackInStockFormProps): React.Reac
   const [message, setMessage] = useState('');
   const subscribe = hooks.useSubscribeBackInStock();
 
+  const text = getNeoTextStyles();
+
   const handleSubmit = (): void => {
     setMessage('');
     subscribe.mutate(
@@ -28,7 +30,7 @@ export function BackInStockForm({ productId }: BackInStockFormProps): React.Reac
 
   return (
     <Card style={styles.card}>
-      <Text style={styles.title}>Avísame cuando haya stock</Text>
+      <Text style={text.sectionTitle}>Avísame cuando haya stock</Text>
       <Input
         value={email}
         onChangeText={setEmail}
@@ -40,7 +42,7 @@ export function BackInStockForm({ productId }: BackInStockFormProps): React.Reac
       <Button onPress={handleSubmit} disabled={subscribe.isPending || email.trim().length === 0}>
         {subscribe.isPending ? 'Registrando…' : 'Suscribirme'}
       </Button>
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+      {message ? <Text style={[text.bodyMuted, styles.message]}>{message}</Text> : null}
     </Card>
   );
 }
@@ -51,15 +53,7 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
   },
-  title: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: neo.onyx,
-    textTransform: 'uppercase',
-  },
   message: {
-    fontSize: 14,
-    color: neo.muted,
-    fontWeight: '600',
+    marginTop: 4,
   },
 });

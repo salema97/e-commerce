@@ -1,59 +1,65 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card } from '@repo/shared-ui';
+import { Card, NeoPageHeader, getNeoLayoutStyles, getNeoTextStyles } from '@repo/shared-ui';
+import { NeoScreen } from '../../components/neo-screen';
 import { useApiQueryHooks } from '../../lib/api';
 import { formatDate } from '@repo/shared-utils';
 
 export default function LoyaltyScreen(): React.ReactElement {
   const hooks = useApiQueryHooks();
+  const text = getNeoTextStyles();
+  const layout = getNeoLayoutStyles();
   const { data: account, isLoading: accountLoading } = hooks.useLoyaltyAccount();
   const { data: transactions, isLoading: txLoading } = hooks.useLoyaltyTransactions();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Programa de lealtad</Text>
+    <NeoScreen style={layout.screen}>
+      <ScrollView contentContainerStyle={layout.content}>
+        <NeoPageHeader title="Programa de lealtad" style={styles.header} compact />
 
         {accountLoading ? (
-          <Text>Cargando cuenta...</Text>
+          <Text style={text.bodyMuted}>Cargando cuenta...</Text>
         ) : account ? (
           <Card>
-            <Text style={styles.label}>Puntos: {account.points}</Text>
-            <Text style={styles.label}>Nivel: {account.tier}</Text>
-            <Text style={styles.label}>Valor: ${account.pointsValue.toFixed(2)}</Text>
+            <Text style={text.label}>Puntos: {account.points}</Text>
+            <Text style={[text.label, styles.rowGap]}>Nivel: {account.tier}</Text>
+            <Text style={text.label}>Valor: ${account.pointsValue.toFixed(2)}</Text>
           </Card>
         ) : null}
 
-        <Text style={styles.section}>Historial</Text>
+        <Text style={[text.sectionTitle, styles.section]}>Historial</Text>
         {txLoading ? (
-          <Text>Cargando movimientos...</Text>
+          <Text style={text.bodyMuted}>Cargando movimientos...</Text>
         ) : (transactions ?? []).length === 0 ? (
-          <Text style={styles.muted}>Sin movimientos aún.</Text>
+          <Text style={text.bodyMuted}>Sin movimientos aún.</Text>
         ) : (
           (transactions ?? []).map((tx) => (
             <Card key={tx.id} style={styles.txCard}>
-              <Text style={styles.txTitle}>
+              <Text style={text.label}>
                 {tx.type} · {tx.points > 0 ? '+' : ''}
                 {tx.points} pts
               </Text>
-              <Text style={styles.muted}>{tx.reason}</Text>
-              <Text style={styles.muted}>{formatDate(tx.createdAt)}</Text>
+              <Text style={[text.bodyMuted, styles.rowGap]}>{tx.reason}</Text>
+              <Text style={text.bodyMuted}>{formatDate(tx.createdAt)}</Text>
             </Card>
           ))
         )}
       </ScrollView>
-    </SafeAreaView>
+    </NeoScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: 24 },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 16 },
-  label: { fontSize: 15, marginBottom: 6 },
-  section: { fontSize: 18, fontWeight: '600', marginTop: 24, marginBottom: 12 },
-  muted: { color: '#737373', fontSize: 13 },
-  txCard: { marginBottom: 8 },
-  txTitle: { fontWeight: '600', marginBottom: 4 },
+  header: {
+    marginBottom: 16,
+  },
+  rowGap: {
+    marginTop: 6,
+  },
+  section: {
+    marginTop: 24,
+  },
+  txCard: {
+    marginBottom: 8,
+  },
 });

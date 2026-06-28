@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../providers/AuthProvider';
-import { Button, Card, Badge, neo } from '@repo/shared-ui';
+import { Button, Card, Badge, NeoPageHeader, getNeoLayoutStyles, getNeoTextStyles, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen';
 import { NeoStaggeredItem } from '../../components/neo-animated';
 import { createMobileApiClient, useApiQueryHooks } from '../../lib/api';
@@ -34,16 +34,19 @@ export default function AccountScreen(): React.ReactElement {
     router.replace('/(tabs)');
   };
 
+  const text = getNeoTextStyles();
+  const layout = getNeoLayoutStyles();
+
   const renderOrder = ({ item, index }: { item: Order; index: number }) => (
     <NeoStaggeredItem index={index}>
       <Pressable onPress={() => router.push(`/order/${item.id}`)}>
         <Card style={styles.orderCard}>
         <View style={styles.orderHeader}>
-          <Text style={styles.orderNumber}>#{item.orderNumber}</Text>
+          <Text style={text.label}>#{item.orderNumber}</Text>
           <Badge variant="secondary">{orderStatusLabel(item.status)}</Badge>
         </View>
-        <Text style={styles.orderDate}>{formatDate(item.createdAt)}</Text>
-        <Text style={styles.orderTotal}>{formatPrice(item.total)}</Text>
+        <Text style={text.bodyMuted}>{formatDate(item.createdAt)}</Text>
+        <Text style={text.totalValue}>{formatPrice(item.total)}</Text>
         </Card>
       </Pressable>
     </NeoStaggeredItem>
@@ -51,11 +54,10 @@ export default function AccountScreen(): React.ReactElement {
 
   if (!user) {
     return (
-      <NeoScreen style={styles.container}>
-        <View style={styles.center}>
-          <Text style={styles.seasonLabel}>Acceso</Text>
-          <Text style={styles.title}>CUENTA</Text>
-          <Text style={styles.message}>Inicia sesión para ver tus pedidos.</Text>
+      <NeoScreen style={layout.screen}>
+        <View style={layout.center}>
+          <NeoPageHeader eyebrow="Acceso" title="Cuenta" compact style={styles.guestHeader} />
+          <Text style={[text.bodyMuted, styles.message]}>Inicia sesión para ver tus pedidos.</Text>
           <Button onPress={() => router.push('/sign-in')} style={styles.authButton}>
             Iniciar sesión
           </Button>
@@ -72,23 +74,20 @@ export default function AccountScreen(): React.ReactElement {
   }
 
   return (
-    <NeoScreen style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.seasonLabel}>Perfil</Text>
-        <Text style={styles.title}>MI CUENTA</Text>
-      </View>
+    <NeoScreen style={layout.screen}>
+      <NeoPageHeader eyebrow="Perfil" title="Mi cuenta" style={styles.header} compact />
 
       <Card style={styles.profileCard}>
-        <Text style={styles.label}>Correo</Text>
-        <Text style={styles.value}>{user?.email ?? 'No disponible'}</Text>
+        <Text style={text.eyebrow}>Correo</Text>
+        <Text style={text.label}>{user?.email ?? 'No disponible'}</Text>
       </Card>
 
       {storeCredit && storeCredit.balance > 0 ? (
         <Card style={styles.creditCard}>
-          <Text style={styles.label}>Crédito en tienda</Text>
-          <Text style={styles.creditValue}>{formatPrice(storeCredit.balance)}</Text>
+          <Text style={text.eyebrow}>Crédito en tienda</Text>
+          <Text style={text.totalValue}>{formatPrice(storeCredit.balance)}</Text>
           {storeCredit.expiresAt ? (
-            <Text style={styles.creditExpiry}>
+            <Text style={[text.bodyMuted, styles.creditExpiry]}>
               Vence el {formatDate(storeCredit.expiresAt)}
             </Text>
           ) : null}
@@ -125,7 +124,7 @@ export default function AccountScreen(): React.ReactElement {
         </Button>
       </View>
 
-      <Text style={styles.sectionTitle}>Pedidos recientes</Text>
+      <Text style={[text.sectionTitle, styles.sectionTitle]}>Pedidos recientes</Text>
 
       <FlatList
           data={orders?.data ?? []}
@@ -133,7 +132,7 @@ export default function AccountScreen(): React.ReactElement {
           renderItem={renderOrder}
           contentContainerStyle={styles.list}
           ListEmptyComponent={
-            <Text style={styles.empty}>Aún no tienes pedidos.</Text>
+            <Text style={[text.bodyMuted, styles.empty]}>Aún no tienes pedidos.</Text>
           }
         />
 
@@ -147,42 +146,19 @@ export default function AccountScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: neo.bg,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
   header: {
     paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: 8,
+    marginBottom: 0,
   },
-  seasonLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-    color: neo.muted,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: neo.onyx,
-    textTransform: 'uppercase',
-    letterSpacing: -1,
+  guestHeader: {
+    marginBottom: 12,
+    borderBottomWidth: 0,
+    paddingBottom: 0,
   },
   message: {
-    fontSize: 16,
-    color: neo.muted,
     textAlign: 'center',
     marginBottom: 24,
-    fontWeight: '600',
-    marginTop: 8,
   },
   authButton: {
     minWidth: 220,
@@ -198,46 +174,17 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: neo.gold,
   },
-  creditValue: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: neo.onyx,
-  },
   creditExpiry: {
-    fontSize: 12,
-    color: neo.muted,
     marginTop: 4,
-    fontWeight: '600',
   },
   actions: {
     marginHorizontal: 16,
     marginBottom: 20,
     gap: 10,
   },
-  label: {
-    fontSize: 11,
-    color: neo.muted,
-    marginBottom: 4,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  value: {
-    fontSize: 16,
-    color: neo.onyx,
-    fontWeight: '700',
-  },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: neo.onyx,
     paddingHorizontal: 20,
     marginBottom: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  loader: {
-    marginTop: 40,
   },
   list: {
     padding: 16,
@@ -253,28 +200,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     gap: 8,
   },
-  orderNumber: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: neo.onyx,
-    textTransform: 'uppercase',
-  },
-  orderDate: {
-    fontSize: 12,
-    color: neo.muted,
-    marginBottom: 6,
-    fontWeight: '600',
-  },
-  orderTotal: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: neo.onyx,
-  },
   empty: {
     textAlign: 'center',
-    color: neo.muted,
     marginTop: 24,
-    fontWeight: '600',
   },
   footer: {
     position: 'absolute',

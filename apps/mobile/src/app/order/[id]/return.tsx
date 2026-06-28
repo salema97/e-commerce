@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Card, Button, Input, Textarea, Checkbox, Alert, neo } from '@repo/shared-ui';
+import { Card, Button, Input, Textarea, Checkbox, Alert, NeoPageHeader, getNeoLayoutStyles, getNeoTextStyles, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../../../components/neo-screen';
 import { NeoStaggeredItem } from '../../../components/neo-animated';
 import { computeReturnEligibility, formatPrice } from '@repo/shared-utils';
@@ -18,10 +18,13 @@ export default function ReturnRequestScreen(): React.ReactElement {
   const createReturn = hooks.useCreateReturnRequest();
   const [selected, setSelected] = React.useState<Record<string, { qty: number; reason: string }>>({});
 
+  const text = getNeoTextStyles();
+  const layout = getNeoLayoutStyles();
+
   if (isError || !order) {
     return (
-      <NeoScreen style={styles.center}>
-        <Text style={styles.error}>No se pudo cargar el pedido.</Text>
+      <NeoScreen style={layout.center}>
+        <Text style={[text.error, styles.errorGap]}>No se pudo cargar el pedido.</Text>
         <Button onPress={() => router.back()}>Volver</Button>
       </NeoScreen>
     );
@@ -65,10 +68,14 @@ export default function ReturnRequestScreen(): React.ReactElement {
   }
 
   return (
-    <NeoScreen style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Solicitar devolución</Text>
-        <Text style={styles.subtitle}>Pedido #{currentOrder.orderNumber}</Text>
+    <NeoScreen style={layout.screen}>
+      <ScrollView contentContainerStyle={layout.contentPaddedBottom}>
+        <NeoPageHeader
+          title="Solicitar devolución"
+          subtitle={`Pedido #${currentOrder.orderNumber}`}
+          compact
+          style={styles.header}
+        />
 
         {!isDelivered ? (
           <NeoStaggeredItem index={0}>
@@ -103,7 +110,7 @@ export default function ReturnRequestScreen(): React.ReactElement {
               label={item.name}
               disabled={!canRequestReturn}
             />
-            <Text style={styles.meta}>
+            <Text style={[text.bodyMuted, styles.meta]}>
               SKU: {item.sku} · {formatPrice(item.price * item.quantity)}
             </Text>
 
@@ -160,31 +167,11 @@ export default function ReturnRequestScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: neo.white,
+  header: {
+    marginBottom: 16,
   },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  content: {
-    padding: 24,
-    paddingBottom: 40,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: neo.onyx,
-    textTransform: 'uppercase',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: neo.muted,
-    marginBottom: 20,
-    fontWeight: '600',
+  errorGap: {
+    marginBottom: 16,
   },
   windowText: {
     fontSize: 14,
@@ -201,17 +188,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   meta: {
-    fontSize: 13,
-    color: neo.muted,
-    fontWeight: '600',
     marginTop: 4,
   },
   inputs: {
     marginTop: 12,
-  },
-  error: {
-    color: neo.scarlet,
-    marginBottom: 16,
-    fontWeight: '700',
   },
 });

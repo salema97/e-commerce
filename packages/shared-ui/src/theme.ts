@@ -1,6 +1,8 @@
-/** Neobrutalist design tokens (Kombai exports) — shared web + mobile */
+/** Neobrutalist design tokens — single source of truth for web (Tailwind) + mobile (RN). */
 export const neo = {
+  /** Page background — maps to web `--color-neo-lace` / `bg-neo-lace`. */
   bg: '#FDF5E6',
+  lace: '#FDF5E6',
   onyx: '#111111',
   gold: '#FFD800',
   scarlet: '#E60026',

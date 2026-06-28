@@ -1,12 +1,14 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, Share } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Card } from '@repo/shared-ui';
+import { Text, ScrollView, StyleSheet, Share } from 'react-native';
+import { Button, Card, NeoPageHeader, getNeoLayoutStyles, getNeoTextStyles } from '@repo/shared-ui';
+import { NeoScreen } from '../../components/neo-screen';
 import { useApiQueryHooks } from '../../lib/api';
 import { formatPrice } from '@repo/shared-utils';
 
 export default function ReferralsScreen(): React.ReactElement {
   const hooks = useApiQueryHooks();
+  const text = getNeoTextStyles();
+  const layout = getNeoLayoutStyles();
   const { data: code } = hooks.useReferralCode();
   const { data: report } = hooks.useReferralPerformance('me');
 
@@ -16,14 +18,14 @@ export default function ReferralsScreen(): React.ReactElement {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Invita y gana</Text>
+    <NeoScreen style={layout.screen}>
+      <ScrollView contentContainerStyle={layout.content}>
+        <NeoPageHeader title="Invita y gana" style={styles.header} compact />
 
         {code ? (
           <Card>
-            <Text style={styles.code}>{code.code}</Text>
-            <Text style={styles.link}>{code.link}</Text>
+            <Text style={text.mono}>{code.code}</Text>
+            <Text style={[text.bodyMuted, styles.link]}>{code.link}</Text>
             <Button variant="outline" onPress={() => void shareLink()} style={styles.button}>
               Compartir enlace
             </Button>
@@ -32,22 +34,33 @@ export default function ReferralsScreen(): React.ReactElement {
 
         {report ? (
           <Card style={styles.stats}>
-            <Text>Conversiones: {report.totalConversions}</Text>
-            <Text>Pendiente: {formatPrice(report.pendingCommission)}</Text>
-            <Text>Pagado: {formatPrice(report.paidCommission)}</Text>
+            <Text style={text.label}>Conversiones: {report.totalConversions}</Text>
+            <Text style={[text.body, styles.rowGap]}>
+              Pendiente: {formatPrice(report.pendingCommission)}
+            </Text>
+            <Text style={text.body}>Pagado: {formatPrice(report.paidCommission)}</Text>
           </Card>
         ) : null}
       </ScrollView>
-    </SafeAreaView>
+    </NeoScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: 24 },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 16 },
-  code: { fontSize: 22, fontWeight: '700', fontFamily: 'monospace', marginBottom: 8 },
-  link: { color: '#525252', marginBottom: 12 },
-  button: { marginTop: 4 },
-  stats: { marginTop: 16, gap: 6 },
+  header: {
+    marginBottom: 16,
+  },
+  link: {
+    marginVertical: 12,
+  },
+  button: {
+    marginTop: 4,
+  },
+  stats: {
+    marginTop: 16,
+    gap: 6,
+  },
+  rowGap: {
+    marginVertical: 6,
+  },
 });

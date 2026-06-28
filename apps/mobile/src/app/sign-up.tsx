@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter, Link } from 'expo-router';
-import { Button, Input } from '@repo/shared-ui';
+import { Button, Input, NeoPageHeader, getNeoLayoutStyles, getNeoTextStyles } from '@repo/shared-ui';
 import { NeoScreen } from '../components/neo-screen';
 import { NeoScaleIn } from '../components/neo-animated';
 import { useAuth } from '../providers/AuthProvider';
@@ -9,6 +9,8 @@ import { useAuth } from '../providers/AuthProvider';
 export default function SignUpScreen(): React.ReactElement {
   const router = useRouter();
   const { signUp } = useAuth();
+  const text = getNeoTextStyles();
+  const layout = getNeoLayoutStyles();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,9 +34,14 @@ export default function SignUpScreen(): React.ReactElement {
   };
 
   return (
-    <NeoScreen style={styles.container}>
+    <NeoScreen style={layout.screen}>
       <NeoScaleIn style={styles.content}>
-        <Text style={styles.title}>Crear cuenta</Text>
+        <NeoPageHeader
+          title="Crear cuenta"
+          subtitle="Regístrate para comprar y seguir tus pedidos"
+          style={styles.header}
+          compact
+        />
 
         <Input
           label="Nombre"
@@ -62,7 +69,7 @@ export default function SignUpScreen(): React.ReactElement {
           containerStyle={styles.field}
         />
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {error ? <Text style={[text.error, styles.errorGap]}>{error}</Text> : null}
 
         <Button
           onPress={handleSignUp}
@@ -74,9 +81,9 @@ export default function SignUpScreen(): React.ReactElement {
         </Button>
 
         <View style={styles.footer}>
-          <Text>¿Ya tienes cuenta? </Text>
+          <Text style={text.bodyMuted}>¿Ya tienes cuenta? </Text>
           <Link href="/sign-in" asChild>
-            <Text style={styles.link}>Inicia sesión</Text>
+            <Text style={text.link}>Inicia sesión</Text>
           </Link>
         </View>
       </NeoScaleIn>
@@ -85,20 +92,13 @@ export default function SignUpScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
   content: {
     flex: 1,
     justifyContent: 'center',
     padding: 24,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
+  header: {
     marginBottom: 24,
-    color: '#171717',
   },
   field: {
     marginBottom: 16,
@@ -106,17 +106,12 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 8,
   },
-  error: {
-    color: '#ef4444',
+  errorGap: {
     marginBottom: 12,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: 20,
-  },
-  link: {
-    color: '#171717',
-    fontWeight: '600',
   },
 });

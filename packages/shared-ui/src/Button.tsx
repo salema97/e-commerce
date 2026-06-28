@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  TouchableOpacity,
+  Pressable,
   Text,
   ActivityIndicator,
   StyleSheet,
@@ -8,6 +8,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { neo } from './theme.js';
+import { getNeoFontFamilies } from './typography.js';
 
 export interface ButtonProps {
   children: React.ReactNode;
@@ -37,20 +38,22 @@ export const Button: React.FC<ButtonProps> = ({
   const isDisabled = disabled || loading;
   const variantStyles = getVariantStyles(variant);
   const sizeStyles = getSizeStyles(size);
+  const fonts = getNeoFontFamilies();
 
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={onPress}
       disabled={isDisabled}
-      activeOpacity={0.9}
       testID={testID}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
-      style={[
+      style={({ pressed }) => [
         styles.base,
+        variantStyles.shadow,
         variantStyles.container,
         sizeStyles.container,
+        pressed && variant !== 'ghost' && !isDisabled && styles.pressed,
         isDisabled && styles.disabled,
         style,
       ]}
@@ -61,11 +64,19 @@ export const Button: React.FC<ButtonProps> = ({
           color={variant === 'primary' || variant === 'destructive' ? neo.white : neo.onyx}
         />
       ) : (
-        <Text style={[styles.text, variantStyles.text, sizeStyles.text, textStyle]}>
+        <Text
+          style={[
+            styles.text,
+            { fontFamily: size === 'lg' ? fonts.display : fonts.sans },
+            variantStyles.text,
+            sizeStyles.text,
+            textStyle,
+          ]}
+        >
           {children}
         </Text>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 
@@ -78,6 +89,7 @@ function getVariantStyles(variant: ButtonProps['variant']) {
           borderColor: neo.onyx,
         },
         text: { color: neo.onyx },
+        shadow: styles.shadowMd,
       };
     case 'outline':
       return {
@@ -86,16 +98,16 @@ function getVariantStyles(variant: ButtonProps['variant']) {
           borderColor: neo.onyx,
         },
         text: { color: neo.onyx },
+        shadow: styles.shadowMd,
       };
     case 'ghost':
       return {
         container: {
           backgroundColor: 'transparent',
           borderColor: 'transparent',
-          shadowOpacity: 0,
-          elevation: 0,
         },
         text: { color: neo.onyx },
+        shadow: styles.shadowNone,
       };
     case 'destructive':
       return {
@@ -104,6 +116,7 @@ function getVariantStyles(variant: ButtonProps['variant']) {
           borderColor: neo.onyx,
         },
         text: { color: neo.white },
+        shadow: styles.shadowLg,
       };
     case 'primary':
     default:
@@ -113,6 +126,7 @@ function getVariantStyles(variant: ButtonProps['variant']) {
           borderColor: neo.onyx,
         },
         text: { color: neo.white },
+        shadow: styles.shadowPrimary,
       };
   }
 }
@@ -137,16 +151,42 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     flexDirection: 'row',
     gap: 8,
+  },
+  shadowPrimary: {
+    shadowColor: neo.gold,
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 6,
+  },
+  shadowLg: {
+    shadowColor: neo.onyx,
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 6,
+  },
+  shadowMd: {
     shadowColor: neo.onyx,
     shadowOffset: { width: 4, height: 4 },
     shadowOpacity: 1,
     shadowRadius: 0,
     elevation: 4,
   },
+  shadowNone: {
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   text: {
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  pressed: {
+    transform: [{ translateX: 4 }, { translateY: 4 }],
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    elevation: 0,
   },
   disabled: {
     opacity: 0.5,

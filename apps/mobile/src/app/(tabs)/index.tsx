@@ -6,7 +6,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Button, PressableCard, ProductImage, neo } from '@repo/shared-ui';
+import { Button, PressableCard, ProductImage, NeoPageHeader, getNeoLayoutStyles, getNeoTextStyles, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen';
 import { useApiQueryHooks } from '../../lib/api';
 import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
@@ -23,6 +23,9 @@ export default function HomeScreen(): React.ReactElement {
   const router = useRouter();
   const hooks = useApiQueryHooks();
   const { data: products, error } = hooks.useProducts();
+
+  const text = getNeoTextStyles();
+  const layout = getNeoLayoutStyles();
 
   const featuredProducts = React.useMemo(() => {
     if (!products) return [];
@@ -47,31 +50,33 @@ export default function HomeScreen(): React.ReactElement {
         </NeoScaleIn>
         <View style={styles.productBody}>
           <View style={styles.productTop}>
-            <Text style={styles.productName} numberOfLines={2}>
+            <Text style={[text.label, styles.productName]} numberOfLines={2}>
               {item.name}
             </Text>
             {item.isFeatured ? <View style={styles.featuredDot} /> : null}
           </View>
-          <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
+          <Text style={text.label}>{formatPrice(item.price)}</Text>
         </View>
       </PressableCard>
     </NeoStaggeredItem>
   );
 
   return (
-    <NeoScreen style={styles.container} entrance={false}>
+    <NeoScreen style={layout.screen} entrance={false}>
       <NeoEnterFromTop>
-        <View style={styles.header}>
-          <Text style={styles.seasonLabel}>Colección</Text>
-          <Text style={styles.heading}>DESCUBRE</Text>
-          <Text style={styles.subheading}>Productos destacados de la tienda</Text>
-        </View>
+        <NeoPageHeader
+          eyebrow="Colección"
+          title="Descubre"
+          subtitle="Productos destacados de la tienda"
+          style={styles.header}
+          compact
+        />
       </NeoEnterFromTop>
 
       {error ? (
-        <View style={styles.center}>
-          <Text style={styles.error}>No se pudieron cargar los productos.</Text>
-          <Text style={styles.errorDetail}>{error.message}</Text>
+        <View style={layout.center}>
+          <Text style={text.error}>No se pudieron cargar los productos.</Text>
+          <Text style={text.bodyMuted}>{error.message}</Text>
         </View>
       ) : (
         <FlatList
@@ -82,7 +87,7 @@ export default function HomeScreen(): React.ReactElement {
           columnWrapperStyle={styles.row}
           renderItem={renderProduct}
           ListEmptyComponent={
-            <Text style={styles.empty}>No hay productos destacados por ahora.</Text>
+            <Text style={[text.bodyMuted, styles.empty]}>No hay productos destacados por ahora.</Text>
           }
         />
       )}

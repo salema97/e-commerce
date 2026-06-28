@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Button, neo } from '@repo/shared-ui';
+import { Button, getNeoTextStyles, neo } from '@repo/shared-ui';
 import {
   DEFAULT_ANALYTICS_CONSENT,
   getStoredAnalyticsConsent,
@@ -9,6 +9,8 @@ import {
 
 export function AnalyticsConsentBanner(): React.ReactElement | null {
   const [visible, setVisible] = useState(false);
+
+  const text = getNeoTextStyles();
 
   useEffect(() => {
     void getStoredAnalyticsConsent().then((stored) => {
@@ -34,8 +36,8 @@ export function AnalyticsConsentBanner(): React.ReactElement | null {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Privacidad y analítica</Text>
-      <Text style={styles.body}>
+      <Text style={text.label}>Privacidad y analítica</Text>
+      <Text style={[text.bodyMuted, styles.body]}>
         Usamos eventos anónimos para mejorar la tienda. Puedes aceptar analítica o continuar solo
         con lo esencial.
       </Text>
@@ -61,19 +63,14 @@ const styles = StyleSheet.create({
     backgroundColor: neo.bg,
     borderWidth: 3,
     borderColor: neo.onyx,
+    shadowColor: neo.onyx,
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 6,
     zIndex: 100,
   },
-  title: {
-    fontSize: 14,
-    fontWeight: '900',
-    color: neo.onyx,
-    textTransform: 'uppercase',
-    marginBottom: 8,
-  },
   body: {
-    fontSize: 13,
-    color: neo.muted,
-    fontWeight: '600',
     marginBottom: 12,
     lineHeight: 18,
   },
