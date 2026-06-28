@@ -121,7 +121,7 @@ export function Navbar() {
           </Link>
 
           {!loading && user ? (
-            <div className="hidden items-center gap-2 lg:flex">
+            <div className="hidden items-center gap-2 md:flex">
               <Link
                 href="/account/notifications"
                 className={actionChipClass('px-3')}
@@ -131,7 +131,7 @@ export function Navbar() {
               </Link>
               <Link href="/account" className={actionChipClass()} aria-label="Mi cuenta">
                 <User className="size-4" strokeWidth={2.5} />
-                <span className="max-w-[120px] truncate">{user.name ?? user.email}</span>
+                <span className="hidden max-w-[120px] truncate lg:inline">{user.name ?? user.email}</span>
               </Link>
               <Button
                 type="button"
@@ -140,11 +140,11 @@ export function Navbar() {
                 className={cn(actionChipClass('h-auto rounded-none'), 'hover:bg-neo-gold')}
               >
                 <LogOut className="size-4" strokeWidth={2.5} />
-                Salir
+                <span className="hidden lg:inline">Salir</span>
               </Button>
             </div>
           ) : !loading ? (
-            <div className="hidden items-center gap-2 lg:flex">
+            <div className="hidden items-center gap-2 md:flex">
               <Link href="/sign-in" className={navChipClass(false, 'px-4 py-2 text-xs')}>
                 Entrar
               </Link>
@@ -157,7 +157,7 @@ export function Navbar() {
           <Button
             variant="outline"
             size="icon"
-            className={cn(actionChipClass('h-10 w-10 p-0 lg:hidden'), 'rounded-none')}
+            className={cn(actionChipClass('h-10 w-10 p-0 md:hidden'), 'rounded-none')}
             onClick={() => setMobileOpen(true)}
             aria-label="Abrir menú"
           >

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ProductImage } from '@/components/store/product-image';
-import { AnimatedPageShell, NeoItem, NeoStagger } from '@/components/motion/neo-page-transition';
+import { AnimatedPageShell, NeoItem, NeoPageHeader, NeoStagger } from '@/components/motion/neo-page-transition';
 import { useCartStore } from '@/lib/cart-store';
 import { trackEvent } from '@/lib/analytics/track';
 import { formatPrice } from '@repo/shared-utils';
@@ -38,7 +38,9 @@ export default function CartPage() {
   return (
     <AnimatedPageShell
       className="container mx-auto px-4 py-8"
-      header={<h1 className="font-anton text-4xl uppercase md:text-5xl">Carrito</h1>}
+      header={
+        <NeoPageHeader eyebrow="Checkout" title="Carrito" className="mb-6 border-b-[6px] border-neo-onyx pb-4" />
+      }
     >
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
         <NeoStagger className="lg:col-span-2 flex flex-col gap-4">

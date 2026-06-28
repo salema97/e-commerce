@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ProductImage } from '@/components/store/product-image';
-import { AnimatedPageShell, NeoItem, NeoStagger } from '@/components/motion/neo-page-transition';
+import { AnimatedPageShell, NeoItem, NeoPageHeader, NeoStagger } from '@/components/motion/neo-page-transition';
 import { useWishlistStore } from '@/lib/wishlist-store';
 
 export default function WishlistPage() {
@@ -25,7 +25,13 @@ export default function WishlistPage() {
   return (
     <AnimatedPageShell
       className="container mx-auto px-4 py-8"
-      header={<h1 className="text-3xl font-bold">Lista de deseos</h1>}
+      header={
+        <NeoPageHeader
+          eyebrow="Mi tienda"
+          title="Lista de deseos"
+          className="mb-6 border-b-[6px] border-neo-onyx pb-4"
+        />
+      }
     >
       <NeoStagger className="mt-8 grid gap-4">
         {items.map((item) => (
