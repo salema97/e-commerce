@@ -8,17 +8,22 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { FormSelect } from '@/components/ui/form-select';
 import type { CatalogFacetValue, Category } from '@repo/shared-types';
 
-interface StoreFiltersProps {
-  search?: string;
-  categorySlug?: string;
-  brand?: string;
-  minPrice?: string;
-  maxPrice?: string;
-  minRating?: string;
-  inStock?: boolean;
+export interface StoreFilterValues {
+  search: string;
+  categorySlug: string;
+  brand: string;
+  minPrice: string;
+  maxPrice: string;
+  minRating: string;
+  inStock: boolean;
   sort: string;
+}
+
+interface StoreFiltersProps {
+  values: StoreFilterValues;
   categories: Category[];
   brandFacets?: CatalogFacetValue[];
+  onApply: (values: StoreFilterValues) => void;
 }
 
 const SORT_OPTIONS = [
@@ -30,16 +35,19 @@ const SORT_OPTIONS = [
 
 const EMPTY_BRAND_FACETS: CatalogFacetValue[] = [];
 
-function InStockFilter({ inStock }: { inStock: boolean }) {
-  const [checked, setChecked] = React.useState(inStock);
-
+function InStockFilter({
+  inStock,
+  onChange,
+}: {
+  inStock: boolean;
+  onChange: (value: boolean) => void;
+}) {
   return (
     <div className="flex items-center gap-2">
-      {checked ? <input type="hidden" name="inStock" value="true" /> : null}
       <Checkbox
         id="inStock"
-        checked={checked}
-        onCheckedChange={(value) => setChecked(value === true)}
+        checked={inStock}
+        onCheckedChange={(value) => onChange(value === true)}
         aria-label="Solo con stock"
       />
       <Label htmlFor="inStock" className="cursor-pointer font-bold uppercase">
@@ -50,29 +58,30 @@ function InStockFilter({ inStock }: { inStock: boolean }) {
 }
 
 export function StoreFilters({
-  search = '',
-  categorySlug = '',
-  brand = '',
-  minPrice = '',
-  maxPrice = '',
-  minRating = '',
-  inStock = false,
-  sort,
+  values,
   categories,
   brandFacets = EMPTY_BRAND_FACETS,
+  onApply,
 }: StoreFiltersProps) {
+  const [draft, setDraft] = React.useState(values);
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    onApply(draft);
+  }
+
   return (
     <form
       className="flex flex-col gap-4 border-[3px] border-neo-onyx bg-white p-5 shadow-[6px_6px_0_0_#111111]"
-      action="/store"
-      method="GET"
+      onSubmit={handleSubmit}
     >
       <div className="flex flex-col gap-2">
         <Label htmlFor="search">Buscar</Label>
         <Input
           id="search"
           name="search"
-          defaultValue={search}
+          value={draft.search}
+          onChange={(event) => setDraft((current) => ({ ...current, search: event.target.value }))}
           placeholder="Buscar productos..."
           className="normal-case placeholder:font-medium placeholder:normal-case"
         />
@@ -83,7 +92,8 @@ export function StoreFilters({
         <FormSelect
           id="category"
           name="category"
-          defaultValue={categorySlug}
+          value={draft.categorySlug}
+          onValueChange={(categorySlug) => setDraft((current) => ({ ...current, categorySlug }))}
           placeholder="Todas"
           options={[
             { value: '', label: 'Todas' },
@@ -104,7 +114,8 @@ export function StoreFilters({
             type="number"
             min={0}
             step="0.01"
-            defaultValue={minPrice}
+            value={draft.minPrice}
+            onChange={(event) => setDraft((current) => ({ ...current, minPrice: event.target.value }))}
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -115,7 +126,8 @@ export function StoreFilters({
             type="number"
             min={0}
             step="0.01"
-            defaultValue={maxPrice}
+            value={draft.maxPrice}
+            onChange={(event) => setDraft((current) => ({ ...current, maxPrice: event.target.value }))}
           />
         </div>
       </div>
@@ -126,7 +138,8 @@ export function StoreFilters({
           <FormSelect
             id="brand"
             name="brand"
-            defaultValue={brand}
+            value={draft.brand}
+            onValueChange={(brand) => setDraft((current) => ({ ...current, brand }))}
             placeholder="Todas"
             options={[
               { value: '', label: 'Todas' },
@@ -144,7 +157,8 @@ export function StoreFilters({
         <FormSelect
           id="minRating"
           name="minRating"
-          defaultValue={minRating}
+          value={draft.minRating}
+          onValueChange={(minRating) => setDraft((current) => ({ ...current, minRating }))}
           placeholder="Cualquiera"
           options={[
             { value: '', label: 'Cualquiera' },
@@ -155,11 +169,20 @@ export function StoreFilters({
         />
       </div>
 
-      <InStockFilter key={inStock ? 'in-stock' : 'all'} inStock={inStock} />
+      <InStockFilter
+        inStock={draft.inStock}
+        onChange={(inStock) => setDraft((current) => ({ ...current, inStock }))}
+      />
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="sort">Ordenar</Label>
-        <FormSelect id="sort" name="sort" defaultValue={sort} options={SORT_OPTIONS} />
+        <FormSelect
+          id="sort"
+          name="sort"
+          value={draft.sort}
+          onValueChange={(sort) => setDraft((current) => ({ ...current, sort }))}
+          options={SORT_OPTIONS}
+        />
       </div>
 
       <Button type="submit" className="w-full">
