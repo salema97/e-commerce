@@ -4,7 +4,6 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApiClient, useAuthApiReady } from '@/lib/client-api';
-import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
 import {
   Table,
@@ -19,10 +18,12 @@ import { InvoiceStatusBadge } from '@/components/admin/invoices/invoice-status-b
 import { InvoiceRowActions } from '@/components/admin/invoices/invoice-row-actions';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
+import { PaginationBar } from '@/components/ui/pagination-bar';
+import { ADMIN_TABLE_PAGE_SIZE } from '@/lib/pagination';
 import { formatDateTime } from '@repo/shared-utils';
 import type { InvoiceResponseDto, InvoiceStatus } from '@repo/shared-types';
 
-const LIMIT = 20;
+const LIMIT = ADMIN_TABLE_PAGE_SIZE;
 
 function matchesSearch(invoice: InvoiceResponseDto, search: string): boolean {
   if (!search) return true;
@@ -176,27 +177,13 @@ export function InvoiceListView({ initialInvoices }: { initialInvoices: InvoiceR
           </TableBody>
         </Table>
 
-      <div className="flex items-center justify-between">
-        <Button
-          type="button"
-          variant="outline"
-          disabled={offset === 0}
-          onClick={() => setOffset((prev) => Math.max(0, prev - LIMIT))}
-        >
-          Anterior
-        </Button>
-        <span className="text-sm text-muted-foreground">
-          Página {Math.floor(offset / LIMIT) + 1}
-        </span>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={filteredInvoices.length < LIMIT}
-          onClick={() => setOffset((prev) => prev + LIMIT)}
-        >
-          Siguiente
-        </Button>
-      </div>
+      <PaginationBar
+        page={Math.floor(offset / LIMIT) + 1}
+        pageSize={LIMIT}
+        currentPageCount={filteredInvoices.length}
+        hasNextPage={filteredInvoices.length >= LIMIT}
+        onPageChange={(page) => setOffset((page - 1) * LIMIT)}
+      />
     </AnimatedPageShell>
   );
 }

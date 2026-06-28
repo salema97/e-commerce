@@ -1,18 +1,7 @@
-import Link from 'next/link';
 import { getServerApiClient } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { AdminPageHeader } from '@/components/admin/admin-page-header';
-import type { User } from '@repo/shared-types';
+import { AdminCustomersTable } from '@/components/admin/admin-customers-table';
 
 export default async function AdminCustomersPage() {
   const api = await getServerApiClient();
@@ -29,32 +18,7 @@ export default async function AdminCustomersPage() {
         />
       }
     >
-      <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Correo electrónico</TableHead>
-              <TableHead>Teléfono</TableHead>
-              <TableHead>Rol</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users.map((user: User) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.email}</TableCell>
-                <TableCell>{user.phone ?? '-'}</TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{user.role}</Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Link href={`/admin/customers/${user.id}`}>
-                    <Button variant="outline" size="sm">Ver</Button>
-                  </Link>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <AdminCustomersTable users={users} />
     </AnimatedPageShell>
   );
 }

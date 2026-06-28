@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser, financeRoles } from '@/lib/auth';
 import { getServerApiClient } from '@/lib/api';
 import { InvoiceListView } from './invoice-list-view';
+import { ADMIN_TABLE_PAGE_SIZE } from '@/lib/pagination';
 import type { InvoiceResponseDto } from '@repo/shared-types';
 
 export default async function AdminInvoicesPage() {
@@ -15,7 +16,7 @@ export default async function AdminInvoicesPage() {
   let initialInvoices: InvoiceResponseDto[] = [];
 
   try {
-    initialInvoices = await api.invoices.findAll({ limit: 20, offset: 0 });
+    initialInvoices = await api.invoices.findAll({ limit: ADMIN_TABLE_PAGE_SIZE, offset: 0 });
   } catch {
     initialInvoices = [];
   }

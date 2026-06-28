@@ -1,9 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { PaginationBar } from '@/components/ui/pagination-bar';
 import { StoreFilters, type StoreFilterValues } from '@/components/store/store-filters';
 import { StoreProductGrid } from '@/components/store/store-product-grid';
 import { useApiQueryHooks } from '@/lib/client-api';
@@ -15,6 +15,7 @@ import {
   type StoreCatalogParams,
 } from '@/lib/store-catalog-params';
 import type { CatalogResponse, Category } from '@repo/shared-types';
+import { shouldShowPagination } from '@/lib/pagination';
 
 interface StoreCatalogPanelProps {
   categories: Category[];
@@ -102,11 +103,11 @@ export function StoreCatalogPanel({
     [applyParams, params],
   );
 
-  const totalPages = Math.max(1, Math.ceil(catalog.total / catalog.limit));
   const attributeFacets = catalog.facets.attributeFacets ?? [];
   const brandFacets = catalog.facets.brand ?? [];
   const activeCategory = categories.find((category) => category.slug === params.category);
   const gridKey = storeCatalogParamsKey(params);
+  const showPagination = shouldShowPagination(catalog.total, catalog.limit);
 
   return (
     <>
@@ -177,29 +178,14 @@ export function StoreCatalogPanel({
             </div>
           ) : null}
 
-          <Separator className="my-8 border-neo-onyx" />
+          {showPagination ? <Separator className="my-8 border-neo-onyx" /> : null}
 
-          <div className="flex items-center justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={params.page <= 1}
-              onClick={() => applyParams({ ...params, page: params.page - 1 })}
-            >
-              Anterior
-            </Button>
-            <span className="text-sm font-bold uppercase">
-              Página {params.page} de {totalPages}
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={params.page >= totalPages}
-              onClick={() => applyParams({ ...params, page: params.page + 1 })}
-            >
-              Siguiente
-            </Button>
-          </div>
+          <PaginationBar
+            page={params.page}
+            pageSize={catalog.limit}
+            total={catalog.total}
+            onPageChange={(page) => applyParams({ ...params, page })}
+          />
         </div>
       </div>
     </>
