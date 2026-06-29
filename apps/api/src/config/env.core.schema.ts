@@ -8,7 +8,16 @@ export const envCoreSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3001),
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1),
-  AUTH_JWT_ACCESS_SECRET: z.string().min(32),
+  AUTH_JWT_ACCESS_SECRET: z
+    .string()
+    .min(1)
+    .refine(
+      (value) => value === '<generate-strong-secret>' || value.length >= 32,
+      {
+        message:
+          'AUTH_JWT_ACCESS_SECRET must be at least 32 characters or the placeholder token <generate-strong-secret>',
+      },
+    ),
   AUTH_ACCESS_TOKEN_TTL: z.string().default('15m'),
   AUTH_REFRESH_TOKEN_DAYS: z.coerce.number().int().positive().default(30),
   ENABLE_TEST_AUTH: z.enum(['true', 'false']).default('false'),

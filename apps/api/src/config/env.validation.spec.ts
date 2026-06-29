@@ -60,13 +60,25 @@ describe('validate', () => {
     );
   });
 
-  it('rejects dev/placeholder provider secrets in production', () => {
+  it('rejects dev/placeholder/e2e/test provider secrets in production', () => {
     expect(() => validate({ ...baseEnv, KUSHKI_PRIVATE_KEY: 'dev-kushki-key' })).toThrow(
       'KUSHKI_PRIVATE_KEY cannot use a dev/placeholder value',
     );
     expect(() => validate({ ...baseEnv, EVOLUTION_API_KEY: 'change-me' })).toThrow(
       'EVOLUTION_API_KEY cannot use a dev/placeholder value',
     );
+    expect(() =>
+      validate({ ...baseEnv, EVOLUTION_WEBHOOK_SECRET: 'e2e-evolution-webhook-secret' }),
+    ).toThrow('EVOLUTION_WEBHOOK_SECRET cannot use a dev/placeholder value');
+    expect(() => validate({ ...baseEnv, PAYPHONE_TOKEN: 'test-payphone-token' })).toThrow(
+      'PAYPHONE_TOKEN cannot use a dev/placeholder value',
+    );
+    expect(() => validate({ ...baseEnv, PLACETOPAY_SECRET_KEY: 'xxx' })).toThrow(
+      'PLACETOPAY_SECRET_KEY cannot use a dev/placeholder value',
+    );
+    expect(() =>
+      validate({ ...baseEnv, MERCADOPAGO_ACCESS_TOKEN: '<generate-strong-secret>' }),
+    ).toThrow('MERCADOPAGO_ACCESS_TOKEN cannot use a dev/placeholder value');
   });
 
   it('rejects incomplete SRI credentials in production', () => {

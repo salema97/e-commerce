@@ -10,7 +10,8 @@ const SRI_REQUIRED_KEYS = [
   'SRI_EMISSION_POINT_CODE',
 ] as const;
 
-const PROVIDER_SECRET_KEYS = [
+const PRODUCTION_SECRET_KEYS = [
+  'AUTH_JWT_ACCESS_SECRET',
   'KUSHKI_PRIVATE_KEY',
   'KUSHKI_WEBHOOK_SECRET',
   'PAYPHONE_TOKEN',
@@ -25,7 +26,16 @@ const PROVIDER_SECRET_KEYS = [
 
 function isPlaceholderValue(value: unknown): value is string {
   if (typeof value !== 'string') return false;
-  return value === 'change-me' || value.startsWith('dev-');
+  if (value === '') return true;
+  const lower = value.toLowerCase();
+  return (
+    lower === 'change-me' ||
+    lower === 'xxx' ||
+    lower === '<generate-strong-secret>' ||
+    lower.startsWith('dev-') ||
+    lower.startsWith('test-') ||
+    lower.startsWith('e2e-')
+  );
 }
 
 function getMissingSriCredentials(data: Env): string[] {
@@ -63,7 +73,7 @@ const envSchema = envCoreSchema.merge(envProvidersSchema).superRefine((data, ctx
     });
   }
 
-  for (const key of PROVIDER_SECRET_KEYS) {
+  for (const key of PRODUCTION_SECRET_KEYS) {
     const value = data[key];
     if (isPlaceholderValue(value)) {
       ctx.addIssue({
