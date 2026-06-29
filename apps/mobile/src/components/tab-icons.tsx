@@ -12,9 +12,11 @@ type TabBarIconProps = {
 
 /** Outline when inactive, filled when active — similar to Lucide on web. */
 export function neoTabIcon(outline: IconName, filled: IconName) {
-  return ({ color, focused, size }: TabBarIconProps) => (
+  const Icon = ({ color, focused, size }: TabBarIconProps) => (
     <MaterialCommunityIcons name={focused ? filled : outline} size={size} color={color} />
   );
+  Icon.displayName = `neoTabIcon(${String(outline)}, ${String(filled)})`;
+  return Icon;
 }
 
 export const tabIcons = {

@@ -356,12 +356,18 @@ importers:
       babel-preset-expo:
         specifier: ~56.0.15
         version: 56.0.15(@babel/core@7.29.7)(@babel/runtime@7.29.7)(expo@56.0.12)(react-refresh@0.18.0)
+      eslint:
+        specifier: 'catalog:'
+        version: 9.20.0(jiti@2.7.0)
       expo-doctor:
         specifier: 1.19.10
         version: 1.19.10
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
+      typescript-eslint:
+        specifier: ^8.32.0
+        version: 8.32.0(eslint@9.20.0(jiti@2.7.0))(typescript@5.9.3)
       vitest:
         specifier: 'catalog:'
         version: 4.1.9(@opentelemetry/api@1.9.1)(@types/node@22.13.0)(jsdom@26.0.0(bufferutil@4.1.0))(vite@8.0.14(@types/node@22.13.0)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
