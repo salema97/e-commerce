@@ -73,8 +73,23 @@ import type {
   ProductContentDraft,
   ChatSession,
   Promotion,
+  Coupon,
+  DiscountRule,
+  CreatePromotionDto,
+  UpdatePromotionDto,
+  CreateAdminCouponDto,
+  UpdateCouponDto,
+  CreateDiscountRuleDto,
+  UpdateDiscountRuleDto,
+  AdminPromotionsQuery,
   DistributePromoDto,
   DistributePromoResponse,
+  MarketingPlacement,
+  CreateMarketingPlacementDto,
+  UpdateMarketingPlacementDto,
+  ActivePlacementsResponse,
+  ActiveMarketingPlatform,
+  AdminMarketingPlacementsQuery,
   AnalyticsOverviewReport,
   CohortRetentionReport,
   ShippingQuote,
@@ -538,6 +553,51 @@ export function createApiClient(options: ApiClientOptions) {
         request<Array<Pick<Promotion, 'id' | 'name'>>>('GET', '/marketing/promotions'),
       distributePromo: (data: DistributePromoDto) =>
         request<DistributePromoResponse>('POST', '/marketing/campaigns/promo', data),
+      listPlacementsAdmin: (query?: AdminMarketingPlacementsQuery) =>
+        request<MarketingPlacement[]>(
+          'GET',
+          '/marketing/placements/admin/list',
+          undefined,
+          query as AdminMarketingPlacementsQuery & Record<string, string | boolean | undefined>,
+        ),
+      getPlacement: (id: string) =>
+        request<MarketingPlacement>('GET', `/marketing/placements/${id}`),
+      createPlacement: (data: CreateMarketingPlacementDto) =>
+        request<MarketingPlacement>('POST', '/marketing/placements', data),
+      updatePlacement: (id: string, data: UpdateMarketingPlacementDto) =>
+        request<MarketingPlacement>('PATCH', `/marketing/placements/${id}`, data),
+      deletePlacement: (id: string) =>
+        request<MarketingPlacement>('DELETE', `/marketing/placements/${id}`),
+      getActivePlacements: (platform: ActiveMarketingPlatform) =>
+        request<ActivePlacementsResponse>('GET', '/marketing/placements/active', undefined, {
+          platform,
+        }),
+    },
+    promotions: {
+      findAll: (query?: AdminPromotionsQuery) =>
+        request<Promotion[]>(
+          'GET',
+          '/promotions',
+          undefined,
+          query as AdminPromotionsQuery & Record<string, string | boolean | undefined>,
+        ),
+      findOne: (id: string) => request<Promotion>('GET', `/promotions/${id}`),
+      create: (data: CreatePromotionDto) => request<Promotion>('POST', '/promotions', data),
+      update: (id: string, data: UpdatePromotionDto) =>
+        request<Promotion>('PATCH', `/promotions/${id}`, data),
+      delete: (id: string) => request<Promotion>('DELETE', `/promotions/${id}`),
+      createCoupon: (promotionId: string, data: CreateAdminCouponDto) =>
+        request<Coupon>('POST', `/promotions/${promotionId}/coupons`, data),
+      updateCoupon: (couponId: string, data: UpdateCouponDto) =>
+        request<Coupon>('PATCH', `/promotions/coupons/${couponId}`, data),
+      deleteCoupon: (couponId: string) =>
+        request<Coupon>('DELETE', `/promotions/coupons/${couponId}`),
+      createDiscountRule: (promotionId: string, data: CreateDiscountRuleDto) =>
+        request<DiscountRule>('POST', `/promotions/${promotionId}/rules`, data),
+      updateDiscountRule: (ruleId: string, data: UpdateDiscountRuleDto) =>
+        request<DiscountRule>('PATCH', `/promotions/rules/${ruleId}`, data),
+      deleteDiscountRule: (ruleId: string) =>
+        request<DiscountRule>('DELETE', `/promotions/rules/${ruleId}`),
     },
     search: {
       products: (query: string, limit?: number) =>

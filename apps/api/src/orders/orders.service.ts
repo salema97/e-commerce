@@ -134,6 +134,7 @@ export class OrdersService {
       items: cartItems,
       taxCategories,
       orderDiscount: discountTotals.discount + loyaltyDiscount,
+      promotionLineDiscounts: discountTotals.lineDiscounts,
       country: shippingAddress?.country,
       province: shippingAddress?.state,
     });
@@ -165,7 +166,15 @@ export class OrdersService {
       promotionId: discountTotals.promotionId,
     };
 
-    const orderItems = await this.buildOrderItems(dto.items, totals, taxResult.lines, allocations);
+    const orderItems = await this.buildOrderItems(
+      dto.items,
+      totals,
+      taxResult.lines,
+      allocations,
+      discountTotals.lineDiscounts,
+      discountTotals.discount,
+      loyaltyDiscount,
+    );
 
     const subtotal = new Prisma.Decimal(totals.subtotal);
     const taxAmount = new Prisma.Decimal(totals.taxAmount);
@@ -494,6 +503,9 @@ export class OrdersService {
     totals: { subtotal: number; discount: number; taxAmount: number },
     taxLines: Array<{ productId: string; taxRate: number; taxAmount: number }>,
     allocations?: ItemAllocation[],
+    promotionLineDiscounts?: number[],
+    promotionDiscount = 0,
+    loyaltyDiscount = 0,
   ) {
     const allocationMap = new Map(
       allocations?.map((item) => [
@@ -550,7 +562,14 @@ export class OrdersService {
       }),
     );
 
-    return this.allocateItemTotals(productItems, totals, taxLines);
+    return this.allocateItemTotals(
+      productItems,
+      totals,
+      taxLines,
+      promotionLineDiscounts,
+      promotionDiscount,
+      loyaltyDiscount,
+    );
   }
 
   private allocateItemTotals(
@@ -571,27 +590,40 @@ export class OrdersService {
     }>,
     totals: { subtotal: number; discount: number; taxAmount: number },
     taxLines: Array<{ productId: string; taxRate: number; taxAmount: number }>,
+    promotionLineDiscounts?: number[],
+    promotionDiscount = 0,
+    loyaltyDiscount = 0,
   ) {
-    const lineSubtotals = items.map((i) => Number(i.price) * i.quantity);
-    const subtotal = lineSubtotals.reduce((sum, v) => sum + v, 0);
+    const lineSubtotals = items.map((item) => Number(item.price) * item.quantity);
+    const subtotal = lineSubtotals.reduce((sum, value) => sum + value, 0);
 
-    let remainingDiscount = totals.discount;
+    const promoDiscounts =
+      promotionLineDiscounts ??
+      lineSubtotals.map((lineSubtotal) =>
+        subtotal > 0 ? Number(((lineSubtotal / subtotal) * promotionDiscount).toFixed(2)) : 0,
+      );
+
+    let remainingLoyalty = loyaltyDiscount;
+    const taxableSubtotal = lineSubtotals.reduce(
+      (sum, lineSubtotal, index) => sum + Math.max(0, lineSubtotal - (promoDiscounts[index] ?? 0)),
+      0,
+    );
 
     const allocated = items.map((item, index) => {
       const lineSubtotal = lineSubtotals[index];
       const isLast = index === items.length - 1;
-
-      const discount = isLast
-        ? remainingDiscount
-        : Number(
-            new Prisma.Decimal(
-              subtotal > 0 ? (lineSubtotal / subtotal) * totals.discount : 0,
-            ).toFixed(2),
-          );
-
-      remainingDiscount = Number(
-        new Prisma.Decimal(remainingDiscount).minus(discount).toFixed(2),
-      );
+      const promoDiscount = promoDiscounts[index] ?? 0;
+      const afterPromotion = Math.max(0, lineSubtotal - promoDiscount);
+      const loyaltyShare =
+        loyaltyDiscount <= 0
+          ? 0
+          : isLast
+            ? remainingLoyalty
+            : taxableSubtotal > 0
+              ? Number(((afterPromotion / taxableSubtotal) * loyaltyDiscount).toFixed(2))
+              : 0;
+      remainingLoyalty = Number((remainingLoyalty - loyaltyShare).toFixed(2));
+      const discount = Number((promoDiscount + loyaltyShare).toFixed(2));
 
       const taxLine = taxLines[index];
 

@@ -14,6 +14,7 @@ import { AuthTokenBridge } from '../providers/AuthTokenBridge';
 import { PushNotificationManager } from '../providers/PushNotificationManager';
 import { DeepLinkManager } from '../providers/DeepLinkManager';
 import { AnalyticsConsentBanner } from '../components/AnalyticsConsentBanner';
+import { MarketingPlacementProvider } from '../providers/MarketingPlacementProvider';
 import { NeoFontProvider } from '../providers/NeoFontProvider';
 import { initMobileSentry } from '../lib/sentry';
 
@@ -46,7 +47,9 @@ export default function RootLayout(): React.ReactElement {
               <PushNotificationManager />
               <DeepLinkManager />
               <AnalyticsConsentBanner />
+              <MarketingPlacementProvider>
               <Stack screenOptions={{ headerShown: false }} />
+              </MarketingPlacementProvider>
               <StatusBar style="auto" />
               </WishlistProvider>
             </CartProvider>

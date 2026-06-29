@@ -100,6 +100,79 @@ export async function clearAuth(page: Page): Promise<void> {
   await page.request.post('/api/auth/logout');
 }
 
+export interface TestPromotion {
+  promotionId: string;
+  promotionName: string;
+  couponCode: string;
+  couponId: string;
+}
+
+export async function createTestPromotion(
+  request: APIRequestContext,
+  options: {
+    name?: string;
+    type?: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIPPING' | 'BUNDLE' | 'TIERED';
+    value?: number;
+    couponCode?: string;
+    rules?: Array<{
+      minimumQuantity?: number;
+      minimumAmount?: number;
+      applicableProductId?: string;
+      applicableCategoryId?: string;
+      discountValue?: number;
+    }>;
+  } = {},
+): Promise<TestPromotion> {
+  const adminHeaders = await getApiAuthHeaders(request, 'ADMIN');
+  const unique = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const promotionName = options.name ?? `E2E Promo ${unique}`;
+  const couponCode = options.couponCode ?? `E2E${unique.replace(/[^a-z0-9]/gi, '').slice(-8).toUpperCase()}`;
+
+  const promoRes = await request.post(`${API_BASE}/promotions`, {
+    data: {
+      name: promotionName,
+      type: options.type ?? 'PERCENTAGE',
+      value: options.value ?? 10,
+      isActive: true,
+    },
+    headers: adminHeaders,
+  });
+
+  if (!promoRes.ok()) {
+    throw new Error(`Failed to create test promotion: ${await promoRes.text()}`);
+  }
+
+  const promotion = (await promoRes.json()) as { id: string };
+
+  const couponRes = await request.post(`${API_BASE}/promotions/${promotion.id}/coupons`, {
+    data: { code: couponCode, isActive: true },
+    headers: adminHeaders,
+  });
+
+  if (!couponRes.ok()) {
+    throw new Error(`Failed to create test coupon: ${await couponRes.text()}`);
+  }
+
+  const coupon = (await couponRes.json()) as { id: string; code: string };
+
+  for (const rule of options.rules ?? []) {
+    const ruleRes = await request.post(`${API_BASE}/promotions/${promotion.id}/rules`, {
+      data: rule,
+      headers: adminHeaders,
+    });
+    if (!ruleRes.ok()) {
+      throw new Error(`Failed to create promotion rule: ${await ruleRes.text()}`);
+    }
+  }
+
+  return {
+    promotionId: promotion.id,
+    promotionName,
+    couponCode: coupon.code,
+    couponId: coupon.id,
+  };
+}
+
 export async function createTestProduct(
   request: APIRequestContext,
 ): Promise<{ id: string; slug: string; variantId?: string }> {

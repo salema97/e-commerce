@@ -366,6 +366,67 @@ export async function seedDatabase(prisma: PrismaClient): Promise<void> {
     },
   });
 
+  await prisma.marketingPlacement.upsert({
+    where: { id: IDS.placementPopupLaunch },
+    update: { isActive: true },
+    create: {
+      id: IDS.placementPopupLaunch,
+      name: 'Launch popup — Verano 2026',
+      type: 'POPUP',
+      slot: 'APP_LAUNCH',
+      platform: 'ALL',
+      title: 'Verano 2026',
+      body: 'Usa el código VERANO10 y obtén 10% de descuento en electrónica.',
+      ctaLabel: 'Ver ofertas',
+      ctaHref: '/store',
+      promotionId: promotion.id,
+      priority: 100,
+      isActive: true,
+      showOncePerSession: true,
+      dismissible: true,
+    },
+  });
+
+  await prisma.marketingPlacement.upsert({
+    where: { id: IDS.placementBannerHomeHero },
+    update: { isActive: true },
+    create: {
+      id: IDS.placementBannerHomeHero,
+      name: 'Home hero banner — Verano WEB',
+      type: 'BANNER',
+      slot: 'HOME_HERO',
+      platform: 'WEB',
+      title: 'Ofertas de verano',
+      body: 'Hasta 10% en electrónica seleccionada.',
+      imageUrl: 'https://placehold.co/1200x400/1e293b/f8fafc/png',
+      ctaLabel: 'Comprar ahora',
+      ctaHref: '/store',
+      promotionId: promotion.id,
+      priority: 50,
+      isActive: true,
+      dismissible: true,
+    },
+  });
+
+  await prisma.marketingPlacement.upsert({
+    where: { id: IDS.placementPromoStripStoreTop },
+    update: { isActive: true },
+    create: {
+      id: IDS.placementPromoStripStoreTop,
+      name: 'Store top promo strip',
+      type: 'PROMO_STRIP',
+      slot: 'STORE_TOP',
+      platform: 'ALL',
+      title: 'Envío gratis desde $50',
+      body: 'Aplica en todo el catálogo.',
+      ctaLabel: 'Ver condiciones',
+      ctaHref: '/store',
+      priority: 10,
+      isActive: true,
+      dismissible: false,
+    },
+  });
+
   await prisma.invoiceSequence.upsert({
     where: {
       documentType_establishmentCode_emissionPointCode: {

@@ -13,6 +13,7 @@ export interface CartTaxInput {
   items: CartItemInput[];
   taxCategories: Map<string, TaxCategory>;
   orderDiscount: number;
+  promotionLineDiscounts?: number[];
   country?: string;
   province?: string;
   currency?: string;
@@ -55,24 +56,48 @@ export class TaxService {
     }));
 
     const subtotal = lineSubtotals.reduce((sum, line) => sum + line.lineSubtotal, 0);
-    let remainingDiscount = Number(input.orderDiscount.toFixed(2));
+    const promotionDiscounts =
+      input.promotionLineDiscounts ??
+      lineSubtotals.map((line) =>
+        subtotal > 0 ? Number(((line.lineSubtotal / subtotal) * input.orderDiscount).toFixed(2)) : 0,
+      );
+  const promotionDiscountTotal = promotionDiscounts.reduce((sum, value) => sum + value, 0);
+  let loyaltyDiscount = Number((input.orderDiscount - promotionDiscountTotal).toFixed(2));
+  if (loyaltyDiscount < 0) {
+    loyaltyDiscount = 0;
+  }
 
     const taxableLines = lineSubtotals.map((line, index) => {
-      const isLast = index === lineSubtotals.length - 1;
-      const lineDiscount = isLast
-        ? remainingDiscount
-        : subtotal > 0
-          ? Number(((line.lineSubtotal / subtotal) * input.orderDiscount).toFixed(2))
-          : 0;
-      remainingDiscount = Number((remainingDiscount - lineDiscount).toFixed(2));
+      const afterPromotion = Number((line.lineSubtotal - (promotionDiscounts[index] ?? 0)).toFixed(2));
       return {
-        lineSubtotal: Number((line.lineSubtotal - lineDiscount).toFixed(2)),
+        lineSubtotal: afterPromotion,
+        taxCategory: line.taxCategory,
+        index,
+      };
+    });
+
+    const taxableSubtotal = taxableLines.reduce((sum, line) => sum + line.lineSubtotal, 0);
+    let remainingLoyalty = loyaltyDiscount;
+
+    const adjustedTaxableLines = taxableLines.map((line, position, lines) => {
+      const isLast = position === lines.length - 1;
+      const loyaltyShare =
+        loyaltyDiscount <= 0
+          ? 0
+          : isLast
+            ? remainingLoyalty
+            : taxableSubtotal > 0
+              ? Number(((line.lineSubtotal / taxableSubtotal) * loyaltyDiscount).toFixed(2))
+              : 0;
+      remainingLoyalty = Number((remainingLoyalty - loyaltyShare).toFixed(2));
+      return {
+        lineSubtotal: Number((line.lineSubtotal - loyaltyShare).toFixed(2)),
         taxCategory: line.taxCategory,
       };
     });
 
     const provider = this.resolveProviderName(input.country);
-    const orderTax = await this.calculateWithProvider(provider, taxableLines, input);
+    const orderTax = await this.calculateWithProvider(provider, adjustedTaxableLines, input);
 
     return {
       taxAmount: orderTax.taxAmount,

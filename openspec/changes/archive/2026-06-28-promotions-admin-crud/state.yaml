@@ -1,0 +1,36 @@
+change: promotions-admin-crud
+status: archived
+parent_change: marketing-ui-popups
+phase: 2
+delivery_strategy: auto-chain
+chain_strategy: stacked-to-main
+max_pr_lines: 400
+current_pr: 0
+planned_prs:
+  - id: 1
+    slice: api
+    target: main
+    description: Refactor rutas a /v1/promotions, controller spec, api-client
+  - id: 2
+    slice: admin-list
+    target: pr-1
+    description: Sub-nav, lista, form crear/editar promo básica
+  - id: 3
+    slice: admin-detail
+    target: pr-2
+    description: Página [id] cupones + reglas de descuento
+phases:
+  explore: complete
+  propose: complete
+  spec: complete
+  design: complete
+  tasks: complete
+  apply: complete
+  verify: complete
+  archive: complete
+decisions:
+  api_routes: /v1/promotions
+  marketing_picker: /v1/marketing/promotions
+  partial_api_refactor: required
+  ui_pattern: placements-list + products-detail
+language: es

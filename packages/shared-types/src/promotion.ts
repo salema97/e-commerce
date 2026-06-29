@@ -7,6 +7,7 @@ export interface DiscountRule {
   minimumAmount?: number | null;
   applicableProductId?: string | null;
   applicableCategoryId?: string | null;
+  discountValue?: number | null;
   createdAt: string;
   promotion?: unknown;
 }
@@ -55,7 +56,28 @@ export interface CreateCouponDto {
   isActive?: boolean;
 }
 
-export type UpdateCouponDto = Partial<CreateCouponDto>;
+export type UpdateCouponDto = Partial<Omit<CreateCouponDto, 'promotionId'>>;
+
+export interface CreateAdminCouponDto {
+  code: string;
+  usageLimit?: number;
+  isActive?: boolean;
+}
+
+export interface CreateDiscountRuleDto {
+  minimumQuantity?: number;
+  minimumAmount?: number;
+  applicableProductId?: string;
+  applicableCategoryId?: string;
+  discountValue?: number;
+}
+
+export type UpdateDiscountRuleDto = Partial<CreateDiscountRuleDto>;
+
+export interface AdminPromotionsQuery {
+  isActive?: boolean;
+  type?: PromotionType;
+}
 
 export interface ApplyCouponDto {
   code: string;

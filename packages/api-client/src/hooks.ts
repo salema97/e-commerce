@@ -15,6 +15,8 @@ import { createReviewsHooks } from './hooks/reviews-hooks.js';
 import { createEngagementHooks } from './hooks/engagement-hooks.js';
 import { createPlatformHooks } from './hooks/platform-hooks.js';
 import { createSubscriptionsHooks } from './hooks/subscriptions-hooks.js';
+import { createMarketingHooks } from './hooks/marketing-hooks.js';
+import { createPromotionHooks } from './hooks/promotion-hooks.js';
 import type { ApiClient } from './client.js';
 
 export { queryKeys } from './query-keys.js';
@@ -38,6 +40,8 @@ export function createQueryHooks(client: ApiClient) {
     ...createEngagementHooks(client),
     ...createPlatformHooks(client),
     ...createSubscriptionsHooks(client),
+    ...createMarketingHooks(client),
+    ...createPromotionHooks(client),
   };
 }
 

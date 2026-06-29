@@ -1,0 +1,41 @@
+change: marketing-ui-popups
+status: archived
+delivery_strategy: auto-chain
+chain_strategy: stacked-to-main
+max_pr_lines: 400
+current_pr: 0
+planned_prs:
+  - id: 1
+    slice: api
+    target: main
+    description: Prisma MarketingPlacement, CRUD admin, GET active público, shared-types, api-client
+  - id: 2
+    slice: admin
+    target: pr-1
+    description: MarketingSubNav, CRUD placements, selector promoción existente
+  - id: 3
+    slice: web
+    target: pr-2
+    description: MarketingPlacementProvider, popup launch, banners/strips home y store
+  - id: 4
+    slice: mobile
+    target: pr-3
+    description: Provider post-consent, popup launch, banners home/store
+phases:
+  explore: complete
+  propose: complete
+  spec: complete
+  design: complete
+  tasks: complete
+  apply: complete
+  verify: complete
+  archive: complete
+decisions:
+  model: MarketingPlacement
+  placement_types:
+    - POPUP
+    - BANNER
+    - PROMO_STRIP
+  promotions_crud: phase-2
+  consent_gating: required
+language: es

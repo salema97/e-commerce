@@ -17,6 +17,7 @@ import {
   neo,
 } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen';
+import { PromoBannerSlot } from '../../components/marketing/PromoBannerSlot';
 import { useApiQueryHooks } from '../../lib/api';
 import { formatPrice, getProductPrimaryImageUrl, getProductPrimaryImageAlt } from '@repo/shared-utils';
 import type { Product } from '@repo/shared-types';
@@ -71,6 +72,7 @@ export default function HomeScreen(): React.ReactElement {
 
   return (
     <NeoScreen style={layout.screen} entrance={false}>
+      <PromoBannerSlot slot="HOME_HERO" />
       <NeoEnterFromTop>
         <NeoPageHeader
           eyebrow="Colección"

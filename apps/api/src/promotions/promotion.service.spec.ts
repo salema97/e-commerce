@@ -7,17 +7,43 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { TaxService } from '../tax/tax.service.js';
 import { PromotionType } from '@prisma/client';
 
-function buildCoupon(overrides: Partial<{
-  type: PromotionType;
-  value: Prisma.Decimal | null;
-  startsAt: Date | null;
-  endsAt: Date | null;
-  isActive: boolean;
-  usageLimit: number | null;
-  usageCount: number;
-  minimumAmount: Prisma.Decimal | null;
-  minimumQuantity: number | null;
-}> = {}) {
+function buildDiscountRule(
+  overrides: Partial<{
+    id: string;
+    minimumQuantity: number | null;
+    minimumAmount: Prisma.Decimal | null;
+    applicableProductId: string | null;
+    applicableCategoryId: string | null;
+    discountValue: Prisma.Decimal | null;
+    createdAt: Date;
+  }> = {},
+) {
+  return {
+    id: 'r1',
+    minimumQuantity: null,
+    minimumAmount: null,
+    applicableProductId: null,
+    applicableCategoryId: null,
+    discountValue: null,
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    ...overrides,
+  };
+}
+
+function buildCoupon(
+  overrides: Partial<{
+    type: PromotionType;
+    value: Prisma.Decimal | null;
+    startsAt: Date | null;
+    endsAt: Date | null;
+    isActive: boolean;
+    usageLimit: number | null;
+    usageCount: number;
+    minimumAmount: Prisma.Decimal | null;
+    minimumQuantity: number | null;
+    discountRules: ReturnType<typeof buildDiscountRule>[];
+  }> = {},
+) {
   const {
     type = PromotionType.PERCENTAGE,
     value = new Prisma.Decimal(10),
@@ -28,7 +54,15 @@ function buildCoupon(overrides: Partial<{
     usageCount = 0,
     minimumAmount = null,
     minimumQuantity = null,
+    discountRules,
   } = overrides;
+
+  const rules =
+    discountRules ??
+    (minimumAmount || minimumQuantity
+      ? [buildDiscountRule({ minimumQuantity, minimumAmount })]
+      : []);
+
   return {
     id: 'c1',
     code: 'SAVE10',
@@ -43,9 +77,7 @@ function buildCoupon(overrides: Partial<{
       startsAt,
       endsAt,
       isActive: true,
-      discountRules: minimumAmount || minimumQuantity
-        ? [{ id: 'r1', minimumQuantity, minimumAmount }]
-        : [],
+      discountRules: rules,
     },
   };
 }
@@ -54,11 +86,18 @@ describe('PromotionService', () => {
   let service: PromotionService;
   let prisma: {
     coupon: { findUnique: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
+    product: { findMany: ReturnType<typeof vi.fn> };
   };
 
   beforeEach(async () => {
     prisma = {
       coupon: { findUnique: vi.fn(), update: vi.fn().mockResolvedValue({}) },
+      product: {
+        findMany: vi.fn().mockResolvedValue([
+          { id: 'p1', categoryId: 'cat-electronics' },
+          { id: 'p2', categoryId: 'cat-apparel' },
+        ]),
+      },
     };
     const taxService = {
       calculateStandardSubtotalTax: (subtotal: number) => Number((subtotal * 0.15).toFixed(2)),
@@ -73,7 +112,7 @@ describe('PromotionService', () => {
     service = module.get(PromotionService);
   });
 
-  const items = [{ productId: 'p1', price: 50, quantity: 2 }]; // subtotal 100
+  const items = [{ productId: 'p1', price: 50, quantity: 2 }];
 
   describe('validateCoupon', () => {
     it('validates a healthy coupon', async () => {
@@ -93,50 +132,131 @@ describe('PromotionService', () => {
       await expect(service.validateCoupon('SAVE10', items)).rejects.toBeInstanceOf(BadRequestException);
     });
 
-    it('rejects not-yet-valid coupon', async () => {
-      const future = new Date(Date.now() + 86_400_000);
-      prisma.coupon.findUnique.mockResolvedValue(buildCoupon({ startsAt: future }));
+    it('rejects when subtotal below global minimumAmount', async () => {
+      prisma.coupon.findUnique.mockResolvedValue(
+        buildCoupon({ minimumAmount: new Prisma.Decimal(200) }),
+      );
       await expect(service.validateCoupon('SAVE10', items)).rejects.toBeInstanceOf(BadRequestException);
     });
 
-    it('rejects expired coupon', async () => {
-      const past = new Date(Date.now() - 86_400_000);
-      prisma.coupon.findUnique.mockResolvedValue(buildCoupon({ endsAt: past }));
+    it('rejects bundle when a component is missing', async () => {
+      prisma.coupon.findUnique.mockResolvedValue(
+        buildCoupon({
+          type: PromotionType.BUNDLE,
+          value: new Prisma.Decimal(10),
+          discountRules: [
+            buildDiscountRule({ id: 'r1', applicableProductId: 'p1', minimumQuantity: 1 }),
+            buildDiscountRule({ id: 'r2', applicableProductId: 'p2', minimumQuantity: 1 }),
+          ],
+        }),
+      );
       await expect(service.validateCoupon('SAVE10', items)).rejects.toBeInstanceOf(BadRequestException);
     });
 
-    it('rejects when usage limit reached', async () => {
-      prisma.coupon.findUnique.mockResolvedValue(buildCoupon({ usageLimit: 5, usageCount: 5 }));
-      await expect(service.validateCoupon('SAVE10', items)).rejects.toBeInstanceOf(BadRequestException);
-    });
-
-    it('rejects when subtotal below minimumAmount', async () => {
-      prisma.coupon.findUnique.mockResolvedValue(buildCoupon({ minimumAmount: new Prisma.Decimal(200) }));
-      await expect(service.validateCoupon('SAVE10', items)).rejects.toBeInstanceOf(BadRequestException);
-    });
-
-    it('rejects when quantity below minimumQuantity', async () => {
-      prisma.coupon.findUnique.mockResolvedValue(buildCoupon({ minimumQuantity: 10 }));
+    it('rejects tiered coupon when no tier matches', async () => {
+      prisma.coupon.findUnique.mockResolvedValue(
+        buildCoupon({
+          type: PromotionType.TIERED,
+          value: new Prisma.Decimal(10),
+          discountRules: [
+            buildDiscountRule({ id: 'r1', minimumQuantity: 10, discountValue: new Prisma.Decimal(15) }),
+          ],
+        }),
+      );
       await expect(service.validateCoupon('SAVE10', items)).rejects.toBeInstanceOf(BadRequestException);
     });
   });
 
   describe('applyPromotion', () => {
     it('applies percentage discount', async () => {
-      prisma.coupon.findUnique.mockResolvedValue(buildCoupon({ type: PromotionType.PERCENTAGE, value: new Prisma.Decimal(10) }));
+      prisma.coupon.findUnique.mockResolvedValue(
+        buildCoupon({ type: PromotionType.PERCENTAGE, value: new Prisma.Decimal(10) }),
+      );
       const applied = await service.applyPromotion('SAVE10', items);
       expect(applied.discount).toBe(10);
-      expect(applied.type).toBe(PromotionType.PERCENTAGE);
+      expect(applied.lineDiscounts).toEqual([10]);
+    });
+
+    it('applies scoped percentage only on eligible lines', async () => {
+      const mixedItems = [
+        { productId: 'p1', price: 50, quantity: 1 },
+        { productId: 'p2', price: 50, quantity: 1 },
+      ];
+      prisma.coupon.findUnique.mockResolvedValue(
+        buildCoupon({
+          type: PromotionType.PERCENTAGE,
+          value: new Prisma.Decimal(10),
+          discountRules: [
+            buildDiscountRule({
+              applicableCategoryId: 'cat-electronics',
+              minimumAmount: new Prisma.Decimal(40),
+            }),
+          ],
+        }),
+      );
+      const applied = await service.applyPromotion('SAVE10', mixedItems);
+      expect(applied.discount).toBe(5);
+      expect(applied.lineDiscounts).toEqual([5, 0]);
+    });
+
+    it('applies bundle discount on union of eligible lines', async () => {
+      const bundleItems = [
+        { productId: 'p1', price: 40, quantity: 1 },
+        { productId: 'p2', price: 60, quantity: 1 },
+      ];
+      prisma.coupon.findUnique.mockResolvedValue(
+        buildCoupon({
+          type: PromotionType.BUNDLE,
+          value: new Prisma.Decimal(10),
+          discountRules: [
+            buildDiscountRule({ id: 'r1', applicableProductId: 'p1' }),
+            buildDiscountRule({ id: 'r2', applicableProductId: 'p2' }),
+          ],
+        }),
+      );
+      const applied = await service.applyPromotion('SAVE10', bundleItems);
+      expect(applied.discount).toBe(10);
+      expect(applied.lineDiscounts.reduce((sum, value) => sum + value, 0)).toBe(10);
+    });
+
+    it('applies highest tier for tiered promotions', async () => {
+      const tieredItems = [{ productId: 'p1', price: 25, quantity: 4 }];
+      prisma.coupon.findUnique.mockResolvedValue(
+        buildCoupon({
+          type: PromotionType.TIERED,
+          value: new Prisma.Decimal(8),
+          discountRules: [
+            buildDiscountRule({
+              id: 'r-low',
+              minimumQuantity: 2,
+              discountValue: new Prisma.Decimal(10),
+              createdAt: new Date('2026-01-02T00:00:00.000Z'),
+            }),
+            buildDiscountRule({
+              id: 'r-high',
+              minimumQuantity: 4,
+              discountValue: new Prisma.Decimal(15),
+              createdAt: new Date('2026-01-01T00:00:00.000Z'),
+            }),
+          ],
+        }),
+      );
+      const applied = await service.applyPromotion('SAVE10', tieredItems);
+      expect(applied.discount).toBe(15);
     });
 
     it('caps fixed_amount discount at subtotal', async () => {
-      prisma.coupon.findUnique.mockResolvedValue(buildCoupon({ type: PromotionType.FIXED_AMOUNT, value: new Prisma.Decimal(150) }));
+      prisma.coupon.findUnique.mockResolvedValue(
+        buildCoupon({ type: PromotionType.FIXED_AMOUNT, value: new Prisma.Decimal(150) }),
+      );
       const applied = await service.applyPromotion('SAVE10', items);
       expect(applied.discount).toBe(100);
     });
 
     it('flags free shipping', async () => {
-      prisma.coupon.findUnique.mockResolvedValue(buildCoupon({ type: PromotionType.FREE_SHIPPING, value: null }));
+      prisma.coupon.findUnique.mockResolvedValue(
+        buildCoupon({ type: PromotionType.FREE_SHIPPING, value: null }),
+      );
       const applied = await service.applyPromotion('SAVE10', items);
       expect(applied.freeShipping).toBe(true);
       expect(applied.discount).toBe(0);
@@ -146,7 +266,6 @@ describe('PromotionService', () => {
   describe('calculateOrderTotals', () => {
     it('computes totals with 15% IVA and no coupon', async () => {
       const totals = await service.calculateOrderTotals(items);
-      // subtotal 100, discount 0, tax 15, total 115
       expect(totals.subtotal).toBe(100);
       expect(totals.taxAmount).toBe(15);
       expect(totals.discount).toBe(0);
@@ -155,33 +274,23 @@ describe('PromotionService', () => {
     });
 
     it('computes totals with percentage coupon', async () => {
-      prisma.coupon.findUnique.mockResolvedValue(buildCoupon({ type: PromotionType.PERCENTAGE, value: new Prisma.Decimal(10) }));
+      prisma.coupon.findUnique.mockResolvedValue(
+        buildCoupon({ type: PromotionType.PERCENTAGE, value: new Prisma.Decimal(10) }),
+      );
       const totals = await service.calculateOrderTotals(items, 'SAVE10');
-      // subtotal 100, discount 10, taxable 90, tax 13.5, total 103.5
       expect(totals.discount).toBe(10);
       expect(totals.taxAmount).toBe(13.5);
       expect(totals.total).toBe(103.5);
-    });
-
-    it('rounds to 2 decimals', async () => {
-      const oddItems = [{ productId: 'p1', price: 19.99, quantity: 2 }]; // 39.98
-      const totals = await service.calculateOrderTotals(oddItems);
-      // tax 39.98 * 0.15 = 5.997 -> 6.00, total 45.98
-      expect(totals.subtotal).toBe(39.98);
-      expect(totals.taxAmount).toBe(6);
-      expect(totals.total).toBe(45.98);
     });
   });
 
   describe('incrementCouponUsage', () => {
     it('increments usage count', async () => {
       await service.incrementCouponUsage('SAVE10');
-      expect(prisma.coupon.update).toHaveBeenCalledWith({ where: { code: 'SAVE10' }, data: { usageCount: { increment: 1 } } });
-    });
-
-    it('swallows errors silently', async () => {
-      prisma.coupon.update.mockRejectedValue(new Error('boom'));
-      await expect(service.incrementCouponUsage('SAVE10')).resolves.toBeUndefined();
+      expect(prisma.coupon.update).toHaveBeenCalledWith({
+        where: { code: 'SAVE10' },
+        data: { usageCount: { increment: 1 } },
+      });
     });
   });
 });

@@ -53,6 +53,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module.js';
 import { SellersModule } from './sellers/sellers.module.js';
 import { DropshipModule } from './dropship/dropship.module.js';
 import { BulkImportModule } from './bulk-import/bulk-import.module.js';
+import { PromotionsModule } from './promotions/promotions.module.js';
 
 @Module({
   imports: [
@@ -102,6 +103,7 @@ import { BulkImportModule } from './bulk-import/bulk-import.module.js';
     RedisModule,
     FinanceModule,
     NotificationsModule,
+    PromotionsModule,
     AiModule,
     AnalyticsModule,
     EventBusModule,

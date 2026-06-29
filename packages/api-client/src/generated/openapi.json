@@ -1523,11 +1523,6 @@
             "description": ""
           }
         },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
         "summary": "List active promotions for campaign targeting",
         "tags": [
           "Marketing"
@@ -1553,12 +1548,165 @@
             "description": ""
           }
         },
+        "summary": "Distribute promo codes to a customer segment",
+        "tags": [
+          "Marketing"
+        ]
+      }
+    },
+    "/v1/marketing/placements/active": {
+      "get": {
+        "operationId": "MarketingController_findActivePlacements",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get active marketing placements for a platform",
+        "tags": [
+          "Marketing"
+        ]
+      }
+    },
+    "/v1/marketing/placements/admin/list": {
+      "get": {
+        "operationId": "MarketingController_listPlacementsAdmin",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
         "security": [
           {
             "bearer": []
           }
         ],
-        "summary": "Distribute promo codes to a customer segment",
+        "summary": "List marketing placements (admin)",
+        "tags": [
+          "Marketing"
+        ]
+      }
+    },
+    "/v1/marketing/placements/{id}": {
+      "get": {
+        "operationId": "MarketingController_findPlacementById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get marketing placement by id (admin)",
+        "tags": [
+          "Marketing"
+        ]
+      },
+      "patch": {
+        "operationId": "MarketingController_updatePlacement",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarketingPlacementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update marketing placement (admin)",
+        "tags": [
+          "Marketing"
+        ]
+      },
+      "delete": {
+        "operationId": "MarketingController_removePlacement",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete marketing placement (admin)",
+        "tags": [
+          "Marketing"
+        ]
+      }
+    },
+    "/v1/marketing/placements": {
+      "post": {
+        "operationId": "MarketingController_createPlacement",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMarketingPlacementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create marketing placement (admin)",
         "tags": [
           "Marketing"
         ]
@@ -3363,6 +3511,357 @@
         "summary": "Approve a pending refund (admin/finance)",
         "tags": [
           "Refunds"
+        ]
+      }
+    },
+    "/v1/promotions": {
+      "get": {
+        "operationId": "PromotionsController_findAll",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List promotions",
+        "tags": [
+          "Promotions"
+        ]
+      },
+      "post": {
+        "operationId": "PromotionsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePromotionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create promotion",
+        "tags": [
+          "Promotions"
+        ]
+      }
+    },
+    "/v1/promotions/coupons/{couponId}": {
+      "patch": {
+        "operationId": "PromotionsController_updateCoupon",
+        "parameters": [
+          {
+            "name": "couponId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePromotionCouponDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update coupon",
+        "tags": [
+          "Promotions"
+        ]
+      },
+      "delete": {
+        "operationId": "PromotionsController_removeCoupon",
+        "parameters": [
+          {
+            "name": "couponId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete coupon",
+        "tags": [
+          "Promotions"
+        ]
+      }
+    },
+    "/v1/promotions/rules/{ruleId}": {
+      "patch": {
+        "operationId": "PromotionsController_updateDiscountRule",
+        "parameters": [
+          {
+            "name": "ruleId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePromotionDiscountRuleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update discount rule",
+        "tags": [
+          "Promotions"
+        ]
+      },
+      "delete": {
+        "operationId": "PromotionsController_removeDiscountRule",
+        "parameters": [
+          {
+            "name": "ruleId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete discount rule",
+        "tags": [
+          "Promotions"
+        ]
+      }
+    },
+    "/v1/promotions/{id}": {
+      "get": {
+        "operationId": "PromotionsController_findOne",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get promotion by id with coupons and rules",
+        "tags": [
+          "Promotions"
+        ]
+      },
+      "patch": {
+        "operationId": "PromotionsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePromotionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update promotion",
+        "tags": [
+          "Promotions"
+        ]
+      },
+      "delete": {
+        "operationId": "PromotionsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete promotion",
+        "tags": [
+          "Promotions"
+        ]
+      }
+    },
+    "/v1/promotions/{id}/coupons": {
+      "post": {
+        "operationId": "PromotionsController_createCoupon",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePromotionCouponDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create coupon for promotion",
+        "tags": [
+          "Promotions"
+        ]
+      }
+    },
+    "/v1/promotions/{id}/rules": {
+      "post": {
+        "operationId": "PromotionsController_createDiscountRule",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePromotionDiscountRuleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create discount rule for promotion",
+        "tags": [
+          "Promotions"
         ]
       }
     },
@@ -7068,6 +7567,14 @@
           "promotionId"
         ]
       },
+      "CreateMarketingPlacementDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdateMarketingPlacementDto": {
+        "type": "object",
+        "properties": {}
+      },
       "CreateUserDto": {
         "type": "object",
         "properties": {
@@ -7681,6 +8188,30 @@
           "amount",
           "type"
         ]
+      },
+      "CreatePromotionDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdatePromotionCouponDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdatePromotionDiscountRuleDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "UpdatePromotionDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreatePromotionCouponDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreatePromotionDiscountRuleDto": {
+        "type": "object",
+        "properties": {}
       },
       "ShippingQuoteDto": {
         "type": "object",

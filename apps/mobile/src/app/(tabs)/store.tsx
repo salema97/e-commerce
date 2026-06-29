@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Input, Badge, PressableCard, ProductImage, Button, NeoPageHeader, getNeoLayoutStyles, getNeoTextStyles, neo } from '@repo/shared-ui';
 import { NeoScreen } from '../../components/neo-screen';
 import { StoreChatWidget } from '../../components/store/StoreChatWidget';
+import { PromoBannerSlot } from '../../components/marketing/PromoBannerSlot';
 import { useApiQueryHooks } from '../../lib/api';
 import { formatPrice } from '@repo/shared-utils';
 import type { CatalogProductSummary, Category } from '@repo/shared-types';
@@ -120,6 +121,9 @@ export default function StoreScreen(): React.ReactElement {
           }
         />
       </NeoEnterFromTop>
+
+      <PromoBannerSlot slot="STORE_TOP" variant="strip" />
+      <PromoBannerSlot slot="STORE_INLINE" />
 
       <FlatList
         horizontal

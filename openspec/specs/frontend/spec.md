@@ -50,3 +50,51 @@ The web app MUST expose public FAQ/CMS and admin knowledge management.
 - GIVEN an admin user
 - WHEN they open `/admin/knowledge`
 - THEN FAQ and CMS CRUD views are reachable from sidebar
+
+---
+
+## Marketing placements consumption (archived)
+
+See `openspec/changes/archive/2026-06-28-marketing-ui-popups/` for full SDD artifacts. API spec: `openspec/specs/marketing-placements/spec.md`.
+
+### Web marketing placement provider
+
+The web app MUST fetch active placements via `useActiveMarketingPlacements('WEB')` in `MarketingPlacementProvider`, defer `APP_LAUNCH` popups until cookie consent is stored, and render `HOME_HERO` / `STORE_TOP` / `STORE_INLINE` banners without consent gating.
+
+#### Scenario: Popup waits for cookie consent
+- GIVEN a first-time visitor with no stored consent
+- WHEN an active APP_LAUNCH popup exists
+- THEN the popup does NOT render until the cookie banner is dismissed
+
+#### Scenario: Home hero banner from API
+- GIVEN active BANNER placements for HOME_HERO
+- WHEN a visitor opens `/`
+- THEN banners render from API instead of hardcoded promo content
+
+### Mobile marketing placement provider
+
+The mobile app MUST fetch via `useActiveMarketingPlacements('MOBILE')`, gate APP_LAUNCH popups on analytics consent, and render placement slots on home/store tabs.
+
+### Client dismiss and frequency
+
+Dismiss keys: `marketing:dismissed:{placementId}:{contentVersion}` in localStorage (web) and AsyncStorage (mobile). `showOnceEver` and `showOncePerSession` flags MUST be honored; `contentVersion` bumps reset dismiss state.
+
+### Accessibility
+
+Web popups: focus trap, Escape to close, labelled dialog, return focus on close. Mobile: `accessibilityViewIsModal={true}`. At most one marketing popup visible at a time.
+
+---
+
+## Promotions admin UI (archived)
+
+See `openspec/changes/archive/2026-06-28-promotions-admin-crud/`. API spec: `openspec/specs/promotions-admin/spec.md`.
+
+### Admin promotions pages
+
+`/admin/marketing/promotions` (list + dialog form) and `/admin/marketing/promotions/[id]` (cupones + reglas). Sub-nav: Campañas | Promociones | Popups y banners. Access via `requireMarketingAccess`.
+
+#### Scenario: Admin creates promotion with coupon
+
+- GIVEN admin on promotions detail
+- WHEN they create a PERCENTAGE promotion and add coupon `VERANO20`
+- THEN checkout can apply the coupon via `PromotionService`

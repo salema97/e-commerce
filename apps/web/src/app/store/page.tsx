@@ -5,6 +5,7 @@ import { getSiteUrl } from '@/lib/site-url';
 import { AnimatedPageShell } from '@/components/motion/neo-page-transition';
 import { StoreCatalogPanel } from '@/components/store/store-catalog-panel';
 import { StoreAnalyticsTracker } from '@/components/analytics/store-analytics-tracker';
+import { PromoBannerSlot } from '@/components/marketing/promo-banner-slot';
 import {
   buildStoreCatalogSearchParams,
   parseStoreCatalogParams,
@@ -73,6 +74,8 @@ export default async function StorePage({ searchParams }: StorePageProps) {
       <Suspense fallback={null}>
         <StoreAnalyticsTracker />
       </Suspense>
+      <PromoBannerSlot slot="STORE_TOP" variant="strip" className="mb-6" />
+      <PromoBannerSlot slot="STORE_INLINE" className="mb-6" />
       <StoreCatalogPanel
         categories={categories}
         initialParams={initialParams}

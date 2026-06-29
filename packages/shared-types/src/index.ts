@@ -33,3 +33,4 @@ export * from './privacy.js';
 export * from './pos.js';
 export * from './subscriptions.js';
 export * from './sellers.js';
+export * from './marketing-placement.js';

@@ -1,3 +1,5 @@
+import type { AdminMarketingPlacementsQuery, AdminPromotionsQuery } from '@repo/shared-types';
+
 export const queryKeys = {
   categories: ['categories'] as const,
   category: (id: string) => ['categories', id] as const,
@@ -46,6 +48,12 @@ export const queryKeys = {
   adminCmsPages: ['ai', 'cms-pages', 'admin'] as const,
   cmsPageBySlug: (slug: string) => ['ai', 'cms-page', slug] as const,
   marketingPromotions: ['marketing', 'promotions'] as const,
+  promotions: (filters?: AdminPromotionsQuery) => ['promotions', filters ?? {}] as const,
+  promotion: (id: string) => ['promotions', id] as const,
+  adminMarketingPlacements: (filters?: AdminMarketingPlacementsQuery) =>
+    ['marketing', 'placements', 'admin', filters ?? {}] as const,
+  marketingPlacementsActive: (platform: string) =>
+    ['marketing', 'placements', 'active', platform] as const,
   analyticsOverview: (days: number) => ['analytics', 'overview', days] as const,
   analyticsFunnel: (days: number) => ['analytics', 'funnel', days] as const,
   analyticsCohorts: (weeks: number) => ['analytics', 'cohorts', weeks] as const,

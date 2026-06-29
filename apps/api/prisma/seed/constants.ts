@@ -96,6 +96,9 @@ export const IDS = {
   orderItemPos: '00000000-0000-0000-0000-000000000314',
   paymentPos: '00000000-0000-0000-0000-000000000404',
   conversationWeb: '00000000-0000-0000-0000-000000001002',
+  placementPopupLaunch: '00000000-0000-0000-0000-000000001801',
+  placementBannerHomeHero: '00000000-0000-0000-0000-000000001802',
+  placementPromoStripStoreTop: '00000000-0000-0000-0000-000000001803',
 } as const;
 
 export const SEED_REFERRAL_CODE = 'STOREADMIN' as const;

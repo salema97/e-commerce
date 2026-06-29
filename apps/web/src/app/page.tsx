@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { HomeHero } from '@/components/home/home-hero';
 import { CategoryBentoGrid } from '@/components/home/category-bento-grid';
 import { FeaturedProductsSection } from '@/components/home/featured-products-section';
+import { PromoBannerSlot } from '@/components/marketing/promo-banner-slot';
 import {
   getProductPrimaryImageUrl,
   getProductPrimaryImageAlt,
@@ -37,6 +38,7 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col gap-16 pb-16">
+      <PromoBannerSlot slot="HOME_HERO" className="px-4 pt-4 md:px-8" />
       <HomeHero
         heroProduct={heroProduct}
         imageUrl={heroProduct ? getProductPrimaryImageUrl(heroProduct) : undefined}
@@ -66,34 +68,7 @@ export default async function HomePage() {
 
       {featuredProducts.length > 0 ? <FeaturedProductsSection products={featuredProducts} /> : null}
 
-      <section className="p-4 md:p-8">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 border-[3px] border-neo-onyx bg-neo-onyx p-10 shadow-[12px_12px_0_0_#FFD800] md:flex-row md:p-16">
-          <div className="md:w-1/2">
-            <h2 className="font-anton text-4xl uppercase leading-none text-neo-gold md:text-6xl">
-              No te pierdas las novedades
-            </h2>
-            <p className="mt-4 text-lg font-bold uppercase tracking-widest text-white/80">
-              Explora el catálogo completo y guarda tus favoritos.
-            </p>
-          </div>
-          <div className="flex w-full flex-col gap-3 sm:flex-row md:w-auto">
-            <Link href="/store">
-              <Button variant="secondary" size="lg" className="w-full min-w-[200px]">
-                Ir a la tienda
-              </Button>
-            </Link>
-            <Link href="/wishlist">
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full min-w-[200px] border-white bg-transparent text-white hover:bg-neo-gold hover:text-neo-onyx"
-              >
-                Mi lista de deseos
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+      <PromoBannerSlot slot="STORE_TOP" variant="strip" className="px-4 md:px-8" />
     </div>
   );
 }

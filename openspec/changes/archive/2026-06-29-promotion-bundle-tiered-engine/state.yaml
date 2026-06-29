@@ -1,0 +1,21 @@
+change: promotion-bundle-tiered-engine
+status: archived
+parent_change: promotions-admin-crud
+phase: verify
+delivery_strategy: auto-chain
+chain_strategy: stacked-to-main
+phases:
+  explore: complete
+  propose: complete
+  spec: complete
+  design: complete
+  tasks: complete
+  apply: complete
+  verify: complete
+  archive: complete
+decisions:
+  bundle_semantics: AND rules, promotion.value percent on union
+  tiered_semantics: best tier, rule.discountValue ?? promotion.value
+  line_discounts: promotionLineDiscounts before loyalty in tax
+  breaking_scope_rules: product/category rules enforced at checkout
+language: es

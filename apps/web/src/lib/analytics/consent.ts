@@ -31,6 +31,26 @@ export function getStoredConsent(): ConsentPreferences | null {
 
 export function saveConsent(preferences: ConsentPreferences): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('ecommerce-consent-change'));
+  }
+}
+
+export function subscribeConsentChanges(onChange: () => void): () => void {
+  if (typeof window === 'undefined') {
+    return () => {};
+  }
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === STORAGE_KEY) {
+      onChange();
+    }
+  };
+  window.addEventListener('storage', onStorage);
+  window.addEventListener('ecommerce-consent-change', onChange);
+  return () => {
+    window.removeEventListener('storage', onStorage);
+    window.removeEventListener('ecommerce-consent-change', onChange);
+  };
 }
 
 export function hasAnalyticsConsent(): boolean {

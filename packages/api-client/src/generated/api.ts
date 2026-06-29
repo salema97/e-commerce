@@ -135,6 +135,10 @@ export interface DistributePromoDto {
   promotionId: string;
 }
 
+export type CreateMarketingPlacementDto = object;
+
+export type UpdateMarketingPlacementDto = object;
+
 export interface CreateUserDto {
   /** @example "customer@example.com" */
   email: string;
@@ -397,6 +401,18 @@ export interface CreateRefundDto {
   type: "full" | "partial";
   reason?: string;
 }
+
+export type CreatePromotionDto = object;
+
+export type UpdatePromotionCouponDto = object;
+
+export type UpdatePromotionDiscountRuleDto = object;
+
+export type UpdatePromotionDto = object;
+
+export type CreatePromotionCouponDto = object;
+
+export type CreatePromotionDiscountRuleDto = object;
 
 export interface ShippingQuoteDto {
   /** @example "EC" */
@@ -1915,13 +1931,11 @@ export class Api<
      * @name MarketingControllerListPromotions
      * @summary List active promotions for campaign targeting
      * @request GET:/v1/marketing/promotions
-     * @secure
      */
     marketingControllerListPromotions: (params: RequestParams = {}) =>
       this.request<void, any>({
         path: `/v1/marketing/promotions`,
         method: "GET",
-        secure: true,
         ...params,
       }),
 
@@ -1932,7 +1946,6 @@ export class Api<
      * @name MarketingControllerDistributePromo
      * @summary Distribute promo codes to a customer segment
      * @request POST:/v1/marketing/campaigns/promo
-     * @secure
      */
     marketingControllerDistributePromo: (
       data: DistributePromoDto,
@@ -1940,6 +1953,122 @@ export class Api<
     ) =>
       this.request<void, any>({
         path: `/v1/marketing/campaigns/promo`,
+        method: "POST",
+        body: data,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Marketing
+     * @name MarketingControllerFindActivePlacements
+     * @summary Get active marketing placements for a platform
+     * @request GET:/v1/marketing/placements/active
+     */
+    marketingControllerFindActivePlacements: (params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/v1/marketing/placements/active`,
+        method: "GET",
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Marketing
+     * @name MarketingControllerListPlacementsAdmin
+     * @summary List marketing placements (admin)
+     * @request GET:/v1/marketing/placements/admin/list
+     * @secure
+     */
+    marketingControllerListPlacementsAdmin: (params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/v1/marketing/placements/admin/list`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Marketing
+     * @name MarketingControllerFindPlacementById
+     * @summary Get marketing placement by id (admin)
+     * @request GET:/v1/marketing/placements/{id}
+     * @secure
+     */
+    marketingControllerFindPlacementById: (
+      id: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/v1/marketing/placements/${id}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Marketing
+     * @name MarketingControllerUpdatePlacement
+     * @summary Update marketing placement (admin)
+     * @request PATCH:/v1/marketing/placements/{id}
+     * @secure
+     */
+    marketingControllerUpdatePlacement: (
+      id: string,
+      data: UpdateMarketingPlacementDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/v1/marketing/placements/${id}`,
+        method: "PATCH",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Marketing
+     * @name MarketingControllerRemovePlacement
+     * @summary Delete marketing placement (admin)
+     * @request DELETE:/v1/marketing/placements/{id}
+     * @secure
+     */
+    marketingControllerRemovePlacement: (
+      id: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/v1/marketing/placements/${id}`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Marketing
+     * @name MarketingControllerCreatePlacement
+     * @summary Create marketing placement (admin)
+     * @request POST:/v1/marketing/placements
+     * @secure
+     */
+    marketingControllerCreatePlacement: (
+      data: CreateMarketingPlacementDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/v1/marketing/placements`,
         method: "POST",
         body: data,
         secure: true,
@@ -3070,6 +3199,234 @@ export class Api<
         path: `/v1/refunds/${id}/approve`,
         method: "PATCH",
         secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Promotions
+     * @name PromotionsControllerFindAll
+     * @summary List promotions
+     * @request GET:/v1/promotions
+     * @secure
+     */
+    promotionsControllerFindAll: (params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/v1/promotions`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Promotions
+     * @name PromotionsControllerCreate
+     * @summary Create promotion
+     * @request POST:/v1/promotions
+     * @secure
+     */
+    promotionsControllerCreate: (
+      data: CreatePromotionDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/v1/promotions`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Promotions
+     * @name PromotionsControllerUpdateCoupon
+     * @summary Update coupon
+     * @request PATCH:/v1/promotions/coupons/{couponId}
+     * @secure
+     */
+    promotionsControllerUpdateCoupon: (
+      couponId: string,
+      data: UpdatePromotionCouponDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/v1/promotions/coupons/${couponId}`,
+        method: "PATCH",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Promotions
+     * @name PromotionsControllerRemoveCoupon
+     * @summary Delete coupon
+     * @request DELETE:/v1/promotions/coupons/{couponId}
+     * @secure
+     */
+    promotionsControllerRemoveCoupon: (
+      couponId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/v1/promotions/coupons/${couponId}`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Promotions
+     * @name PromotionsControllerUpdateDiscountRule
+     * @summary Update discount rule
+     * @request PATCH:/v1/promotions/rules/{ruleId}
+     * @secure
+     */
+    promotionsControllerUpdateDiscountRule: (
+      ruleId: string,
+      data: UpdatePromotionDiscountRuleDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/v1/promotions/rules/${ruleId}`,
+        method: "PATCH",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Promotions
+     * @name PromotionsControllerRemoveDiscountRule
+     * @summary Delete discount rule
+     * @request DELETE:/v1/promotions/rules/{ruleId}
+     * @secure
+     */
+    promotionsControllerRemoveDiscountRule: (
+      ruleId: string,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/v1/promotions/rules/${ruleId}`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Promotions
+     * @name PromotionsControllerFindOne
+     * @summary Get promotion by id with coupons and rules
+     * @request GET:/v1/promotions/{id}
+     * @secure
+     */
+    promotionsControllerFindOne: (id: string, params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/v1/promotions/${id}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Promotions
+     * @name PromotionsControllerUpdate
+     * @summary Update promotion
+     * @request PATCH:/v1/promotions/{id}
+     * @secure
+     */
+    promotionsControllerUpdate: (
+      id: string,
+      data: UpdatePromotionDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/v1/promotions/${id}`,
+        method: "PATCH",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Promotions
+     * @name PromotionsControllerRemove
+     * @summary Delete promotion
+     * @request DELETE:/v1/promotions/{id}
+     * @secure
+     */
+    promotionsControllerRemove: (id: string, params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/v1/promotions/${id}`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Promotions
+     * @name PromotionsControllerCreateCoupon
+     * @summary Create coupon for promotion
+     * @request POST:/v1/promotions/{id}/coupons
+     * @secure
+     */
+    promotionsControllerCreateCoupon: (
+      id: string,
+      data: CreatePromotionCouponDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/v1/promotions/${id}/coupons`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Promotions
+     * @name PromotionsControllerCreateDiscountRule
+     * @summary Create discount rule for promotion
+     * @request POST:/v1/promotions/{id}/rules
+     * @secure
+     */
+    promotionsControllerCreateDiscountRule: (
+      id: string,
+      data: CreatePromotionDiscountRuleDto,
+      params: RequestParams = {},
+    ) =>
+      this.request<void, any>({
+        path: `/v1/promotions/${id}/rules`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
 

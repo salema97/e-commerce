@@ -164,6 +164,25 @@ enum PromotionType {
   TIERED
 }
 
+enum MarketingPlacementType {
+  POPUP
+  BANNER
+  PROMO_STRIP
+}
+
+enum MarketingPlacementSlot {
+  APP_LAUNCH
+  HOME_HERO
+  STORE_TOP
+  STORE_INLINE
+}
+
+enum MarketingPlacementPlatform {
+  WEB
+  MOBILE
+  ALL
+}
+
 enum ReviewStatus {
   PENDING
   APPROVED
@@ -833,8 +852,9 @@ model Promotion {
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
-  coupons       Coupon[]
-  discountRules DiscountRule[]
+  coupons             Coupon[]
+  discountRules       DiscountRule[]
+  marketingPlacements MarketingPlacement[]
 
   @@index([type])
   @@index([isActive])
@@ -859,17 +879,47 @@ model Coupon {
 }
 
 model DiscountRule {
-  id                   String  @id @default(uuid())
+  id                   String   @id @default(uuid())
   promotionId          String
   minimumQuantity      Int?
   minimumAmount        Decimal? @db.Decimal(12, 2)
   applicableProductId  String?
   applicableCategoryId String?
+  discountValue        Decimal? @db.Decimal(12, 2)
   createdAt            DateTime @default(now())
 
   promotion Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
 
   @@index([promotionId])
+}
+
+model MarketingPlacement {
+  id                 String                     @id @default(uuid())
+  name               String
+  type               MarketingPlacementType
+  slot               MarketingPlacementSlot
+  platform           MarketingPlacementPlatform @default(ALL)
+  title              String
+  body               String?
+  imageUrl           String?
+  ctaLabel           String?
+  ctaHref            String?
+  promotionId        String?
+  promotion          Promotion?                 @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+  priority           Int                        @default(0)
+  startsAt           DateTime?
+  endsAt             DateTime?
+  isActive           Boolean                    @default(true)
+  contentVersion     Int                        @default(1)
+  showOncePerSession Boolean                    @default(false)
+  showOnceEver       Boolean                    @default(false)
+  dismissible        Boolean                    @default(true)
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+
+  @@index([isActive, slot, platform])
+  @@index([priority])
+  @@index([startsAt, endsAt])
 }
 
 model Wishlist {

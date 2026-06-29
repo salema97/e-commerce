@@ -19,6 +19,8 @@ import { NotificationPreferencesService } from './notification-preferences.servi
 import { NotificationSegmentService } from './notification-segment.service.js';
 import { MarketingAutomationService } from './marketing-automation.service.js';
 import { MarketingController } from './marketing.controller.js';
+import { MarketingPlacementService } from './marketing-placement.service.js';
+import { MarketingPlacementCacheService } from './marketing-placement-cache.service.js';
 import { PushNotificationProvider } from './push-notification-provider.interface.js';
 import { ConsolePushNotificationProvider } from './providers/console-push.provider.js';
 import { ExpoPushNotificationProvider } from './providers/expo-push.provider.js';
@@ -51,6 +53,8 @@ import { NotificationProviderWiring } from './notification-provider.wiring.js';
     NotificationPreferencesService,
     NotificationSegmentService,
     MarketingAutomationService,
+    MarketingPlacementService,
+    MarketingPlacementCacheService,
     OrderConfirmationService,
     OrderPaidDomainConsumer,
     ConsolePushNotificationProvider,
