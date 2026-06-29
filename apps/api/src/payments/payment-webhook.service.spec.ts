@@ -11,6 +11,7 @@ import { EmailNotificationService } from '../notifications/email-notification.se
 import { PushNotificationService } from '../notifications/push-notification.service.js';
 import { InvoicesService } from '../invoices/invoices.service.js';
 import { EventBus } from '../event-bus/event-bus.interface.js';
+import { RedisIdempotencyService } from '../common/redis/idempotency.service.js';
 
 describe('PaymentWebhookService', () => {
   let service: PaymentWebhookService;
@@ -31,6 +32,7 @@ describe('PaymentWebhookService', () => {
   let pushNotificationService: { notifyForOrder: ReturnType<typeof vi.fn> };
   let invoicesService: { enqueueInvoiceForOrder: ReturnType<typeof vi.fn> };
   let eventBus: { publish: ReturnType<typeof vi.fn>; registerHandler: ReturnType<typeof vi.fn> };
+  let idempotency: { claim: ReturnType<typeof vi.fn>; release: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     provider = {
@@ -49,6 +51,7 @@ describe('PaymentWebhookService', () => {
     pushNotificationService = { notifyForOrder: vi.fn().mockResolvedValue(undefined) };
     invoicesService = { enqueueInvoiceForOrder: vi.fn().mockResolvedValue(undefined) };
     eventBus = { publish: vi.fn(), registerHandler: vi.fn() };
+    idempotency = { claim: vi.fn().mockResolvedValue(true), release: vi.fn().mockResolvedValue(undefined) };
 
     const module = await Test.createTestingModule({
       providers: [
@@ -72,6 +75,7 @@ describe('PaymentWebhookService', () => {
         { provide: PushNotificationService, useValue: pushNotificationService },
         { provide: InvoicesService, useValue: invoicesService },
         { provide: EventBus, useValue: eventBus },
+        { provide: RedisIdempotencyService, useValue: idempotency },
       ],
     }).compile();
 
@@ -260,6 +264,28 @@ describe('PaymentWebhookService', () => {
     expect(result.providerTransactionId).toBe('mp_1');
     expect(prisma.payment.update).not.toHaveBeenCalled();
     expect(prisma.order.update).not.toHaveBeenCalled();
+  });
+
+  it('skips duplicate webhooks using idempotency', async () => {
+    provider.parseWebhookPayload.mockResolvedValueOnce({
+      status: PaymentStatus.COMPLETED,
+      providerTransactionId: 'kushki_txn_1',
+      metadata: {},
+    });
+    idempotency.claim.mockResolvedValueOnce(false);
+
+    const result = await service.handle(
+      'kushki',
+      Buffer.from(JSON.stringify({ transactionReference: 'kushki_txn_1', status: 'approved' })),
+      'kushki_secret',
+    );
+
+    expect(idempotency.claim).toHaveBeenCalledWith(
+      'KUSHKI:kushki_txn_1',
+      86_400,
+    );
+    expect(prisma.payment.update).not.toHaveBeenCalled();
+    expect(result.providerTransactionId).toBe('kushki_txn_1');
   });
 
   it('routes placetopay provider to the configured secret', async () => {

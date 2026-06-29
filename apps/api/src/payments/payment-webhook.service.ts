@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { OrderStatus, PaymentProvider as PaymentProviderEnum, PaymentStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { RedisIdempotencyService } from '../common/redis/idempotency.service.js';
 import { PaymentProviderFactory } from './payment-provider.factory.js';
 import { ProviderPaymentResult } from './payment-provider.interface.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
@@ -10,6 +11,14 @@ import { EmailNotificationService } from '../notifications/email-notification.se
 import { PushNotificationService } from '../notifications/push-notification.service.js';
 import { InvoicesService } from '../invoices/invoices.service.js';
 import { EventBus } from '../event-bus/event-bus.interface.js';
+
+const PROVIDER_IDEMPOTENCY_TTL_SECONDS: Record<PaymentProviderEnum, number> = {
+  [PaymentProviderEnum.STRIPE]: 86_400,
+  [PaymentProviderEnum.KUSHKI]: 86_400,
+  [PaymentProviderEnum.PAYPHONE]: 43_200,
+  [PaymentProviderEnum.MERCADOPAGO]: 86_400,
+  [PaymentProviderEnum.PLACETOPAY]: 43_200,
+};
 
 @Injectable()
 export class PaymentWebhookService {
@@ -24,6 +33,7 @@ export class PaymentWebhookService {
     private readonly pushNotificationService: PushNotificationService,
     private readonly invoicesService: InvoicesService,
     @Inject(EventBus) private readonly eventBus: EventBus,
+    private readonly idempotency: RedisIdempotencyService,
   ) {}
 
   async handle(
@@ -41,7 +51,28 @@ export class PaymentWebhookService {
 
     const payload = this.parseRawBody(rawBody);
     const result = await provider.parseWebhookPayload(payload);
-    await this.applyPaymentResult(providerEnum, result);
+
+    const transactionId = result.providerTransactionId;
+    if (transactionId) {
+      const idempotencyKey = `${providerEnum}:${transactionId}`;
+      const ttl = PROVIDER_IDEMPOTENCY_TTL_SECONDS[providerEnum] ?? 86_400;
+      const claimed = await this.idempotency.claim(idempotencyKey, ttl);
+      if (!claimed) {
+        this.logger.debug(`Webhook ${providerEnum}:${transactionId} already processed; skipping`);
+        return result;
+      }
+
+      try {
+        await this.applyPaymentResult(providerEnum, result);
+      } catch (error) {
+        await this.idempotency.release(idempotencyKey);
+        throw error;
+      }
+    } else {
+      this.logger.warn(`Webhook from ${providerEnum} has no transaction id; skipping idempotency`);
+      await this.applyPaymentResult(providerEnum, result);
+    }
+
     return result;
   }
 
