@@ -1,5 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger, OnModuleInit } from '@nestjs/common';
 import type { DomainEvent } from '@repo/shared-types';
 import { ALERT_EVENT_NAMES } from '@repo/shared-types';
 import { EventBus } from '../event-bus/event-bus.interface.js';
