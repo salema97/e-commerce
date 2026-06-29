@@ -31,6 +31,7 @@ const e2eServerEnv = {
 };
 
 export default defineConfig({
+  forbidOnly: !!process.env.CI,
   testDir: './e2e',
   fullyParallel: false,
   retries: 1,
