@@ -1,26 +1,6 @@
-import { z } from 'zod';
+import type { z } from 'zod';
 import { envCoreSchema } from './env.core.schema.js';
 import { envProvidersSchema } from './env.providers.schema.js';
-
-const envSchema = envCoreSchema.merge(envProvidersSchema).superRefine((data, ctx) => {
-  if (data.APP_ENV === 'production' && data.ENABLE_TEST_AUTH === 'true') {
-    ctx.addIssue({
-      code: 'custom',
-      path: ['ENABLE_TEST_AUTH'],
-      message: 'ENABLE_TEST_AUTH cannot be true when APP_ENV is production',
-    });
-  }
-
-  if (data.APP_ENV === 'production' && data.E2E_RELAX_THROTTLE === 'true') {
-    ctx.addIssue({
-      code: 'custom',
-      path: ['E2E_RELAX_THROTTLE'],
-      message: 'E2E_RELAX_THROTTLE cannot be true when APP_ENV is production',
-    });
-  }
-});
-
-export type Env = z.infer<typeof envSchema>;
 
 const SRI_REQUIRED_KEYS = [
   'SRI_RUC',
@@ -29,6 +9,89 @@ const SRI_REQUIRED_KEYS = [
   'SRI_ESTABLISHMENT_CODE',
   'SRI_EMISSION_POINT_CODE',
 ] as const;
+
+const PROVIDER_SECRET_KEYS = [
+  'KUSHKI_PRIVATE_KEY',
+  'KUSHKI_WEBHOOK_SECRET',
+  'PAYPHONE_TOKEN',
+  'PAYPHONE_STORE_ID',
+  'MERCADOPAGO_ACCESS_TOKEN',
+  'MERCADOPAGO_WEBHOOK_SECRET',
+  'PLACETOPAY_LOGIN',
+  'PLACETOPAY_SECRET_KEY',
+  'EVOLUTION_API_KEY',
+  'EVOLUTION_WEBHOOK_SECRET',
+] as const;
+
+function isPlaceholderValue(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  return value === 'change-me' || value.startsWith('dev-');
+}
+
+function getMissingSriCredentials(data: Env): string[] {
+  if (data.SRI_MODE !== 'direct') return [];
+  return SRI_REQUIRED_KEYS.filter((key) => {
+    const value = data[key];
+    return typeof value !== 'string' || value.trim() === '';
+  });
+}
+
+const envSchema = envCoreSchema.merge(envProvidersSchema).superRefine((data, ctx) => {
+  if (data.APP_ENV !== 'production') return;
+
+  if (data.ENABLE_TEST_AUTH === 'true') {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['ENABLE_TEST_AUTH'],
+      message: 'ENABLE_TEST_AUTH cannot be true when APP_ENV is production',
+    });
+  }
+
+  if (data.E2E_RELAX_THROTTLE === 'true') {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['E2E_RELAX_THROTTLE'],
+      message: 'E2E_RELAX_THROTTLE cannot be true when APP_ENV is production',
+    });
+  }
+
+  if (data.STRIPE_SECRET_KEY.startsWith('sk_test_')) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['STRIPE_SECRET_KEY'],
+      message: 'STRIPE_SECRET_KEY must be a live key (sk_live_*) when APP_ENV is production',
+    });
+  }
+
+  for (const key of PROVIDER_SECRET_KEYS) {
+    const value = data[key];
+    if (isPlaceholderValue(value)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [key],
+        message: `${key} cannot use a dev/placeholder value when APP_ENV is production`,
+      });
+    }
+  }
+
+  for (const key of getMissingSriCredentials(data)) {
+    ctx.addIssue({
+      code: 'custom',
+      path: [key],
+      message: `${key} is required when APP_ENV is production and SRI_MODE is direct`,
+    });
+  }
+
+  if (data.SRI_MODE === 'direct' && data.SRI_TEST_ENVIRONMENT === 'true') {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['SRI_TEST_ENVIRONMENT'],
+      message: 'SRI_TEST_ENVIRONMENT must be false when APP_ENV is production',
+    });
+  }
+});
+
+export type Env = z.infer<typeof envSchema>;
 
 export function validate(config: Record<string, unknown>): Env {
   const result = envSchema.safeParse(config);
@@ -43,31 +106,6 @@ export function validate(config: Record<string, unknown>): Env {
   const data = result.data;
   const isProduction = data.APP_ENV === 'production';
 
-  if (isProduction) {
-    if (data.STRIPE_SECRET_KEY.startsWith('sk_test_')) {
-      throw new Error(
-        'Environment validation failed: STRIPE_SECRET_KEY must be a live key (sk_live_*) when APP_ENV is production',
-      );
-    }
-
-    if (data.SRI_MODE === 'direct') {
-      for (const key of SRI_REQUIRED_KEYS) {
-        const value = data[key as keyof Env];
-        if (typeof value !== 'string' || value.trim() === '') {
-          throw new Error(
-            `Environment validation failed: ${key} is required when APP_ENV is production and SRI_MODE is direct`,
-          );
-        }
-      }
-
-      if (data.SRI_TEST_ENVIRONMENT === 'true') {
-        throw new Error(
-          'Environment validation failed: SRI_TEST_ENVIRONMENT must be false when APP_ENV is production',
-        );
-      }
-    }
-  }
-
   if (data.APP_ENV === 'staging' || isProduction) {
     if (data.ENABLE_TEST_AUTH === 'true') {
       console.warn('WARNING: ENABLE_TEST_AUTH is enabled in a non-development environment');
@@ -78,13 +116,8 @@ export function validate(config: Record<string, unknown>): Env {
     if (data.STRIPE_SECRET_KEY.startsWith('sk_test_')) {
       console.warn('WARNING: STRIPE_SECRET_KEY appears to be a test key in a non-development environment');
     }
-    if (data.SRI_MODE === 'direct') {
-      for (const key of SRI_REQUIRED_KEYS) {
-        const value = data[key as keyof Env];
-        if (typeof value !== 'string' || value.trim() === '') {
-          console.warn(`WARNING: ${key} is empty; SRI direct integration will fail in production`);
-        }
-      }
+    for (const key of getMissingSriCredentials(data)) {
+      console.warn(`WARNING: ${key} is empty; SRI direct integration will fail in production`);
     }
   }
 

@@ -9,6 +9,16 @@ const baseEnv = {
   AUTH_JWT_ACCESS_SECRET: 'a'.repeat(32),
   STRIPE_SECRET_KEY: 'sk_live_xxx',
   STRIPE_WEBHOOK_SECRET: 'whsec_xxx',
+  KUSHKI_PRIVATE_KEY: 'pk_live_kushki',
+  KUSHKI_WEBHOOK_SECRET: 'whsec_kushki_live',
+  PAYPHONE_TOKEN: 'live_payphone_token',
+  PAYPHONE_STORE_ID: 'live_store_id',
+  MERCADOPAGO_ACCESS_TOKEN: 'live_mp_token',
+  MERCADOPAGO_WEBHOOK_SECRET: 'whsec_mp_live',
+  PLACETOPAY_LOGIN: 'live_ptp_login',
+  PLACETOPAY_SECRET_KEY: 'live_ptp_secret',
+  EVOLUTION_API_KEY: 'live_evolution_key',
+  EVOLUTION_WEBHOOK_SECRET: 'live_evolution_wh',
   SRI_MODE: 'direct',
   SRI_RUC: '1234567890001',
   SRI_SOL_KEY: 'sol-key',
@@ -47,6 +57,15 @@ describe('validate', () => {
   it('rejects Stripe test keys in production', () => {
     expect(() => validate({ ...baseEnv, STRIPE_SECRET_KEY: 'sk_test_xxx' })).toThrow(
       'STRIPE_SECRET_KEY must be a live key',
+    );
+  });
+
+  it('rejects dev/placeholder provider secrets in production', () => {
+    expect(() => validate({ ...baseEnv, KUSHKI_PRIVATE_KEY: 'dev-kushki-key' })).toThrow(
+      'KUSHKI_PRIVATE_KEY cannot use a dev/placeholder value',
+    );
+    expect(() => validate({ ...baseEnv, EVOLUTION_API_KEY: 'change-me' })).toThrow(
+      'EVOLUTION_API_KEY cannot use a dev/placeholder value',
     );
   });
 
