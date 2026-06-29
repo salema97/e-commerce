@@ -13,6 +13,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "lighthouse": "lhci autorun",
     "analyze": "cross-env ANALYZE=true next build",
     "clean": "rm -rf dist .next .turbo"
   },
@@ -60,7 +61,8 @@
     "dotenv": "17.4.2",
     "eslint": "catalog:",
     "jsdom": "^26.0.0",
-    "postcss": "^8.5.3",
+    "lighthouse": "^12.6.0",
+    "@lhci/cli": "^0.14.0",
     "react-doctor": "0.5.8",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
