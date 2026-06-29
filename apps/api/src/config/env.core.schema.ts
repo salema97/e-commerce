@@ -15,4 +15,8 @@ export const envCoreSchema = z.object({
   E2E_RELAX_THROTTLE: z.enum(['true', 'false']).default('false'),
   CAPTCHA_PROVIDER: z.enum(['none', 'hcaptcha']).default('none'),
   HCAPTCHA_SECRET_KEY: z.string().optional(),
+  DB_POOL_MAX: z.coerce.number().int().positive().optional().default(10),
+  DB_IDLE_TIMEOUT_MS: z.coerce.number().int().positive().optional().default(10_000),
+  DB_CONNECT_TIMEOUT_MS: z.coerce.number().int().positive().optional().default(5_000),
+  DB_QUERY_TIMEOUT_MS: z.coerce.number().int().positive().optional().default(30_000),
 });

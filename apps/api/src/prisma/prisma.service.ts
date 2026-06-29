@@ -34,6 +34,10 @@ export class PrismaService
   constructor(@Inject(ConfigService) configService: ConfigService) {
     const pool = new pg.Pool({
       connectionString: configService.getOrThrow<string>('DATABASE_URL'),
+      max: configService.get<number>('DB_POOL_MAX', 10),
+      idleTimeoutMillis: configService.get<number>('DB_IDLE_TIMEOUT_MS', 10_000),
+      connectionTimeoutMillis: configService.get<number>('DB_CONNECT_TIMEOUT_MS', 5_000),
+      statement_timeout: configService.get<number>('DB_QUERY_TIMEOUT_MS', 30_000),
     });
 
     super({ adapter: new PrismaPg(pool) });
