@@ -55,7 +55,6 @@ export function MarketingLaunchPopup({ placement, onDismiss, onCta }: MarketingL
           {placement.body ? <DialogDescription>{placement.body}</DialogDescription> : null}
         </DialogHeader>
         {placement.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img src={placement.imageUrl} alt="" className="w-full border-[3px] border-neo-onyx object-cover" />
         ) : null}
         <DialogFooter className="gap-2 sm:justify-start">

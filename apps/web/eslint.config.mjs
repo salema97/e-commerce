@@ -12,6 +12,8 @@ export default [
       'postcss.config.mjs',
       'public/**',
       'e2e/**',
+      'playwright.config.ts',
+      'lighthouserc.cjs',
     ],
   },
   ...sharedConfig,
