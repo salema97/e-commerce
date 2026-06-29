@@ -1,10 +1,9 @@
-import { Controller, Get, HttpStatus, ServiceUnavailableException } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import {
   HealthCheck,
   HealthCheckError,
   HealthCheckService,
-  HealthIndicatorResult,
 } from '@nestjs/terminus';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Public } from '../auth/public.decorator.js';
