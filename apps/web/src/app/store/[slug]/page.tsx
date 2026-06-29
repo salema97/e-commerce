@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import {
   findProductBySlug,
   fetchProductReviews,
@@ -47,6 +48,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
   const product = await findProductBySlug(slug);
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
 
   if (!product) {
     notFound();
@@ -107,6 +109,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     >
       <script
         type="application/ld+json"
+        nonce={nonce}
         dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
       <ProductViewTracker productId={product.id} productName={product.name} />

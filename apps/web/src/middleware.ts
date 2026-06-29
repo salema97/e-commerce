@@ -15,6 +15,8 @@ const ROLES: Role[] = [
   'CUSTOMER',
 ];
 
+const REFRESH_TIMEOUT_MS = 5_000;
+
 function isRole(value: string): value is Role {
   return ROLES.includes(value as Role);
 }
@@ -25,10 +27,9 @@ function generateNonce(): string {
   return btoa(String.fromCharCode(...bytes));
 }
 
-function addSecurityHeaders(response: NextResponse): NextResponse {
+function addSecurityHeaders(response: NextResponse, nonce: string): NextResponse {
   const csp = response.headers.get('Content-Security-Policy') ?? '';
   if (csp.includes('{NONCE}')) {
-    const nonce = generateNonce();
     response.headers.set(
       'Content-Security-Policy',
       csp.replaceAll("'nonce-{NONCE}'", `'nonce-${nonce}'`),
@@ -57,6 +58,18 @@ async function readSession(request: NextRequest, accessToken?: string) {
   }
 }
 
+async function tryRefreshSession(refreshToken: string) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REFRESH_TIMEOUT_MS);
+    const tokens = await fetchAuthRefresh(refreshToken, controller.signal);
+    clearTimeout(timeout);
+    return tokens;
+  } catch {
+    return null;
+  }
+}
+
 function redirectToSignIn(request: NextRequest, pathname: string) {
   const signInUrl = new URL('/sign-in', request.url);
   signInUrl.searchParams.set('redirect_url', pathname);
@@ -67,9 +80,14 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAdmin = pathname.startsWith('/admin');
   const isAccount = pathname.startsWith('/account');
+  const nonce = generateNonce();
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-nonce', nonce);
+  const baseResponse = NextResponse.next({ request: { headers: requestHeaders } });
 
   if (!isAdmin && !isAccount) {
-    return addSecurityHeaders(NextResponse.next());
+    return addSecurityHeaders(baseResponse, nonce);
   }
 
   let session = await readSession(request);
@@ -78,10 +96,10 @@ export async function middleware(request: NextRequest) {
   if (!session) {
     const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
     if (refreshToken) {
-      const tokens = await fetchAuthRefresh(refreshToken);
+      const tokens = await tryRefreshSession(refreshToken);
       if (tokens) {
         session = await readSession(request, tokens.accessToken);
-        responseWithCookies = NextResponse.next();
+        responseWithCookies = NextResponse.next({ request: { headers: requestHeaders } });
         setAuthCookies(responseWithCookies, tokens);
       }
     }
@@ -97,7 +115,7 @@ export async function middleware(request: NextRequest) {
     return redirectToSignIn(request, pathname);
   }
 
-  return addSecurityHeaders(responseWithCookies ?? NextResponse.next());
+  return addSecurityHeaders(responseWithCookies ?? baseResponse, nonce);
 }
 
 export const config = {
