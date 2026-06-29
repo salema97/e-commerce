@@ -19,6 +19,28 @@ function isRole(value: string): value is Role {
   return ROLES.includes(value as Role);
 }
 
+function generateNonce(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return btoa(String.fromCharCode(...bytes));
+}
+
+function addSecurityHeaders(response: NextResponse): NextResponse {
+  const csp = response.headers.get('Content-Security-Policy') ?? '';
+  if (csp.includes('{NONCE}')) {
+    const nonce = generateNonce();
+    response.headers.set(
+      'Content-Security-Policy',
+      csp.replaceAll("'nonce-{NONCE}'", `'nonce-${nonce}'`),
+    );
+  }
+
+  response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+  response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
+  response.headers.set('X-Permitted-Cross-Domain-Policies', 'none');
+  return response;
+}
+
 async function readSession(request: NextRequest, accessToken?: string) {
   const token = accessToken ?? request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
   const secret = process.env.AUTH_JWT_ACCESS_SECRET;
@@ -45,8 +67,9 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAdmin = pathname.startsWith('/admin');
   const isAccount = pathname.startsWith('/account');
+
   if (!isAdmin && !isAccount) {
-    return NextResponse.next();
+    return addSecurityHeaders(NextResponse.next());
   }
 
   let session = await readSession(request);
@@ -74,9 +97,9 @@ export async function middleware(request: NextRequest) {
     return redirectToSignIn(request, pathname);
   }
 
-  return responseWithCookies ?? NextResponse.next();
+  return addSecurityHeaders(responseWithCookies ?? NextResponse.next());
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/account/:path*'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)'],
 };
