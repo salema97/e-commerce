@@ -15,7 +15,7 @@ import { EvolutionHealthIndicator } from './evolution.health.js';
 
 interface ReadinessResult {
   status: 'ok' | 'error';
-  info: Record<string, HealthIndicatorResult[string]>;
+  info: Record<string, unknown>;
   error?: Record<string, unknown>;
   details?: Record<string, unknown>;
 }
@@ -70,7 +70,7 @@ export class HealthController {
     let criticalResult: ReadinessResult;
     try {
       const check = await this.health.check(criticalIndicators);
-      criticalResult = { status: 'ok', info: check.info };
+      criticalResult = { status: 'ok', info: (check.info ?? {}) as Record<string, unknown> };
     } catch (error) {
       const response =
         error instanceof HealthCheckError
@@ -86,7 +86,7 @@ export class HealthController {
     for (const { key, indicator } of softIndicators) {
       try {
         const status = await this.withTimeout(() => indicator.isHealthy(key), key);
-        criticalResult.info[key] = { status: 'up', ...status[key] };
+        criticalResult.info[key] = { ...status[key], status: 'up' };
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         criticalResult.info[key] = { status: 'down', mode: 'degraded', message };

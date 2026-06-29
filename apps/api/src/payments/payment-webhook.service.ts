@@ -18,6 +18,7 @@ const PROVIDER_IDEMPOTENCY_TTL_SECONDS: Record<PaymentProviderEnum, number> = {
   [PaymentProviderEnum.PAYPHONE]: 43_200,
   [PaymentProviderEnum.MERCADOPAGO]: 86_400,
   [PaymentProviderEnum.PLACETOPAY]: 43_200,
+  [PaymentProviderEnum.CASH]: 86_400,
 };
 
 @Injectable()
