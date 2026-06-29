@@ -5,8 +5,8 @@ import { z } from 'zod';
  * aligned with apps/api/.env.example so local boot works without every provider configured.
  */
 export const envProvidersSchema = z.object({
-  STRIPE_SECRET_KEY: z.string().min(1).default('sk_test_xxx'),
-  STRIPE_WEBHOOK_SECRET: z.string().min(1).default('whsec_xxx'),
+  STRIPE_SECRET_KEY: z.string().min(1),
+  STRIPE_WEBHOOK_SECRET: z.string().min(1),
   STRIPE_SUCCESS_URL: z.string().min(1).default('https://localhost:3000/checkout/success'),
   STRIPE_CANCEL_URL: z.string().min(1).default('https://localhost:3000/checkout/cancel'),
   KUSHKI_PRIVATE_KEY: z.string().min(1),
@@ -20,8 +20,8 @@ export const envProvidersSchema = z.object({
   PLACETOPAY_BASE_URL: z.string().min(1).default('https://checkout-test.placetopay.com'),
   DEFAULT_LOCAL_PAYMENT_PROVIDER: z.string().optional(),
   AWS_REGION: z.string().min(1).default('us-east-1'),
-  AWS_ACCESS_KEY_ID: z.string().min(1).default('xxx'),
-  AWS_SECRET_ACCESS_KEY: z.string().min(1).default('xxx'),
+  AWS_ACCESS_KEY_ID: z.string().min(1),
+  AWS_SECRET_ACCESS_KEY: z.string().min(1),
   AWS_S3_BUCKET: z.string().min(1).default('e-commerce'),
   AWS_S3_ENDPOINT: z.string().url().default('https://s3.example.com'),
   AWS_S3_FORCE_PATH_STYLE: z.enum(['true', 'false']).default('true'),
@@ -69,7 +69,7 @@ export const envProvidersSchema = z.object({
   ABANDONED_CART_REMINDER_HOURS: z.coerce.number().int().positive().default(24),
   WIN_BACK_ENABLED: z.enum(['true', 'false']).default('true'),
   MEILI_HOST: z.string().optional().default('http://localhost:7700'),
-  MEILI_API_KEY: z.string().optional().default('dev-master-key'),
+  MEILI_API_KEY: z.string().min(1),
   CATALOG_CACHE_TTL_SECONDS: z.coerce.number().int().min(0).default(120),
   LLM_PROVIDER: z.enum(['console', 'openai', 'anthropic']).default('console'),
   OPENAI_API_KEY: z.string().optional(),

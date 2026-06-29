@@ -12,6 +12,11 @@ const SRI_REQUIRED_KEYS = [
 
 const PRODUCTION_SECRET_KEYS = [
   'AUTH_JWT_ACCESS_SECRET',
+  'STRIPE_SECRET_KEY',
+  'STRIPE_WEBHOOK_SECRET',
+  'AWS_ACCESS_KEY_ID',
+  'AWS_SECRET_ACCESS_KEY',
+  'MEILI_API_KEY',
   'KUSHKI_PRIVATE_KEY',
   'KUSHKI_WEBHOOK_SECRET',
   'PAYPHONE_TOKEN',
@@ -32,6 +37,7 @@ function isPlaceholderValue(value: unknown): value is string {
     lower === 'change-me' ||
     lower === 'xxx' ||
     lower === '<generate-strong-secret>' ||
+    lower === 'whsec_xxx' ||
     lower.startsWith('dev-') ||
     lower.startsWith('test-') ||
     lower.startsWith('e2e-')

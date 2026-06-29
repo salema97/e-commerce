@@ -8,7 +8,10 @@ const baseEnv = {
   REDIS_URL: 'redis://localhost:6379',
   AUTH_JWT_ACCESS_SECRET: 'a'.repeat(32),
   STRIPE_SECRET_KEY: 'sk_live_xxx',
-  STRIPE_WEBHOOK_SECRET: 'whsec_xxx',
+  STRIPE_WEBHOOK_SECRET: 'whsec_live_valid_secret',
+  AWS_ACCESS_KEY_ID: 'AKIA_live_key',
+  AWS_SECRET_ACCESS_KEY: 'live_secret_key',
+  MEILI_API_KEY: 'live_meili_key',
   KUSHKI_PRIVATE_KEY: 'pk_live_kushki',
   KUSHKI_WEBHOOK_SECRET: 'whsec_kushki_live',
   PAYPHONE_TOKEN: 'live_payphone_token',
@@ -79,6 +82,18 @@ describe('validate', () => {
     expect(() =>
       validate({ ...baseEnv, MERCADOPAGO_ACCESS_TOKEN: '<generate-strong-secret>' }),
     ).toThrow('MERCADOPAGO_ACCESS_TOKEN cannot use a dev/placeholder value');
+    expect(() => validate({ ...baseEnv, MEILI_API_KEY: 'dev-master-key' })).toThrow(
+      'MEILI_API_KEY cannot use a dev/placeholder value',
+    );
+    expect(() => validate({ ...baseEnv, AWS_ACCESS_KEY_ID: 'xxx' })).toThrow(
+      'AWS_ACCESS_KEY_ID cannot use a dev/placeholder value',
+    );
+    expect(() => validate({ ...baseEnv, AWS_SECRET_ACCESS_KEY: 'xxx' })).toThrow(
+      'AWS_SECRET_ACCESS_KEY cannot use a dev/placeholder value',
+    );
+    expect(() => validate({ ...baseEnv, STRIPE_WEBHOOK_SECRET: 'whsec_xxx' })).toThrow(
+      'STRIPE_WEBHOOK_SECRET cannot use a dev/placeholder value',
+    );
   });
 
   it('rejects incomplete SRI credentials in production', () => {
