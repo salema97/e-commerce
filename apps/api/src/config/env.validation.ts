@@ -27,20 +27,28 @@ const PRODUCTION_SECRET_KEYS = [
   'PLACETOPAY_SECRET_KEY',
   'EVOLUTION_API_KEY',
   'EVOLUTION_WEBHOOK_SECRET',
+  'RESEND_API_KEY',
+  'POSTHOG_KEY',
+  'SRI_RUC',
+  'SRI_SOL_KEY',
+  'SRI_DIGITAL_CERTIFICATE_PASSWORD',
 ] as const;
 
-function isPlaceholderValue(value: unknown): value is string {
-  if (typeof value !== 'string') return false;
+function isPlaceholderValue(value: string): boolean {
   if (value === '') return true;
   const lower = value.toLowerCase();
   return (
     lower === 'change-me' ||
     lower === 'xxx' ||
-    lower === '<generate-strong-secret>' ||
     lower === 'whsec_xxx' ||
+    lower === 're_xxx' ||
+    lower === 'phc_xxx' ||
     lower.startsWith('dev-') ||
     lower.startsWith('test-') ||
-    lower.startsWith('e2e-')
+    lower.startsWith('e2e-') ||
+    lower.startsWith('pk_test_') ||
+    lower.startsWith('sk_test_') ||
+    (lower.startsWith('<') && lower.endsWith('>'))
   );
 }
 
@@ -50,6 +58,11 @@ function getMissingSriCredentials(data: Env): string[] {
     const value = data[key];
     return typeof value !== 'string' || value.trim() === '';
   });
+}
+
+function looksLikeLocalDatabase(url: string): boolean {
+  const lower = url.toLowerCase();
+  return lower.includes('localhost') || lower.includes('127.0.0.1');
 }
 
 const envSchema = envCoreSchema.merge(envProvidersSchema).superRefine((data, ctx) => {
@@ -81,13 +94,21 @@ const envSchema = envCoreSchema.merge(envProvidersSchema).superRefine((data, ctx
 
   for (const key of PRODUCTION_SECRET_KEYS) {
     const value = data[key];
-    if (isPlaceholderValue(value)) {
+    if (typeof value === 'string' && isPlaceholderValue(value)) {
       ctx.addIssue({
         code: 'custom',
         path: [key],
         message: `${key} cannot use a dev/placeholder value when APP_ENV is production`,
       });
     }
+  }
+
+  if (looksLikeLocalDatabase(data.DATABASE_URL)) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['DATABASE_URL'],
+      message: 'DATABASE_URL must not point to localhost or 127.0.0.1 when APP_ENV is production',
+    });
   }
 
   for (const key of getMissingSriCredentials(data)) {

@@ -7,7 +7,8 @@ Use this checklist before taking the platform to production or a major release.
 - [ ] `NODE_ENV=production` is set for the web build and API.
 - [ ] `AUTH_JWT_ACCESS_SECRET` is at least 32 random characters and shared only between API and web.
 - [ ] Database credentials, Redis credentials, and provider API keys are injected via secrets, not files in the image.
-- [ ] `.env.example` files contain only safe placeholder tokens like `<generate-strong-secret>`; do not use `change-me`, `xxx`, `dev-*`, `sk_test_*`, or `whsec_xxx`.
+- [ ] `DATABASE_URL` does not point to `localhost` or `127.0.0.1` in production; API boot validation rejects local database hosts when `APP_ENV=production`.
+- [ ] `.env.example` files contain only safe placeholder tokens like `<generate-strong-secret>`; do not use `change-me`, `xxx`, `dev-*`, `sk_test_*`, or `whsec_xxx`. Use provider-specific tokens such as `<resend-api-key>`, `<posthog-key>`, `<kushki-private-key>`, and `<stripe-publishable-key>`.
 
 ## Payments
 - [ ] `STRIPE_SECRET_KEY` is a live key (`sk_live_*`) in production.
