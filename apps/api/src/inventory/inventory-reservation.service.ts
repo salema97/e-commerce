@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
 import { OrderStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 
@@ -26,16 +26,18 @@ export class InventoryReservationService {
   }
 
   async reserveItems(items: ReservationItem[]): Promise<void> {
+    const sorted = this.sortByProductId(items);
     await this.prisma.$transaction(async (tx) => {
-      for (const item of items) {
+      for (const item of sorted) {
         await this.reserveItemInTx(tx, item);
       }
-    });
+    }, { maxWait: 5000, timeout: 10000 });
   }
 
   async releaseItems(items: ReservationItem[]): Promise<void> {
+    const sorted = this.sortByProductId(items);
     await this.prisma.$transaction(async (tx) => {
-      for (const item of items) {
+      for (const item of sorted) {
         await this.releaseItemInTx(tx, item);
       }
     });
@@ -64,7 +66,8 @@ export class InventoryReservationService {
         const order = await tx.order.findUnique({ where: { id }, include: { items: true } });
         if (!order) return;
 
-        for (const item of order.items) {
+        const sorted = this.sortByProductId(order.items);
+        for (const item of sorted) {
           await this.releaseItemInTx(tx, {
             productId: item.productId,
             variantId: item.variantId,
@@ -90,7 +93,8 @@ export class InventoryReservationService {
       const order = await tx.order.findUnique({ where: { id: orderId }, include: { items: true } });
       if (!order) throw new NotFoundException(`Order ${orderId} not found`);
 
-      for (const item of order.items) {
+      const sorted = this.sortByProductId(order.items);
+      for (const item of sorted) {
         await this.releaseItemInTx(tx, {
           productId: item.productId,
           variantId: item.variantId,
@@ -108,12 +112,26 @@ export class InventoryReservationService {
     });
   }
 
+  private sortByProductId<T extends { productId: string }>(items: T[]): T[] {
+    return [...items].sort((a, b) => a.productId.localeCompare(b.productId));
+  }
+
+  private async lockInventoryRow(tx: TransactionClient, id: string): Promise<void> {
+    await tx.$queryRaw`SELECT 1 FROM "Inventory" WHERE id = ${id} FOR UPDATE`;
+  }
+
   private async reserveItemInTx(tx: TransactionClient, item: ReservationItem): Promise<void> {
     const inv = await tx.inventory.findFirst({
       where: { productId: item.productId, variantId: item.variantId ?? null },
     });
     if (!inv) {
       throw new BadRequestException(`No inventory for product ${item.productId}`);
+    }
+
+    try {
+      await this.lockInventoryRow(tx, inv.id);
+    } catch (error) {
+      throw new ConflictException(`Unable to reserve inventory for product ${item.productId}; please retry`);
     }
 
     const updatedRows = await tx.$executeRaw`
@@ -137,6 +155,7 @@ export class InventoryReservationService {
     const releaseQty = Math.min(item.quantity, inv.reservedQuantity);
     if (releaseQty <= 0) return;
 
+    await this.lockInventoryRow(tx, inv.id);
     await tx.inventory.update({
       where: { id: inv.id },
       data: { reservedQuantity: { decrement: releaseQty } },
@@ -147,14 +166,16 @@ export class InventoryReservationService {
     items: Array<{ productId: string; variantId: string | null; quantity: number }>,
     build: (qty: number) => object,
   ): Promise<void> {
+    const sorted = this.sortByProductId(items);
     await this.prisma.$transaction(async (tx) => {
-      for (const item of items) {
+      for (const item of sorted) {
         const inv = await tx.inventory.findFirst({
           where: { productId: item.productId, variantId: item.variantId ?? null },
         });
         if (!inv) continue;
         const qty = Math.min(item.quantity, inv.reservedQuantity);
         if (qty <= 0) continue;
+        await this.lockInventoryRow(tx, inv.id);
         await tx.inventory.update({ where: { id: inv.id }, data: build(qty) });
       }
     });

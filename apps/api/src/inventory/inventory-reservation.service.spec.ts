@@ -23,11 +23,13 @@ describe('InventoryReservationService', () => {
       },
       order,
       $executeRaw: vi.fn().mockResolvedValue(1),
+      $queryRaw: vi.fn().mockResolvedValue([{ '?column?': 1 }]),
     };
     return {
       order,
       $transaction: vi.fn((cb: (t: typeof tx) => Promise<unknown>) => cb(tx)),
       $executeRaw: tx.$executeRaw,
+      $queryRaw: tx.$queryRaw,
       inventory: tx.inventory,
     };
   }
@@ -63,6 +65,25 @@ describe('InventoryReservationService', () => {
     expect(prisma.$transaction).toHaveBeenCalledTimes(2);
   });
 
+  it('sorts items by productId and locks rows before updating', async () => {
+    const items = [
+      { productId: 'p3', variantId: null, quantity: 1 },
+      { productId: 'p1', variantId: null, quantity: 2 },
+      { productId: 'p2', variantId: null, quantity: 1 },
+    ];
+    prisma.inventory.findFirst
+      .mockResolvedValueOnce({ id: 'inv_p3', quantity: 10, reservedQuantity: 0 })
+      .mockResolvedValueOnce({ id: 'inv_p1', quantity: 10, reservedQuantity: 0 })
+      .mockResolvedValueOnce({ id: 'inv_p2', quantity: 10, reservedQuantity: 0 });
+
+    await service.reserveItems(items);
+
+    const ids = prisma.inventory.findFirst.mock.calls.map((call) => call[0].where.productId);
+    expect(ids).toEqual(['p1', 'p2', 'p3']);
+    expect(prisma.$queryRaw).toHaveBeenCalledTimes(3);
+    expect(prisma.$executeRaw).toHaveBeenCalledTimes(3);
+  });
+
   it('cancels expired reservations', async () => {
     const txOrderUpdate = vi.fn();
     prisma.order.findMany.mockResolvedValue([{ id: 'o2' }]);
@@ -70,6 +91,7 @@ describe('InventoryReservationService', () => {
       order: { findUnique: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
       inventory: { findFirst: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
       $executeRaw: ReturnType<typeof vi.fn>;
+      $queryRaw: ReturnType<typeof vi.fn>;
     }) => Promise<unknown>) =>
       cb({
         order: {
@@ -81,6 +103,7 @@ describe('InventoryReservationService', () => {
         },
         inventory: prisma.inventory,
         $executeRaw: prisma.$executeRaw,
+        $queryRaw: vi.fn().mockResolvedValue([{ '?column?': 1 }]),
       }),
     );
     expect(await service.releaseExpiredReservations(new Date())).toBe(1);
