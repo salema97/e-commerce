@@ -54,6 +54,7 @@ import { SellersModule } from './sellers/sellers.module.js';
 import { DropshipModule } from './dropship/dropship.module.js';
 import { BulkImportModule } from './bulk-import/bulk-import.module.js';
 import { PromotionsModule } from './promotions/promotions.module.js';
+import { AlertsModule } from './alerts/alerts.module.js';
 
 @Module({
   imports: [
@@ -126,6 +127,7 @@ import { PromotionsModule } from './promotions/promotions.module.js';
     SellersModule,
     DropshipModule,
     BulkImportModule,
+    AlertsModule,
   ],
   providers: [
     {

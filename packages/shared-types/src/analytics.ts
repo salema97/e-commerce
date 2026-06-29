@@ -24,6 +24,12 @@ export const DOMAIN_EVENT_NAMES = [
 
 export type DomainEventName = (typeof DOMAIN_EVENT_NAMES)[number];
 
+export const ALERT_EVENT_NAMES = {
+  SRI_DLQ: 'alert.sri_dlq',
+  WEBHOOK_FAILURE: 'alert.webhook_failure',
+  FIVE_XX_SPIKE: 'alert.5xx_spike',
+} as const satisfies Record<string, DomainEventName>;
+
 export interface AnalyticsEventInput {
   event: EcommerceAnalyticsEventName;
   properties?: Record<string, unknown>;

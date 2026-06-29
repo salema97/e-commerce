@@ -11,6 +11,7 @@ import { EmailNotificationService } from '../notifications/email-notification.se
 import { PushNotificationService } from '../notifications/push-notification.service.js';
 import { InvoicesService } from '../invoices/invoices.service.js';
 import { EventBus } from '../event-bus/event-bus.interface.js';
+import { ALERT_EVENT_NAMES } from '@repo/shared-types';
 
 const PROVIDER_IDEMPOTENCY_TTL_SECONDS: Record<PaymentProviderEnum, number> = {
   [PaymentProviderEnum.STRIPE]: 86_400,
@@ -48,7 +49,7 @@ export class PaymentWebhookService {
 
     if (!provider.validateWebhookSignature(rawBody, signature ?? '', secret)) {
       void this.eventBus.publish({
-        name: 'alert.webhook_failure',
+        name: ALERT_EVENT_NAMES.WEBHOOK_FAILURE,
         payload: {
           provider: providerEnum,
           reason: 'invalid_signature',
@@ -76,7 +77,7 @@ export class PaymentWebhookService {
       } catch (error) {
         await this.idempotency.release(idempotencyKey);
         void this.eventBus.publish({
-          name: 'alert.webhook_failure',
+          name: ALERT_EVENT_NAMES.WEBHOOK_FAILURE,
           payload: {
             provider: providerEnum,
             transactionId,

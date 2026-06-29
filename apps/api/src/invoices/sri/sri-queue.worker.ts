@@ -24,6 +24,7 @@ import {
   readSriCompanyConfig,
 } from './sri-company.config.js';
 import { EventBus } from '../../event-bus/event-bus.interface.js';
+import { ALERT_EVENT_NAMES } from '@repo/shared-types';
 import {
   SRI_QUEUE_NAME,
   getSriQueueConcurrency,
@@ -172,7 +173,7 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
 
       if (isFinalAttempt) {
         void this.eventBus.publish({
-          name: 'alert.sri_dlq',
+          name: ALERT_EVENT_NAMES.SRI_DLQ,
           payload: {
             jobId: String(job.id),
             documentType: jobRecord.documentType,

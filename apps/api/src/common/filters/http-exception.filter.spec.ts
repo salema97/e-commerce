@@ -3,6 +3,7 @@ import { HttpAdapterHost, HttpStatus } from '@nestjs/common';
 import { AllExceptionsFilter } from './http-exception.filter.js';
 import { ErrorTracker } from '../../analytics/error-tracker.interface.js';
 import { EventBus } from '../../event-bus/event-bus.interface.js';
+import { ALERT_EVENT_NAMES } from '@repo/shared-types';
 
 describe('AllExceptionsFilter', () => {
   let filter: AllExceptionsFilter;
@@ -12,7 +13,7 @@ describe('AllExceptionsFilter', () => {
   let host: { switchToHttp: () => { getRequest: () => object; getResponse: () => object } };
 
   beforeEach(() => {
-    const bucket = (AllExceptionsFilter as unknown as { fiveXxBucket: { count: number; windowStart: number } }).fiveXxBucket;
+    const bucket = (AllExceptionsFilter as unknown as { serverErrorBucket: { count: number; windowStart: number } }).serverErrorBucket;
     bucket.count = 0;
     bucket.windowStart = 0;
 
@@ -49,7 +50,7 @@ describe('AllExceptionsFilter', () => {
       expect.objectContaining({ level: 'warning' }),
     );
     expect(eventBus.publish).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'alert.5xx_spike' }),
+      expect.objectContaining({ name: ALERT_EVENT_NAMES.FIVE_XX_SPIKE }),
     );
     expect(httpAdapter.reply).toHaveBeenCalledTimes(10);
   });

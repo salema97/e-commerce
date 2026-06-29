@@ -12,6 +12,7 @@ import { PushNotificationService } from '../notifications/push-notification.serv
 import { InvoicesService } from '../invoices/invoices.service.js';
 import { EventBus } from '../event-bus/event-bus.interface.js';
 import { RedisIdempotencyService } from '../common/redis/idempotency.service.js';
+import { ALERT_EVENT_NAMES } from '@repo/shared-types';
 
 describe('PaymentWebhookService', () => {
   let service: PaymentWebhookService;
@@ -94,6 +95,35 @@ describe('PaymentWebhookService', () => {
     await expect(
       service.handle('kushki', Buffer.from(JSON.stringify({ foo: 'bar' })), 'bad-signature'),
     ).rejects.toBeInstanceOf(UnauthorizedException);
+
+    expect(eventBus.publish).toHaveBeenCalledWith(
+      expect.objectContaining({ name: ALERT_EVENT_NAMES.WEBHOOK_FAILURE }),
+    );
+  });
+
+  it('publishes webhook_failure alert on processing error', async () => {
+    provider.parseWebhookPayload.mockResolvedValueOnce({
+      status: PaymentStatus.COMPLETED,
+      providerTransactionId: 'kushki_txn_1',
+      metadata: {},
+    });
+    prisma.payment.findFirst.mockRejectedValue(new Error('Database down'));
+
+    await expect(
+      service.handle(
+        'kushki',
+        Buffer.from(JSON.stringify({ transactionReference: 'kushki_txn_1', status: 'approved' })),
+        'kushki_secret',
+      ),
+    ).rejects.toBeInstanceOf(Error);
+
+    expect(idempotency.release).toHaveBeenCalledWith('KUSHKI:kushki_txn_1');
+    expect(eventBus.publish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: ALERT_EVENT_NAMES.WEBHOOK_FAILURE,
+        payload: expect.objectContaining({ reason: 'processing_error' }),
+      }),
+    );
   });
 
   it('completes payment and transitions order to PROCESSING on COMPLETED webhook', async () => {

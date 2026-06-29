@@ -9,6 +9,8 @@ import {
 import { HttpAdapterHost } from '@nestjs/core';
 import { ErrorTracker } from '../../analytics/error-tracker.interface.js';
 import { EventBus } from '../../event-bus/event-bus.interface.js';
+import { ALERT_EVENT_NAMES } from '@repo/shared-types';
+import type { DomainEvent } from '@repo/shared-types';
 
 export interface ErrorResponse {
   statusCode: number;
@@ -28,7 +30,7 @@ interface ErrorBucket {
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  private static readonly fiveXxBucket: ErrorBucket = { count: 0, windowStart: 0 };
+  private static readonly serverErrorBucket: ErrorBucket = { count: 0, windowStart: 0 };
 
   constructor(
     private readonly httpAdapterHost: HttpAdapterHost,
@@ -75,7 +77,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (!this.eventBus) return;
 
     const now = Date.now();
-    const bucket = AllExceptionsFilter.fiveXxBucket;
+    const bucket = AllExceptionsFilter.serverErrorBucket;
 
     if (bucket.windowStart === 0 || now - bucket.windowStart > SPIKE_WINDOW_MS) {
       bucket.count = 0;
@@ -91,13 +93,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
         tags: { alertType: '5xx_spike', statusCode: String(statusCode) },
       });
       void this.eventBus.publish({
-        name: 'alert.5xx_spike',
+        name: ALERT_EVENT_NAMES.FIVE_XX_SPIKE,
         payload: {
           threshold: SPIKE_THRESHOLD,
           windowSeconds: SPIKE_WINDOW_MS / 1000,
           statusCode,
         },
-      });
+      } as DomainEvent);
     }
   }
 }

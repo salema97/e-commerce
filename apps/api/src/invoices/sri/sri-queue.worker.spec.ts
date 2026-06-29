@@ -19,6 +19,7 @@ import { SriDocumentStorageService } from './sri-document-storage.service.js';
 import { SriDeliveryService } from './sri-delivery.service.js';
 import { EventBus } from '../../event-bus/event-bus.interface.js';
 import { SriQueueWorker } from './sri-queue.worker.js';
+import { ALERT_EVENT_NAMES } from '@repo/shared-types';
 
 vi.mock('bullmq', () => ({
   Worker: vi.fn().mockImplementation(function () {
@@ -360,7 +361,7 @@ describe('SriQueueWorker', () => {
       }),
     );
     expect(eventBusMock.publish).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'alert.sri_dlq' }),
+      expect.objectContaining({ name: ALERT_EVENT_NAMES.SRI_DLQ }),
     );
   });
 
