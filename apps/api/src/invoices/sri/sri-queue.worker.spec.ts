@@ -79,6 +79,7 @@ describe('SriQueueWorker', () => {
     deliverInvoice: ReturnType<typeof vi.fn>;
     deliverCreditNote: ReturnType<typeof vi.fn>;
   };
+  let eventBusMock: { publish: ReturnType<typeof vi.fn>; registerHandler: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     prisma = {
@@ -183,7 +184,7 @@ describe('SriQueueWorker', () => {
       deliverCreditNote: vi.fn().mockResolvedValue(undefined),
     };
 
-    const eventBusMock = { publish: vi.fn(), registerHandler: vi.fn() };
+    eventBusMock = { publish: vi.fn(), registerHandler: vi.fn() };
 
     const module = await Test.createTestingModule({
       providers: [

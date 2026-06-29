@@ -77,7 +77,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const now = Date.now();
     const bucket = AllExceptionsFilter.fiveXxBucket;
 
-    if (now - bucket.windowStart > SPIKE_WINDOW_MS) {
+    if (bucket.windowStart === 0 || now - bucket.windowStart > SPIKE_WINDOW_MS) {
       bucket.count = 0;
       bucket.windowStart = now;
     }

@@ -12,6 +12,10 @@ describe('AllExceptionsFilter', () => {
   let host: { switchToHttp: () => { getRequest: () => object; getResponse: () => object } };
 
   beforeEach(() => {
+    const bucket = (AllExceptionsFilter as unknown as { fiveXxBucket: { count: number; windowStart: number } }).fiveXxBucket;
+    bucket.count = 0;
+    bucket.windowStart = 0;
+
     errorTracker = {
       captureException: vi.fn(),
       captureMessage: vi.fn(),
@@ -62,7 +66,7 @@ describe('AllExceptionsFilter', () => {
   });
 
   it('resets counter after window expires', () => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout'] });
     const error = new Error('Boom');
 
     for (let i = 0; i < 10; i += 1) {
