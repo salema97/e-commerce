@@ -10,6 +10,7 @@ import helmet from 'helmet';
 import { AppModule } from './app.module.js';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter.js';
 import { ErrorTracker } from './analytics/error-tracker.interface.js';
+import { EventBus } from './event-bus/event-bus.interface.js';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -57,7 +58,7 @@ async function bootstrap() {
   );
 
   app.useGlobalFilters(
-    new AllExceptionsFilter(app.get(HttpAdapterHost), app.get(ErrorTracker)),
+    new AllExceptionsFilter(app.get(HttpAdapterHost), app.get(ErrorTracker), app.get(EventBus)),
   );
 
   const swaggerConfig = new DocumentBuilder()
