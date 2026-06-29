@@ -88,6 +88,16 @@ export class StripeWebhookService {
       }
     } catch (error) {
       await this.idempotency.release(idempotencyKey);
+      void this.eventBus.publish({
+        name: 'alert.webhook_failure',
+        payload: {
+          provider: 'STRIPE',
+          eventId: event.id,
+          eventType: event.type,
+          reason: 'processing_error',
+          message: error instanceof Error ? error.message : String(error),
+        },
+      });
       throw error;
     }
   }

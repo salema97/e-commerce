@@ -17,6 +17,9 @@ export const DOMAIN_EVENT_NAMES = [
   'product.deleted',
   'inventory.changed',
   'invoice.authorized',
+  'alert.sri_dlq',
+  'alert.webhook_failure',
+  'alert.5xx_spike',
 ] as const;
 
 export type DomainEventName = (typeof DOMAIN_EVENT_NAMES)[number];

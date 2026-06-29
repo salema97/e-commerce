@@ -183,6 +183,8 @@ describe('SriQueueWorker', () => {
       deliverCreditNote: vi.fn().mockResolvedValue(undefined),
     };
 
+    const eventBusMock = { publish: vi.fn(), registerHandler: vi.fn() };
+
     const module = await Test.createTestingModule({
       providers: [
         SriQueueWorker,
@@ -221,7 +223,7 @@ describe('SriQueueWorker', () => {
         { provide: SriRidePdfService, useValue: ridePdfService },
         { provide: SriDocumentStorageService, useValue: documentStorageService },
         { provide: SriDeliveryService, useValue: deliveryService },
-        { provide: EventBus, useValue: { publish: vi.fn(), registerHandler: vi.fn() } },
+        { provide: EventBus, useValue: eventBusMock },
       ],
     }).compile();
 
@@ -355,6 +357,9 @@ describe('SriQueueWorker', () => {
           lastError: 'SRI down',
         }),
       }),
+    );
+    expect(eventBusMock.publish).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'alert.sri_dlq' }),
     );
   });
 

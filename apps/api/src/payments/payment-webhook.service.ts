@@ -46,6 +46,14 @@ export class PaymentWebhookService {
     const secret = this.getProviderSecret(providerEnum);
 
     if (!provider.validateWebhookSignature(rawBody, signature ?? '', secret)) {
+      void this.eventBus.publish({
+        name: 'alert.webhook_failure',
+        payload: {
+          provider: providerEnum,
+          reason: 'invalid_signature',
+          message: 'Invalid webhook signature',
+        },
+      });
       throw new UnauthorizedException('Invalid webhook signature');
     }
 
@@ -66,6 +74,15 @@ export class PaymentWebhookService {
         await this.applyPaymentResult(providerEnum, result);
       } catch (error) {
         await this.idempotency.release(idempotencyKey);
+        void this.eventBus.publish({
+          name: 'alert.webhook_failure',
+          payload: {
+            provider: providerEnum,
+            transactionId,
+            reason: 'processing_error',
+            message: error instanceof Error ? error.message : String(error),
+          },
+        });
         throw error;
       }
     } else {

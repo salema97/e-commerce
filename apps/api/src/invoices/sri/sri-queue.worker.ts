@@ -170,6 +170,18 @@ export class SriQueueWorker implements OnModuleInit, OnModuleDestroy {
         },
       });
 
+      if (isFinalAttempt) {
+        void this.eventBus.publish({
+          name: 'alert.sri_dlq',
+          payload: {
+            jobId: String(job.id),
+            documentType: jobRecord.documentType,
+            documentId: jobRecord.documentId,
+            error: message,
+          },
+        });
+      }
+
       this.logger.error(
         {
           jobId: job.id,
