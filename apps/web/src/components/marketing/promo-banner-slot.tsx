@@ -36,7 +36,6 @@ function WebPromoBanner({
     <div className={variant === 'strip' ? 'w-full' : 'mb-6 w-full'}>
       <div className="neo-panel overflow-hidden p-0">
         {placement.imageUrl && variant === 'banner' ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img src={placement.imageUrl} alt="" className="h-40 w-full object-cover md:h-52" />
         ) : null}
         <div className={`flex flex-col gap-2 p-4 ${variant === 'strip' ? 'bg-neo-gold' : ''}`}>

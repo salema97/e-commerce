@@ -4,9 +4,13 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
+  Inject,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { ErrorTracker } from '../../analytics/error-tracker.interface.js';
+import { EventBus } from '../../event-bus/event-bus.interface.js';
+import { ALERT_EVENT_NAMES } from '@repo/shared-types';
+import type { DomainEvent } from '@repo/shared-types';
 
 export interface ErrorResponse {
   statusCode: number;
@@ -16,11 +20,22 @@ export interface ErrorResponse {
   path: string;
 }
 
+const SPIKE_WINDOW_MS = 60_000;
+const SPIKE_THRESHOLD = 10;
+
+interface ErrorBucket {
+  count: number;
+  windowStart: number;
+}
+
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
+  private static readonly serverErrorBucket: ErrorBucket = { count: 0, windowStart: 0 };
+
   constructor(
     private readonly httpAdapterHost: HttpAdapterHost,
     private readonly errorTracker?: ErrorTracker,
+    @Inject(EventBus) private readonly eventBus?: EventBus,
   ) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
@@ -52,8 +67,39 @@ export class AllExceptionsFilter implements ExceptionFilter {
         tags: { path: errorResponse.path },
         extra: { statusCode },
       });
+      this.checkAndEmitSpikeAlert(statusCode);
     }
 
     httpAdapter.reply(response, errorResponse, statusCode);
+  }
+
+  private checkAndEmitSpikeAlert(statusCode: number): void {
+    if (!this.eventBus) return;
+
+    const now = Date.now();
+    const bucket = AllExceptionsFilter.serverErrorBucket;
+
+    if (bucket.windowStart === 0 || now - bucket.windowStart > SPIKE_WINDOW_MS) {
+      bucket.count = 0;
+      bucket.windowStart = now;
+    }
+
+    bucket.count += 1;
+
+    if (bucket.count === SPIKE_THRESHOLD) {
+      const alertMessage = `5xx spike detected: ${SPIKE_THRESHOLD} errors in ${SPIKE_WINDOW_MS / 1000}s`;
+      this.errorTracker?.captureMessage(alertMessage, {
+        level: 'warning',
+        tags: { alertType: '5xx_spike', statusCode: String(statusCode) },
+      });
+      void this.eventBus.publish({
+        name: ALERT_EVENT_NAMES.FIVE_XX_SPIKE,
+        payload: {
+          threshold: SPIKE_THRESHOLD,
+          windowSeconds: SPIKE_WINDOW_MS / 1000,
+          statusCode,
+        },
+      } as DomainEvent);
+    }
   }
 }

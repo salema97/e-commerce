@@ -8,11 +8,24 @@ export const envCoreSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3001),
   DATABASE_URL: z.string().min(1),
   REDIS_URL: z.string().min(1),
-  AUTH_JWT_ACCESS_SECRET: z.string().min(32),
+  AUTH_JWT_ACCESS_SECRET: z
+    .string()
+    .min(1)
+    .refine(
+      (value) => value === '<generate-strong-secret>' || value.length >= 32,
+      {
+        message:
+          'AUTH_JWT_ACCESS_SECRET must be at least 32 characters or the placeholder token <generate-strong-secret>',
+      },
+    ),
   AUTH_ACCESS_TOKEN_TTL: z.string().default('15m'),
   AUTH_REFRESH_TOKEN_DAYS: z.coerce.number().int().positive().default(30),
   ENABLE_TEST_AUTH: z.enum(['true', 'false']).default('false'),
   E2E_RELAX_THROTTLE: z.enum(['true', 'false']).default('false'),
   CAPTCHA_PROVIDER: z.enum(['none', 'hcaptcha']).default('none'),
   HCAPTCHA_SECRET_KEY: z.string().optional(),
+  DB_POOL_MAX: z.coerce.number().int().positive().optional().default(10),
+  DB_IDLE_TIMEOUT_MS: z.coerce.number().int().positive().optional().default(10_000),
+  DB_CONNECT_TIMEOUT_MS: z.coerce.number().int().positive().optional().default(5_000),
+  DB_QUERY_TIMEOUT_MS: z.coerce.number().int().positive().optional().default(30_000),
 });

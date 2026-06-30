@@ -14,6 +14,7 @@ import { InventoryReservationService } from '../../inventory/inventory-reservati
 import { AuditLogService } from '../../audit/audit-log.service.js';
 import { EventBus } from '../../event-bus/event-bus.interface.js';
 import { RedisIdempotencyService } from '../../common/redis/idempotency.service.js';
+import { ALERT_EVENT_NAMES } from '@repo/shared-types';
 
 interface StripeEvent {
   id: string;
@@ -45,6 +46,14 @@ export class StripeWebhookService {
     const secret = this.configService.getOrThrow<string>('STRIPE_WEBHOOK_SECRET');
 
     if (!this.stripeProvider.validateWebhookSignature(rawBody, signature, secret)) {
+      void this.eventBus.publish({
+        name: ALERT_EVENT_NAMES.WEBHOOK_FAILURE,
+        payload: {
+          provider: 'STRIPE',
+          reason: 'invalid_signature',
+          message: 'Invalid Stripe webhook signature',
+        },
+      });
       throw new UnauthorizedException('Invalid Stripe webhook signature');
     }
 
@@ -88,6 +97,16 @@ export class StripeWebhookService {
       }
     } catch (error) {
       await this.idempotency.release(idempotencyKey);
+      void this.eventBus.publish({
+        name: ALERT_EVENT_NAMES.WEBHOOK_FAILURE,
+        payload: {
+          provider: 'STRIPE',
+          eventId: event.id,
+          eventType: event.type,
+          reason: 'processing_error',
+          message: error instanceof Error ? error.message : String(error),
+        },
+      });
       throw error;
     }
   }

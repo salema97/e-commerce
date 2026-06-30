@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { OrderStatus, PaymentProvider as PaymentProviderEnum, PaymentStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { RedisIdempotencyService } from '../common/redis/idempotency.service.js';
 import { PaymentProviderFactory } from './payment-provider.factory.js';
 import { ProviderPaymentResult } from './payment-provider.interface.js';
 import { WhatsAppNotificationService } from '../whatsapp/whatsapp-notification.service.js';
@@ -10,6 +11,16 @@ import { EmailNotificationService } from '../notifications/email-notification.se
 import { PushNotificationService } from '../notifications/push-notification.service.js';
 import { InvoicesService } from '../invoices/invoices.service.js';
 import { EventBus } from '../event-bus/event-bus.interface.js';
+import { ALERT_EVENT_NAMES } from '@repo/shared-types';
+
+const PROVIDER_IDEMPOTENCY_TTL_SECONDS: Record<PaymentProviderEnum, number> = {
+  [PaymentProviderEnum.STRIPE]: 86_400,
+  [PaymentProviderEnum.KUSHKI]: 86_400,
+  [PaymentProviderEnum.PAYPHONE]: 43_200,
+  [PaymentProviderEnum.MERCADOPAGO]: 86_400,
+  [PaymentProviderEnum.PLACETOPAY]: 43_200,
+  [PaymentProviderEnum.CASH]: 86_400,
+};
 
 @Injectable()
 export class PaymentWebhookService {
@@ -24,6 +35,7 @@ export class PaymentWebhookService {
     private readonly pushNotificationService: PushNotificationService,
     private readonly invoicesService: InvoicesService,
     @Inject(EventBus) private readonly eventBus: EventBus,
+    private readonly idempotency: RedisIdempotencyService,
   ) {}
 
   async handle(
@@ -36,12 +48,50 @@ export class PaymentWebhookService {
     const secret = this.getProviderSecret(providerEnum);
 
     if (!provider.validateWebhookSignature(rawBody, signature ?? '', secret)) {
+      void this.eventBus.publish({
+        name: ALERT_EVENT_NAMES.WEBHOOK_FAILURE,
+        payload: {
+          provider: providerEnum,
+          reason: 'invalid_signature',
+          message: 'Invalid webhook signature',
+        },
+      });
       throw new UnauthorizedException('Invalid webhook signature');
     }
 
     const payload = this.parseRawBody(rawBody);
     const result = await provider.parseWebhookPayload(payload);
-    await this.applyPaymentResult(providerEnum, result);
+
+    const transactionId = result.providerTransactionId;
+    if (transactionId) {
+      const idempotencyKey = `${providerEnum}:${transactionId}`;
+      const ttl = PROVIDER_IDEMPOTENCY_TTL_SECONDS[providerEnum] ?? 86_400;
+      const claimed = await this.idempotency.claim(idempotencyKey, ttl);
+      if (!claimed) {
+        this.logger.debug(`Webhook ${providerEnum}:${transactionId} already processed; skipping`);
+        return result;
+      }
+
+      try {
+        await this.applyPaymentResult(providerEnum, result);
+      } catch (error) {
+        await this.idempotency.release(idempotencyKey);
+        void this.eventBus.publish({
+          name: ALERT_EVENT_NAMES.WEBHOOK_FAILURE,
+          payload: {
+            provider: providerEnum,
+            transactionId,
+            reason: 'processing_error',
+            message: error instanceof Error ? error.message : String(error),
+          },
+        });
+        throw error;
+      }
+    } else {
+      this.logger.warn(`Webhook from ${providerEnum} has no transaction id; skipping idempotency`);
+      await this.applyPaymentResult(providerEnum, result);
+    }
+
     return result;
   }
 

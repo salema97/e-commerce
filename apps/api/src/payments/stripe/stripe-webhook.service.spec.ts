@@ -12,6 +12,7 @@ import { InventoryReservationService } from '../../inventory/inventory-reservati
 import { AuditLogService } from '../../audit/audit-log.service.js';
 import { RedisIdempotencyService } from '../../common/redis/idempotency.service.js';
 import { EventBus } from '../../event-bus/event-bus.interface.js';
+import { ALERT_EVENT_NAMES } from '@repo/shared-types';
 
 describe('StripeWebhookService', () => {
   let service: StripeWebhookService;
@@ -36,6 +37,8 @@ describe('StripeWebhookService', () => {
     $transaction: ReturnType<typeof vi.fn>;
   };
 
+  let eventBus: { publish: ReturnType<typeof vi.fn>; registerHandler: ReturnType<typeof vi.fn> };
+
   beforeEach(async () => {
     stripeProvider = { validateWebhookSignature: vi.fn() };
     sriQueue = { addIssueInvoiceJob: vi.fn().mockResolvedValue({ id: 'job_1' }) };
@@ -45,6 +48,7 @@ describe('StripeWebhookService', () => {
       claim: vi.fn().mockResolvedValue(true),
       release: vi.fn().mockResolvedValue(undefined),
     };
+    eventBus = { publish: vi.fn(), registerHandler: vi.fn() };
 
     const tx = {
       payment: {
@@ -84,7 +88,7 @@ describe('StripeWebhookService', () => {
         { provide: InventoryReservationService, useValue: reservationService },
         { provide: AuditLogService, useValue: auditLogService },
         { provide: RedisIdempotencyService, useValue: idempotency },
-        { provide: EventBus, useValue: { publish: vi.fn(), registerHandler: vi.fn() } },
+        { provide: EventBus, useValue: eventBus },
       ],
     }).compile();
 
@@ -101,6 +105,30 @@ describe('StripeWebhookService', () => {
     await expect(
       service.handleWebhook(Buffer.from('{}'), 'bad-signature'),
     ).rejects.toThrow(UnauthorizedException);
+
+    expect(eventBus.publish).toHaveBeenCalledWith(
+      expect.objectContaining({ name: ALERT_EVENT_NAMES.WEBHOOK_FAILURE }),
+    );
+  });
+
+  it('publishes webhook_failure alert on processing error', async () => {
+    stripeProvider.validateWebhookSignature.mockReturnValue(true);
+    prisma.payment.findFirst.mockRejectedValue(new Error('Database down'));
+
+    await expect(
+      service.handleWebhook(
+        buildWebhookPayload('payment_intent.succeeded', { id: 'pi_error' }),
+        'signature',
+      ),
+    ).rejects.toBeInstanceOf(Error);
+
+    expect(idempotency.release).toHaveBeenCalledWith('stripe:event:evt_1');
+    expect(eventBus.publish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: ALERT_EVENT_NAMES.WEBHOOK_FAILURE,
+        payload: expect.objectContaining({ reason: 'processing_error' }),
+      }),
+    );
   });
 
   it('skips already processed events', async () => {

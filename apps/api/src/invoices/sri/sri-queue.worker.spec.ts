@@ -19,6 +19,7 @@ import { SriDocumentStorageService } from './sri-document-storage.service.js';
 import { SriDeliveryService } from './sri-delivery.service.js';
 import { EventBus } from '../../event-bus/event-bus.interface.js';
 import { SriQueueWorker } from './sri-queue.worker.js';
+import { ALERT_EVENT_NAMES } from '@repo/shared-types';
 
 vi.mock('bullmq', () => ({
   Worker: vi.fn().mockImplementation(function () {
@@ -79,6 +80,7 @@ describe('SriQueueWorker', () => {
     deliverInvoice: ReturnType<typeof vi.fn>;
     deliverCreditNote: ReturnType<typeof vi.fn>;
   };
+  let eventBusMock: { publish: ReturnType<typeof vi.fn>; registerHandler: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     prisma = {
@@ -183,6 +185,8 @@ describe('SriQueueWorker', () => {
       deliverCreditNote: vi.fn().mockResolvedValue(undefined),
     };
 
+    eventBusMock = { publish: vi.fn(), registerHandler: vi.fn() };
+
     const module = await Test.createTestingModule({
       providers: [
         SriQueueWorker,
@@ -221,7 +225,7 @@ describe('SriQueueWorker', () => {
         { provide: SriRidePdfService, useValue: ridePdfService },
         { provide: SriDocumentStorageService, useValue: documentStorageService },
         { provide: SriDeliveryService, useValue: deliveryService },
-        { provide: EventBus, useValue: { publish: vi.fn(), registerHandler: vi.fn() } },
+        { provide: EventBus, useValue: eventBusMock },
       ],
     }).compile();
 
@@ -355,6 +359,9 @@ describe('SriQueueWorker', () => {
           lastError: 'SRI down',
         }),
       }),
+    );
+    expect(eventBusMock.publish).toHaveBeenCalledWith(
+      expect.objectContaining({ name: ALERT_EVENT_NAMES.SRI_DLQ }),
     );
   });
 

@@ -45,6 +45,6 @@ import { AnalyticsProviderWiring } from './analytics-provider.wiring.js';
     },
     AnalyticsProviderWiring,
   ],
-  exports: [],
+  exports: [ErrorTracker],
 })
 export class AnalyticsModule {}

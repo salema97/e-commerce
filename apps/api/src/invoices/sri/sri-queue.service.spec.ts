@@ -6,6 +6,7 @@ import { SriDocumentJobStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { SriQueueService } from './sri-queue.service.js';
 import { SRI_QUEUE_TOKEN } from './sri-queue.tokens.js';
+import { SriQueueLifecycle } from './sri-queue.lifecycle.js';
 import { SriJobName } from './sri-queue.types.js';
 
 describe('SriQueueService', () => {
@@ -50,6 +51,7 @@ describe('SriQueueService', () => {
         },
         { provide: PrismaService, useValue: prisma },
         { provide: SRI_QUEUE_TOKEN, useValue: queue as unknown as Queue },
+        { provide: SriQueueLifecycle, useValue: { onModuleInit: vi.fn(), onModuleDestroy: vi.fn() } },
       ],
     }).compile();
 

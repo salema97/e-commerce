@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { Anton, Space_Grotesk } from 'next/font/google';
 import { Providers } from './providers';
 import { StoreChrome } from '@/components/layout/store-chrome';
@@ -29,13 +30,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
+
   return (
-    <html lang="es" className={`${spaceGrotesk.variable} ${anton.variable}`}>
+    <html lang="es" data-nonce={nonce} className={`${spaceGrotesk.variable} ${anton.variable}`}>
       <body className="min-h-screen flex flex-col overflow-x-clip font-sans antialiased">
         <a
           href="#main-content"

@@ -31,6 +31,7 @@ const e2eServerEnv = {
 };
 
 export default defineConfig({
+  forbidOnly: !!process.env.CI,
   testDir: './e2e',
   fullyParallel: false,
   retries: 1,
@@ -44,6 +45,14 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
     },
   ],
   webServer: [

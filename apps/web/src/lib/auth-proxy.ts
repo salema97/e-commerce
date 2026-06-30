@@ -25,12 +25,16 @@ export function clearAuthCookies(response: NextResponse): void {
   response.cookies.set(REFRESH_TOKEN_COOKIE, '', { ...cookieOptions, maxAge: 0 });
 }
 
-export async function fetchAuthRefresh(refreshToken: string): Promise<AuthTokens | null> {
+export async function fetchAuthRefresh(
+  refreshToken: string,
+  signal?: AbortSignal,
+): Promise<AuthTokens | null> {
   const upstream = await fetch(`${API_BASE}/auth/refresh`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refreshToken }),
     cache: 'no-store',
+    signal,
   });
 
   if (!upstream.ok) {

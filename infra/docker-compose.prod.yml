@@ -1,14 +1,15 @@
-# Referencia de producción — ajustar hosts y secretos antes de usar
+# Production reference stack. Adjust hosts and secrets before deploying.
 version: "3.8"
 
 services:
   api:
+    image: ${API_IMAGE:-ecommerce-api:latest}
     build:
       context: ..
       dockerfile: apps/api/Dockerfile
     restart: unless-stopped
-    ports:
-      - "3001:3001"
+    expose:
+      - "3001"
     env_file:
       - ../apps/api/.env
     depends_on:
@@ -16,13 +17,36 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3001/v1/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  migration:
+    image: ${API_IMAGE:-ecommerce-api:latest}
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    command: ["npx", "prisma", "migrate", "deploy"]
+    env_file:
+      - ../apps/api/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+    restart: on-failure:1
 
   postgres:
     image: pgvector/pgvector:pg16
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: ecommerce
     volumes:
       - postgres-prod-data:/var/lib/postgresql/data
@@ -31,6 +55,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - ecommerce-network
 
   redis:
     image: redis:7-alpine
@@ -42,7 +68,87 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - ecommerce-network
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.47
+    restart: unless-stopped
+    env_file:
+      - ../apps/api/.env
+    environment:
+      MEILI_ENV: production
+    volumes:
+      - meilisearch-prod-data:/meili_data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:7700/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ecommerce-network
+
+  evolution:
+    image: atendai/evolution-api:v2
+    restart: unless-stopped
+    env_file:
+      - ../apps/api/.env
+    environment:
+      SERVER_URL: ${API_PUBLIC_URL:-http://localhost:3001}
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY:?EVOLUTION_API_KEY is required}
+      # Run with the Baileys provider for MVP; migrate to WhatsApp Cloud API for scale.
+      PROVIDER_ENABLED_BAILEYS: "true"
+    volumes:
+      - evolution-prod-data:/evolution/instances
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - ecommerce-network
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${NGINX_SSL_CERTIFICATE:?NGINX_SSL_CERTIFICATE is required}:/etc/nginx/ssl/fullchain.pem:ro
+      - ${NGINX_SSL_CERTIFICATE_KEY:?NGINX_SSL_CERTIFICATE_KEY is required}:/etc/nginx/ssl/privkey.pem:ro
+    depends_on:
+      - api
+    networks:
+      - ecommerce-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - ecommerce-network
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    restart: unless-stopped
+    networks:
+      - ecommerce-network
 
 volumes:
   postgres-prod-data:
   redis-prod-data:
+  meilisearch-prod-data:
+  evolution-prod-data:
+  prometheus-data:
+
+networks:
+  ecommerce-network:
+    driver: bridge

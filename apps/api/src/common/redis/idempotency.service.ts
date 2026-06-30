@@ -25,11 +25,11 @@ export class RedisIdempotencyService {
       const result = await this.redis.client.set(fullKey, '1', 'EX', ttlSeconds, 'NX');
       return result === 'OK';
     } catch (error) {
-      this.logger.warn(
+      this.logger.error(
         { error, key },
-        'Redis idempotency check failed; allowing processing to avoid webhook loss',
+        'Redis idempotency check failed; rejecting claim to avoid duplicate webhook processing',
       );
-      return true;
+      return false;
     }
   }
 

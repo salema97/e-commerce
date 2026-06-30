@@ -27,10 +27,13 @@ export function FunnelBarChart({
               <span className="text-neo-onyx">{step.value}</span>
             </div>
             <div className="h-8 border-[3px] border-neo-onyx bg-neo-lace">
-              <div
-                className="h-full bg-neo-gold transition-[width] duration-500"
-                style={{ width: `${widthPercent}%` }}
-              />
+              <svg className="h-full w-full" preserveAspectRatio="none">
+                <rect
+                  className="fill-current text-neo-gold"
+                  width={`${widthPercent}%`}
+                  height="100%"
+                />
+              </svg>
             </div>
           </div>
         );

@@ -24,10 +24,13 @@ export function TopProductsBarChart({
               </span>
             </div>
             <div className="h-3 border-[2px] border-neo-onyx bg-white">
-              <div
-                className="h-full bg-neo-scarlet/80"
-                style={{ width: `${widthPercent}%` }}
-              />
+              <svg className="h-full w-full" preserveAspectRatio="none">
+                <rect
+                  className="fill-current text-neo-scarlet opacity-80"
+                  width={`${widthPercent}%`}
+                  height="100%"
+                />
+              </svg>
             </div>
           </div>
         );
