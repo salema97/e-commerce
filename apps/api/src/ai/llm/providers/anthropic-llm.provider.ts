@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import Anthropic from '@anthropic-ai/sdk';
 import { LlmProvider } from '../llm-provider.interface.js';
 import type { LlmCompletionOptions, LlmCompletionResult, LlmMessage } from '../llm.types.js';
+import { requireLlmApiKey, resolveLlmModel } from '../llm-config.js';
 
 @Injectable()
 export class AnthropicLlmProvider extends LlmProvider {
@@ -16,13 +17,10 @@ export class AnthropicLlmProvider extends LlmProvider {
     messages: LlmMessage[],
     options?: LlmCompletionOptions,
   ): Promise<LlmCompletionResult> {
-    const apiKey = this.config.get<string>('ANTHROPIC_API_KEY');
-    if (!apiKey) {
-      throw new Error('ANTHROPIC_API_KEY is required when LLM_PROVIDER=anthropic');
-    }
+    const apiKey = requireLlmApiKey(this.config, 'anthropic');
 
     const client = new Anthropic({ apiKey });
-    const model = this.config.get<string>('ANTHROPIC_MODEL') ?? 'claude-3-5-sonnet-20241022';
+    const model = resolveLlmModel(this.config);
     const maxTokens = options?.maxTokens ?? Number(this.config.get<string>('LLM_MAX_TOKENS') ?? '2048');
 
     const system = messages.find((message) => message.role === 'system')?.content;

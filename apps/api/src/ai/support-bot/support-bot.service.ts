@@ -48,6 +48,27 @@ export class SupportBotService {
       return;
     }
 
+    await this.processInbound(conversationId, content, phoneDigits);
+  }
+
+  async handleInboundWeb(conversationId: string, content: string): Promise<void> {
+    if (this.config.get<string>('SUPPORT_BOT_ENABLED') !== 'true') {
+      return;
+    }
+
+    const conversation = await this.prisma.conversation.findUnique({ where: { id: conversationId } });
+    if (!conversation?.botEnabled || conversation.channel !== 'WEB') {
+      return;
+    }
+
+    await this.processInbound(conversationId, content, '');
+  }
+
+  private async processInbound(
+    conversationId: string,
+    content: string,
+    phoneDigits: string,
+  ): Promise<void> {
     const normalized = content.trim().toLowerCase();
     if (this.shouldEscalateByKeyword(normalized)) {
       await this.escalate(conversationId, 0.1, []);
@@ -88,7 +109,10 @@ export class SupportBotService {
     try {
       const completion = await this.llmProvider.complete(messages);
       const threshold = Number(this.config.get<string>('BOT_CONFIDENCE_THRESHOLD') ?? '0.7');
-      const confidence = Math.min(completion.confidence, retrievalScore + 0.3);
+      const confidence =
+        chunks.length > 0
+          ? Math.min(completion.confidence, retrievalScore + 0.3)
+          : completion.confidence;
 
       if (confidence < threshold) {
         await this.escalate(conversationId, confidence, chunks.map((chunk) => chunk.id), {
@@ -112,19 +136,6 @@ export class SupportBotService {
       this.logger.error({ error, conversationId }, 'Support bot failed');
       await this.escalate(conversationId, 0, []);
     }
-  }
-
-  async handleInboundWeb(conversationId: string, content: string): Promise<void> {
-    if (this.config.get<string>('SUPPORT_BOT_ENABLED') !== 'true') {
-      return;
-    }
-
-    const conversation = await this.prisma.conversation.findUnique({ where: { id: conversationId } });
-    if (!conversation?.botEnabled || conversation.channel !== 'WEB') {
-      return;
-    }
-
-    await this.handleInboundWhatsApp(conversationId, content, '');
   }
 
   private shouldEscalateByKeyword(text: string): boolean {

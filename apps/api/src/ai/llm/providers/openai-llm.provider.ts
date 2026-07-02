@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
 import { LlmProvider } from '../llm-provider.interface.js';
 import type { LlmCompletionOptions, LlmCompletionResult, LlmMessage } from '../llm.types.js';
+import { requireLlmApiKey, resolveLlmModel } from '../llm-config.js';
 
 @Injectable()
 export class OpenAiLlmProvider extends LlmProvider {
@@ -16,13 +17,10 @@ export class OpenAiLlmProvider extends LlmProvider {
     messages: LlmMessage[],
     options?: LlmCompletionOptions,
   ): Promise<LlmCompletionResult> {
-    const apiKey = this.config.get<string>('OPENAI_API_KEY');
-    if (!apiKey) {
-      throw new Error('OPENAI_API_KEY is required when LLM_PROVIDER=openai');
-    }
+    const apiKey = requireLlmApiKey(this.config, 'openai');
 
     const client = new OpenAI({ apiKey });
-    const model = this.config.get<string>('LLM_MODEL') ?? 'gpt-4o';
+    const model = resolveLlmModel(this.config);
     const maxTokens = options?.maxTokens ?? Number(this.config.get<string>('LLM_MAX_TOKENS') ?? '2048');
     const timeoutMs = Number(this.config.get<string>('LLM_TIMEOUT_MS') ?? '30000');
 

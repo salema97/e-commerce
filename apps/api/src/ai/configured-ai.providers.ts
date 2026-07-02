@@ -5,6 +5,7 @@ import { LlmProvider } from './llm/llm-provider.interface.js';
 import { ConsoleLlmProvider } from './llm/providers/console-llm.provider.js';
 import { OpenAiLlmProvider } from './llm/providers/openai-llm.provider.js';
 import { AnthropicLlmProvider } from './llm/providers/anthropic-llm.provider.js';
+import { GoogleLlmProvider } from './llm/providers/google-llm.provider.js';
 import { EmbeddingProvider } from './embedding/embedding-provider.interface.js';
 import { ConsoleEmbeddingProvider } from './embedding/providers/console-embedding.provider.js';
 import { OpenAiEmbeddingProvider } from './embedding/providers/openai-embedding.provider.js';
@@ -18,6 +19,7 @@ export class ConfiguredLlmProvider extends LlmProvider {
     consoleProvider: ConsoleLlmProvider,
     openAiProvider: OpenAiLlmProvider,
     anthropicProvider: AnthropicLlmProvider,
+    googleProvider: GoogleLlmProvider,
   ) {
     super();
     const selected = config.get<string>('LLM_PROVIDER', 'console');
@@ -25,6 +27,8 @@ export class ConfiguredLlmProvider extends LlmProvider {
       this.delegate = openAiProvider;
     } else if (selected === 'anthropic') {
       this.delegate = anthropicProvider;
+    } else if (selected === 'google') {
+      this.delegate = googleProvider;
     } else {
       this.delegate = consoleProvider;
     }

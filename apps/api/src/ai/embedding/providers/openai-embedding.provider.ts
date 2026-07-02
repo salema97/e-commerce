@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
 import { EmbeddingProvider } from '../embedding-provider.interface.js';
+import { getEmbeddingApiKey } from '../../llm/llm-config.js';
 
 @Injectable()
 export class OpenAiEmbeddingProvider extends EmbeddingProvider {
@@ -12,9 +13,9 @@ export class OpenAiEmbeddingProvider extends EmbeddingProvider {
   }
 
   async embed(text: string): Promise<number[]> {
-    const apiKey = this.config.get<string>('OPENAI_API_KEY');
+    const apiKey = getEmbeddingApiKey(this.config);
     if (!apiKey) {
-      throw new Error('OPENAI_API_KEY is required for OpenAI embeddings');
+      throw new Error('EMBEDDING_API_KEY or LLM_API_KEY is required when EMBEDDING_PROVIDER=openai');
     }
 
     const client = new OpenAI({ apiKey });
