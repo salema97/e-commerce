@@ -8,11 +8,7 @@ function isDevelopmentAppEnv(): boolean {
 }
 
 function resolveEasProjectId(): string {
-  return (
-    process.env.EAS_PROJECT_ID ??
-    process.env.EXPO_PUBLIC_EAS_PROJECT_ID ??
-    LOCAL_EAS_PROJECT_ID_PLACEHOLDER
-  );
+  return process.env.EAS_PROJECT_ID ?? LOCAL_EAS_PROJECT_ID_PLACEHOLDER;
 }
 
 export default ({ config }: ConfigContext): ExpoConfig => {

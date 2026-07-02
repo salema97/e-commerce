@@ -8,13 +8,6 @@ import { AnthropicLlmProvider } from './llm/providers/anthropic-llm.provider.js'
 import { EmbeddingProvider } from './embedding/embedding-provider.interface.js';
 import { ConsoleEmbeddingProvider } from './embedding/providers/console-embedding.provider.js';
 import { OpenAiEmbeddingProvider } from './embedding/providers/openai-embedding.provider.js';
-import {
-  ConversationInboundContext,
-  ConversationOrchestrator,
-} from './orchestrator/conversation-orchestrator.interface.js';
-import { NativeSupportBotOrchestrator } from './orchestrator/native-support-bot.orchestrator.js';
-import { DifyOrchestrator } from './orchestrator/dify-orchestrator.js';
-import { TypebotOrchestrator } from './orchestrator/typebot-orchestrator.js';
 
 @Injectable()
 export class ConfiguredLlmProvider extends LlmProvider {
@@ -58,31 +51,5 @@ export class ConfiguredEmbeddingProvider extends EmbeddingProvider {
 
   embed(text: string): Promise<number[]> {
     return this.delegate.embed(text);
-  }
-}
-
-@Injectable()
-export class ConfiguredConversationOrchestrator extends ConversationOrchestrator {
-  private readonly delegate: ConversationOrchestrator;
-
-  constructor(
-    config: ConfigService,
-    native: NativeSupportBotOrchestrator,
-    dify: DifyOrchestrator,
-    typebot: TypebotOrchestrator,
-  ) {
-    super();
-    const selected = config.get<string>('CONVERSATION_ORCHESTRATOR', 'native');
-    if (selected === 'dify') {
-      this.delegate = dify;
-    } else if (selected === 'typebot') {
-      this.delegate = typebot;
-    } else {
-      this.delegate = native;
-    }
-  }
-
-  handleInbound(context: ConversationInboundContext): Promise<void> {
-    return this.delegate.handleInbound(context);
   }
 }

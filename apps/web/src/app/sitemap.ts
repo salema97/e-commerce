@@ -1,8 +1,9 @@
 import type { MetadataRoute } from 'next';
 import { getServerApiClient } from '@/lib/api';
+import { getSiteUrl } from '@/lib/site-url';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://example.com';
+  const baseUrl = getSiteUrl();
   const api = await getServerApiClient();
 
   const [products, categories] = await Promise.allSettled([

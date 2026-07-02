@@ -31,8 +31,6 @@ import { SupportBotService } from './support-bot/support-bot.service.js';
 import { OrderLookupTool } from './support-bot/order-lookup.tool.js';
 import { ConversationOrchestrator } from './orchestrator/conversation-orchestrator.interface.js';
 import { NativeSupportBotOrchestrator } from './orchestrator/native-support-bot.orchestrator.js';
-import { DifyOrchestrator } from './orchestrator/dify-orchestrator.js';
-import { TypebotOrchestrator } from './orchestrator/typebot-orchestrator.js';
 import { ChatService } from './chat/chat.service.js';
 import { ChatController } from './chat/chat.controller.js';
 import { MeilisearchService } from './search/meilisearch.service.js';
@@ -45,7 +43,6 @@ import { ProductSearchSyncService } from './search/product-search-sync.service.j
 import { SearchDomainEventConsumer } from './search/search-domain-event.consumer.js';
 import { SearchReindexService } from './search/search-reindex.service.js';
 import {
-  ConfiguredConversationOrchestrator,
   ConfiguredEmbeddingProvider,
   ConfiguredLlmProvider,
 } from './configured-ai.providers.js';
@@ -114,12 +111,9 @@ import { AiProviderWiring } from './ai-provider.wiring.js';
     OrderLookupTool,
     SupportBotService,
     NativeSupportBotOrchestrator,
-    DifyOrchestrator,
-    TypebotOrchestrator,
-    ConfiguredConversationOrchestrator,
     {
       provide: ConversationOrchestrator,
-      useExisting: ConfiguredConversationOrchestrator,
+      useExisting: NativeSupportBotOrchestrator,
     },
     AiProviderWiring,
     ChatService,

@@ -258,7 +258,6 @@ enum MarketplaceImportStatus {
 enum AccountingProviderType {
   CONSOLE
   SIIGO
-  ALEGRA
 }
 
 enum AccountingSyncStatus {

@@ -22,7 +22,7 @@ import { WhatsAppNotificationModule } from '../whatsapp/whatsapp-notification.mo
 import { NotificationsModule } from '../notifications/notifications.module.js';
 import { SriQueueModule } from '../invoices/sri/sri-queue.module.js';
 import { RedisModule } from '../common/redis/redis.module.js';
-import { isNonProduction } from '../common/is-non-production.js';
+import { isTestEndpointsEnabled } from '../common/is-test-endpoints-enabled.js';
 
 @Module({
   imports: [
@@ -38,7 +38,7 @@ import { isNonProduction } from '../common/is-non-production.js';
     StripeWebhookController,
     PaymentWebhookController,
     PaymentsController,
-    ...(isNonProduction() ? [TestPaymentsController] : []),
+    ...(isTestEndpointsEnabled() ? [TestPaymentsController] : []),
   ],
   providers: [
     PaymentsService,

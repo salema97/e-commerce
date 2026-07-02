@@ -1,5 +1,3 @@
-import type { Product } from './product.js';
-
 export type CatalogSort = 'newest' | 'price_asc' | 'price_desc' | 'name_asc';
 
 export interface CatalogQuery {
@@ -54,6 +52,3 @@ export interface CatalogResponse {
   limit: number;
   facets: CatalogFacets;
 }
-
-/** @deprecated Prefer CatalogProductSummary for list views */
-export type CatalogProduct = CatalogProductSummary & Partial<Product>;

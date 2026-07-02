@@ -18,8 +18,6 @@ export class AccountingProviderFactory {
     switch (selected) {
       case AccountingProviderType.SIIGO:
         return this.siigoProvider;
-      case AccountingProviderType.ALEGRA:
-        return this.siigoProvider;
       case AccountingProviderType.CONSOLE:
       default:
         return this.consoleProvider;
@@ -30,7 +28,6 @@ export class AccountingProviderFactory {
     return [
       { id: AccountingProviderType.CONSOLE, name: 'Console (dev)', regions: ['*'] },
       { id: AccountingProviderType.SIIGO, name: 'Siigo', regions: ['CO', 'LATAM'] },
-      { id: AccountingProviderType.ALEGRA, name: 'Alegra', regions: ['CO', 'MX', 'LATAM'] },
     ];
   }
 }

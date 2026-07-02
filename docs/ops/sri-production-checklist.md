@@ -6,16 +6,13 @@ Use this checklist before switching from SRI **test** (`celcer`) to **production
 
 - [ ] Valid **RUC** registered with SRI for the operating company.
 - [ ] **Digital certificate** (`.p12`) from an SRI-approved CA, not expired.
-- [ ] **SOL key** for SRI online services (web consultations if needed).
 - [ ] **Establishment** and **emission point** codes authorized for document types 01, 04, 05, 06, 07 as required.
 - [ ] **Authorized invoice sequences** loaded in Prisma (`InvoiceSequence`) matching SRI authorization ranges.
 
 ## Environment variables (`apps/api/.env`)
 
 ```bash
-SRI_MODE=direct
 SRI_RUC=xxxxxxxxxxxx
-SRI_SOL_KEY=********
 SRI_DIGITAL_CERTIFICATE_PATH=/secure/path/cert.p12
 SRI_DIGITAL_CERTIFICATE_PASSWORD=********
 SRI_ESTABLISHMENT_CODE=001

@@ -20,9 +20,15 @@ export class SiigoAccountingProvider implements AccountingProvider {
     return Boolean(this.config.get<string>('SIIGO_API_KEY'));
   }
 
+  private get apiBaseUrl(): string {
+    return this.config.get<string>('SIIGO_API_URL') ?? 'https://api.siigo.com';
+  }
+
   pushCustomer(input: AccountingCustomerInput): Promise<AccountingSyncOutput> {
     if (!this.configured) {
       this.logger.warn('Siigo not configured; returning stub sync id');
+    } else {
+      this.logger.debug(`Siigo API base: ${this.apiBaseUrl}`);
     }
     return Promise.resolve({
       externalId: `siigo-cust-${input.externalRef}`,

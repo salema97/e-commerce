@@ -30,7 +30,6 @@ const PRODUCTION_SECRET_KEYS = [
   'RESEND_API_KEY',
   'POSTHOG_KEY',
   'SRI_RUC',
-  'SRI_SOL_KEY',
   'SRI_DIGITAL_CERTIFICATE_PASSWORD',
 ] as const;
 
@@ -53,7 +52,6 @@ function isPlaceholderValue(value: string): boolean {
 }
 
 function getMissingSriCredentials(data: Env): string[] {
-  if (data.SRI_MODE !== 'direct') return [];
   return SRI_REQUIRED_KEYS.filter((key) => {
     const value = data[key];
     return typeof value !== 'string' || value.trim() === '';
@@ -115,11 +113,11 @@ const envSchema = envCoreSchema.merge(envProvidersSchema).superRefine((data, ctx
     ctx.addIssue({
       code: 'custom',
       path: [key],
-      message: `${key} is required when APP_ENV is production and SRI_MODE is direct`,
+      message: `${key} is required when APP_ENV is production`,
     });
   }
 
-  if (data.SRI_MODE === 'direct' && data.SRI_TEST_ENVIRONMENT === 'true') {
+  if (data.SRI_TEST_ENVIRONMENT === 'true') {
     ctx.addIssue({
       code: 'custom',
       path: ['SRI_TEST_ENVIRONMENT'],
@@ -158,5 +156,5 @@ export function validate(config: Record<string, unknown>): Env {
     }
   }
 
-  return data;
+  return result.data;
 }

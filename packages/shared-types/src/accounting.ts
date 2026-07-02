@@ -1,4 +1,4 @@
-export type AccountingProviderType = 'CONSOLE' | 'SIIGO' | 'ALEGRA';
+export type AccountingProviderType = 'CONSOLE' | 'SIIGO';
 export type AccountingSyncStatus = 'PENDING' | 'SYNCED' | 'FAILED';
 
 export interface AccountingSyncRecord {

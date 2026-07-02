@@ -24,9 +24,7 @@ const baseEnv = {
   EVOLUTION_WEBHOOK_SECRET: 'simulated_evolution_webhook_secret',
   RESEND_API_KEY: 'resend_simulated_key',
   POSTHOG_KEY: 'posthog_simulated_key',
-  SRI_MODE: 'direct',
   SRI_RUC: '1234567890001',
-  SRI_SOL_KEY: 'simulated_sri_sol_key',
   SRI_DIGITAL_CERTIFICATE_PATH: '/secure/path/to/cert.p12',
   SRI_DIGITAL_CERTIFICATE_PASSWORD: 'simulated_sri_cert_password',
   SRI_ESTABLISHMENT_CODE: '001',
@@ -117,9 +115,6 @@ describe('validate', () => {
     expect(() => validate({ ...baseEnv, SRI_RUC: '<sri-ruc>' })).toThrow(
       'SRI_RUC cannot use a dev/placeholder value',
     );
-    expect(() => validate({ ...baseEnv, SRI_SOL_KEY: '<sri-sol-key>' })).toThrow(
-      'SRI_SOL_KEY cannot use a dev/placeholder value',
-    );
     expect(() =>
       validate({ ...baseEnv, SRI_DIGITAL_CERTIFICATE_PASSWORD: '<sri-digital-certificate-password>' }),
     ).toThrow('SRI_DIGITAL_CERTIFICATE_PASSWORD cannot use a dev/placeholder value');
@@ -136,7 +131,7 @@ describe('validate', () => {
 
   it('rejects incomplete SRI credentials in production', () => {
     expect(() => validate({ ...baseEnv, SRI_RUC: '' })).toThrow(
-      'SRI_RUC is required when APP_ENV is production and SRI_MODE is direct',
+      'SRI_RUC is required when APP_ENV is production',
     );
   });
 
